@@ -9,13 +9,13 @@ import (
 
 func TestGetTests(t *testing.T) {
 	client := sciensano.APIClient{}
-	firstDay := time.Date(2020, 03, 01, 0, 0, 0, 0, time.UTC)
+	firstDay := time.Date(2020, 03, 10, 0, 0, 0, 0, time.UTC)
 	result, err := client.GetTests(firstDay)
 
 	if assert.Nil(t, err) {
-		assert.Len(t, result, 1)
-		assert.Equal(t, firstDay, result[0].Timestamp)
-		assert.Equal(t, 82, result[0].Total)
-		assert.Equal(t, 0, result[0].Positive)
+		assert.Len(t, result, 10)
+		assert.Equal(t, firstDay, result[9].Timestamp)
+		assert.Equal(t, 804, result[9].Total)
+		assert.Equal(t, 57, result[9].Positive)
 	}
 }

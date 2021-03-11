@@ -68,7 +68,7 @@ type apiTestResponse struct {
 	Province  string `json:"PROVINCE"`
 	Region    string `json:"REGION"`
 	Total     int    `json:"TESTS_ALL"`
-	Positive  int    `json:"TESTS_ALL_POSITIVE"`
+	Positive  int    `json:"TESTS_ALL_POS"`
 }
 
 func (client *APIClient) getTests() (stats []apiTestResponse, err error) {
