@@ -23,6 +23,9 @@ var VaccineTargets = []string{
 }
 
 var VaccineByAgeTargets = []string{
+	"vaccine-0-17-first",
+	"vaccine-0-17-second",
+	"vaccine-18-34-second",
 	"vaccine-18-34-first",
 	"vaccine-18-34-second",
 	"vaccine-35-44-first",
