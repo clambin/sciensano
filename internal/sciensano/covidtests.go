@@ -10,6 +10,8 @@ import (
 	"time"
 )
 
+var TestTargets = []string{"tests-positive", "tests-total", "tests-rate"}
+
 type Test struct {
 	Timestamp time.Time
 	Total     int

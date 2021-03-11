@@ -22,8 +22,8 @@ var (
 	// tests-ago-18-35-total
 	// etc.
 	targets = map[string][]string{
-		"tests":   []string{"tests-positive", "tests-total", "tests-rate"},
-		"vaccine": []string{"vaccine-first", "vaccine-second"},
+		"tests":   sciensano.TestTargets,
+		"vaccine": sciensano.VaccineTargets,
 	}
 )
 

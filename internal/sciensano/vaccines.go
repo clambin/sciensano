@@ -16,6 +16,8 @@ type Vaccine struct {
 	SecondDose int
 }
 
+var VaccineTargets = []string{"vaccine-first", "vaccine-second"}
+
 type Vaccines []Vaccine
 
 func (client *APIClient) GetVaccines(end time.Time) (results Vaccines, err error) {
