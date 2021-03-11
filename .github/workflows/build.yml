@@ -48,7 +48,7 @@ jobs:
             go build \
               -ldflags "-X github.com/clambin/sciensano/internal/version.BuildVersion=$RELEASE_VERSION" \
               -o bld/$TARGET-$PLATFORM-$ARCH \
-              cmd/$TARGET/$TARGET.go
+              $TARGET.go
       - uses: actions/upload-artifact@v2
         with:
           name: ${{ matrix.target }}-${{ matrix.platform }}-${{ matrix.arch }}
