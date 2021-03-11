@@ -26,7 +26,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        target: [ sciensanso ]
+        target: [ sciensano ]
         platform: [ linux ]
         arch: [ amd64, arm ]
     steps:
