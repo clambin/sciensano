@@ -8,6 +8,21 @@ import (
 	"time"
 )
 
+func TestAPIHandler_Search(t *testing.T) {
+	apiHandler, err := apihandler.Create()
+	assert.Nil(t, err)
+
+	targets := apiHandler.Search()
+
+	if assert.Len(t, targets, 5) {
+		assert.Equal(t, "tests-positive", targets[0])
+		assert.Equal(t, "tests-rate", targets[1])
+		assert.Equal(t, "tests-total", targets[2])
+		assert.Equal(t, "vaccine-first", targets[3])
+		assert.Equal(t, "vaccine-second", targets[4])
+	}
+}
+
 // TODO: API should be stubbed so we're not dependent on external data for testing
 func TestAPIHandler_Query(t *testing.T) {
 	apiHandler, err := apihandler.Create()
@@ -18,6 +33,7 @@ func TestAPIHandler_Query(t *testing.T) {
 		Targets: []apiserver.APIQueryRequestTarget{
 			{Target: "tests-total"},
 			{Target: "tests-positive"},
+			{Target: "tests-rate"},
 			{Target: "vaccine-first"},
 			{Target: "vaccine-second"},
 			{Target: "invalid"},
@@ -28,7 +44,7 @@ func TestAPIHandler_Query(t *testing.T) {
 	response, err = apiHandler.Query(request)
 
 	if assert.Nil(t, err) {
-		assert.Len(t, response, 4)
+		assert.Len(t, response, 5)
 
 		for _, entry := range response {
 			switch entry.Target {
@@ -37,6 +53,10 @@ func TestAPIHandler_Query(t *testing.T) {
 					assert.Equal(t, int64(82), entry.DataPoints[0][0])
 				}
 			case "tests-positive":
+				if assert.Len(t, entry.DataPoints, 1) {
+					assert.Equal(t, int64(0), entry.DataPoints[0][0])
+				}
+			case "tests-rate":
 				if assert.Len(t, entry.DataPoints, 1) {
 					assert.Equal(t, int64(0), entry.DataPoints[0][0])
 				}
@@ -52,17 +72,21 @@ func TestAPIHandler_Query(t *testing.T) {
 	response, err = apiHandler.Query(request)
 
 	if assert.Nil(t, err) {
-		assert.Len(t, response, 4)
+		assert.Len(t, response, 5)
 
 		for _, entry := range response {
 			switch entry.Target {
 			case "tests-total":
 				if assert.Len(t, entry.DataPoints, 303) {
-					assert.Equal(t, int64(82), entry.DataPoints[0][0])
+					assert.Equal(t, int64(29048), entry.DataPoints[302][0])
 				}
 			case "tests-positive":
 				if assert.Len(t, entry.DataPoints, 303) {
-					assert.Equal(t, int64(0), entry.DataPoints[0][0])
+					assert.Equal(t, int64(1898), entry.DataPoints[302][0])
+				}
+			case "tests-rate":
+				if assert.Len(t, entry.DataPoints, 303) {
+					assert.Equal(t, int64(6), entry.DataPoints[302][0])
 				}
 			case "vaccine-first":
 				if assert.Len(t, entry.DataPoints, 1) {

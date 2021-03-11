@@ -4,6 +4,7 @@ import (
 	"github.com/clambin/covid19/pkg/grafana/apiserver"
 	"github.com/clambin/sciensano/internal/sciensano"
 	log "github.com/sirupsen/logrus"
+	"sort"
 )
 
 // APIHandler implements a Grafana SimpleJson API that gets BE covid stats
@@ -20,17 +21,34 @@ var (
 	// tests-age-18-35-positive
 	// tests-ago-18-35-total
 	// etc.
-	targets = []string{
-		"tests-positive",
-		"tests-total",
-		"vaccine-first",
-		"vaccine-second",
+	targets = map[string][]string{
+		"tests":   []string{"tests-positive", "tests-total", "tests-rate"},
+		"vaccine": []string{"vaccine-first", "vaccine-second"},
 	}
 )
 
+func findTargetGroup(target string) string {
+	for group, entries := range targets {
+		for _, entry := range entries {
+			if target == entry {
+				return group
+			}
+		}
+	}
+	return ""
+}
+
+func allTargets() (output []string) {
+	for _, entries := range targets {
+		output = append(output, entries...)
+	}
+	sort.Strings(output)
+	return
+}
+
 // Search returns all supported targets
 func (apiHandler *APIHandler) Search() []string {
-	return targets
+	return allTargets()
 }
 
 // Query the DB and return the requested targets
@@ -38,10 +56,15 @@ func (apiHandler *APIHandler) Query(request *apiserver.APIQueryRequest) (respons
 	var (
 		testStats    sciensano.Tests
 		vaccineStats sciensano.Vaccines
+		group        string
 	)
 
 	for _, target := range request.Targets {
-		if target.Target == "tests-positive" || target.Target == "tests-total" {
+		if group = findTargetGroup(target.Target); group == "" {
+			log.WithField("target", target.Target).Warning("invalid target")
+			continue
+		}
+		if group == "tests" {
 			if testStats == nil {
 				if testStats, err = apiHandler.apiClient.GetTests(request.Range.To); err != nil {
 					log.WithField("err", err).Warning("unable to get test statistics")
@@ -49,7 +72,7 @@ func (apiHandler *APIHandler) Query(request *apiserver.APIQueryRequest) (respons
 				}
 			}
 			response = append(response, buildTestPart(testStats, target.Target))
-		} else if target.Target == "vaccine-first" || target.Target == "vaccine-second" {
+		} else if group == "vaccine" {
 			if vaccineStats == nil {
 				if vaccineStats, err = apiHandler.apiClient.GetVaccines(request.Range.To); err != nil {
 					log.WithField("err", err).Warning("unable to get vaccine statistics")
@@ -57,8 +80,6 @@ func (apiHandler *APIHandler) Query(request *apiserver.APIQueryRequest) (respons
 				}
 			}
 			response = append(response, buildVaccinePart(vaccineStats, target.Target))
-		} else {
-			log.WithField("target", target.Target).Warning("invalid target found")
 		}
 	}
 	return
@@ -72,10 +93,15 @@ func buildTestPart(entries sciensano.Tests, target string) (response apiserver.A
 	for index, entry := range entries {
 		timestamp = entry.Timestamp.UnixNano() / 1000000
 		value = 0
-		if target == "tests-total" {
+		switch target {
+		case "tests-total":
 			value = int64(entry.Total)
-		} else {
+		case "tests-positive":
 			value = int64(entry.Positive)
+		case "tests-rate":
+			if entry.Total > 0 {
+				value = int64(100 * entry.Positive / entry.Total)
+			}
 		}
 		response.DataPoints[index] = [2]int64{value, timestamp}
 	}
