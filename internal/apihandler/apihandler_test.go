@@ -3,7 +3,9 @@ package apihandler_test
 import (
 	"github.com/clambin/covid19/pkg/grafana/apiserver"
 	"github.com/clambin/sciensano/internal/apihandler"
+	"github.com/clambin/sciensano/internal/sciensano"
 	"github.com/stretchr/testify/assert"
+	"sort"
 	"testing"
 	"time"
 )
@@ -14,12 +16,16 @@ func TestAPIHandler_Search(t *testing.T) {
 
 	targets := apiHandler.Search()
 
-	if assert.Len(t, targets, 5) {
-		assert.Equal(t, "tests-positive", targets[0])
-		assert.Equal(t, "tests-rate", targets[1])
-		assert.Equal(t, "tests-total", targets[2])
-		assert.Equal(t, "vaccine-first", targets[3])
-		assert.Equal(t, "vaccine-second", targets[4])
+	realTargets := make([]string, 0)
+	realTargets = append(realTargets, sciensano.TestTargets...)
+	realTargets = append(realTargets, sciensano.VaccineTargets...)
+	realTargets = append(realTargets, sciensano.VaccineByAgeTargets...)
+	sort.Strings(realTargets)
+
+	if assert.Len(t, targets, len(realTargets)) {
+		for index, target := range targets {
+			assert.Equal(t, realTargets[index], target)
+		}
 	}
 }
 
@@ -36,6 +42,7 @@ func TestAPIHandler_Query(t *testing.T) {
 			{Target: "tests-rate"},
 			{Target: "vaccine-first"},
 			{Target: "vaccine-second"},
+			{Target: "vaccine-45-54-first"},
 			{Target: "invalid"},
 		}}
 
@@ -44,7 +51,7 @@ func TestAPIHandler_Query(t *testing.T) {
 	response, err = apiHandler.Query(request)
 
 	if assert.Nil(t, err) {
-		assert.Len(t, response, 5)
+		assert.Len(t, response, 6)
 
 		for _, entry := range response {
 			switch entry.Target {
@@ -64,6 +71,8 @@ func TestAPIHandler_Query(t *testing.T) {
 				assert.Len(t, entry.DataPoints, 0)
 			case "vaccine-second":
 				assert.Len(t, entry.DataPoints, 0)
+			case "vaccine-45-54-first":
+				assert.Len(t, entry.DataPoints, 0)
 			}
 		}
 	}
@@ -72,7 +81,7 @@ func TestAPIHandler_Query(t *testing.T) {
 	response, err = apiHandler.Query(request)
 
 	if assert.Nil(t, err) {
-		assert.Len(t, response, 5)
+		assert.Len(t, response, 6)
 
 		for _, entry := range response {
 			switch entry.Target {

@@ -19,4 +19,15 @@ func TestGetVaccines(t *testing.T) {
 			assert.Equal(t, 0, result[0].SecondDose)
 		}
 	}
+
+	result, err = client.GetVaccinesByAge(firstDay, "vaccine-45-54-first")
+
+	if assert.Nil(t, err) {
+		if assert.Len(t, result, 1) {
+			assert.Equal(t, firstDay, result[0].Timestamp)
+			assert.Equal(t, 22, result[0].FirstDose)
+			assert.Equal(t, 0, result[0].SecondDose)
+		}
+	}
+
 }

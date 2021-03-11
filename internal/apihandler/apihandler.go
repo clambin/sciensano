@@ -24,6 +24,7 @@ var (
 	targets = map[string][]string{
 		"tests":   sciensano.TestTargets,
 		"vaccine": sciensano.VaccineTargets,
+		"vac-age": sciensano.VaccineByAgeTargets,
 	}
 )
 
@@ -65,21 +66,24 @@ func (apiHandler *APIHandler) Query(request *apiserver.APIQueryRequest) (respons
 			continue
 		}
 		if group == "tests" {
-			if testStats == nil {
-				if testStats, err = apiHandler.apiClient.GetTests(request.Range.To); err != nil {
-					log.WithField("err", err).Warning("unable to get test statistics")
-					continue
-				}
+			if testStats, err = apiHandler.apiClient.GetTests(request.Range.To); err != nil {
+				log.WithField("err", err).Warning("unable to get test statistics")
+				continue
 			}
 			response = append(response, buildTestPart(testStats, target.Target))
 		} else if group == "vaccine" {
-			if vaccineStats == nil {
-				if vaccineStats, err = apiHandler.apiClient.GetVaccines(request.Range.To); err != nil {
-					log.WithField("err", err).Warning("unable to get vaccine statistics")
-					continue
-				}
+			if vaccineStats, err = apiHandler.apiClient.GetVaccines(request.Range.To); err != nil {
+				log.WithField("err", err).Warning("unable to get vaccine statistics")
+				continue
 			}
 			response = append(response, buildVaccinePart(vaccineStats, target.Target))
+		} else if group == "vac-age" {
+			if vaccineStats, err = apiHandler.apiClient.GetVaccinesByAge(request.Range.To, target.Target); err != nil {
+				log.WithField("err", err).Warning("unable to get vaccine statistics by age")
+				continue
+			}
+			response = append(response, buildVaccinePart(vaccineStats, target.Target))
+
 		}
 	}
 	return

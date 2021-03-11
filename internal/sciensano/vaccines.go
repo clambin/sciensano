@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"sort"
+	"strings"
 	"time"
 )
 
@@ -16,7 +17,29 @@ type Vaccine struct {
 	SecondDose int
 }
 
-var VaccineTargets = []string{"vaccine-first", "vaccine-second"}
+var VaccineTargets = []string{
+	"vaccine-first",
+	"vaccine-second",
+}
+
+var VaccineByAgeTargets = []string{
+	"vaccine-18-34-first",
+	"vaccine-18-34-second",
+	"vaccine-35-44-first",
+	"vaccine-35-44-second",
+	"vaccine-45-54-first",
+	"vaccine-45-54-second",
+	"vaccine-55-64-first",
+	"vaccine-55-64-second",
+	"vaccine-65-74-first",
+	"vaccine-65-74-second",
+	"vaccine-75-84-first",
+	"vaccine-75-84-second",
+	"vaccine-75-84-first",
+	"vaccine-75-84-second",
+	"vaccine-85+-first",
+	"vaccine-85+-second",
+}
 
 type Vaccines []Vaccine
 
@@ -27,6 +50,42 @@ func (client *APIClient) GetVaccines(end time.Time) (results Vaccines, err error
 		results = accumulateVaccines(groupVaccines(apiResult, end))
 	}
 
+	return
+}
+
+func (client *APIClient) GetVaccinesByAge(end time.Time, target string) (results Vaccines, err error) {
+	var apiResult []apiVaccineResponse
+
+	if apiResult, err = client.getVaccines(); err == nil {
+		apiResult = filterByAge(apiResult, ageFromTarget(target))
+		results = accumulateVaccines(groupVaccines(apiResult, end))
+	}
+
+	return
+}
+
+func ageFromTarget(target string) (output string) {
+	output = target
+	if strings.HasPrefix(output, "vaccine-") {
+		tmp := output
+		output = tmp[len("vaccine-"):]
+	}
+	if strings.HasSuffix(output, "-first") {
+		tmp := output
+		output = tmp[:len("-first")-1]
+	} else if strings.HasSuffix(output, "-second") {
+		tmp := output
+		output = tmp[:len("-second")-1]
+	}
+	return
+}
+
+func filterByAge(apiResult []apiVaccineResponse, ageGroup string) (output []apiVaccineResponse) {
+	for _, result := range apiResult {
+		if result.AgeGroup == ageGroup {
+			output = append(output, result)
+		}
+	}
 	return
 }
 
