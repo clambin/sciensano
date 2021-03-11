@@ -65,18 +65,9 @@ func (client *APIClient) GetVaccinesByAge(end time.Time, target string) (results
 }
 
 func ageFromTarget(target string) (output string) {
-	output = target
-	if strings.HasPrefix(output, "vaccine-") {
-		tmp := output
-		output = tmp[len("vaccine-"):]
-	}
-	if strings.HasSuffix(output, "-first") {
-		tmp := output
-		output = tmp[:len("-first")-1]
-	} else if strings.HasSuffix(output, "-second") {
-		tmp := output
-		output = tmp[:len("-second")-1]
-	}
+	output = strings.TrimPrefix(target, "vaccine-")
+	output = strings.TrimSuffix(output, "-first")
+	output = strings.TrimSuffix(output, "-second")
 	return
 }
 
