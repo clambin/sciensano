@@ -18,8 +18,8 @@ func TestAPIHandler_Search(t *testing.T) {
 
 	realTargets := make([]string, 0)
 	realTargets = append(realTargets, sciensano.TestTargets...)
-	realTargets = append(realTargets, sciensano.VaccineTargets...)
-	realTargets = append(realTargets, sciensano.VaccineByAgeTargets...)
+	realTargets = append(realTargets, sciensano.GetVaccinationsTargets()...)
+	realTargets = append(realTargets, sciensano.GetVaccinationsByAgeTargets()...)
 	sort.Strings(realTargets)
 
 	if assert.Len(t, targets, len(realTargets)) {
@@ -40,9 +40,9 @@ func TestAPIHandler_Query(t *testing.T) {
 			{Target: "tests-total"},
 			{Target: "tests-positive"},
 			{Target: "tests-rate"},
-			{Target: "vaccine-first"},
-			{Target: "vaccine-second"},
-			{Target: "vaccine-45-54-first"},
+			{Target: "vaccinations-first"},
+			{Target: "vaccinations-second"},
+			{Target: "vaccinations-45-54-first"},
 			{Target: "invalid"},
 		}}
 
@@ -67,11 +67,11 @@ func TestAPIHandler_Query(t *testing.T) {
 				if assert.Len(t, entry.DataPoints, 1) {
 					assert.Equal(t, int64(0), entry.DataPoints[0][0])
 				}
-			case "vaccine-first":
+			case "vaccinations-first":
 				assert.Len(t, entry.DataPoints, 0)
-			case "vaccine-second":
+			case "vaccinations-second":
 				assert.Len(t, entry.DataPoints, 0)
-			case "vaccine-45-54-first":
+			case "vaccinations-45-54-first":
 				assert.Len(t, entry.DataPoints, 0)
 			}
 		}
@@ -86,27 +86,16 @@ func TestAPIHandler_Query(t *testing.T) {
 		for _, entry := range response {
 			switch entry.Target {
 			case "tests-total":
-				if assert.Len(t, entry.DataPoints, 303) {
-					assert.Equal(t, int64(29048), entry.DataPoints[302][0])
-				}
+				assert.Equal(t, int64(29048), entry.DataPoints[len(entry.DataPoints)-1][0])
 			case "tests-positive":
-				if assert.Len(t, entry.DataPoints, 303) {
-					assert.Equal(t, int64(1898), entry.DataPoints[302][0])
-				}
+				assert.Equal(t, int64(1898), entry.DataPoints[len(entry.DataPoints)-1][0])
 			case "tests-rate":
-				if assert.Len(t, entry.DataPoints, 303) {
-					assert.Equal(t, int64(6), entry.DataPoints[302][0])
-				}
-			case "vaccine-first":
-				if assert.Len(t, entry.DataPoints, 1) {
-					assert.Equal(t, int64(298), entry.DataPoints[0][0])
-				}
-			case "vaccine-second":
-				if assert.Len(t, entry.DataPoints, 1) {
-					assert.Equal(t, int64(0), entry.DataPoints[0][0])
-				}
+				assert.Equal(t, int64(6), entry.DataPoints[len(entry.DataPoints)-1][0])
+			case "vaccinations-first":
+				assert.Equal(t, int64(298), entry.DataPoints[len(entry.DataPoints)-1][0])
+			case "vaccinations-second":
+				assert.Equal(t, int64(0), entry.DataPoints[len(entry.DataPoints)-1][0])
 			}
 		}
 	}
-
 }
