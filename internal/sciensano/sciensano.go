@@ -77,14 +77,15 @@ func (client *Client) getVaccinations() ([]apiVaccinationsResponse, error) {
 					body []byte
 				)
 				if body, err = ioutil.ReadAll(resp.Body); err == nil {
-					err = json.Unmarshal(body, &stats)
+					if err = json.Unmarshal(body, &stats); err == nil {
+						client.vaccinationsCache = stats
+						client.vaccinationsCacheExpiry = time.Now().Add(client.VaccinationsCacheDuration)
+					}
 				}
 			} else {
 				err = errors.New(resp.Status)
 			}
 		}
-		client.vaccinationsCache = stats
-		client.vaccinationsCacheExpiry = time.Now().Add(client.VaccinationsCacheDuration)
 	}
 
 	return client.vaccinationsCache, err

@@ -53,7 +53,7 @@ func TestAPIHandler_Query(t *testing.T) {
 	response, err = apiHandler.Query(request)
 
 	if assert.Nil(t, err) {
-		assert.Len(t, response, 6)
+		assert.Len(t, response, 7)
 
 		for _, entry := range response {
 			switch entry.Target {
@@ -85,7 +85,7 @@ func TestAPIHandler_Query(t *testing.T) {
 	response, err = apiHandler.Query(request)
 
 	if assert.Nil(t, err) {
-		assert.Len(t, response, 6)
+		assert.Len(t, response, 7)
 
 		for _, entry := range response {
 			switch entry.Target {

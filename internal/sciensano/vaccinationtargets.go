@@ -40,9 +40,9 @@ func GetVaccinationsByAgeTargets() (targets []string) {
 }
 
 func GetVaccinationsByRegionTargets() (targets []string) {
-	for _, ageGroup := range AgeGroups {
-		targets = append(targets, "vaccinations-"+ageGroup+"-first")
-		targets = append(targets, "vaccinations-"+ageGroup+"-second")
+	for _, region := range Regions {
+		targets = append(targets, "vaccinations-"+region+"-first")
+		targets = append(targets, "vaccinations-"+region+"-second")
 	}
 	return
 }

@@ -18,12 +18,6 @@ func (client *Client) GetVaccinations(end time.Time) (results Vaccinations, err 
 	var apiResult []apiVaccinationsResponse
 
 	if apiResult, err = client.getVaccinations(); err == nil {
-		// debug: are we missing something
-		sizes := make(map[string][]apiVaccinationsResponse)
-		for _, ageGroup := range AgeGroups {
-			sizes[ageGroup] = filterByAgeGroup(apiResult, ageGroup)
-		}
-
 		results = accumulateVaccinations(groupVaccinations(apiResult, end))
 	}
 
@@ -108,8 +102,6 @@ func groupVaccinations(apiResult []apiVaccinationsResponse, end time.Time) (tota
 	}
 	// Maps are iterated in random order. Sort the final slice
 	sort.Sort(totals)
-
-	// log.WithField("ageGroups", ageGroups).Info("ageGroups")
 
 	return
 }
