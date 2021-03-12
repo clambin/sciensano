@@ -29,6 +29,7 @@ var (
 		"tests":   sciensano.TestTargets,
 		"vaccine": sciensano.GetVaccinationsTargets(),
 		"vac-age": sciensano.GetVaccinationsByAgeTargets(),
+		"vac-reg": sciensano.GetVaccinationsByRegionTargets(),
 	}
 )
 
@@ -87,8 +88,14 @@ func (apiHandler *APIHandler) Query(request *apiserver.APIQueryRequest) (respons
 				continue
 			}
 			response = append(response, buildVaccinePart(vaccineStats, target.Target))
-
+		} else if group == "vac-reg" {
+			if vaccineStats, err = apiHandler.apiClient.GetVaccinationsByRegion(request.Range.To, sciensano.GetRegionFromTarget(target.Target)); err != nil {
+				log.WithField("err", err).Warning("unable to get vaccine statistics by region")
+				continue
+			}
+			response = append(response, buildVaccinePart(vaccineStats, target.Target))
 		}
+
 	}
 	return
 }

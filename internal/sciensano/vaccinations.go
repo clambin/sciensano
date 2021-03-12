@@ -3,7 +3,6 @@ package sciensano
 import (
 	log "github.com/sirupsen/logrus"
 	"sort"
-	"strings"
 	"time"
 )
 
@@ -14,33 +13,6 @@ type Vaccination struct {
 }
 
 type Vaccinations []Vaccination
-
-func GetVaccinationsTargets() []string {
-	return []string{
-		"vaccinations-first",
-		"vaccinations-second",
-	}
-}
-
-var AgeGroups = []string{
-	"",
-	"0-17",
-	"18-34",
-	"35-44",
-	"45-54",
-	"55-64",
-	"65-74",
-	"75-84",
-	"85+",
-}
-
-func GetVaccinationsByAgeTargets() (targets []string) {
-	for _, ageGroup := range AgeGroups {
-		targets = append(targets, "vaccinations-"+ageGroup+"-first")
-		targets = append(targets, "vaccinations-"+ageGroup+"-second")
-	}
-	return
-}
 
 func (client *Client) GetVaccinations(end time.Time) (results Vaccinations, err error) {
 	var apiResult []apiVaccinationsResponse
@@ -69,28 +41,29 @@ func (client *Client) GetVaccinationsByAge(end time.Time, group string) (results
 	return
 }
 
-func GetAgeGroupFromTarget(target string) (output string) {
-	if strings.HasPrefix(target, "vaccinations-") &&
-		(strings.HasSuffix(target, "-first") || strings.HasSuffix(target, "-second")) {
-		output = strings.TrimPrefix(target, "vaccinations-")
-		output = strings.TrimSuffix(output, "-first")
-		output = strings.TrimSuffix(output, "-second")
-	}
-	return
-}
+func (client *Client) GetVaccinationsByRegion(end time.Time, group string) (results Vaccinations, err error) {
+	var apiResult []apiVaccinationsResponse
 
-func GetModeFromTarget(target string) (mode string) {
-	if strings.HasSuffix(target, "-first") {
-		mode = "A"
-	} else if strings.HasSuffix(target, "-second") {
-		mode = "B"
+	if apiResult, err = client.getVaccinations(); err == nil {
+		apiResult = filterByRegion(apiResult, group)
+		results = accumulateVaccinations(groupVaccinations(apiResult, end))
 	}
+
 	return
 }
 
 func filterByAgeGroup(apiResult []apiVaccinationsResponse, ageGroup string) (output []apiVaccinationsResponse) {
 	for _, result := range apiResult {
 		if result.AgeGroup == ageGroup {
+			output = append(output, result)
+		}
+	}
+	return
+}
+
+func filterByRegion(apiResult []apiVaccinationsResponse, region string) (output []apiVaccinationsResponse) {
+	for _, result := range apiResult {
+		if result.Region == region {
 			output = append(output, result)
 		}
 	}
@@ -141,19 +114,6 @@ func groupVaccinations(apiResult []apiVaccinationsResponse, end time.Time) (tota
 	return
 }
 
-// helper functions for sort.Sort([]Test)
-func (p Vaccinations) Len() int {
-	return len(p)
-}
-
-func (p Vaccinations) Less(i, j int) bool {
-	return p[i].Timestamp.Before(p[j].Timestamp)
-}
-
-func (p Vaccinations) Swap(i, j int) {
-	p[i], p[j] = p[j], p[i]
-}
-
 func accumulateVaccinations(entries Vaccinations) (totals Vaccinations) {
 	first := 0
 	second := 0
@@ -169,4 +129,17 @@ func accumulateVaccinations(entries Vaccinations) (totals Vaccinations) {
 		}
 	}
 	return
+}
+
+// helper functions for sort.Sort(Vaccinations)
+func (p Vaccinations) Len() int {
+	return len(p)
+}
+
+func (p Vaccinations) Less(i, j int) bool {
+	return p[i].Timestamp.Before(p[j].Timestamp)
+}
+
+func (p Vaccinations) Swap(i, j int) {
+	p[i], p[j] = p[j], p[i]
 }

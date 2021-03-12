@@ -20,6 +20,7 @@ func TestAPIHandler_Search(t *testing.T) {
 	realTargets = append(realTargets, sciensano.TestTargets...)
 	realTargets = append(realTargets, sciensano.GetVaccinationsTargets()...)
 	realTargets = append(realTargets, sciensano.GetVaccinationsByAgeTargets()...)
+	realTargets = append(realTargets, sciensano.GetVaccinationsByRegionTargets()...)
 	sort.Strings(realTargets)
 
 	if assert.Len(t, targets, len(realTargets)) {
@@ -43,6 +44,7 @@ func TestAPIHandler_Query(t *testing.T) {
 			{Target: "vaccinations-first"},
 			{Target: "vaccinations-second"},
 			{Target: "vaccinations-45-54-first"},
+			{Target: "vaccinations-Brussels-first"},
 			{Target: "invalid"},
 		}}
 
@@ -72,6 +74,8 @@ func TestAPIHandler_Query(t *testing.T) {
 			case "vaccinations-second":
 				assert.Len(t, entry.DataPoints, 0)
 			case "vaccinations-45-54-first":
+				assert.Len(t, entry.DataPoints, 0)
+			case "vaccinations-Flanders-first":
 				assert.Len(t, entry.DataPoints, 0)
 			}
 		}
