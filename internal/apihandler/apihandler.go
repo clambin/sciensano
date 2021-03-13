@@ -9,14 +9,14 @@ import (
 
 // APIHandler implements a Grafana SimpleJson API that gets BE covid stats
 type APIHandler struct {
-	apiClient sciensano.Client
+	Client sciensano.API
 }
 
 func Create() (*APIHandler, error) {
 	client := sciensano.Client{
 		VaccinationsCacheDuration: 5 * time.Second,
 	}
-	return &APIHandler{apiClient: client}, nil
+	return &APIHandler{Client: &client}, nil
 }
 
 // Search returns all supported targets
@@ -41,21 +41,21 @@ func (apiHandler *APIHandler) Query(request *apiserver.APIQueryRequest) (respons
 		err = nil
 		switch group {
 		case "tests":
-			if testStats, err = apiHandler.apiClient.GetTests(request.Range.To); err == nil {
+			if testStats, err = apiHandler.Client.GetTests(request.Range.To); err == nil {
 				response = append(response, buildTestPart(testStats, target.Target))
 			}
 		case "vaccine":
-			if vaccineStats, err = apiHandler.apiClient.GetVaccinations(request.Range.To); err == nil {
+			if vaccineStats, err = apiHandler.Client.GetVaccinations(request.Range.To); err == nil {
 				vaccineStats = sciensano.AccumulateVaccinations(vaccineStats)
 				response = append(response, buildVaccinePart(vaccineStats, target.Target))
 			}
 		case "vac-age":
-			if vaccineStats, err = apiHandler.apiClient.GetVaccinationsByAge(request.Range.To, getAgeGroupFromTarget(target.Target)); err == nil {
+			if vaccineStats, err = apiHandler.Client.GetVaccinationsByAge(request.Range.To, getAgeGroupFromTarget(target.Target)); err == nil {
 				vaccineStats = sciensano.AccumulateVaccinations(vaccineStats)
 				response = append(response, buildVaccinePart(vaccineStats, target.Target))
 			}
 		case "vac-reg":
-			if vaccineStats, err = apiHandler.apiClient.GetVaccinationsByRegion(request.Range.To, getRegionFromTarget(target.Target)); err == nil {
+			if vaccineStats, err = apiHandler.Client.GetVaccinationsByRegion(request.Range.To, getRegionFromTarget(target.Target)); err == nil {
 				vaccineStats = sciensano.AccumulateVaccinations(vaccineStats)
 				response = append(response, buildVaccinePart(vaccineStats, target.Target))
 			}

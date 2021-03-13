@@ -35,10 +35,8 @@ type apiTestResponse struct {
 }
 
 func (client *Client) getTests() (stats []apiTestResponse, err error) {
-	req, _ := http.NewRequest("GET", baseURL+"COVID19BE_tests.json", nil)
-
 	var resp *http.Response
-	if resp, err = client.apiClient.Do(req); err == nil {
+	if resp, err = client.apiClient.Get(baseURL + "COVID19BE_tests.json"); err == nil {
 		defer resp.Body.Close()
 		if resp.StatusCode == 200 {
 			var (

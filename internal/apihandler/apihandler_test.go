@@ -1,7 +1,9 @@
-package apihandler
+package apihandler_test
 
 import (
 	"github.com/clambin/covid19/pkg/grafana/apiserver"
+	"github.com/clambin/sciensano/internal/apihandler"
+	"github.com/clambin/sciensano/internal/apihandler/mockapi"
 	"github.com/stretchr/testify/assert"
 	"sort"
 	"testing"
@@ -9,16 +11,16 @@ import (
 )
 
 func TestAPIHandler_Search(t *testing.T) {
-	apiHandler, err := Create()
+	apiHandler, err := apihandler.Create()
 	assert.Nil(t, err)
 
 	targets := apiHandler.Search()
 
 	realTargets := make([]string, 0)
-	realTargets = append(realTargets, getTestTargets()...)
-	realTargets = append(realTargets, getVaccinationsTargets()...)
-	realTargets = append(realTargets, getVaccinationsByAgeTargets()...)
-	realTargets = append(realTargets, getVaccinationsByRegionTargets()...)
+	realTargets = append(realTargets, apihandler.GetTestTargets()...)
+	realTargets = append(realTargets, apihandler.GetVaccinationsTargets()...)
+	realTargets = append(realTargets, apihandler.GetVaccinationsByAgeTargets()...)
+	realTargets = append(realTargets, apihandler.GetVaccinationsByRegionTargets()...)
 	sort.Strings(realTargets)
 
 	if assert.Len(t, targets, len(realTargets)) {
@@ -30,8 +32,9 @@ func TestAPIHandler_Search(t *testing.T) {
 
 // TODO: API should be stubbed so we're not dependent on external data for testing
 func TestAPIHandler_Query(t *testing.T) {
-	apiHandler, err := Create()
+	apiHandler, err := apihandler.Create()
 	assert.Nil(t, err)
+	apiHandler.Client = &mockapi.API{Tests: mockapi.DefaultTests, Vaccinations: mockapi.DefaultVaccinations}
 
 	request := &apiserver.APIQueryRequest{
 		Range: apiserver.APIQueryRequestRange{},
@@ -46,57 +49,41 @@ func TestAPIHandler_Query(t *testing.T) {
 			{Target: "invalid"},
 		}}
 
-	request.Range.To = time.Date(2020, 03, 01, 0, 0, 0, 0, time.UTC)
+	endDate := time.Date(2021, 01, 06, 0, 0, 0, 0, time.UTC)
+	request.Range.To = endDate
+
 	var response []apiserver.APIQueryResponse
 	response, err = apiHandler.Query(request)
 
 	if assert.Nil(t, err) {
-		assert.Len(t, response, 7)
+		assert.Len(t, response, len(request.Targets)-1)
 
 		for _, entry := range response {
-			switch entry.Target {
-			case "tests-total":
-				if assert.Len(t, entry.DataPoints, 1) {
-					assert.Equal(t, int64(82), entry.DataPoints[0][0])
-				}
-			case "tests-positive":
-				if assert.Len(t, entry.DataPoints, 1) {
-					assert.Equal(t, int64(0), entry.DataPoints[0][0])
-				}
-			case "tests-rate":
-				if assert.Len(t, entry.DataPoints, 1) {
-					assert.Equal(t, int64(0), entry.DataPoints[0][0])
-				}
-			case "vaccinations-first":
-				assert.Len(t, entry.DataPoints, 0)
-			case "vaccinations-second":
-				assert.Len(t, entry.DataPoints, 0)
-			case "vaccinations-45-54-first":
-				assert.Len(t, entry.DataPoints, 0)
-			case "vaccinations-Flanders-first":
-				assert.Len(t, entry.DataPoints, 0)
-			}
-		}
-	}
+			if assert.NotZero(t, len(entry.DataPoints), entry.Target) {
 
-	request.Range.To = time.Date(2020, 12, 28, 0, 0, 0, 0, time.UTC)
-	response, err = apiHandler.Query(request)
+				lastIndex := len(entry.DataPoints) - 1
 
-	if assert.Nil(t, err) {
-		assert.Len(t, response, 7)
+				// Last entry should be endDate
+				// Grafana time is in msec. Convert to sec + set TZ to UTC in order to compare
+				ts := time.Unix(entry.DataPoints[lastIndex][1]/1000, 0).In(time.UTC)
+				assert.Equal(t, endDate, ts)
 
-		for _, entry := range response {
-			switch entry.Target {
-			case "tests-total":
-				assert.Equal(t, int64(29048), entry.DataPoints[len(entry.DataPoints)-1][0])
-			case "tests-positive":
-				assert.Equal(t, int64(1898), entry.DataPoints[len(entry.DataPoints)-1][0])
-			case "tests-rate":
-				assert.Equal(t, int64(6), entry.DataPoints[len(entry.DataPoints)-1][0])
-			case "vaccinations-first":
-				assert.Equal(t, int64(298), entry.DataPoints[len(entry.DataPoints)-1][0])
-			case "vaccinations-second":
-				assert.Equal(t, int64(0), entry.DataPoints[len(entry.DataPoints)-1][0])
+				switch entry.Target {
+				case "tests-total":
+					assert.Equal(t, int64(10), entry.DataPoints[lastIndex][0])
+				case "tests-positive":
+					assert.Equal(t, int64(5), entry.DataPoints[lastIndex][0])
+				case "tests-rate":
+					assert.Equal(t, int64(100*5/10), entry.DataPoints[lastIndex][0])
+				case "vaccinations-first":
+					assert.Equal(t, int64(15), entry.DataPoints[lastIndex][0])
+				case "vaccinations-second":
+					assert.Equal(t, int64(10), entry.DataPoints[lastIndex][0])
+				case "vaccinations-45-54-first":
+					assert.Equal(t, int64(15), entry.DataPoints[lastIndex][0])
+				case "vaccinations-Flanders-first":
+					assert.Equal(t, int64(15), entry.DataPoints[lastIndex][0])
+				}
 			}
 		}
 	}

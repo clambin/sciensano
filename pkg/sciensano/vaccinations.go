@@ -76,17 +76,12 @@ type apiVaccinationsResponse struct {
 	Count     int    `json:"Count"`
 }
 
-func (client *Client) getVaccinations() ([]apiVaccinationsResponse, error) {
-	var err error
-
+func (client *Client) getVaccinations() (result []apiVaccinationsResponse, err error) {
 	if client.vaccinationsCache == nil || time.Now().After(client.vaccinationsCacheExpiry) {
-
-		req, _ := http.NewRequest("GET", baseURL+"COVID19BE_VACC.json", nil)
-
 		var resp *http.Response
 		var stats []apiVaccinationsResponse
 
-		if resp, err = client.apiClient.Do(req); err == nil {
+		if resp, err = client.apiClient.Get(baseURL + "COVID19BE_VACC.json"); err == nil {
 			defer resp.Body.Close()
 			if resp.StatusCode == 200 {
 				var (
@@ -103,7 +98,6 @@ func (client *Client) getVaccinations() ([]apiVaccinationsResponse, error) {
 			}
 		}
 	}
-
 	return client.vaccinationsCache, err
 }
 
