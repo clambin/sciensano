@@ -17,10 +17,10 @@ jobs:
       - name: test
         run: |
           go test ./... -race -coverprofile=coverage.txt -covermode=atomic
-      #- uses: codecov/codecov-action@v1
-      #  with:
-      #    file: coverage.txt
-      #    token: ${{ secrets.CODECOV_TOKEN }}
+      - uses: codecov/codecov-action@v1
+        with:
+          file: coverage.txt
+          token: ${{ secrets.CODECOV_TOKEN }}
   build:
     needs: test
     runs-on: ubuntu-latest
