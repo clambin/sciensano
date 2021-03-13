@@ -1,12 +1,14 @@
 package sciensano
 
 import (
+	"encoding/json"
+	"errors"
 	log "github.com/sirupsen/logrus"
+	"io/ioutil"
+	"net/http"
 	"sort"
 	"time"
 )
-
-var TestTargets = []string{"tests-positive", "tests-total", "tests-rate"}
 
 type Test struct {
 	Timestamp time.Time
@@ -14,15 +16,41 @@ type Test struct {
 	Positive  int
 }
 
-type Tests []Test
-
-func (client *Client) GetTests(end time.Time) (results Tests, err error) {
+func (client *Client) GetTests(end time.Time) (results []Test, err error) {
 	var apiResult []apiTestResponse
 
 	if apiResult, err = client.getTests(); err == nil {
 		results = groupTests(apiResult, end)
 	}
 
+	return
+}
+
+type apiTestResponse struct {
+	TimeStamp string `json:"DATE"`
+	Province  string `json:"PROVINCE"`
+	Region    string `json:"REGION"`
+	Total     int    `json:"TESTS_ALL"`
+	Positive  int    `json:"TESTS_ALL_POS"`
+}
+
+func (client *Client) getTests() (stats []apiTestResponse, err error) {
+	req, _ := http.NewRequest("GET", baseURL+"COVID19BE_tests.json", nil)
+
+	var resp *http.Response
+	if resp, err = client.apiClient.Do(req); err == nil {
+		defer resp.Body.Close()
+		if resp.StatusCode == 200 {
+			var (
+				body []byte
+			)
+			if body, err = ioutil.ReadAll(resp.Body); err == nil {
+				err = json.Unmarshal(body, &stats)
+			}
+		} else {
+			err = errors.New(resp.Status)
+		}
+	}
 	return
 }
 
@@ -62,6 +90,8 @@ func groupTests(apiResult []apiTestResponse, end time.Time) (results Tests) {
 }
 
 // helper functions for sort.Sort([]Test)
+type Tests []Test
+
 func (p Tests) Len() int {
 	return len(p)
 }

@@ -1,6 +1,17 @@
-package sciensano
+package apihandler
 
-import "strings"
+import (
+	"github.com/clambin/sciensano/pkg/sciensano"
+	"strings"
+)
+
+func GetTestTargets() []string {
+	return []string{
+		"tests-total",
+		"tests-positive",
+		"tests-rate",
+	}
+}
 
 func GetVaccinationsTargets() []string {
 	return []string{
@@ -9,30 +20,10 @@ func GetVaccinationsTargets() []string {
 	}
 }
 
-var AgeGroups = []string{
-	"",
-	"0-17",
-	"18-34",
-	"35-44",
-	"45-54",
-	"55-64",
-	"65-74",
-	"75-84",
-	"85+",
-}
-
-var Regions = []string{
-	"",
-	"Flanders",
-	"Brussels",
-	"Wallonia",
-	"Ostbelgien",
-}
-
 // Targets
 
 func GetVaccinationsByAgeTargets() (targets []string) {
-	for _, ageGroup := range AgeGroups {
+	for _, ageGroup := range sciensano.AgeGroups {
 		targets = append(targets, "vaccinations-"+ageGroup+"-first")
 		targets = append(targets, "vaccinations-"+ageGroup+"-second")
 	}
@@ -40,7 +31,7 @@ func GetVaccinationsByAgeTargets() (targets []string) {
 }
 
 func GetVaccinationsByRegionTargets() (targets []string) {
-	for _, region := range Regions {
+	for _, region := range sciensano.Regions {
 		targets = append(targets, "vaccinations-"+region+"-first")
 		targets = append(targets, "vaccinations-"+region+"-second")
 	}

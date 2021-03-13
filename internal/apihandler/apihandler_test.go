@@ -3,7 +3,6 @@ package apihandler_test
 import (
 	"github.com/clambin/covid19/pkg/grafana/apiserver"
 	"github.com/clambin/sciensano/internal/apihandler"
-	"github.com/clambin/sciensano/internal/sciensano"
 	"github.com/stretchr/testify/assert"
 	"sort"
 	"testing"
@@ -17,10 +16,10 @@ func TestAPIHandler_Search(t *testing.T) {
 	targets := apiHandler.Search()
 
 	realTargets := make([]string, 0)
-	realTargets = append(realTargets, sciensano.TestTargets...)
-	realTargets = append(realTargets, sciensano.GetVaccinationsTargets()...)
-	realTargets = append(realTargets, sciensano.GetVaccinationsByAgeTargets()...)
-	realTargets = append(realTargets, sciensano.GetVaccinationsByRegionTargets()...)
+	realTargets = append(realTargets, apihandler.GetTestTargets()...)
+	realTargets = append(realTargets, apihandler.GetVaccinationsTargets()...)
+	realTargets = append(realTargets, apihandler.GetVaccinationsByAgeTargets()...)
+	realTargets = append(realTargets, apihandler.GetVaccinationsByRegionTargets()...)
 	sort.Strings(realTargets)
 
 	if assert.Len(t, targets, len(realTargets)) {

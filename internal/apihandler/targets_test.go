@@ -1,7 +1,7 @@
-package sciensano_test
+package apihandler_test
 
 import (
-	"github.com/clambin/sciensano/internal/sciensano"
+	"github.com/clambin/sciensano/internal/apihandler"
 	"testing"
 )
 
@@ -22,7 +22,7 @@ func TestGetAgeGroupFromTarget(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if gotOutput := sciensano.GetAgeGroupFromTarget(tt.args.target); gotOutput != tt.wantOutput {
+			if gotOutput := apihandler.GetAgeGroupFromTarget(tt.args.target); gotOutput != tt.wantOutput {
 				t.Errorf("GetAgeGroupFromTarget() = %v, want %v", gotOutput, tt.wantOutput)
 			}
 		})
@@ -44,7 +44,7 @@ func TestGetModeFromTarget(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if gotMode := sciensano.GetModeFromTarget(tt.args.target); gotMode != tt.wantMode {
+			if gotMode := apihandler.GetModeFromTarget(tt.args.target); gotMode != tt.wantMode {
 				t.Errorf("GetModeFromTarget() = %v, want %v", gotMode, tt.wantMode)
 			}
 		})

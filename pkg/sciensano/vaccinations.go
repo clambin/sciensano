@@ -1,10 +1,33 @@
 package sciensano
 
 import (
+	"encoding/json"
+	"errors"
 	log "github.com/sirupsen/logrus"
+	"io/ioutil"
+	"net/http"
 	"sort"
 	"time"
 )
+
+var AgeGroups = []string{
+	"0-17",
+	"18-34",
+	"35-44",
+	"45-54",
+	"55-64",
+	"65-74",
+	"75-84",
+	"85+",
+}
+
+var Regions = []string{
+	"",
+	"Flanders",
+	"Brussels",
+	"Wallonia",
+	"Ostbelgien",
+}
 
 type Vaccination struct {
 	Timestamp  time.Time
@@ -12,38 +35,76 @@ type Vaccination struct {
 	SecondDose int
 }
 
-type Vaccinations []Vaccination
-
-func (client *Client) GetVaccinations(end time.Time) (results Vaccinations, err error) {
+func (client *Client) GetVaccinations(end time.Time) (results []Vaccination, err error) {
 	var apiResult []apiVaccinationsResponse
 
 	if apiResult, err = client.getVaccinations(); err == nil {
-		results = accumulateVaccinations(groupVaccinations(apiResult, end))
+		results = groupVaccinations(apiResult, end)
 	}
 
 	return
 }
 
-func (client *Client) GetVaccinationsByAge(end time.Time, group string) (results Vaccinations, err error) {
+func (client *Client) GetVaccinationsByAge(end time.Time, group string) (results []Vaccination, err error) {
 	var apiResult []apiVaccinationsResponse
 
 	if apiResult, err = client.getVaccinations(); err == nil {
 		apiResult = filterByAgeGroup(apiResult, group)
-		results = accumulateVaccinations(groupVaccinations(apiResult, end))
+		results = groupVaccinations(apiResult, end)
 	}
 
 	return
 }
 
-func (client *Client) GetVaccinationsByRegion(end time.Time, group string) (results Vaccinations, err error) {
+func (client *Client) GetVaccinationsByRegion(end time.Time, group string) (results []Vaccination, err error) {
 	var apiResult []apiVaccinationsResponse
 
 	if apiResult, err = client.getVaccinations(); err == nil {
 		apiResult = filterByRegion(apiResult, group)
-		results = accumulateVaccinations(groupVaccinations(apiResult, end))
+		results = groupVaccinations(apiResult, end)
 	}
 
 	return
+}
+
+type apiVaccinationsResponse struct {
+	TimeStamp string `json:"DATE"`
+	Region    string `json:"REGION"`
+	AgeGroup  string `json:"AGEGROUP"`
+	Gender    string `json:"SEX"`
+	Dose      string `json:"DOSE"`
+	Count     int    `json:"Count"`
+}
+
+func (client *Client) getVaccinations() ([]apiVaccinationsResponse, error) {
+	var err error
+
+	if client.vaccinationsCache == nil || time.Now().After(client.vaccinationsCacheExpiry) {
+
+		req, _ := http.NewRequest("GET", baseURL+"COVID19BE_VACC.json", nil)
+
+		var resp *http.Response
+		var stats []apiVaccinationsResponse
+
+		if resp, err = client.apiClient.Do(req); err == nil {
+			defer resp.Body.Close()
+			if resp.StatusCode == 200 {
+				var (
+					body []byte
+				)
+				if body, err = ioutil.ReadAll(resp.Body); err == nil {
+					if err = json.Unmarshal(body, &stats); err == nil {
+						client.vaccinationsCache = stats
+						client.vaccinationsCacheExpiry = time.Now().Add(client.VaccinationsCacheDuration)
+					}
+				}
+			} else {
+				err = errors.New(resp.Status)
+			}
+		}
+	}
+
+	return client.vaccinationsCache, err
 }
 
 func filterByAgeGroup(apiResult []apiVaccinationsResponse, ageGroup string) (output []apiVaccinationsResponse) {
@@ -80,13 +141,11 @@ func groupVaccinations(apiResult []apiVaccinationsResponse, end time.Time) (tota
 			if current, ok = accumTotal[ts]; ok == false {
 				current = Vaccination{Timestamp: ts}
 			}
-			if entry.Dose == "A" {
+			switch entry.Dose {
+			case "A":
 				current.FirstDose += entry.Count
-			} else if entry.Dose == "B" {
+			case "B":
 				current.SecondDose += entry.Count
-			} else {
-				log.WithField("dose", entry.Dose).Warning("unexpected dose code. skipping entry")
-				continue
 			}
 			accumTotal[ts] = current
 		} else {
@@ -106,7 +165,7 @@ func groupVaccinations(apiResult []apiVaccinationsResponse, end time.Time) (tota
 	return
 }
 
-func accumulateVaccinations(entries Vaccinations) (totals Vaccinations) {
+func AccumulateVaccinations(entries []Vaccination) (totals []Vaccination) {
 	first := 0
 	second := 0
 
@@ -124,6 +183,8 @@ func accumulateVaccinations(entries Vaccinations) (totals Vaccinations) {
 }
 
 // helper functions for sort.Sort(Vaccinations)
+type Vaccinations []Vaccination
+
 func (p Vaccinations) Len() int {
 	return len(p)
 }
