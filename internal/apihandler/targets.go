@@ -2,10 +2,43 @@ package apihandler
 
 import (
 	"github.com/clambin/sciensano/pkg/sciensano"
+	"sort"
 	"strings"
 )
 
-func GetTestTargets() []string {
+var (
+	// TODO: should be build dynamically based on content. e.g. to provide stats by age group, we'd need:
+	// tests-age-18-35-positive
+	// tests-ago-18-35-total
+	// etc.
+	targets = map[string][]string{
+		"tests":   getTestTargets(),
+		"vaccine": getVaccinationsTargets(),
+		"vac-age": getVaccinationsByAgeTargets(),
+		"vac-reg": getVaccinationsByRegionTargets(),
+	}
+)
+
+func findTargetGroup(target string) string {
+	for group, entries := range targets {
+		for _, entry := range entries {
+			if target == entry {
+				return group
+			}
+		}
+	}
+	return ""
+}
+
+func allTargets() (output []string) {
+	for _, entries := range targets {
+		output = append(output, entries...)
+	}
+	sort.Strings(output)
+	return
+}
+
+func getTestTargets() []string {
 	return []string{
 		"tests-total",
 		"tests-positive",
@@ -13,7 +46,7 @@ func GetTestTargets() []string {
 	}
 }
 
-func GetVaccinationsTargets() []string {
+func getVaccinationsTargets() []string {
 	return []string{
 		"vaccinations-first",
 		"vaccinations-second",
@@ -22,7 +55,7 @@ func GetVaccinationsTargets() []string {
 
 // Targets
 
-func GetVaccinationsByAgeTargets() (targets []string) {
+func getVaccinationsByAgeTargets() (targets []string) {
 	for _, ageGroup := range sciensano.AgeGroups {
 		targets = append(targets, "vaccinations-"+ageGroup+"-first")
 		targets = append(targets, "vaccinations-"+ageGroup+"-second")
@@ -30,7 +63,7 @@ func GetVaccinationsByAgeTargets() (targets []string) {
 	return
 }
 
-func GetVaccinationsByRegionTargets() (targets []string) {
+func getVaccinationsByRegionTargets() (targets []string) {
 	for _, region := range sciensano.Regions {
 		targets = append(targets, "vaccinations-"+region+"-first")
 		targets = append(targets, "vaccinations-"+region+"-second")
@@ -40,7 +73,7 @@ func GetVaccinationsByRegionTargets() (targets []string) {
 
 // Generic functions
 
-func GetModeFromTarget(target string) (mode string) {
+func getModeFromTarget(target string) (mode string) {
 	if strings.HasSuffix(target, "-first") {
 		mode = "A"
 	} else if strings.HasSuffix(target, "-second") {
@@ -51,7 +84,7 @@ func GetModeFromTarget(target string) (mode string) {
 
 // Helpers for Age Group targets
 
-func GetAgeGroupFromTarget(target string) (output string) {
+func getAgeGroupFromTarget(target string) (output string) {
 	if strings.HasPrefix(target, "vaccinations-") &&
 		(strings.HasSuffix(target, "-first") || strings.HasSuffix(target, "-second")) {
 		output = strings.TrimPrefix(target, "vaccinations-")
@@ -63,7 +96,7 @@ func GetAgeGroupFromTarget(target string) (output string) {
 
 // Helpers for Region targets
 
-func GetRegionFromTarget(target string) (output string) {
+func getRegionFromTarget(target string) (output string) {
 	if strings.HasPrefix(target, "vaccinations-") &&
 		(strings.HasSuffix(target, "-first") || strings.HasSuffix(target, "-second")) {
 		output = strings.TrimPrefix(target, "vaccinations-")

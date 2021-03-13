@@ -4,7 +4,6 @@ import (
 	"github.com/clambin/covid19/pkg/grafana/apiserver"
 	"github.com/clambin/sciensano/pkg/sciensano"
 	log "github.com/sirupsen/logrus"
-	"sort"
 	"time"
 )
 
@@ -18,38 +17,6 @@ func Create() (*APIHandler, error) {
 		VaccinationsCacheDuration: 5 * time.Second,
 	}
 	return &APIHandler{apiClient: client}, nil
-}
-
-var (
-	// TODO: should be build dynamically based on content. e.g. to provide stats by age group, we'd need:
-	// tests-age-18-35-positive
-	// tests-ago-18-35-total
-	// etc.
-	targets = map[string][]string{
-		"tests":   GetTestTargets(),
-		"vaccine": GetVaccinationsTargets(),
-		"vac-age": GetVaccinationsByAgeTargets(),
-		"vac-reg": GetVaccinationsByRegionTargets(),
-	}
-)
-
-func findTargetGroup(target string) string {
-	for group, entries := range targets {
-		for _, entry := range entries {
-			if target == entry {
-				return group
-			}
-		}
-	}
-	return ""
-}
-
-func allTargets() (output []string) {
-	for _, entries := range targets {
-		output = append(output, entries...)
-	}
-	sort.Strings(output)
-	return
 }
 
 // Search returns all supported targets
@@ -78,24 +45,24 @@ func (apiHandler *APIHandler) Query(request *apiserver.APIQueryRequest) (respons
 			response = append(response, buildTestPart(testStats, target.Target))
 		} else if group == "vaccine" {
 			if vaccineStats, err = apiHandler.apiClient.GetVaccinations(request.Range.To); err != nil {
-				vaccineStats = sciensano.AccumulateVaccinations(vaccineStats)
 				log.WithField("err", err).Warning("unable to get vaccine statistics")
 				continue
 			}
+			vaccineStats = sciensano.AccumulateVaccinations(vaccineStats)
 			response = append(response, buildVaccinePart(vaccineStats, target.Target))
 		} else if group == "vac-age" {
-			if vaccineStats, err = apiHandler.apiClient.GetVaccinationsByAge(request.Range.To, GetAgeGroupFromTarget(target.Target)); err != nil {
-				vaccineStats = sciensano.AccumulateVaccinations(vaccineStats)
+			if vaccineStats, err = apiHandler.apiClient.GetVaccinationsByAge(request.Range.To, getAgeGroupFromTarget(target.Target)); err != nil {
 				log.WithField("err", err).Warning("unable to get vaccine statistics by age")
 				continue
 			}
+			vaccineStats = sciensano.AccumulateVaccinations(vaccineStats)
 			response = append(response, buildVaccinePart(vaccineStats, target.Target))
 		} else if group == "vac-reg" {
-			if vaccineStats, err = apiHandler.apiClient.GetVaccinationsByRegion(request.Range.To, GetRegionFromTarget(target.Target)); err != nil {
-				vaccineStats = sciensano.AccumulateVaccinations(vaccineStats)
+			if vaccineStats, err = apiHandler.apiClient.GetVaccinationsByRegion(request.Range.To, getRegionFromTarget(target.Target)); err != nil {
 				log.WithField("err", err).Warning("unable to get vaccine statistics by region")
 				continue
 			}
+			vaccineStats = sciensano.AccumulateVaccinations(vaccineStats)
 			response = append(response, buildVaccinePart(vaccineStats, target.Target))
 		}
 
@@ -132,7 +99,7 @@ func buildVaccinePart(entries []sciensano.Vaccination, target string) (response 
 	response.Target = target
 	response.DataPoints = make([][2]int64, len(entries))
 
-	mode := GetModeFromTarget(target)
+	mode := getModeFromTarget(target)
 
 	for index, entry := range entries {
 		timestamp = entry.Timestamp.UnixNano() / 1000000

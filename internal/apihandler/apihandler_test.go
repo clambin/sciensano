@@ -1,8 +1,7 @@
-package apihandler_test
+package apihandler
 
 import (
 	"github.com/clambin/covid19/pkg/grafana/apiserver"
-	"github.com/clambin/sciensano/internal/apihandler"
 	"github.com/stretchr/testify/assert"
 	"sort"
 	"testing"
@@ -10,16 +9,16 @@ import (
 )
 
 func TestAPIHandler_Search(t *testing.T) {
-	apiHandler, err := apihandler.Create()
+	apiHandler, err := Create()
 	assert.Nil(t, err)
 
 	targets := apiHandler.Search()
 
 	realTargets := make([]string, 0)
-	realTargets = append(realTargets, apihandler.GetTestTargets()...)
-	realTargets = append(realTargets, apihandler.GetVaccinationsTargets()...)
-	realTargets = append(realTargets, apihandler.GetVaccinationsByAgeTargets()...)
-	realTargets = append(realTargets, apihandler.GetVaccinationsByRegionTargets()...)
+	realTargets = append(realTargets, getTestTargets()...)
+	realTargets = append(realTargets, getVaccinationsTargets()...)
+	realTargets = append(realTargets, getVaccinationsByAgeTargets()...)
+	realTargets = append(realTargets, getVaccinationsByRegionTargets()...)
 	sort.Strings(realTargets)
 
 	if assert.Len(t, targets, len(realTargets)) {
@@ -31,7 +30,7 @@ func TestAPIHandler_Search(t *testing.T) {
 
 // TODO: API should be stubbed so we're not dependent on external data for testing
 func TestAPIHandler_Query(t *testing.T) {
-	apiHandler, err := apihandler.Create()
+	apiHandler, err := Create()
 	assert.Nil(t, err)
 
 	request := &apiserver.APIQueryRequest{
