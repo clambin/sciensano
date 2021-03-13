@@ -26,46 +26,44 @@ func (apiHandler *APIHandler) Search() []string {
 
 // Query the DB and return the requested targets
 func (apiHandler *APIHandler) Query(request *apiserver.APIQueryRequest) (response []apiserver.APIQueryResponse, err error) {
-	var (
-		testStats    sciensano.Tests
-		vaccineStats []sciensano.Vaccination
-		group        string
-	)
-
 	for _, target := range request.Targets {
+		var (
+			testStats    sciensano.Tests
+			vaccineStats []sciensano.Vaccination
+			group        string
+		)
+
 		if group = findTargetGroup(target.Target); group == "" {
 			log.WithField("target", target.Target).Warning("invalid target")
 			continue
 		}
-		if group == "tests" {
-			if testStats, err = apiHandler.apiClient.GetTests(request.Range.To); err != nil {
-				log.WithField("err", err).Warning("unable to get test statistics")
-				continue
+
+		err = nil
+		switch group {
+		case "tests":
+			if testStats, err = apiHandler.apiClient.GetTests(request.Range.To); err == nil {
+				response = append(response, buildTestPart(testStats, target.Target))
 			}
-			response = append(response, buildTestPart(testStats, target.Target))
-		} else if group == "vaccine" {
-			if vaccineStats, err = apiHandler.apiClient.GetVaccinations(request.Range.To); err != nil {
-				log.WithField("err", err).Warning("unable to get vaccine statistics")
-				continue
+		case "vaccine":
+			if vaccineStats, err = apiHandler.apiClient.GetVaccinations(request.Range.To); err == nil {
+				vaccineStats = sciensano.AccumulateVaccinations(vaccineStats)
+				response = append(response, buildVaccinePart(vaccineStats, target.Target))
 			}
-			vaccineStats = sciensano.AccumulateVaccinations(vaccineStats)
-			response = append(response, buildVaccinePart(vaccineStats, target.Target))
-		} else if group == "vac-age" {
-			if vaccineStats, err = apiHandler.apiClient.GetVaccinationsByAge(request.Range.To, getAgeGroupFromTarget(target.Target)); err != nil {
-				log.WithField("err", err).Warning("unable to get vaccine statistics by age")
-				continue
+		case "vac-age":
+			if vaccineStats, err = apiHandler.apiClient.GetVaccinationsByAge(request.Range.To, getAgeGroupFromTarget(target.Target)); err == nil {
+				vaccineStats = sciensano.AccumulateVaccinations(vaccineStats)
+				response = append(response, buildVaccinePart(vaccineStats, target.Target))
 			}
-			vaccineStats = sciensano.AccumulateVaccinations(vaccineStats)
-			response = append(response, buildVaccinePart(vaccineStats, target.Target))
-		} else if group == "vac-reg" {
-			if vaccineStats, err = apiHandler.apiClient.GetVaccinationsByRegion(request.Range.To, getRegionFromTarget(target.Target)); err != nil {
-				log.WithField("err", err).Warning("unable to get vaccine statistics by region")
-				continue
+		case "vac-reg":
+			if vaccineStats, err = apiHandler.apiClient.GetVaccinationsByRegion(request.Range.To, getRegionFromTarget(target.Target)); err == nil {
+				vaccineStats = sciensano.AccumulateVaccinations(vaccineStats)
+				response = append(response, buildVaccinePart(vaccineStats, target.Target))
 			}
-			vaccineStats = sciensano.AccumulateVaccinations(vaccineStats)
-			response = append(response, buildVaccinePart(vaccineStats, target.Target))
 		}
 
+		if err != nil {
+			log.WithField("err", err).Warning("unable to get statistics")
+		}
 	}
 	return
 }

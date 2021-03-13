@@ -42,7 +42,7 @@ func TestAPIHandler_Query(t *testing.T) {
 			{Target: "vaccinations-first"},
 			{Target: "vaccinations-second"},
 			{Target: "vaccinations-45-54-first"},
-			{Target: "vaccinations-Brussels-first"},
+			{Target: "vaccinations-Flanders-first"},
 			{Target: "invalid"},
 		}}
 
