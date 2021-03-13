@@ -34,22 +34,28 @@ type apiTestResponse struct {
 	Positive  int    `json:"TESTS_ALL_POS"`
 }
 
-func (client *Client) getTests() (stats []apiTestResponse, err error) {
-	var resp *http.Response
-	if resp, err = client.apiClient.Get(baseURL + "COVID19BE_tests.json"); err == nil {
-		defer resp.Body.Close()
-		if resp.StatusCode == 200 {
-			var (
-				body []byte
-			)
-			if body, err = ioutil.ReadAll(resp.Body); err == nil {
-				err = json.Unmarshal(body, &stats)
+func (client *Client) getTests() (response []apiTestResponse, err error) {
+	if client.testCache == nil || time.Now().After(client.testCacheExpiry) {
+		var resp *http.Response
+		var stats []apiTestResponse
+
+		if resp, err = client.apiClient.Get(baseURL + "COVID19BE_tests.json"); err == nil {
+			defer resp.Body.Close()
+			if resp.StatusCode == 200 {
+				var body []byte
+
+				if body, err = ioutil.ReadAll(resp.Body); err == nil {
+					if err = json.Unmarshal(body, &stats); err == nil {
+						client.testCache = stats
+						client.testCacheExpiry = time.Now().Add(client.CacheDuration)
+					}
+				}
+			} else {
+				err = errors.New(resp.Status)
 			}
-		} else {
-			err = errors.New(resp.Status)
 		}
 	}
-	return
+	return client.testCache, err
 }
 
 func groupTests(apiResult []apiTestResponse, end time.Time) (results Tests) {

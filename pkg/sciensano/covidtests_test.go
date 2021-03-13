@@ -8,7 +8,7 @@ import (
 )
 
 func TestGetTests(t *testing.T) {
-	client := sciensano.Client{}
+	client := sciensano.Client{CacheDuration: 1 * time.Hour}
 	firstDay := time.Date(2020, 03, 10, 0, 0, 0, 0, time.UTC)
 	result, err := client.GetTests(firstDay)
 

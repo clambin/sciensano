@@ -9,9 +9,11 @@ import (
 type Client struct {
 	apiClient http.Client
 
-	VaccinationsCacheDuration time.Duration
-	vaccinationsCacheExpiry   time.Time
-	vaccinationsCache         []apiVaccinationsResponse
+	CacheDuration           time.Duration
+	testCacheExpiry         time.Time
+	testCache               []apiTestResponse
+	vaccinationsCacheExpiry time.Time
+	vaccinationsCache       []apiVaccinationsResponse
 }
 
 const baseURL = "https://epistat.sciensano.be/Data/"

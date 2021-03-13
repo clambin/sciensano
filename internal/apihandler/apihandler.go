@@ -14,7 +14,7 @@ type APIHandler struct {
 
 func Create() (*APIHandler, error) {
 	client := sciensano.Client{
-		VaccinationsCacheDuration: 5 * time.Second,
+		CacheDuration: 15 * time.Minute,
 	}
 	return &APIHandler{Client: &client}, nil
 }

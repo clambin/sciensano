@@ -84,13 +84,12 @@ func (client *Client) getVaccinations() (result []apiVaccinationsResponse, err e
 		if resp, err = client.apiClient.Get(baseURL + "COVID19BE_VACC.json"); err == nil {
 			defer resp.Body.Close()
 			if resp.StatusCode == 200 {
-				var (
-					body []byte
-				)
+				var body []byte
+
 				if body, err = ioutil.ReadAll(resp.Body); err == nil {
 					if err = json.Unmarshal(body, &stats); err == nil {
 						client.vaccinationsCache = stats
-						client.vaccinationsCacheExpiry = time.Now().Add(client.VaccinationsCacheDuration)
+						client.vaccinationsCacheExpiry = time.Now().Add(client.CacheDuration)
 					}
 				}
 			} else {
