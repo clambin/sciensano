@@ -36,14 +36,28 @@ func New(duration time.Duration) *Cache {
 }
 
 func (cache *Cache) Run() {
+	log.Info("cache starting up")
+loop:
 	for {
 		select {
-		case msg := <-cache.Tests:
+		case msg, ok := <-cache.Tests:
+			if ok == false {
+				break loop
+			}
 			msg.Response <- cache.getTests(msg.EndTime)
-		case msg := <-cache.Vaccinations:
+		case msg, ok := <-cache.Vaccinations:
+			if ok == false {
+				break loop
+			}
 			msg.Response <- cache.getVaccinations(msg.EndTime, msg.Filter, msg.Value)
 		}
 	}
+	log.Info("cache shutting down")
+}
+
+func (cache *Cache) Stop() {
+	close(cache.Tests)
+	close(cache.Vaccinations)
 }
 
 func (cache *Cache) getTests(end time.Time) (tests []sciensano.Test) {

@@ -1,9 +1,9 @@
 package main
 
 import (
-	"github.com/clambin/covid19/pkg/grafana/apiserver"
 	"github.com/clambin/sciensano/internal/apihandler"
 	"github.com/clambin/sciensano/internal/version"
+	"github.com/clambin/sciensano/pkg/grafana/apiserver"
 	log "github.com/sirupsen/logrus"
 )
 

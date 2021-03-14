@@ -85,4 +85,8 @@ func TestCache_Run(t *testing.T) {
 	assert.Len(t, vaccinations, 0)
 
 	close(vaccinationResponse)
+
+	c.Stop()
+
+	time.Sleep(500 * time.Millisecond)
 }

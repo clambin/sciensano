@@ -1,8 +1,8 @@
 package apihandler
 
 import (
-	"github.com/clambin/covid19/pkg/grafana/apiserver"
 	"github.com/clambin/sciensano/internal/cache"
+	"github.com/clambin/sciensano/pkg/grafana/apiserver"
 	"github.com/clambin/sciensano/pkg/sciensano"
 	log "github.com/sirupsen/logrus"
 	"time"
@@ -27,14 +27,14 @@ func (apiHandler *APIHandler) Search() []string {
 }
 
 // Query the DB and return the requested targets
-func (apiHandler *APIHandler) Query(request *apiserver.APIQueryRequest) (response []apiserver.APIQueryResponse, err error) {
+func (apiHandler *APIHandler) Query(request *apiserver.QueryRequest) (response []apiserver.QueryResponse, err error) {
 	for _, target := range request.Targets {
 		var (
 			group string
 		)
 
-		if group = findTargetGroup(target.Target); group == "" {
-			log.WithField("target", target.Target).Warning("invalid target")
+		if group = findTargetGroup(target); group == "" {
+			log.WithField("target", target).Warning("invalid target")
 			continue
 		}
 
@@ -43,62 +43,59 @@ func (apiHandler *APIHandler) Query(request *apiserver.APIQueryRequest) (respons
 		case "tests":
 			responseChannel := make(chan []sciensano.Test)
 			apiHandler.Cache.Tests <- cache.TestsRequest{
-				EndTime:  request.Range.To,
+				EndTime:  request.To,
 				Response: responseChannel,
 			}
 			testStats := <-responseChannel
-			response = append(response, buildTestPart(testStats, target.Target))
+			response = append(response, buildTestPart(testStats, target))
 			close(responseChannel)
 
 		case "vaccine":
 			responseChannel := make(chan []sciensano.Vaccination)
 			apiHandler.Cache.Vaccinations <- cache.VaccinationsRequest{
-				EndTime:  request.Range.To,
+				EndTime:  request.To,
 				Response: responseChannel,
 			}
 			vaccineStats := <-responseChannel
 			vaccineStats = sciensano.AccumulateVaccinations(vaccineStats)
-			response = append(response, buildVaccinePart(vaccineStats, target.Target))
+			response = append(response, buildVaccinePart(vaccineStats, target))
 			close(responseChannel)
 
 		case "vac-age":
 			responseChannel := make(chan []sciensano.Vaccination)
 			apiHandler.Cache.Vaccinations <- cache.VaccinationsRequest{
-				EndTime:  request.Range.To,
+				EndTime:  request.To,
 				Filter:   "AgeGroup",
-				Value:    getAgeGroupFromTarget(target.Target),
+				Value:    getAgeGroupFromTarget(target),
 				Response: responseChannel,
 			}
 			vaccineStats := <-responseChannel
 			vaccineStats = sciensano.AccumulateVaccinations(vaccineStats)
-			response = append(response, buildVaccinePart(vaccineStats, target.Target))
+			response = append(response, buildVaccinePart(vaccineStats, target))
 			close(responseChannel)
 
 		case "vac-reg":
 			responseChannel := make(chan []sciensano.Vaccination)
 			apiHandler.Cache.Vaccinations <- cache.VaccinationsRequest{
-				EndTime:  request.Range.To,
+				EndTime:  request.To,
 				Filter:   "Region",
-				Value:    getRegionFromTarget(target.Target),
+				Value:    getRegionFromTarget(target),
 				Response: responseChannel,
 			}
 			vaccineStats := <-responseChannel
 			vaccineStats = sciensano.AccumulateVaccinations(vaccineStats)
-			response = append(response, buildVaccinePart(vaccineStats, target.Target))
+			response = append(response, buildVaccinePart(vaccineStats, target))
 			close(responseChannel)
 		}
 	}
 	return
 }
 
-func buildTestPart(entries sciensano.Tests, target string) (response apiserver.APIQueryResponse) {
-	var timestamp, value int64
-
+func buildTestPart(entries sciensano.Tests, target string) (response apiserver.QueryResponse) {
 	response.Target = target
-	response.DataPoints = make([][2]int64, len(entries))
+	response.Data = make([]apiserver.QueryResponseData, len(entries))
 	for index, entry := range entries {
-		timestamp = entry.Timestamp.UnixNano() / 1000000
-		value = 0
+		var value int64
 		switch target {
 		case "tests-total":
 			value = int64(entry.Total)
@@ -109,28 +106,25 @@ func buildTestPart(entries sciensano.Tests, target string) (response apiserver.A
 				value = int64(100 * entry.Positive / entry.Total)
 			}
 		}
-		response.DataPoints[index] = [2]int64{value, timestamp}
+		response.Data[index] = apiserver.QueryResponseData{Timestamp: entry.Timestamp, Value: value}
 	}
 	return
 }
 
-func buildVaccinePart(entries []sciensano.Vaccination, target string) (response apiserver.APIQueryResponse) {
-	var timestamp, value int64
-
+func buildVaccinePart(entries []sciensano.Vaccination, target string) (response apiserver.QueryResponse) {
 	response.Target = target
-	response.DataPoints = make([][2]int64, len(entries))
+	response.Data = make([]apiserver.QueryResponseData, len(entries))
 
 	mode := getModeFromTarget(target)
 
 	for index, entry := range entries {
-		timestamp = entry.Timestamp.UnixNano() / 1000000
-		value = 0
+		var value int64
 		if mode == "A" {
 			value = int64(entry.FirstDose)
 		} else if mode == "B" {
 			value = int64(entry.SecondDose)
 		}
-		response.DataPoints[index] = [2]int64{value, timestamp}
+		response.Data[index] = apiserver.QueryResponseData{Timestamp: entry.Timestamp, Value: value}
 	}
 	return
 }

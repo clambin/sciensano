@@ -1,8 +1,8 @@
 package apihandler_test
 
 import (
-	"github.com/clambin/covid19/pkg/grafana/apiserver"
 	"github.com/clambin/sciensano/internal/apihandler"
+	"github.com/clambin/sciensano/pkg/grafana/apiserver"
 	"github.com/clambin/sciensano/pkg/sciensano/mockapi"
 	"github.com/stretchr/testify/assert"
 	"sort"
@@ -36,53 +36,49 @@ func TestAPIHandler_Query(t *testing.T) {
 	assert.Nil(t, err)
 	apiHandler.Cache.API = &mockapi.API{Tests: mockapi.DefaultTests, Vaccinations: mockapi.DefaultVaccinations}
 
-	request := &apiserver.APIQueryRequest{
-		Range: apiserver.APIQueryRequestRange{},
-		Targets: []apiserver.APIQueryRequestTarget{
-			{Target: "tests-total"},
-			{Target: "tests-positive"},
-			{Target: "tests-rate"},
-			{Target: "vaccinations-first"},
-			{Target: "vaccinations-second"},
-			{Target: "vaccinations-45-54-first"},
-			{Target: "vaccinations-Flanders-first"},
-			{Target: "invalid"},
+	request := &apiserver.QueryRequest{
+		Targets: []string{
+			"tests-total",
+			"tests-positive",
+			"tests-rate",
+			"vaccinations-first",
+			"vaccinations-second",
+			"vaccinations-45-54-first",
+			"vaccinations-Flanders-first",
+			"invalid",
 		}}
 
 	endDate := time.Date(2021, 01, 06, 0, 0, 0, 0, time.UTC)
-	request.Range.To = endDate
+	request.To = endDate
 
-	var response []apiserver.APIQueryResponse
+	var response []apiserver.QueryResponse
 	response, err = apiHandler.Query(request)
 
 	if assert.Nil(t, err) {
 		assert.Len(t, response, len(request.Targets)-1)
 
 		for _, entry := range response {
-			if assert.NotZero(t, len(entry.DataPoints), entry.Target) {
-
-				lastIndex := len(entry.DataPoints) - 1
+			if assert.NotZero(t, len(entry.Data), entry.Target) {
+				lastIndex := len(entry.Data) - 1
 
 				// Last entry should be endDate
-				// Grafana time is in msec. Convert to sec + set TZ to UTC in order to compare
-				ts := time.Unix(entry.DataPoints[lastIndex][1]/1000, 0).In(time.UTC)
-				assert.Equal(t, endDate, ts)
+				assert.Equal(t, endDate, entry.Data[lastIndex].Timestamp)
 
 				switch entry.Target {
 				case "tests-total":
-					assert.Equal(t, int64(10), entry.DataPoints[lastIndex][0])
+					assert.Equal(t, int64(10), entry.Data[lastIndex].Value)
 				case "tests-positive":
-					assert.Equal(t, int64(5), entry.DataPoints[lastIndex][0])
+					assert.Equal(t, int64(5), entry.Data[lastIndex].Value)
 				case "tests-rate":
-					assert.Equal(t, int64(100*5/10), entry.DataPoints[lastIndex][0])
+					assert.Equal(t, int64(100*5/10), entry.Data[lastIndex].Value)
 				case "vaccinations-first":
-					assert.Equal(t, int64(15), entry.DataPoints[lastIndex][0])
+					assert.Equal(t, int64(15), entry.Data[lastIndex].Value)
 				case "vaccinations-second":
-					assert.Equal(t, int64(10), entry.DataPoints[lastIndex][0])
+					assert.Equal(t, int64(10), entry.Data[lastIndex].Value)
 				case "vaccinations-45-54-first":
-					assert.Equal(t, int64(15), entry.DataPoints[lastIndex][0])
+					assert.Equal(t, int64(15), entry.Data[lastIndex].Value)
 				case "vaccinations-Flanders-first":
-					assert.Equal(t, int64(15), entry.DataPoints[lastIndex][0])
+					assert.Equal(t, int64(15), entry.Data[lastIndex].Value)
 				}
 			}
 		}
