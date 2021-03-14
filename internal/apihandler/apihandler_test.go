@@ -3,7 +3,7 @@ package apihandler_test
 import (
 	"github.com/clambin/covid19/pkg/grafana/apiserver"
 	"github.com/clambin/sciensano/internal/apihandler"
-	"github.com/clambin/sciensano/internal/apihandler/mockapi"
+	"github.com/clambin/sciensano/pkg/sciensano/mockapi"
 	"github.com/stretchr/testify/assert"
 	"sort"
 	"testing"
@@ -34,7 +34,7 @@ func TestAPIHandler_Search(t *testing.T) {
 func TestAPIHandler_Query(t *testing.T) {
 	apiHandler, err := apihandler.Create()
 	assert.Nil(t, err)
-	apiHandler.Client = &mockapi.API{Tests: mockapi.DefaultTests, Vaccinations: mockapi.DefaultVaccinations}
+	apiHandler.Cache.API = &mockapi.API{Tests: mockapi.DefaultTests, Vaccinations: mockapi.DefaultVaccinations}
 
 	request := &apiserver.APIQueryRequest{
 		Range: apiserver.APIQueryRequestRange{},

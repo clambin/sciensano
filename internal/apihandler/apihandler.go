@@ -2,6 +2,7 @@ package apihandler
 
 import (
 	"github.com/clambin/covid19/pkg/grafana/apiserver"
+	"github.com/clambin/sciensano/internal/cache"
 	"github.com/clambin/sciensano/pkg/sciensano"
 	log "github.com/sirupsen/logrus"
 	"time"
@@ -9,14 +10,15 @@ import (
 
 // APIHandler implements a Grafana SimpleJson API that gets BE covid stats
 type APIHandler struct {
-	Client sciensano.API
+	Cache *cache.Cache
 }
 
 func Create() (*APIHandler, error) {
-	client := sciensano.Client{
-		CacheDuration: 15 * time.Minute,
-	}
-	return &APIHandler{Client: &client}, nil
+	c := cache.New(15 * time.Minute)
+	go c.Run()
+	return &APIHandler{
+		Cache: c,
+	}, nil
 }
 
 // Search returns all supported targets
@@ -28,9 +30,7 @@ func (apiHandler *APIHandler) Search() []string {
 func (apiHandler *APIHandler) Query(request *apiserver.APIQueryRequest) (response []apiserver.APIQueryResponse, err error) {
 	for _, target := range request.Targets {
 		var (
-			testStats    sciensano.Tests
-			vaccineStats []sciensano.Vaccination
-			group        string
+			group string
 		)
 
 		if group = findTargetGroup(target.Target); group == "" {
@@ -41,28 +41,51 @@ func (apiHandler *APIHandler) Query(request *apiserver.APIQueryRequest) (respons
 		err = nil
 		switch group {
 		case "tests":
-			if testStats, err = apiHandler.Client.GetTests(request.Range.To); err == nil {
-				response = append(response, buildTestPart(testStats, target.Target))
+			responseChannel := make(chan []sciensano.Test)
+			apiHandler.Cache.Tests <- cache.TestsRequest{
+				EndTime:  request.Range.To,
+				Response: responseChannel,
 			}
-		case "vaccine":
-			if vaccineStats, err = apiHandler.Client.GetVaccinations(request.Range.To); err == nil {
-				vaccineStats = sciensano.AccumulateVaccinations(vaccineStats)
-				response = append(response, buildVaccinePart(vaccineStats, target.Target))
-			}
-		case "vac-age":
-			if vaccineStats, err = apiHandler.Client.GetVaccinationsByAge(request.Range.To, getAgeGroupFromTarget(target.Target)); err == nil {
-				vaccineStats = sciensano.AccumulateVaccinations(vaccineStats)
-				response = append(response, buildVaccinePart(vaccineStats, target.Target))
-			}
-		case "vac-reg":
-			if vaccineStats, err = apiHandler.Client.GetVaccinationsByRegion(request.Range.To, getRegionFromTarget(target.Target)); err == nil {
-				vaccineStats = sciensano.AccumulateVaccinations(vaccineStats)
-				response = append(response, buildVaccinePart(vaccineStats, target.Target))
-			}
-		}
+			testStats := <-responseChannel
+			response = append(response, buildTestPart(testStats, target.Target))
+			close(responseChannel)
 
-		if err != nil {
-			log.WithField("err", err).Warning("unable to get statistics")
+		case "vaccine":
+			responseChannel := make(chan []sciensano.Vaccination)
+			apiHandler.Cache.Vaccinations <- cache.VaccinationsRequest{
+				EndTime:  request.Range.To,
+				Response: responseChannel,
+			}
+			vaccineStats := <-responseChannel
+			vaccineStats = sciensano.AccumulateVaccinations(vaccineStats)
+			response = append(response, buildVaccinePart(vaccineStats, target.Target))
+			close(responseChannel)
+
+		case "vac-age":
+			responseChannel := make(chan []sciensano.Vaccination)
+			apiHandler.Cache.Vaccinations <- cache.VaccinationsRequest{
+				EndTime:  request.Range.To,
+				Filter:   "AgeGroup",
+				Value:    getAgeGroupFromTarget(target.Target),
+				Response: responseChannel,
+			}
+			vaccineStats := <-responseChannel
+			vaccineStats = sciensano.AccumulateVaccinations(vaccineStats)
+			response = append(response, buildVaccinePart(vaccineStats, target.Target))
+			close(responseChannel)
+
+		case "vac-reg":
+			responseChannel := make(chan []sciensano.Vaccination)
+			apiHandler.Cache.Vaccinations <- cache.VaccinationsRequest{
+				EndTime:  request.Range.To,
+				Filter:   "Region",
+				Value:    getRegionFromTarget(target.Target),
+				Response: responseChannel,
+			}
+			vaccineStats := <-responseChannel
+			vaccineStats = sciensano.AccumulateVaccinations(vaccineStats)
+			response = append(response, buildVaccinePart(vaccineStats, target.Target))
+			close(responseChannel)
 		}
 	}
 	return
