@@ -41,51 +41,47 @@ func (apiHandler *APIHandler) Query(request *apiserver.QueryRequest) (response [
 		err = nil
 		switch group {
 		case "tests":
-			responseChannel := make(chan []sciensano.Test)
-			apiHandler.Cache.Tests <- cache.TestsRequest{
+			req := cache.TestsRequest{
 				EndTime:  request.To,
-				Response: responseChannel,
+				Response: make(chan []sciensano.Test),
 			}
-			testStats := <-responseChannel
+			apiHandler.Cache.Tests <- req
+			testStats := <-req.Response
 			response = append(response, buildTestPart(testStats, target))
-			close(responseChannel)
 
 		case "vaccine":
-			responseChannel := make(chan []sciensano.Vaccination)
-			apiHandler.Cache.Vaccinations <- cache.VaccinationsRequest{
+			req := cache.VaccinationsRequest{
 				EndTime:  request.To,
-				Response: responseChannel,
+				Response: make(chan []sciensano.Vaccination),
 			}
-			vaccineStats := <-responseChannel
+			apiHandler.Cache.Vaccinations <- req
+			vaccineStats := <-req.Response
 			vaccineStats = sciensano.AccumulateVaccinations(vaccineStats)
 			response = append(response, buildVaccinePart(vaccineStats, target))
-			close(responseChannel)
 
 		case "vac-age":
-			responseChannel := make(chan []sciensano.Vaccination)
-			apiHandler.Cache.Vaccinations <- cache.VaccinationsRequest{
+			req := cache.VaccinationsRequest{
 				EndTime:  request.To,
 				Filter:   "AgeGroup",
 				Value:    getAgeGroupFromTarget(target),
-				Response: responseChannel,
+				Response: make(chan []sciensano.Vaccination),
 			}
-			vaccineStats := <-responseChannel
+			apiHandler.Cache.Vaccinations <- req
+			vaccineStats := <-req.Response
 			vaccineStats = sciensano.AccumulateVaccinations(vaccineStats)
 			response = append(response, buildVaccinePart(vaccineStats, target))
-			close(responseChannel)
 
 		case "vac-reg":
-			responseChannel := make(chan []sciensano.Vaccination)
-			apiHandler.Cache.Vaccinations <- cache.VaccinationsRequest{
+			req := cache.VaccinationsRequest{
 				EndTime:  request.To,
 				Filter:   "Region",
 				Value:    getRegionFromTarget(target),
-				Response: responseChannel,
+				Response: make(chan []sciensano.Vaccination),
 			}
-			vaccineStats := <-responseChannel
+			apiHandler.Cache.Vaccinations <- req
+			vaccineStats := <-req.Response
 			vaccineStats = sciensano.AccumulateVaccinations(vaccineStats)
 			response = append(response, buildVaccinePart(vaccineStats, target))
-			close(responseChannel)
 		}
 	}
 	return
