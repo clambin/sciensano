@@ -49,6 +49,8 @@ github.com/clambin/grafana-json v0.0.0-20210316205605-7ed412955d84 h1:tbaVBc7meI
 github.com/clambin/grafana-json v0.0.0-20210316205605-7ed412955d84/go.mod h1:fEtU37pQ5argukXFngiRcG0eOfQW/IQsy4PwAjCqelA=
 github.com/clambin/grafana-json v0.0.0-20210317081041-e07fdbff4249 h1:yO23Ei/RUmUUY9y6SKWvFLbtOzeqyF5W83LUZHag3Oo=
 github.com/clambin/grafana-json v0.0.0-20210317081041-e07fdbff4249/go.mod h1:jGNAS9rLk2aeAD8RnYVDSQ1lKgT28olrR2l9QSjrcUk=
+github.com/clambin/grafana-json v0.1.2 h1:EWS0Dq+Qudfw21gGjWlAPbd2te1oB/QkZrJd28Dtc9A=
+github.com/clambin/grafana-json v0.1.2/go.mod h1:jGNAS9rLk2aeAD8RnYVDSQ1lKgT28olrR2l9QSjrcUk=
 github.com/clbanning/x2j v0.0.0-20191024224557-825249438eec/go.mod h1:jMjuTZXRI4dUb/I5gc9Hdhagfvm9+RyrPryS/auMzxE=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
 github.com/cockroachdb/datadriven v0.0.0-20190809214429-80d97fb3cbaa/go.mod h1:zn76sxSg3SzpJ0PPJaLDCu+Bu0Lg3sKTORVIj19EIF8=
