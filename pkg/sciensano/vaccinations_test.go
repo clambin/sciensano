@@ -24,9 +24,9 @@ func TestAPIClient_GetVaccinations(t *testing.T) {
 
 func TestAPIClient_GetVaccinationsByAge(t *testing.T) {
 	var (
-		err    error
-		totals []sciensano.Vaccination
-		result []sciensano.Vaccination
+		err               error
+		totals            []sciensano.Vaccination
+		vaccinationsByAge map[string][]sciensano.Vaccination
 	)
 	client := sciensano.Client{CacheDuration: 1 * time.Hour}
 	testDate := time.Now()
@@ -34,34 +34,33 @@ func TestAPIClient_GetVaccinationsByAge(t *testing.T) {
 	assert.Nil(t, err)
 
 	if assert.Greater(t, len(totals), 0) {
-		vaccinationsByAge := make(map[string][]sciensano.Vaccination, 0)
+		vaccinationsByAge, err = client.GetVaccinationsByAge(testDate)
+		if assert.Nil(t, err) {
 
-		for _, ageGroup := range sciensano.AgeGroups {
-			result, err = client.GetVaccinationsByAge(testDate, ageGroup)
-			if assert.Nil(t, err) {
-				vaccinationsByAge[ageGroup] = result
+			var firstDose, secondDose int
+			for group, vaccinations := range vaccinationsByAge {
+				// FIXME: shouldn't be needed?
+				if group == "" {
+					continue
+				}
+				if len(vaccinations) > 0 {
+					firstDose += vaccinations[len(vaccinations)-1].FirstDose
+					secondDose += vaccinations[len(vaccinations)-1].SecondDose
+				}
 			}
-		}
 
-		var firstDose, secondDose int
-		for _, vaccinations := range vaccinationsByAge {
-			if len(vaccinations) > 0 {
-				firstDose += vaccinations[len(vaccinations)-1].FirstDose
-				secondDose += vaccinations[len(vaccinations)-1].SecondDose
-			}
+			// the sum of final dose count for each age group should be the same as the final overall dose count
+			assert.Equal(t, totals[len(totals)-1].FirstDose, firstDose)
+			assert.Equal(t, totals[len(totals)-1].SecondDose, secondDose)
 		}
-
-		// the sum of final dose count for each age group should be the same as the final overall dose count
-		assert.Equal(t, totals[len(totals)-1].FirstDose, firstDose)
-		assert.Equal(t, totals[len(totals)-1].SecondDose, secondDose)
 	}
 }
 
 func TestAPIClient_GetVaccinationsByRegion(t *testing.T) {
 	var (
-		err    error
-		totals sciensano.Vaccinations
-		result sciensano.Vaccinations
+		err                  error
+		totals               []sciensano.Vaccination
+		vaccinationsByRegion map[string][]sciensano.Vaccination
 	)
 	client := sciensano.Client{CacheDuration: 1 * time.Hour}
 	testDate := time.Now()
@@ -69,25 +68,27 @@ func TestAPIClient_GetVaccinationsByRegion(t *testing.T) {
 	assert.Nil(t, err)
 
 	if assert.Greater(t, len(totals), 0) {
-		var firstDose, secondDose int
-		for _, region := range sciensano.Regions {
-			result, err = client.GetVaccinationsByRegion(testDate, region)
-			if assert.Nil(t, err) && len(result) > 0 {
-				firstDose += result[len(result)-1].FirstDose
-				secondDose += result[len(result)-1].SecondDose
+		vaccinationsByRegion, err = client.GetVaccinationsByRegion(testDate)
+		if assert.Nil(t, err) {
+			var firstDose, secondDose int
+			for _, vaccinations := range vaccinationsByRegion {
+				if len(vaccinations) > 0 {
+					firstDose += vaccinations[len(vaccinations)-1].FirstDose
+					secondDose += vaccinations[len(vaccinations)-1].SecondDose
+				}
 			}
+			// the sum of final dose count for each age group should be the same as the final overall dose count
+			assert.Equal(t, totals[len(totals)-1].FirstDose, firstDose)
+			assert.Equal(t, totals[len(totals)-1].SecondDose, secondDose)
 		}
-		// the sum of final dose count for each age group should be the same as the final overall dose count
-		assert.Equal(t, totals[len(totals)-1].FirstDose, firstDose)
-		assert.Equal(t, totals[len(totals)-1].SecondDose, secondDose)
 	}
 }
 
 func BenchmarkClient_GetVaccinationsByRegion(b *testing.B) {
 	var (
-		err    error
-		totals sciensano.Vaccinations
-		result sciensano.Vaccinations
+		err                  error
+		totals               []sciensano.Vaccination
+		vaccinationsByRegion map[string][]sciensano.Vaccination
 	)
 	client := sciensano.Client{CacheDuration: 1 * time.Hour}
 	testDate := time.Now()
@@ -95,17 +96,19 @@ func BenchmarkClient_GetVaccinationsByRegion(b *testing.B) {
 	assert.Nil(b, err)
 
 	if assert.Greater(b, len(totals), 0) {
-		var firstDose, secondDose int
-		for _, region := range sciensano.Regions {
-			result, err = client.GetVaccinationsByRegion(testDate, region)
-			if assert.Nil(b, err) && len(result) > 0 {
-				firstDose += result[len(result)-1].FirstDose
-				secondDose += result[len(result)-1].SecondDose
+		vaccinationsByRegion, err = client.GetVaccinationsByRegion(testDate)
+		if assert.Nil(b, err) {
+			var firstDose, secondDose int
+			for _, vaccinations := range vaccinationsByRegion {
+				if len(vaccinations) > 0 {
+					firstDose += vaccinations[len(vaccinations)-1].FirstDose
+					secondDose += vaccinations[len(vaccinations)-1].SecondDose
+				}
 			}
+			// the sum of final dose count for each age group should be the same as the final overall dose count
+			assert.Equal(b, totals[len(totals)-1].FirstDose, firstDose)
+			assert.Equal(b, totals[len(totals)-1].SecondDose, secondDose)
 		}
-		// the sum of final dose count for each age group should be the same as the final overall dose count
-		assert.Equal(b, totals[len(totals)-1].FirstDose, firstDose)
-		assert.Equal(b, totals[len(totals)-1].SecondDose, secondDose)
 	}
 }
 

@@ -19,10 +19,10 @@ type TestsRequest struct {
 }
 
 type VaccinationsRequest struct {
-	EndTime  time.Time
-	Filter   string
-	Value    string
-	Response chan []sciensano.Vaccination
+	EndTime         time.Time
+	Filter          string
+	Response        chan []sciensano.Vaccination
+	GroupedResponse chan map[string][]sciensano.Vaccination
 }
 
 func New(duration time.Duration) *Cache {
@@ -49,7 +49,20 @@ loop:
 			if ok == false {
 				break loop
 			}
-			msg.Response <- cache.getVaccinations(msg.EndTime, msg.Filter, msg.Value)
+			switch msg.Filter {
+			case "":
+				result, _ := cache.GetVaccinations(msg.EndTime)
+				msg.Response <- result
+			case "AgeGroup":
+				result, _ := cache.GetVaccinationsByAge(msg.EndTime)
+				msg.GroupedResponse <- result
+			case "Region":
+				result, _ := cache.GetVaccinationsByRegion(msg.EndTime)
+				msg.GroupedResponse <- result
+			default:
+				log.WithField("filter", msg.Filter).Warning("ignoring unsupported filter")
+				msg.GroupedResponse <- map[string][]sciensano.Vaccination{}
+			}
 		}
 	}
 	log.Info("cache shutting down")
@@ -64,24 +77,6 @@ func (cache *Cache) getTests(end time.Time) (tests []sciensano.Test) {
 	var err error
 	if tests, err = cache.GetTests(end); err != nil {
 		log.WithField("err", err).Warning("failed to get test results")
-	}
-	return
-}
-
-func (cache *Cache) getVaccinations(end time.Time, filter, value string) (vaccinations []sciensano.Vaccination) {
-	var err error
-	switch filter {
-	case "":
-		vaccinations, err = cache.GetVaccinations(end)
-	case "AgeGroup":
-		vaccinations, err = cache.GetVaccinationsByAge(end, value)
-	case "Region":
-		vaccinations, err = cache.GetVaccinationsByRegion(end, value)
-	default:
-		log.WithField("filter", filter).Warning("ignoring unsupported filter")
-	}
-	if err != nil {
-		log.WithField("err", err).Warning("failed to get vaccination stats")
 	}
 	return
 }

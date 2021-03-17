@@ -27,64 +27,55 @@ func TestCache_Run(t *testing.T) {
 	tests := <-testsResponse
 	assert.Len(t, tests, 6)
 	assert.Equal(t, testDate, tests[5].Timestamp)
+	assert.Equal(t, 5, tests[5].Positive)
+	assert.Equal(t, 10, tests[5].Total)
 	close(testsResponse)
 
 	vaccinationResponse := make(chan []sciensano.Vaccination)
 	c.Vaccinations <- cache.VaccinationsRequest{
 		EndTime:  testDate,
 		Filter:   "",
-		Value:    "",
 		Response: vaccinationResponse,
 	}
 	vaccinations := <-vaccinationResponse
-	assert.Len(t, vaccinations, 6)
-	assert.Equal(t, testDate, tests[5].Timestamp)
-	assert.Equal(t, 5, tests[5].Positive)
-	assert.Equal(t, 10, tests[5].Total)
+	if assert.Len(t, vaccinations, 6) {
+		assert.Equal(t, testDate, vaccinations[5].Timestamp)
+		assert.Equal(t, 5, vaccinations[5].FirstDose)
+		assert.Equal(t, 4, vaccinations[5].SecondDose)
+	}
+
+	groupedVaccinationResponse := make(chan map[string][]sciensano.Vaccination)
+	c.Vaccinations <- cache.VaccinationsRequest{
+		EndTime:         testDate,
+		Filter:          "AgeGroup",
+		GroupedResponse: groupedVaccinationResponse,
+	}
+	groupedVaccinations := <-groupedVaccinationResponse
+	if assert.Len(t, groupedVaccinations, 1) && assert.Len(t, groupedVaccinations["45-54"], 6) {
+		assert.Equal(t, testDate, groupedVaccinations["45-54"][5].Timestamp)
+		assert.Equal(t, 5, groupedVaccinations["45-54"][5].FirstDose)
+		assert.Equal(t, 4, groupedVaccinations["45-54"][5].SecondDose)
+	}
 
 	c.Vaccinations <- cache.VaccinationsRequest{
-		EndTime:  testDate,
-		Filter:   "AgeGroup",
-		Value:    "45-54",
-		Response: vaccinationResponse,
+		EndTime:         testDate,
+		Filter:          "Region",
+		GroupedResponse: groupedVaccinationResponse,
 	}
-	vaccinations = <-vaccinationResponse
-	assert.Len(t, vaccinations, 6)
-	assert.Equal(t, testDate, tests[5].Timestamp)
-	assert.Equal(t, 5, tests[5].Positive)
-	assert.Equal(t, 10, tests[5].Total)
+	groupedVaccinations = <-groupedVaccinationResponse
+	if assert.Len(t, groupedVaccinations, 1) && assert.Len(t, groupedVaccinations["Flanders"], 6) {
+		assert.Equal(t, testDate, groupedVaccinations["Flanders"][5].Timestamp)
+		assert.Equal(t, 5, groupedVaccinations["Flanders"][5].FirstDose)
+		assert.Equal(t, 4, groupedVaccinations["Flanders"][5].SecondDose)
+	}
 
 	c.Vaccinations <- cache.VaccinationsRequest{
-		EndTime:  testDate,
-		Filter:   "Region",
-		Value:    "Flanders",
-		Response: vaccinationResponse,
+		EndTime:         testDate,
+		Filter:          "invalid",
+		GroupedResponse: groupedVaccinationResponse,
 	}
-	vaccinations = <-vaccinationResponse
-	assert.Len(t, vaccinations, 6)
-	assert.Equal(t, testDate, tests[5].Timestamp)
-	assert.Equal(t, 5, tests[5].Positive)
-	assert.Equal(t, 10, tests[5].Total)
-
-	c.Vaccinations <- cache.VaccinationsRequest{
-		EndTime:  testDate,
-		Filter:   "Region",
-		Value:    "Brussels",
-		Response: vaccinationResponse,
-	}
-	vaccinations = <-vaccinationResponse
-	assert.Len(t, vaccinations, 0)
-
-	c.Vaccinations <- cache.VaccinationsRequest{
-		EndTime:  testDate,
-		Filter:   "Invalid",
-		Value:    "",
-		Response: vaccinationResponse,
-	}
-	vaccinations = <-vaccinationResponse
-	assert.Len(t, vaccinations, 0)
-
-	close(vaccinationResponse)
+	groupedVaccinations = <-groupedVaccinationResponse
+	assert.Len(t, groupedVaccinations, 0)
 
 	c.Stop()
 

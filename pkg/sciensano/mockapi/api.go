@@ -48,16 +48,14 @@ func (client *API) GetVaccinations(end time.Time) (results []sciensano.Vaccinati
 	return
 }
 
-func (client *API) GetVaccinationsByAge(end time.Time, group string) (results []sciensano.Vaccination, err error) {
-	if group == "45-54" {
-		results, err = client.GetVaccinations(end)
-	}
+func (client *API) GetVaccinationsByAge(end time.Time) (results map[string][]sciensano.Vaccination, err error) {
+	results = make(map[string][]sciensano.Vaccination)
+	results["45-54"], err = client.GetVaccinations(end)
 	return
 }
 
-func (client *API) GetVaccinationsByRegion(end time.Time, region string) (results []sciensano.Vaccination, err error) {
-	if region == "Flanders" {
-		results, err = client.GetVaccinations(end)
-	}
+func (client *API) GetVaccinationsByRegion(end time.Time) (results map[string][]sciensano.Vaccination, err error) {
+	results = make(map[string][]sciensano.Vaccination)
+	results["Flanders"], err = client.GetVaccinations(end)
 	return
 }

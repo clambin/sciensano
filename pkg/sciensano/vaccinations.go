@@ -10,25 +10,6 @@ import (
 	"time"
 )
 
-var AgeGroups = []string{
-	"0-17",
-	"18-34",
-	"35-44",
-	"45-54",
-	"55-64",
-	"65-74",
-	"75-84",
-	"85+",
-}
-
-var Regions = []string{
-	"",
-	"Flanders",
-	"Brussels",
-	"Wallonia",
-	"Ostbelgien",
-}
-
 type Vaccination struct {
 	Timestamp  time.Time
 	FirstDose  int
@@ -45,23 +26,29 @@ func (client *Client) GetVaccinations(end time.Time) (results []Vaccination, err
 	return
 }
 
-func (client *Client) GetVaccinationsByAge(end time.Time, group string) (results []Vaccination, err error) {
+func (client *Client) GetVaccinationsByAge(end time.Time) (results map[string][]Vaccination, err error) {
 	var apiResult []apiVaccinationsResponse
 
 	if apiResult, err = client.getVaccinations(); err == nil {
-		apiResult = filterByAgeGroup(apiResult, group)
-		results = groupVaccinations(apiResult, end)
+		results = make(map[string][]Vaccination)
+		for _, ageGroup := range getAgeGroups(apiResult) {
+			result := filterByAgeGroup(apiResult, ageGroup)
+			results[ageGroup] = groupVaccinations(result, end)
+		}
 	}
 
 	return
 }
 
-func (client *Client) GetVaccinationsByRegion(end time.Time, group string) (results []Vaccination, err error) {
+func (client *Client) GetVaccinationsByRegion(end time.Time) (results map[string][]Vaccination, err error) {
 	var apiResult []apiVaccinationsResponse
 
 	if apiResult, err = client.getVaccinations(); err == nil {
-		apiResult = filterByRegion(apiResult, group)
-		results = groupVaccinations(apiResult, end)
+		results = make(map[string][]Vaccination)
+		for _, region := range getRegions(apiResult) {
+			result := filterByRegion(apiResult, region)
+			results[region] = groupVaccinations(result, end)
+		}
 	}
 
 	return
@@ -120,7 +107,7 @@ func filterByRegion(apiResult []apiVaccinationsResponse, region string) (output 
 
 func groupVaccinations(apiResult []apiVaccinationsResponse, end time.Time) (totals Vaccinations) {
 	// Store the totals in a map
-	accumTotal := make(map[time.Time]Vaccination, 0)
+	accumTotal := make(map[time.Time]Vaccination)
 	for _, entry := range apiResult {
 		if ts, err2 := time.Parse("2006-01-02", entry.TimeStamp); err2 == nil {
 			// Skip anything after the specified end date
@@ -188,4 +175,30 @@ func (p Vaccinations) Less(i, j int) bool {
 
 func (p Vaccinations) Swap(i, j int) {
 	p[i], p[j] = p[j], p[i]
+}
+
+func getAgeGroups(results []apiVaccinationsResponse) (ageGroups []string) {
+	groups := make(map[string]bool)
+
+	for _, result := range results {
+		groups[result.AgeGroup] = true
+	}
+
+	for group := range groups {
+		ageGroups = append(ageGroups, group)
+	}
+	return
+}
+
+func getRegions(results []apiVaccinationsResponse) (regions []string) {
+	groups := make(map[string]bool)
+
+	for _, result := range results {
+		groups[result.Region] = true
+	}
+
+	for group := range groups {
+		regions = append(regions, group)
+	}
+	return
 }

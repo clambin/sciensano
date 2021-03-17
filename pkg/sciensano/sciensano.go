@@ -21,6 +21,6 @@ const baseURL = "https://epistat.sciensano.be/Data/"
 type API interface {
 	GetTests(end time.Time) (results []Test, err error)
 	GetVaccinations(end time.Time) (results []Vaccination, err error)
-	GetVaccinationsByAge(end time.Time, group string) (results []Vaccination, err error)
-	GetVaccinationsByRegion(end time.Time, group string) (results []Vaccination, err error)
+	GetVaccinationsByAge(end time.Time) (results map[string][]Vaccination, err error)
+	GetVaccinationsByRegion(end time.Time) (results map[string][]Vaccination, err error)
 }
