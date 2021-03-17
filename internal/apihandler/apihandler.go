@@ -186,7 +186,7 @@ func buildGroupedVaccinationTableResponse(vaccinations map[string][]sciensano.Va
 		Text: "timestamp",
 		Data: timestampColumn,
 	}}
-	for group := range dataColumns {
+	for _, group := range groups {
 		label := group
 		if label == "" {
 			label = "(empty)"
