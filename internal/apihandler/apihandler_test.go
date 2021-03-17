@@ -10,18 +10,18 @@ import (
 	"time"
 )
 
+var realTargets = map[string]bool{
+	"tests":               false,
+	"vaccinations":        false,
+	"vacc-age-partial":    false,
+	"vacc-age-full":       false,
+	"vacc-region-partial": false,
+	"vacc-region-full":    false,
+}
+
 func TestAPIHandler_Search(t *testing.T) {
 	apiHandler, err := apihandler.Create()
 	assert.Nil(t, err)
-
-	realTargets := map[string]bool{
-		"tests":               false,
-		"vaccinations":        false,
-		"vacc-age-partial":    false,
-		"vacc-age-full":       false,
-		"vacc-region-partial": false,
-		"vacc-region-full":    false,
-	}
 
 	targets := apiHandler.Search()
 
@@ -129,10 +129,9 @@ func BenchmarkHandler_QueryTable(b *testing.B) {
 
 		for i := 0; i < 100; i++ {
 			// Tests
-			_, _ = apiHandler.QueryTable("tests", request)
-			_, _ = apiHandler.QueryTable("vaccinations-full", request)
-			_, _ = apiHandler.QueryTable("vacc-age-full", request)
-			_, _ = apiHandler.QueryTable("vacc-reg-full", request)
+			for target := range realTargets {
+				_, _ = apiHandler.QueryTable(target, request)
+			}
 		}
 	}
 }

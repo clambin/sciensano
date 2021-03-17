@@ -35,8 +35,8 @@ func (handler *Handler) Search() []string {
 }
 
 // Query the DB and return the requested targets
-func (handler *Handler) Query(_ string, _ *grafana_json.QueryRequest) (response *grafana_json.QueryResponse, err error) {
-	err = errors.New("not implemented")
+func (handler *Handler) Query(target string, _ *grafana_json.QueryRequest) (response *grafana_json.QueryResponse, err error) {
+	err = errors.New("dataserie not implemented for " + target)
 	return
 }
 
@@ -137,15 +137,24 @@ func buildVaccinationTableResponse(vaccinations []sciensano.Vaccination) (respon
 }
 
 func buildGroupedVaccinationTableResponse(vaccinations map[string][]sciensano.Vaccination, target string) (response *grafana_json.QueryTableResponse) {
+	// sort group names so they always show up in the same order
+	groups := make([]string, len(vaccinations))
+	index := 0
+	for group := range vaccinations {
+		groups[index] = group
+		index++
+	}
+	sort.Strings(groups)
+
 	// build the columns
 	// TODO: pre-allocating size is more efficient
 	timestampColumn := make(grafana_json.QueryTableResponseTimeColumn, 0)
 	dataColumns := make(map[string]grafana_json.QueryTableResponseNumberColumn, len(vaccinations))
-	for group := range vaccinations {
+	for _, group := range groups {
 		dataColumns[group] = make(grafana_json.QueryTableResponseNumberColumn, 0)
 	}
 
-	// get all timestamps across all groups & populate the column
+	// get all timestamps across all groups & populate the timestamp column
 	timestamps := getTimestamps(vaccinations)
 	timestampColumn = append(timestampColumn, timestamps...)
 
@@ -177,7 +186,6 @@ func buildGroupedVaccinationTableResponse(vaccinations map[string][]sciensano.Va
 		Text: "timestamp",
 		Data: timestampColumn,
 	}}
-
 	for group := range dataColumns {
 		label := group
 		if label == "" {
@@ -199,6 +207,7 @@ func getTimestamps(vaccinations map[string][]sciensano.Vaccination) (timestamps 
 			uniqueTimestamps[data.Timestamp] = true
 		}
 	}
+	timestamps = make([]time.Time, 0, len(uniqueTimestamps))
 	for timestamp := range uniqueTimestamps {
 		timestamps = append(timestamps, timestamp)
 	}
