@@ -41,6 +41,21 @@ func TestAPIHandler_Search(t *testing.T) {
 
 }
 
+func TestAPIHandler_Query(t *testing.T) {
+	apiHandler, err := apihandler.Create()
+	assert.Nil(t, err)
+	apiHandler.Cache.API = &mockapi.API{Tests: mockapi.DefaultTests, Vaccinations: mockapi.DefaultVaccinations}
+
+	request := &grafana_json.QueryRequest{
+		Range: grafana_json.QueryRequestRange{
+			To: time.Now(),
+		},
+	}
+
+	_, err = apiHandler.Query("tests", request)
+	assert.NotNil(t, err)
+}
+
 func TestAPIHandler_QueryTable(t *testing.T) {
 	apiHandler, err := apihandler.Create()
 	assert.Nil(t, err)
@@ -117,6 +132,26 @@ func TestAPIHandler_QueryTable(t *testing.T) {
 		}
 	}
 
+	// Vaccinations grouped by Region
+	if response, err = apiHandler.QueryTable("vacc-region-full", request); assert.Nil(t, err) {
+		for _, column := range response.Columns {
+			switch data := column.Data.(type) {
+			case grafana_json.QueryTableResponseTimeColumn:
+				assert.Equal(t, "timestamp", column.Text)
+				if assert.NotZero(t, len(data)) {
+					assert.Equal(t, endDate, data[len(data)-1])
+				}
+			case grafana_json.QueryTableResponseNumberColumn:
+				switch column.Text {
+				case "Flanders":
+					if assert.NotZero(t, len(data)) {
+						assert.Equal(t, 10.0, data[len(data)-1])
+					}
+				}
+			}
+		}
+	}
+
 	// Lag
 	if response, err = apiHandler.QueryTable("vaccination-lag", request); assert.Nil(t, err) {
 		for _, column := range response.Columns {
@@ -136,6 +171,10 @@ func TestAPIHandler_QueryTable(t *testing.T) {
 			}
 		}
 	}
+
+	// Unknown target should return an error
+	_, err = apiHandler.QueryTable("invalid", request)
+	assert.NotNil(t, err)
 
 }
 

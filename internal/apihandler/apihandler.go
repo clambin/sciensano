@@ -1,7 +1,7 @@
 package apihandler
 
 import (
-	"errors"
+	"fmt"
 	"github.com/clambin/grafana-json"
 	"github.com/clambin/sciensano/internal/cache"
 	"github.com/clambin/sciensano/pkg/sciensano"
@@ -37,7 +37,7 @@ func (handler *Handler) Search() []string {
 
 // Query the DB and return the requested targets
 func (handler *Handler) Query(target string, _ *grafana_json.QueryRequest) (response *grafana_json.QueryResponse, err error) {
-	err = errors.New("dataserie not implemented for " + target)
+	err = fmt.Errorf("dataserie not implemented for '%s'", target)
 	return
 }
 
@@ -96,6 +96,9 @@ func (handler *Handler) QueryTable(target string, request *grafana_json.QueryReq
 		vaccineStats := <-req.Response
 		vaccineStats = sciensano.AccumulateVaccinations(vaccineStats)
 		response = buildVaccinationLagTableResponse(vaccineStats)
+
+	default:
+		err = fmt.Errorf("unknown target '%s'", target)
 	}
 
 	return
