@@ -164,20 +164,25 @@ func buildGroupedVaccinationTableResponse(vaccinations map[string][]sciensano.Va
 		complete = true
 	}
 
-	// fill out each group, so all groups have all timestamps
-	// use goroutines to performs this in parallel and get the results when we build the response
-	results := make(map[string]chan []float64)
-	for group := range vaccinations {
-		results[group] = make(chan []float64)
-		go func(groupName string) {
-			results[groupName] <- getFilledVaccinations(timestamps, vaccinations[groupName], complete)
-		}(group)
-	}
+	/*
+		// fill out each group, so all groups have all timestamps
+		// use goroutines to performs this in parallel and get the results when we build the response
+		results := make(map[string]chan []float64)
+		for group := range vaccinations {
+			results[group] = make(chan []float64)
+			go func(groupName string) {
+				results[groupName] <- getFilledVaccinations(timestamps, vaccinations[groupName], complete)
+			}(group)
+		}
 
-	// populate the data columns
-	for group := range vaccinations {
-		data := <-results[group]
-		dataColumns[group] = append(dataColumns[group], data...)
+		// populate the data columns
+		for group := range vaccinations {
+			data := <-results[group]
+			dataColumns[group] = append(dataColumns[group], data...)
+		}
+	*/
+	for groupName := range vaccinations {
+		dataColumns[groupName] = getFilledVaccinations(timestamps, vaccinations[groupName], complete)
 	}
 
 	// build the response

@@ -3,9 +3,11 @@ package apihandler_test
 import (
 	"github.com/clambin/grafana-json"
 	"github.com/clambin/sciensano/internal/apihandler"
+	"github.com/clambin/sciensano/internal/cache"
 	"github.com/clambin/sciensano/pkg/sciensano"
 	"github.com/clambin/sciensano/pkg/sciensano/mockapi"
 	"github.com/stretchr/testify/assert"
+	"sync"
 	"testing"
 	"time"
 )
@@ -116,24 +118,30 @@ func TestAPIHandler_QueryTable(t *testing.T) {
 }
 
 func BenchmarkHandler_QueryTable(b *testing.B) {
-	apiHandler, err := apihandler.Create()
-	if assert.Nil(b, err) {
-		apiHandler.Cache.API = &mockapi.API{Tests: buildTestTable(365), Vaccinations: buildVaccinationTable(365)}
+	handler := apihandler.Handler{Cache: cache.New(0 * time.Minute)}
+	handler.Cache.API = &mockapi.API{Tests: buildTestTable(365), Vaccinations: buildVaccinationTable(365)}
+	go handler.Cache.Run()
 
-		endDate := time.Date(2021, 01, 06, 0, 0, 0, 0, time.UTC)
-		request := &grafana_json.QueryRequest{
-			Range: grafana_json.QueryRequestRange{
-				To: endDate,
-			},
-		}
-
-		for i := 0; i < 100; i++ {
-			// Tests
-			for target := range realTargets {
-				_, _ = apiHandler.QueryTable(target, request)
-			}
-		}
+	endDate := time.Date(2021, 01, 06, 0, 0, 0, 0, time.UTC)
+	request := &grafana_json.QueryRequest{
+		Range: grafana_json.QueryRequestRange{
+			To: endDate,
+		},
 	}
+
+	var wg sync.WaitGroup
+	for i := 0; i < 100; i++ {
+		wg.Add(1)
+		go func() {
+			for j := 0; j < 100; j++ {
+				for target := range realTargets {
+					_, _ = handler.QueryTable(target, request)
+				}
+			}
+			wg.Done()
+		}()
+	}
+	wg.Wait()
 }
 
 func buildTestTable(size int) (table []sciensano.Test) {
