@@ -19,6 +19,7 @@ var realTargets = map[string]bool{
 	"vacc-age-full":       false,
 	"vacc-region-partial": false,
 	"vacc-region-full":    false,
+	"vaccination-lag":     false,
 }
 
 func TestAPIHandler_Search(t *testing.T) {
@@ -115,6 +116,27 @@ func TestAPIHandler_QueryTable(t *testing.T) {
 			}
 		}
 	}
+
+	// Lag
+	if response, err = apiHandler.QueryTable("vaccination-lag", request); assert.Nil(t, err) {
+		for _, column := range response.Columns {
+			switch data := column.Data.(type) {
+			case grafana_json.QueryTableResponseTimeColumn:
+				assert.Equal(t, "timestamp", column.Text)
+				if assert.NotZero(t, len(data)) {
+					assert.Equal(t, endDate, data[len(data)-1])
+				}
+			case grafana_json.QueryTableResponseNumberColumn:
+				switch column.Text {
+				case "lag":
+					if assert.NotZero(t, len(data)) {
+						assert.Equal(t, 1.0, data[len(data)-1])
+					}
+				}
+			}
+		}
+	}
+
 }
 
 func BenchmarkHandler_QueryTable(b *testing.B) {
