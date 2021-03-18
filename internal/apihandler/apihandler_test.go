@@ -119,7 +119,7 @@ func TestAPIHandler_QueryTable(t *testing.T) {
 
 func BenchmarkHandler_QueryTable(b *testing.B) {
 	handler := apihandler.Handler{Cache: cache.New(0 * time.Minute)}
-	handler.Cache.API = &mockapi.API{Tests: buildTestTable(365), Vaccinations: buildVaccinationTable(365)}
+	handler.Cache.API = &mockapi.API{Tests: buildTestTable(720), Vaccinations: buildVaccinationTable(720)}
 	go handler.Cache.Run()
 
 	endDate := time.Date(2021, 01, 06, 0, 0, 0, 0, time.UTC)
@@ -130,17 +130,15 @@ func BenchmarkHandler_QueryTable(b *testing.B) {
 	}
 
 	var wg sync.WaitGroup
-	for i := 0; i < 100; i++ {
-		wg.Add(1)
-		go func() {
-			for j := 0; j < 100; j++ {
-				for target := range realTargets {
-					_, _ = handler.QueryTable(target, request)
-				}
+	wg.Add(1)
+	go func() {
+		for j := 0; j < 100; j++ {
+			for target := range realTargets {
+				_, _ = handler.QueryTable(target, request)
 			}
-			wg.Done()
-		}()
-	}
+		}
+		wg.Done()
+	}()
 	wg.Wait()
 }
 
