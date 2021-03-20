@@ -5,6 +5,7 @@ import (
 	"github.com/clambin/grafana-json"
 	"github.com/clambin/sciensano/internal/cache"
 	"github.com/clambin/sciensano/pkg/sciensano"
+	log "github.com/sirupsen/logrus"
 	"sort"
 	"strings"
 	"time"
@@ -13,6 +14,8 @@ import (
 // Handler implements a Grafana SimpleJson API Handler that gets BE covid stats
 type Handler struct {
 	Cache *cache.Cache
+
+	lastDate time.Time
 }
 
 // Create a Handler
@@ -101,7 +104,26 @@ func (handler *Handler) QueryTable(target string, request *grafana_json.QueryReq
 		err = fmt.Errorf("unknown target '%s'", target)
 	}
 
+	// log if there's a new update
+	if err == nil && response != nil {
+		handler.logUpdates(response)
+	}
+
 	return
+}
+
+func (handler *Handler) logUpdates(response *grafana_json.QueryTableResponse) {
+	for _, column := range response.Columns {
+		if column.Text == "timestamp" {
+			timestamps := column.Data.(grafana_json.QueryTableResponseTimeColumn)
+			if len(timestamps) > 0 {
+				if timestamps[len(timestamps)-1].After(handler.lastDate) {
+					handler.lastDate = timestamps[len(timestamps)-1]
+					log.WithField("time", handler.lastDate).Info("new data found")
+				}
+			}
+		}
+	}
 }
 
 func buildTestTableResponse(tests []sciensano.Test) (response *grafana_json.QueryTableResponse) {
