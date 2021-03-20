@@ -15,7 +15,7 @@ import (
 type Handler struct {
 	Cache *cache.Cache
 
-	lastDate time.Time
+	lastDate map[string]time.Time
 }
 
 // Create a Handler
@@ -106,23 +106,38 @@ func (handler *Handler) QueryTable(target string, request *grafana_json.QueryReq
 
 	// log if there's a new update
 	if err == nil && response != nil {
-		handler.logUpdates(response)
+		handler.logUpdates(target, response)
 	}
 
 	return
 }
 
-func (handler *Handler) logUpdates(response *grafana_json.QueryTableResponse) {
+func (handler *Handler) logUpdates(target string, response *grafana_json.QueryTableResponse) {
+	if handler.lastDate == nil {
+		handler.lastDate = make(map[string]time.Time)
+	}
+
+	key := "vaccinations"
+	if target == "tests" {
+		key = "tests"
+	}
+
+	latest := time.Time{}
 	for _, column := range response.Columns {
 		if column.Text == "timestamp" {
 			timestamps := column.Data.(grafana_json.QueryTableResponseTimeColumn)
 			if len(timestamps) > 0 {
-				if timestamps[len(timestamps)-1].After(handler.lastDate) {
-					handler.lastDate = timestamps[len(timestamps)-1]
-					log.WithField("time", handler.lastDate).Info("new data found")
-				}
+				latest = timestamps[len(timestamps)-1]
+				break
 			}
 		}
+	}
+
+	if entry, ok := handler.lastDate[key]; ok == false {
+		handler.lastDate[key] = latest
+	} else if latest.After(entry) {
+		handler.lastDate[key] = latest
+		log.WithFields(log.Fields{"target": key, "time": latest}).Info("new data found")
 	}
 }
 
