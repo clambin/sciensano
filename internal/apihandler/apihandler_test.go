@@ -13,13 +13,17 @@ import (
 )
 
 var realTargets = map[string]bool{
-	"tests":               false,
-	"vaccinations":        false,
-	"vacc-age-partial":    false,
-	"vacc-age-full":       false,
-	"vacc-region-partial": false,
-	"vacc-region-full":    false,
-	"vaccination-lag":     false,
+	"tests":                    false,
+	"vaccinations":             false,
+	"vacc-age-partial":         false,
+	"vacc-age-full":            false,
+	"vacc-age-rate-partial":    false,
+	"vacc-age-rate-full":       false,
+	"vacc-region-partial":      false,
+	"vacc-region-full":         false,
+	"vacc-region-rate-partial": false,
+	"vacc-region-rate-full":    false,
+	"vaccination-lag":          false,
 }
 
 func TestAPIHandler_Search(t *testing.T) {
@@ -132,6 +136,26 @@ func TestAPIHandler_QueryTable(t *testing.T) {
 		}
 	}
 
+	// Vaccination rate grouped by Age
+	if response, err = apiHandler.QueryTable("vacc-age-rate-full", request); assert.Nil(t, err) {
+		for _, column := range response.Columns {
+			switch data := column.Data.(type) {
+			case grafana_json.QueryTableResponseTimeColumn:
+				assert.Equal(t, "timestamp", column.Text)
+				if assert.NotZero(t, len(data)) {
+					assert.Equal(t, endDate, data[len(data)-1])
+				}
+			case grafana_json.QueryTableResponseNumberColumn:
+				switch column.Text {
+				case "45-54":
+					if assert.NotZero(t, len(data)) {
+						assert.Equal(t, 6, int(1000000*data[len(data)-1]))
+					}
+				}
+			}
+		}
+	}
+
 	// Vaccinations grouped by Region
 	if response, err = apiHandler.QueryTable("vacc-region-full", request); assert.Nil(t, err) {
 		for _, column := range response.Columns {
@@ -146,6 +170,26 @@ func TestAPIHandler_QueryTable(t *testing.T) {
 				case "Flanders":
 					if assert.NotZero(t, len(data)) {
 						assert.Equal(t, 10.0, data[len(data)-1])
+					}
+				}
+			}
+		}
+	}
+
+	// Vaccination rate grouped by Region
+	if response, err = apiHandler.QueryTable("vacc-region-rate-full", request); assert.Nil(t, err) {
+		for _, column := range response.Columns {
+			switch data := column.Data.(type) {
+			case grafana_json.QueryTableResponseTimeColumn:
+				assert.Equal(t, "timestamp", column.Text)
+				if assert.NotZero(t, len(data)) {
+					assert.Equal(t, endDate, data[len(data)-1])
+				}
+			case grafana_json.QueryTableResponseNumberColumn:
+				switch column.Text {
+				case "Flanders":
+					if assert.NotZero(t, len(data)) {
+						assert.Equal(t, 1, int(1000000*data[len(data)-1]))
 					}
 				}
 			}

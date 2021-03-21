@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/clambin/grafana-json"
 	"github.com/clambin/sciensano/internal/cache"
+	"github.com/clambin/sciensano/internal/demographics"
 	"github.com/clambin/sciensano/pkg/sciensano"
 	log "github.com/sirupsen/logrus"
 	"sort"
@@ -32,8 +33,8 @@ func (handler *Handler) Search() []string {
 	return []string{
 		"tests",
 		"vaccinations",
-		"vacc-age-partial", "vacc-age-full",
-		"vacc-region-partial", "vacc-region-full",
+		"vacc-age-partial", "vacc-age-full", "vacc-age-rate-partial", "vacc-age-rate-full",
+		"vacc-region-partial", "vacc-region-full", "vacc-region-rate-partial", "vacc-region-rate-full",
 		"vaccination-lag",
 	}
 }
@@ -64,7 +65,7 @@ func (handler *Handler) QueryTable(target string, request *grafana_json.QueryReq
 		vaccineStats = sciensano.AccumulateVaccinations(vaccineStats)
 		response = buildVaccinationTableResponse(vaccineStats)
 
-	case "vacc-age-partial", "vacc-age-full":
+	case "vacc-age-partial", "vacc-age-full", "vacc-age-rate-partial", "vacc-age-rate-full":
 		req := cache.VaccinationsRequest{
 			EndTime:         request.Range.To,
 			Filter:          "AgeGroup",
@@ -77,7 +78,11 @@ func (handler *Handler) QueryTable(target string, request *grafana_json.QueryReq
 		}
 		response = buildGroupedVaccinationTableResponse(vaccineStats, target)
 
-	case "vacc-region-partial", "vacc-region-full":
+		if strings.HasPrefix(target, "vacc-age-rate-") {
+			prorateFigures(response, demographics.GetAgeGroupFigures())
+		}
+
+	case "vacc-region-partial", "vacc-region-full", "vacc-region-rate-partial", "vacc-region-rate-full":
 		req := cache.VaccinationsRequest{
 			EndTime:         request.Range.To,
 			Filter:          "Region",
@@ -89,6 +94,10 @@ func (handler *Handler) QueryTable(target string, request *grafana_json.QueryReq
 			vaccineStats[region] = sciensano.AccumulateVaccinations(data)
 		}
 		response = buildGroupedVaccinationTableResponse(vaccineStats, target)
+
+		if strings.HasPrefix(target, "vacc-region-rate-") {
+			prorateFigures(response, demographics.GetRegionFigures())
+		}
 
 	case "vaccination-lag":
 		req := cache.VaccinationsRequest{
@@ -269,4 +278,17 @@ func buildVaccinationLagTableResponse(vaccinations []sciensano.Vaccination) (res
 	}
 
 	return
+}
+
+func prorateFigures(result *grafana_json.QueryTableResponse, groups map[string]int) {
+	for _, column := range result.Columns {
+		switch data := column.Data.(type) {
+		case grafana_json.QueryTableResponseNumberColumn:
+			if figure, ok := groups[column.Text]; ok && figure != 0 {
+				for index, entry := range data {
+					data[index] = entry / float64(figure)
+				}
+			}
+		}
+	}
 }
