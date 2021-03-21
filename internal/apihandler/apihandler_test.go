@@ -45,43 +45,29 @@ func TestAPIHandler_Search(t *testing.T) {
 
 }
 
-func TestAPIHandler_Query(t *testing.T) {
-	apiHandler, err := apihandler.Create()
-	assert.Nil(t, err)
-	apiHandler.Cache.API = &mockapi.API{Tests: mockapi.DefaultTests, Vaccinations: mockapi.DefaultVaccinations}
-
-	request := &grafana_json.QueryRequest{
-		Range: grafana_json.QueryRequestRange{
-			To: time.Now(),
-		},
-	}
-
-	_, err = apiHandler.Query("tests", request)
-	assert.NotNil(t, err)
-}
-
-func TestAPIHandler_QueryTable(t *testing.T) {
+func TestAPIHandler_TableQuery(t *testing.T) {
 	apiHandler, err := apihandler.Create()
 	assert.Nil(t, err)
 	apiHandler.Cache.API = &mockapi.API{Tests: mockapi.DefaultTests, Vaccinations: mockapi.DefaultVaccinations}
 
 	endDate := time.Date(2021, 01, 06, 0, 0, 0, 0, time.UTC)
-	request := &grafana_json.QueryRequest{
-		Range: grafana_json.QueryRequestRange{
-			To: endDate,
+
+	request := &grafana_json.TableQueryArgs{
+		CommonQueryArgs: grafana_json.CommonQueryArgs{
+			Range: grafana_json.QueryRequestRange{To: endDate},
 		},
 	}
 
-	var response *grafana_json.QueryTableResponse
+	var response *grafana_json.TableQueryResponse
 
 	// Tests
-	if response, err = apiHandler.QueryTable("tests", request); assert.Nil(t, err) {
+	if response, err = apiHandler.TableQuery("tests", request); assert.Nil(t, err) {
 		for _, column := range response.Columns {
 			switch data := column.Data.(type) {
-			case grafana_json.QueryTableResponseTimeColumn:
+			case grafana_json.TableQueryResponseTimeColumn:
 				assert.Equal(t, "timestamp", column.Text)
 				assert.Equal(t, endDate, data[len(data)-1])
-			case grafana_json.QueryTableResponseNumberColumn:
+			case grafana_json.TableQueryResponseNumberColumn:
 				switch column.Text {
 				case "total":
 					assert.Equal(t, 10.0, data[len(data)-1])
@@ -97,13 +83,13 @@ func TestAPIHandler_QueryTable(t *testing.T) {
 	}
 
 	// Vaccinations
-	if response, err = apiHandler.QueryTable("vaccinations", request); assert.Nil(t, err) {
+	if response, err = apiHandler.TableQuery("vaccinations", request); assert.Nil(t, err) {
 		for _, column := range response.Columns {
 			switch data := column.Data.(type) {
-			case grafana_json.QueryTableResponseTimeColumn:
+			case grafana_json.TableQueryResponseTimeColumn:
 				assert.Equal(t, "timestamp", column.Text)
 				assert.Equal(t, endDate, data[len(data)-1])
-			case grafana_json.QueryTableResponseNumberColumn:
+			case grafana_json.TableQueryResponseNumberColumn:
 				switch column.Text {
 				case "partial":
 					assert.Equal(t, 15.0, data[len(data)-1])
@@ -117,15 +103,15 @@ func TestAPIHandler_QueryTable(t *testing.T) {
 	}
 
 	// Vaccinations grouped by Age
-	if response, err = apiHandler.QueryTable("vacc-age-full", request); assert.Nil(t, err) {
+	if response, err = apiHandler.TableQuery("vacc-age-full", request); assert.Nil(t, err) {
 		for _, column := range response.Columns {
 			switch data := column.Data.(type) {
-			case grafana_json.QueryTableResponseTimeColumn:
+			case grafana_json.TableQueryResponseTimeColumn:
 				assert.Equal(t, "timestamp", column.Text)
 				if assert.NotZero(t, len(data)) {
 					assert.Equal(t, endDate, data[len(data)-1])
 				}
-			case grafana_json.QueryTableResponseNumberColumn:
+			case grafana_json.TableQueryResponseNumberColumn:
 				switch column.Text {
 				case "45-54":
 					if assert.NotZero(t, len(data)) {
@@ -137,15 +123,15 @@ func TestAPIHandler_QueryTable(t *testing.T) {
 	}
 
 	// Vaccination rate grouped by Age
-	if response, err = apiHandler.QueryTable("vacc-age-rate-full", request); assert.Nil(t, err) {
+	if response, err = apiHandler.TableQuery("vacc-age-rate-full", request); assert.Nil(t, err) {
 		for _, column := range response.Columns {
 			switch data := column.Data.(type) {
-			case grafana_json.QueryTableResponseTimeColumn:
+			case grafana_json.TableQueryResponseTimeColumn:
 				assert.Equal(t, "timestamp", column.Text)
 				if assert.NotZero(t, len(data)) {
 					assert.Equal(t, endDate, data[len(data)-1])
 				}
-			case grafana_json.QueryTableResponseNumberColumn:
+			case grafana_json.TableQueryResponseNumberColumn:
 				switch column.Text {
 				case "45-54":
 					if assert.NotZero(t, len(data)) {
@@ -157,15 +143,15 @@ func TestAPIHandler_QueryTable(t *testing.T) {
 	}
 
 	// Vaccinations grouped by Region
-	if response, err = apiHandler.QueryTable("vacc-region-full", request); assert.Nil(t, err) {
+	if response, err = apiHandler.TableQuery("vacc-region-full", request); assert.Nil(t, err) {
 		for _, column := range response.Columns {
 			switch data := column.Data.(type) {
-			case grafana_json.QueryTableResponseTimeColumn:
+			case grafana_json.TableQueryResponseTimeColumn:
 				assert.Equal(t, "timestamp", column.Text)
 				if assert.NotZero(t, len(data)) {
 					assert.Equal(t, endDate, data[len(data)-1])
 				}
-			case grafana_json.QueryTableResponseNumberColumn:
+			case grafana_json.TableQueryResponseNumberColumn:
 				switch column.Text {
 				case "Flanders":
 					if assert.NotZero(t, len(data)) {
@@ -177,15 +163,15 @@ func TestAPIHandler_QueryTable(t *testing.T) {
 	}
 
 	// Vaccination rate grouped by Region
-	if response, err = apiHandler.QueryTable("vacc-region-rate-full", request); assert.Nil(t, err) {
+	if response, err = apiHandler.TableQuery("vacc-region-rate-full", request); assert.Nil(t, err) {
 		for _, column := range response.Columns {
 			switch data := column.Data.(type) {
-			case grafana_json.QueryTableResponseTimeColumn:
+			case grafana_json.TableQueryResponseTimeColumn:
 				assert.Equal(t, "timestamp", column.Text)
 				if assert.NotZero(t, len(data)) {
 					assert.Equal(t, endDate, data[len(data)-1])
 				}
-			case grafana_json.QueryTableResponseNumberColumn:
+			case grafana_json.TableQueryResponseNumberColumn:
 				switch column.Text {
 				case "Flanders":
 					if assert.NotZero(t, len(data)) {
@@ -197,15 +183,15 @@ func TestAPIHandler_QueryTable(t *testing.T) {
 	}
 
 	// Lag
-	if response, err = apiHandler.QueryTable("vaccination-lag", request); assert.Nil(t, err) {
+	if response, err = apiHandler.TableQuery("vaccination-lag", request); assert.Nil(t, err) {
 		for _, column := range response.Columns {
 			switch data := column.Data.(type) {
-			case grafana_json.QueryTableResponseTimeColumn:
+			case grafana_json.TableQueryResponseTimeColumn:
 				assert.Equal(t, "timestamp", column.Text)
 				if assert.NotZero(t, len(data)) {
 					assert.Equal(t, endDate, data[len(data)-1])
 				}
-			case grafana_json.QueryTableResponseNumberColumn:
+			case grafana_json.TableQueryResponseNumberColumn:
 				switch column.Text {
 				case "lag":
 					if assert.NotZero(t, len(data)) {
@@ -217,7 +203,7 @@ func TestAPIHandler_QueryTable(t *testing.T) {
 	}
 
 	// Unknown target should return an error
-	_, err = apiHandler.QueryTable("invalid", request)
+	_, err = apiHandler.TableQuery("invalid", request)
 	assert.NotNil(t, err)
 
 }
@@ -228,9 +214,11 @@ func BenchmarkHandler_QueryTable(b *testing.B) {
 	go handler.Cache.Run()
 
 	endDate := time.Date(2021, 01, 06, 0, 0, 0, 0, time.UTC)
-	request := &grafana_json.QueryRequest{
-		Range: grafana_json.QueryRequestRange{
-			To: endDate,
+	request := &grafana_json.TableQueryArgs{
+		CommonQueryArgs: grafana_json.CommonQueryArgs{
+			Range: grafana_json.QueryRequestRange{
+				To: endDate,
+			},
 		},
 	}
 
@@ -239,7 +227,7 @@ func BenchmarkHandler_QueryTable(b *testing.B) {
 	go func() {
 		for j := 0; j < 100; j++ {
 			for target := range realTargets {
-				_, _ = handler.QueryTable(target, request)
+				_, _ = handler.TableQuery(target, request)
 			}
 		}
 		wg.Done()
