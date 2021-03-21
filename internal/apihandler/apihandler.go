@@ -281,14 +281,19 @@ func buildVaccinationLagTableResponse(vaccinations []sciensano.Vaccination) (res
 }
 
 func prorateFigures(result *grafana_json.QueryTableResponse, groups map[string]int) {
+	newColumns := make([]grafana_json.QueryTableResponseColumn, 0, len(result.Columns))
 	for _, column := range result.Columns {
-		switch data := column.Data.(type) {
-		case grafana_json.QueryTableResponseNumberColumn:
-			if figure, ok := groups[column.Text]; ok && figure != 0 {
-				for index, entry := range data {
-					data[index] = entry / float64(figure)
+		if column.Text != "(empty)" {
+			switch data := column.Data.(type) {
+			case grafana_json.QueryTableResponseNumberColumn:
+				if figure, ok := groups[column.Text]; ok && figure != 0 {
+					for index, entry := range data {
+						data[index] = entry / float64(figure)
+					}
 				}
 			}
+			newColumns = append(newColumns, column)
 		}
 	}
+	result.Columns = newColumns
 }
