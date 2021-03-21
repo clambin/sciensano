@@ -24,12 +24,11 @@ var realTargets = map[string]bool{
 	"vacc-region-rate-partial": false,
 	"vacc-region-rate-full":    false,
 	"vaccination-lag":          false,
+	"vaccines":                 false,
 }
 
 func TestAPIHandler_Search(t *testing.T) {
-	apiHandler, err := apihandler.Create()
-	assert.Nil(t, err)
-
+	apiHandler, _ := apihandler.Create()
 	targets := apiHandler.Search()
 
 	for _, target := range targets {
@@ -46,12 +45,10 @@ func TestAPIHandler_Search(t *testing.T) {
 }
 
 func TestAPIHandler_TableQuery(t *testing.T) {
-	apiHandler, err := apihandler.Create()
-	assert.Nil(t, err)
+	apiHandler, _ := apihandler.Create()
 	apiHandler.Cache.API = &mockapi.API{Tests: mockapi.DefaultTests, Vaccinations: mockapi.DefaultVaccinations}
 
 	endDate := time.Date(2021, 01, 06, 0, 0, 0, 0, time.UTC)
-
 	request := &grafana_json.TableQueryArgs{
 		CommonQueryArgs: grafana_json.CommonQueryArgs{
 			Range: grafana_json.QueryRequestRange{To: endDate},
@@ -59,6 +56,7 @@ func TestAPIHandler_TableQuery(t *testing.T) {
 	}
 
 	var response *grafana_json.TableQueryResponse
+	var err error
 
 	// Tests
 	if response, err = apiHandler.TableQuery("tests", request); assert.Nil(t, err) {
@@ -258,4 +256,21 @@ func buildVaccinationTable(size int) (table []sciensano.Vaccination) {
 		testDate = testDate.Add(24 * time.Hour)
 	}
 	return
+}
+
+func TestHandler_Annotations(t *testing.T) {
+	handler, _ := apihandler.Create()
+	// TODO: stub the API
+
+	args := grafana_json.AnnotationRequestArgs{
+		CommonQueryArgs: grafana_json.CommonQueryArgs{
+			Range: grafana_json.QueryRequestRange{
+				To: time.Now(),
+			},
+		},
+	}
+
+	annotations, err := handler.Annotations("foo", &args)
+	assert.Nil(t, err)
+	assert.Greater(t, len(annotations), 0)
 }

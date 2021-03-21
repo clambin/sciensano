@@ -5,9 +5,11 @@ import (
 	"github.com/clambin/grafana-json"
 	"github.com/clambin/sciensano/internal/cache"
 	"github.com/clambin/sciensano/internal/demographics"
+	"github.com/clambin/sciensano/internal/vaccines"
 	"github.com/clambin/sciensano/pkg/sciensano"
 	log "github.com/sirupsen/logrus"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -16,7 +18,9 @@ import (
 type Handler struct {
 	Cache     *cache.Cache
 	Endpoints grafana_json.Handler
-	lastDate  map[string]time.Time
+	Vaccines  *vaccines.Handler
+
+	lastDate map[string]time.Time
 }
 
 // Create a Handler
@@ -24,13 +28,17 @@ type Handler struct {
 func Create() (*Handler, error) {
 	c := cache.New(15 * time.Minute)
 	go c.Run()
+
+	v := vaccines.Create()
+
 	handler := Handler{
-		Cache: c,
+		Cache:    c,
+		Vaccines: v,
 	}
 	handler.Endpoints = grafana_json.Handler{
-		Search:     handler.Search,
-		TableQuery: handler.TableQuery,
-		// Annotations: ,
+		Search:      handler.Search,
+		TableQuery:  handler.TableQuery,
+		Annotations: handler.Annotations,
 	}
 
 	return &handler, nil
@@ -44,6 +52,7 @@ func (handler *Handler) Search() []string {
 		"vacc-age-partial", "vacc-age-full", "vacc-age-rate-partial", "vacc-age-rate-full",
 		"vacc-region-partial", "vacc-region-full", "vacc-region-rate-partial", "vacc-region-rate-full",
 		"vaccination-lag",
+		"vaccines",
 	}
 }
 
@@ -110,6 +119,13 @@ func (handler *Handler) TableQuery(target string, args *grafana_json.TableQueryA
 		vaccineStats := <-req.Response
 		vaccineStats = sciensano.AccumulateVaccinations(vaccineStats)
 		response = buildVaccinationLagTableResponse(vaccineStats)
+
+	case "vaccines":
+		responseChannel := make(vaccines.ResponseChannel)
+		handler.Vaccines.Request <- responseChannel
+		batches := <-responseChannel
+		batches = vaccines.AccumulateBatches(batches)
+		response = buildVaccineTableResponse(batches)
 
 	default:
 		err = fmt.Errorf("unknown target '%s'", target)
@@ -298,4 +314,42 @@ func prorateFigures(result *grafana_json.TableQueryResponse, groups map[string]i
 		}
 	}
 	result.Columns = newColumns
+}
+
+func buildVaccineTableResponse(batches []vaccines.Batch) (response *grafana_json.TableQueryResponse) {
+	rows := len(batches)
+	timestampColumn := make(grafana_json.TableQueryResponseTimeColumn, rows)
+	batchColumn := make(grafana_json.TableQueryResponseNumberColumn, rows)
+
+	for index, entry := range batches {
+		timestampColumn[index] = time.Time(entry.Date)
+		batchColumn[index] = float64(entry.Amount)
+	}
+
+	response = new(grafana_json.TableQueryResponse)
+	response.Columns = []grafana_json.TableQueryResponseColumn{
+		{Text: "timestamp", Data: timestampColumn},
+		{Text: "vaccines", Data: batchColumn},
+	}
+	return
+}
+
+func (handler *Handler) Annotations(annotation string, args *grafana_json.AnnotationRequestArgs) (annotations []grafana_json.Annotation, err error) {
+	log.WithFields(log.Fields{
+		"annotation": annotation,
+		"endTime":    args.Range.To,
+	}).Info("annotations")
+
+	responseChannel := make(vaccines.ResponseChannel)
+	handler.Vaccines.Request <- responseChannel
+
+	batches := <-responseChannel
+	for _, batch := range batches {
+		annotations = append(annotations, grafana_json.Annotation{
+			Time:  time.Time(batch.Date),
+			Title: batch.Manufacturer,
+			Text:  "Amount: " + strconv.FormatInt(batch.Amount, 10),
+		})
+	}
+	return
 }
