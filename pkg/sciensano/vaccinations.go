@@ -68,7 +68,7 @@ func (client *Client) getVaccinations() (result []apiVaccinationsResponse, err e
 		var resp *http.Response
 		var stats []apiVaccinationsResponse
 
-		if resp, err = client.apiClient.Get(baseURL + "COVID19BE_VACC.json"); err == nil {
+		if resp, err = client.HTTPClient.Get(baseURL + "COVID19BE_VACC.json"); err == nil {
 			defer resp.Body.Close()
 			if resp.StatusCode == 200 {
 				var body []byte

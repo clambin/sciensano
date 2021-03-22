@@ -39,7 +39,7 @@ func (client *Client) getTests() (response []apiTestResponse, err error) {
 		var resp *http.Response
 		var stats []apiTestResponse
 
-		if resp, err = client.apiClient.Get(baseURL + "COVID19BE_tests.json"); err == nil {
+		if resp, err = client.HTTPClient.Get(baseURL + "COVID19BE_tests.json"); err == nil {
 			defer resp.Body.Close()
 			if resp.StatusCode == 200 {
 				var body []byte

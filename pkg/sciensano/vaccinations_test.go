@@ -1,6 +1,7 @@
 package sciensano_test
 
 import (
+	"github.com/clambin/gotools/httpstub"
 	"github.com/clambin/sciensano/pkg/sciensano"
 	"github.com/stretchr/testify/assert"
 	"reflect"
@@ -9,15 +10,15 @@ import (
 )
 
 func TestAPIClient_GetVaccinations(t *testing.T) {
-	client := sciensano.Client{CacheDuration: 1 * time.Hour}
-	firstDay := time.Date(2020, 12, 28, 0, 0, 0, 0, time.UTC)
-	result, err := client.GetVaccinations(firstDay)
+	client := sciensano.Client{CacheDuration: 1 * time.Hour, HTTPClient: *httpstub.NewTestClient(server)}
+	lastDay := time.Date(2021, 3, 10, 0, 0, 0, 0, time.UTC)
+	result, err := client.GetVaccinations(lastDay)
 
 	if assert.Nil(t, err) {
-		if assert.Len(t, result, 1) {
-			assert.Equal(t, firstDay, result[0].Timestamp)
-			assert.Equal(t, 298, result[0].FirstDose)
-			assert.Equal(t, 0, result[0].SecondDose)
+		if assert.Len(t, result, 2) {
+			assert.Equal(t, lastDay, result[1].Timestamp)
+			assert.Equal(t, 250, result[1].FirstDose)
+			assert.Equal(t, 0, result[1].SecondDose)
 		}
 	}
 }
@@ -28,7 +29,7 @@ func TestAPIClient_GetVaccinationsByAge(t *testing.T) {
 		totals            []sciensano.Vaccination
 		vaccinationsByAge map[string][]sciensano.Vaccination
 	)
-	client := sciensano.Client{CacheDuration: 1 * time.Hour}
+	client := sciensano.Client{CacheDuration: 1 * time.Hour, HTTPClient: *httpstub.NewTestClient(server)}
 	testDate := time.Now()
 	totals, err = client.GetVaccinations(testDate)
 	assert.Nil(t, err)
@@ -62,7 +63,7 @@ func TestAPIClient_GetVaccinationsByRegion(t *testing.T) {
 		totals               []sciensano.Vaccination
 		vaccinationsByRegion map[string][]sciensano.Vaccination
 	)
-	client := sciensano.Client{CacheDuration: 1 * time.Hour}
+	client := sciensano.Client{CacheDuration: 1 * time.Hour, HTTPClient: *httpstub.NewTestClient(server)}
 	testDate := time.Now()
 	totals, err = client.GetVaccinations(testDate)
 	assert.Nil(t, err)
@@ -90,7 +91,7 @@ func BenchmarkClient_GetVaccinationsByRegion(b *testing.B) {
 		totals               []sciensano.Vaccination
 		vaccinationsByRegion map[string][]sciensano.Vaccination
 	)
-	client := sciensano.Client{CacheDuration: 1 * time.Hour}
+	client := sciensano.Client{CacheDuration: 1 * time.Hour, HTTPClient: *httpstub.NewTestClient(server)}
 	testDate := time.Now()
 	totals, err = client.GetVaccinations(testDate)
 	assert.Nil(b, err)

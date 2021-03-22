@@ -14,9 +14,9 @@ type Handler struct {
 	CacheTime time.Duration
 	Request   chan ResponseChannel
 
-	client *http.Client
-	cache  []Batch
-	expiry time.Time
+	HTTPClient *http.Client
+	cache      []Batch
+	expiry     time.Time
 }
 
 type ResponseChannel chan []Batch
@@ -29,9 +29,9 @@ type Batch struct {
 
 func Create() (handler *Handler) {
 	handler = &Handler{
-		CacheTime: 6 * time.Hour,
-		Request:   make(chan ResponseChannel),
-		client:    &http.Client{},
+		CacheTime:  6 * time.Hour,
+		Request:    make(chan ResponseChannel),
+		HTTPClient: &http.Client{},
 	}
 	go handler.Run()
 	return
@@ -69,7 +69,7 @@ func (handler *Handler) getBatches() (batches []Batch, err error) {
 		var resp *http.Response
 		var stats apiResult
 
-		if resp, err = handler.client.Get("https://covid-vaccinatie.be/api/v1/delivered.json"); err == nil {
+		if resp, err = handler.HTTPClient.Get("https://covid-vaccinatie.be/api/v1/delivered.json"); err == nil {
 			defer resp.Body.Close()
 			if resp.StatusCode == 200 {
 				var body []byte
@@ -92,9 +92,8 @@ func (handler *Handler) getBatches() (batches []Batch, err error) {
 			handler.expiry = time.Now().Add(handler.CacheTime)
 		}
 
-	} else {
-		batches = handler.cache
 	}
+	batches = handler.cache
 	return
 }
 

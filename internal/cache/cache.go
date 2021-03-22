@@ -3,6 +3,7 @@ package cache
 import (
 	"github.com/clambin/sciensano/pkg/sciensano"
 	log "github.com/sirupsen/logrus"
+	"net/http"
 	"time"
 )
 
@@ -30,6 +31,7 @@ func New(duration time.Duration) *Cache {
 		Tests:        make(chan TestsRequest),
 		Vaccinations: make(chan VaccinationsRequest),
 		API: &sciensano.Client{
+			HTTPClient:    http.Client{Timeout: 15 * time.Second},
 			CacheDuration: duration,
 		},
 	}

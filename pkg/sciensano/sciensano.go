@@ -7,7 +7,7 @@ import (
 
 // Client queries different Sciensano APIs
 type Client struct {
-	apiClient http.Client
+	HTTPClient http.Client
 
 	CacheDuration           time.Duration
 	testCacheExpiry         time.Time
