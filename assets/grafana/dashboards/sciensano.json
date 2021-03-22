@@ -46,7 +46,7 @@
       "fillGradient": 0,
       "gridPos": {
         "h": 9,
-        "w": 8,
+        "w": 12,
         "x": 0,
         "y": 1
       },
@@ -149,8 +149,8 @@
       "fillGradient": 0,
       "gridPos": {
         "h": 9,
-        "w": 8,
-        "x": 8,
+        "w": 12,
+        "x": 12,
         "y": 1
       },
       "hiddenSeries": false,
@@ -252,9 +252,9 @@
       "fillGradient": 0,
       "gridPos": {
         "h": 9,
-        "w": 8,
-        "x": 16,
-        "y": 1
+        "w": 12,
+        "x": 0,
+        "y": 10
       },
       "hiddenSeries": false,
       "id": 15,
@@ -335,12 +335,124 @@
       }
     },
     {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "json-test",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {}
+        },
+        "overrides": []
+      },
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 10
+      },
+      "hiddenSeries": false,
+      "id": 33,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "connected",
+      "options": {
+        "alertThreshold": true
+      },
+      "percentage": false,
+      "pluginVersion": "7.4.5",
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [
+        {
+          "$$hashKey": "object:320",
+          "alias": "vaccines",
+          "stack": false,
+          "yaxis": 2
+        }
+      ],
+      "spaceLength": 10,
+      "stack": true,
+      "steppedLine": false,
+      "targets": [
+        {
+          "hide": false,
+          "queryType": "randomWalk",
+          "refId": "A",
+          "target": "vaccinations",
+          "type": "table"
+        },
+        {
+          "hide": false,
+          "refId": "B",
+          "target": "vaccines",
+          "type": "table"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Vaccines",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "transformations": [],
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "$$hashKey": "object:65",
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "$$hashKey": "object:66",
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": true,
+        "alignLevel": 1
+      }
+    },
+    {
       "datasource": null,
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 10
+        "y": 19
       },
       "id": 23,
       "title": "Vaccinations by Age Group",
@@ -364,7 +476,7 @@
         "h": 8,
         "w": 4,
         "x": 0,
-        "y": 11
+        "y": 20
       },
       "hiddenSeries": false,
       "id": 5,
@@ -467,7 +579,7 @@
         "h": 8,
         "w": 4,
         "x": 4,
-        "y": 11
+        "y": 20
       },
       "hiddenSeries": false,
       "id": 6,
@@ -571,7 +683,7 @@
         "h": 8,
         "w": 4,
         "x": 8,
-        "y": 11
+        "y": 20
       },
       "hiddenSeries": false,
       "id": 28,
@@ -675,7 +787,7 @@
         "h": 8,
         "w": 4,
         "x": 12,
-        "y": 11
+        "y": 20
       },
       "hiddenSeries": false,
       "id": 29,
@@ -790,7 +902,7 @@
         "h": 8,
         "w": 4,
         "x": 16,
-        "y": 11
+        "y": 20
       },
       "id": 16,
       "options": {
@@ -856,7 +968,7 @@
         "h": 8,
         "w": 4,
         "x": 20,
-        "y": 11
+        "y": 20
       },
       "id": 17,
       "options": {
@@ -898,7 +1010,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 19
+        "y": 28
       },
       "id": 21,
       "title": "Vaccinations by region",
@@ -923,7 +1035,7 @@
         "h": 8,
         "w": 4,
         "x": 0,
-        "y": 20
+        "y": 29
       },
       "hiddenSeries": false,
       "id": 10,
@@ -1021,7 +1133,7 @@
         "h": 8,
         "w": 4,
         "x": 4,
-        "y": 20
+        "y": 29
       },
       "hiddenSeries": false,
       "id": 11,
@@ -1119,7 +1231,7 @@
         "h": 8,
         "w": 4,
         "x": 8,
-        "y": 20
+        "y": 29
       },
       "hiddenSeries": false,
       "id": 30,
@@ -1217,7 +1329,7 @@
         "h": 8,
         "w": 4,
         "x": 12,
-        "y": 20
+        "y": 29
       },
       "hiddenSeries": false,
       "id": 31,
@@ -1328,7 +1440,7 @@
         "h": 8,
         "w": 4,
         "x": 16,
-        "y": 20
+        "y": 29
       },
       "id": 18,
       "options": {
@@ -1396,7 +1508,7 @@
         "h": 8,
         "w": 4,
         "x": 20,
-        "y": 20
+        "y": 29
       },
       "id": 19,
       "options": {
@@ -1433,7 +1545,7 @@
       "type": "bargauge"
     }
   ],
-  "refresh": "1m",
+  "refresh": "15m",
   "schemaVersion": 27,
   "style": "dark",
   "tags": [],
@@ -1448,5 +1560,5 @@
   "timezone": "",
   "title": "Sciensano",
   "uid": "KU9aRfgRz",
-  "version": 19
+  "version": 21
 }
