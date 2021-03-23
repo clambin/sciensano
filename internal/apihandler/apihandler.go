@@ -16,9 +16,8 @@ import (
 
 // Handler implements a Grafana SimpleJson API Handler that gets BE covid stats
 type Handler struct {
-	Cache     *cache.Cache
-	Endpoints grafana_json.Handler
-	Vaccines  *vaccines.Handler
+	Cache    *cache.Cache
+	Vaccines *vaccines.Handler
 
 	lastDate map[string]time.Time
 }
@@ -35,13 +34,17 @@ func Create() (*Handler, error) {
 		Cache:    c,
 		Vaccines: v,
 	}
-	handler.Endpoints = grafana_json.Handler{
+
+	return &handler, nil
+}
+
+// Endpoints tells the server which endpoints we have implemented
+func (handler *Handler) Endpoints() grafana_json.Endpoints {
+	return grafana_json.Endpoints{
 		Search:      handler.Search,
 		TableQuery:  handler.TableQuery,
 		Annotations: handler.Annotations,
 	}
-
-	return &handler, nil
 }
 
 // Search returns all supported targets
@@ -334,10 +337,11 @@ func buildVaccineTableResponse(batches []vaccines.Batch) (response *grafana_json
 	return
 }
 
-func (handler *Handler) Annotations(annotation string, args *grafana_json.AnnotationRequestArgs) (annotations []grafana_json.Annotation, err error) {
+func (handler *Handler) Annotations(name, query string, args *grafana_json.AnnotationRequestArgs) (annotations []grafana_json.Annotation, err error) {
 	log.WithFields(log.Fields{
-		"annotation": annotation,
-		"endTime":    args.Range.To,
+		"name":    name,
+		"query":   query,
+		"endTime": args.Range.To,
 	}).Info("annotations")
 
 	responseChannel := make(vaccines.ResponseChannel)

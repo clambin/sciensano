@@ -29,7 +29,7 @@ var realTargets = map[string]bool{
 
 func TestAPIHandler_Search(t *testing.T) {
 	apiHandler, _ := apihandler.Create()
-	targets := apiHandler.Search()
+	targets := apiHandler.Endpoints().Search()
 
 	for _, target := range targets {
 		_, ok := realTargets[target]
@@ -59,7 +59,7 @@ func TestAPIHandler_TableQuery(t *testing.T) {
 	var err error
 
 	// Tests
-	if response, err = apiHandler.TableQuery("tests", request); assert.Nil(t, err) {
+	if response, err = apiHandler.Endpoints().TableQuery("tests", request); assert.Nil(t, err) {
 		for _, column := range response.Columns {
 			switch data := column.Data.(type) {
 			case grafana_json.TableQueryResponseTimeColumn:
@@ -81,7 +81,7 @@ func TestAPIHandler_TableQuery(t *testing.T) {
 	}
 
 	// Vaccinations
-	if response, err = apiHandler.TableQuery("vaccinations", request); assert.Nil(t, err) {
+	if response, err = apiHandler.Endpoints().TableQuery("vaccinations", request); assert.Nil(t, err) {
 		for _, column := range response.Columns {
 			switch data := column.Data.(type) {
 			case grafana_json.TableQueryResponseTimeColumn:
@@ -101,7 +101,7 @@ func TestAPIHandler_TableQuery(t *testing.T) {
 	}
 
 	// Vaccinations grouped by Age
-	if response, err = apiHandler.TableQuery("vacc-age-full", request); assert.Nil(t, err) {
+	if response, err = apiHandler.Endpoints().TableQuery("vacc-age-full", request); assert.Nil(t, err) {
 		for _, column := range response.Columns {
 			switch data := column.Data.(type) {
 			case grafana_json.TableQueryResponseTimeColumn:
@@ -121,7 +121,7 @@ func TestAPIHandler_TableQuery(t *testing.T) {
 	}
 
 	// Vaccination rate grouped by Age
-	if response, err = apiHandler.TableQuery("vacc-age-rate-full", request); assert.Nil(t, err) {
+	if response, err = apiHandler.Endpoints().TableQuery("vacc-age-rate-full", request); assert.Nil(t, err) {
 		for _, column := range response.Columns {
 			switch data := column.Data.(type) {
 			case grafana_json.TableQueryResponseTimeColumn:
@@ -141,7 +141,7 @@ func TestAPIHandler_TableQuery(t *testing.T) {
 	}
 
 	// Vaccinations grouped by Region
-	if response, err = apiHandler.TableQuery("vacc-region-full", request); assert.Nil(t, err) {
+	if response, err = apiHandler.Endpoints().TableQuery("vacc-region-full", request); assert.Nil(t, err) {
 		for _, column := range response.Columns {
 			switch data := column.Data.(type) {
 			case grafana_json.TableQueryResponseTimeColumn:
@@ -161,7 +161,7 @@ func TestAPIHandler_TableQuery(t *testing.T) {
 	}
 
 	// Vaccination rate grouped by Region
-	if response, err = apiHandler.TableQuery("vacc-region-rate-full", request); assert.Nil(t, err) {
+	if response, err = apiHandler.Endpoints().TableQuery("vacc-region-rate-full", request); assert.Nil(t, err) {
 		for _, column := range response.Columns {
 			switch data := column.Data.(type) {
 			case grafana_json.TableQueryResponseTimeColumn:
@@ -181,7 +181,7 @@ func TestAPIHandler_TableQuery(t *testing.T) {
 	}
 
 	// Lag
-	if response, err = apiHandler.TableQuery("vaccination-lag", request); assert.Nil(t, err) {
+	if response, err = apiHandler.Endpoints().TableQuery("vaccination-lag", request); assert.Nil(t, err) {
 		for _, column := range response.Columns {
 			switch data := column.Data.(type) {
 			case grafana_json.TableQueryResponseTimeColumn:
@@ -223,9 +223,12 @@ func BenchmarkHandler_QueryTable(b *testing.B) {
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
-		for j := 0; j < 100; j++ {
+		for j := 0; j < 1000; j++ {
 			for target := range realTargets {
-				_, _ = handler.TableQuery(target, request)
+				if target == "vaccines" {
+					continue
+				}
+				_, _ = handler.Endpoints().TableQuery(target, request)
 			}
 		}
 		wg.Done()
@@ -270,7 +273,7 @@ func TestHandler_Annotations(t *testing.T) {
 		},
 	}
 
-	annotations, err := handler.Annotations("foo", &args)
+	annotations, err := handler.Endpoints().Annotations("foo", "bar", &args)
 	assert.Nil(t, err)
 	assert.Greater(t, len(annotations), 0)
 }
