@@ -5,7 +5,7 @@ import (
 	"github.com/clambin/gotools/httpstub"
 	"github.com/clambin/sciensano/internal/vaccines"
 	"github.com/stretchr/testify/assert"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"testing"
 )
@@ -48,7 +48,7 @@ func server(req *http.Request) (resp *http.Response) {
 	if req.URL.Path == "/api/v1/delivered.json" {
 		resp = &http.Response{
 			StatusCode: http.StatusOK,
-			Body:       ioutil.NopCloser(bytes.NewBufferString(vaccinesResponse)),
+			Body:       io.NopCloser(bytes.NewBufferString(vaccinesResponse)),
 		}
 	} else {
 		resp = &http.Response{

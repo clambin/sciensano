@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	log "github.com/sirupsen/logrus"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"sort"
 	"time"
@@ -74,7 +74,7 @@ func (handler *Handler) getBatches() (batches []Batch, err error) {
 			if resp.StatusCode == 200 {
 				var body []byte
 
-				if body, err = ioutil.ReadAll(resp.Body); err == nil {
+				if body, err = io.ReadAll(resp.Body); err == nil {
 					if err = json.Unmarshal(body, &stats); err == nil {
 						batches = stats.Result.Delivered
 					} else {

@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	log "github.com/sirupsen/logrus"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"sort"
 	"time"
@@ -73,7 +73,7 @@ func (client *Client) getVaccinations() (result []apiVaccinationsResponse, err e
 			if resp.StatusCode == 200 {
 				var body []byte
 
-				if body, err = ioutil.ReadAll(resp.Body); err == nil {
+				if body, err = io.ReadAll(resp.Body); err == nil {
 					if err = json.Unmarshal(body, &stats); err == nil {
 						client.vaccinationsCache = stats
 						client.vaccinationsCacheExpiry = time.Now().Add(client.CacheDuration)
