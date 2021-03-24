@@ -105,7 +105,7 @@ func filterByRegion(apiResult []apiVaccinationsResponse, region string) (output 
 	return
 }
 
-func groupVaccinations(apiResult []apiVaccinationsResponse, end time.Time) (totals Vaccinations) {
+func groupVaccinations(apiResult []apiVaccinationsResponse, end time.Time) (totals []Vaccination) {
 	// Store the totals in a map
 	accumTotal := make(map[time.Time]Vaccination)
 	for _, entry := range apiResult {
@@ -129,10 +129,7 @@ func groupVaccinations(apiResult []apiVaccinationsResponse, end time.Time) (tota
 			}
 			accumTotal[ts] = current
 		} else {
-			log.WithFields(log.Fields{
-				"err":       err2,
-				"timestamp": entry.TimeStamp,
-			}).Warning("could not parse timestamp from API. skipping entry")
+			log.WithFields(log.Fields{"err": err2, "timestamp": entry.TimeStamp}).Warning("could not parse timestamp from API. skipping entry")
 		}
 	}
 	// For each entry in the map, create an entry in the results slice
@@ -140,7 +137,7 @@ func groupVaccinations(apiResult []apiVaccinationsResponse, end time.Time) (tota
 		totals = append(totals, entry)
 	}
 	// Maps are iterated in random order. Sort the final slice
-	sort.Sort(totals)
+	sort.Slice(totals, func(i, j int) bool { return totals[i].Timestamp.Before(totals[j].Timestamp) })
 
 	return
 }
@@ -149,7 +146,7 @@ func AccumulateVaccinations(entries []Vaccination) (totals []Vaccination) {
 	first := 0
 	second := 0
 
-	totals = make(Vaccinations, len(entries))
+	totals = make([]Vaccination, len(entries))
 	for index, entry := range entries {
 		first += entry.FirstDose
 		second += entry.SecondDose
@@ -160,21 +157,6 @@ func AccumulateVaccinations(entries []Vaccination) (totals []Vaccination) {
 		}
 	}
 	return
-}
-
-// helper functions for sort.Sort(Vaccinations)
-type Vaccinations []Vaccination
-
-func (p Vaccinations) Len() int {
-	return len(p)
-}
-
-func (p Vaccinations) Less(i, j int) bool {
-	return p[i].Timestamp.Before(p[j].Timestamp)
-}
-
-func (p Vaccinations) Swap(i, j int) {
-	p[i], p[j] = p[j], p[i]
 }
 
 func getAgeGroups(results []apiVaccinationsResponse) (ageGroups []string) {
