@@ -6,3 +6,17 @@
 ![GitHub](https://img.shields.io/github/license/clambin/sciensano?style=plastic)
 
 Grafana SimpleJson API server for BE Sciensano Covid19 data
+
+
+![screenshot](assets/screenshots/screenshot.png?raw=true)
+
+
+## Source code
+
+- https://github.com/clambin/sciensano
+
+## Data sources
+
+- https://epistat.wiv-isp.be/covid
+- https://covid-vaccinatie.be
+
