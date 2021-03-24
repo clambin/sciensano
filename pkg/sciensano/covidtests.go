@@ -58,7 +58,7 @@ func (client *Client) getTests() (response []apiTestResponse, err error) {
 	return client.testCache, err
 }
 
-func groupTests(apiResult []apiTestResponse, end time.Time) (results Tests) {
+func groupTests(apiResult []apiTestResponse, end time.Time) (results []Test) {
 	// Store the totals in a map
 	totals := make(map[time.Time]Test, 0)
 	for _, entry := range apiResult {
@@ -77,10 +77,7 @@ func groupTests(apiResult []apiTestResponse, end time.Time) (results Tests) {
 			current.Positive += entry.Positive
 			totals[ts] = current
 		} else {
-			log.WithFields(log.Fields{
-				"err":       err2,
-				"timestamp": entry.TimeStamp,
-			}).Warning("could not parse timestamp from API. skipping entry")
+			log.WithFields(log.Fields{"err": err2, "timestamp": entry.TimeStamp}).Warning("could not parse timestamp from API. skipping entry")
 		}
 	}
 	// For each entry in the map, create an entry in the results slice
@@ -88,22 +85,7 @@ func groupTests(apiResult []apiTestResponse, end time.Time) (results Tests) {
 		results = append(results, entry)
 	}
 	// Maps are iterated in random order. Sort the final slice
-	sort.Sort(results)
+	sort.Slice(results, func(i, j int) bool { return results[i].Timestamp.Before(results[j].Timestamp) })
 
 	return
-}
-
-// helper functions for sort.Sort([]Test)
-type Tests []Test
-
-func (p Tests) Len() int {
-	return len(p)
-}
-
-func (p Tests) Less(i, j int) bool {
-	return p[i].Timestamp.Before(p[j].Timestamp)
-}
-
-func (p Tests) Swap(i, j int) {
-	p[i], p[j] = p[j], p[i]
 }
