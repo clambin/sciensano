@@ -85,7 +85,7 @@ func (handler *Handler) TableQuery(target string, args *grafana_json.TableQueryA
 
 	case "vacc-region-partial", "vacc-region-full", "vacc-region-rate-partial", "vacc-region-rate-full":
 		var stats map[string][]sciensano.Vaccination
-		if stats, err = handler.Sciensano.GetVaccinationsByAge(args.Range.To); err == nil {
+		if stats, err = handler.Sciensano.GetVaccinationsByRegion(args.Range.To); err == nil {
 			for region, data := range stats {
 				stats[region] = sciensano.AccumulateVaccinations(data)
 			}
