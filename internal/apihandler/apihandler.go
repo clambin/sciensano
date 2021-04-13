@@ -3,11 +3,11 @@ package apihandler
 import (
 	"fmt"
 	"github.com/clambin/grafana-json"
-	"github.com/clambin/sciensano/internal/cache"
 	"github.com/clambin/sciensano/internal/demographics"
 	"github.com/clambin/sciensano/internal/vaccines"
 	"github.com/clambin/sciensano/pkg/sciensano"
 	log "github.com/sirupsen/logrus"
+	"net/http"
 	"sort"
 	"strconv"
 	"strings"
@@ -16,23 +16,20 @@ import (
 
 // Handler implements a Grafana SimpleJson API Handler that gets BE covid stats
 type Handler struct {
-	Cache    *cache.Cache
-	Vaccines *vaccines.Handler
+	Sciensano sciensano.API
+	Vaccines  *vaccines.Server
 
 	lastDate map[string]time.Time
 }
 
 // Create a Handler
-// TODO: this is a bit clunky. needs a better interface in grafana-json
 func Create() (*Handler, error) {
-	c := cache.New(15 * time.Minute)
-	go c.Run()
-
-	v := vaccines.Create()
-
 	handler := Handler{
-		Cache:    c,
-		Vaccines: v,
+		Sciensano: &sciensano.Client{
+			HTTPClient:    http.Client{Timeout: 20 * time.Second},
+			CacheDuration: 15 * time.Minute,
+		},
+		Vaccines: vaccines.New(),
 	}
 
 	return &handler, nil
@@ -62,73 +59,55 @@ func (handler *Handler) Search() []string {
 func (handler *Handler) TableQuery(target string, args *grafana_json.TableQueryArgs) (response *grafana_json.TableQueryResponse, err error) {
 	switch target {
 	case "tests":
-		req := cache.TestsRequest{
-			EndTime:  args.Range.To,
-			Response: make(chan []sciensano.Test),
+		var stats []sciensano.Test
+		if stats, err = handler.Sciensano.GetTests(args.Range.To); err == nil {
+			response = buildTestTableResponse(stats)
 		}
-		handler.Cache.Tests <- req
-		testStats := <-req.Response
-		response = buildTestTableResponse(testStats)
+
 	case "vaccinations":
-		req := cache.VaccinationsRequest{
-			EndTime:  args.Range.To,
-			Response: make(chan []sciensano.Vaccination),
+		var stats []sciensano.Vaccination
+		if stats, err = handler.Sciensano.GetVaccinations(args.Range.To); err == nil {
+			stats = sciensano.AccumulateVaccinations(stats)
+			response = buildVaccinationTableResponse(stats)
 		}
-		handler.Cache.Vaccinations <- req
-		vaccineStats := <-req.Response
-		vaccineStats = sciensano.AccumulateVaccinations(vaccineStats)
-		response = buildVaccinationTableResponse(vaccineStats)
 
 	case "vacc-age-partial", "vacc-age-full", "vacc-age-rate-partial", "vacc-age-rate-full":
-		req := cache.VaccinationsRequest{
-			EndTime:         args.Range.To,
-			Filter:          "AgeGroup",
-			GroupedResponse: make(chan map[string][]sciensano.Vaccination),
-		}
-		handler.Cache.Vaccinations <- req
-		vaccineStats := <-req.GroupedResponse
-		for ageGroup, data := range vaccineStats {
-			vaccineStats[ageGroup] = sciensano.AccumulateVaccinations(data)
-		}
-		response = buildGroupedVaccinationTableResponse(vaccineStats, target)
-
-		if strings.HasPrefix(target, "vacc-age-rate-") {
-			prorateFigures(response, demographics.GetAgeGroupFigures())
+		var stats map[string][]sciensano.Vaccination
+		if stats, err = handler.Sciensano.GetVaccinationsByAge(args.Range.To); err == nil {
+			for ageGroup, data := range stats {
+				stats[ageGroup] = sciensano.AccumulateVaccinations(data)
+			}
+			response = buildGroupedVaccinationTableResponse(stats, target)
+			if strings.HasPrefix(target, "vacc-age-rate-") {
+				prorateFigures(response, demographics.GetAgeGroupFigures())
+			}
 		}
 
 	case "vacc-region-partial", "vacc-region-full", "vacc-region-rate-partial", "vacc-region-rate-full":
-		req := cache.VaccinationsRequest{
-			EndTime:         args.Range.To,
-			Filter:          "Region",
-			GroupedResponse: make(chan map[string][]sciensano.Vaccination),
-		}
-		handler.Cache.Vaccinations <- req
-		vaccineStats := <-req.GroupedResponse
-		for region, data := range vaccineStats {
-			vaccineStats[region] = sciensano.AccumulateVaccinations(data)
-		}
-		response = buildGroupedVaccinationTableResponse(vaccineStats, target)
+		var stats map[string][]sciensano.Vaccination
+		if stats, err = handler.Sciensano.GetVaccinationsByAge(args.Range.To); err == nil {
+			for region, data := range stats {
+				stats[region] = sciensano.AccumulateVaccinations(data)
+			}
+			response = buildGroupedVaccinationTableResponse(stats, target)
 
-		if strings.HasPrefix(target, "vacc-region-rate-") {
-			prorateFigures(response, demographics.GetRegionFigures())
+			if strings.HasPrefix(target, "vacc-region-rate-") {
+				prorateFigures(response, demographics.GetRegionFigures())
+			}
 		}
 
 	case "vaccination-lag":
-		req := cache.VaccinationsRequest{
-			EndTime:  args.Range.To,
-			Response: make(chan []sciensano.Vaccination),
+		var stats []sciensano.Vaccination
+		if stats, err = handler.Sciensano.GetVaccinations(args.Range.To); err == nil {
+			stats = sciensano.AccumulateVaccinations(stats)
+			response = buildVaccinationLagTableResponse(stats)
 		}
-		handler.Cache.Vaccinations <- req
-		vaccineStats := <-req.Response
-		vaccineStats = sciensano.AccumulateVaccinations(vaccineStats)
-		response = buildVaccinationLagTableResponse(vaccineStats)
 
 	case "vaccines":
-		responseChannel := make(vaccines.ResponseChannel)
-		handler.Vaccines.Request <- responseChannel
-		batches := <-responseChannel
-		batches = vaccines.AccumulateBatches(batches)
-		response = buildVaccineTableResponse(batches)
+		if batches, err := handler.Vaccines.GetBatches(); err == nil {
+			batches = vaccines.AccumulateBatches(batches)
+			response = buildVaccineTableResponse(batches)
+		}
 
 	default:
 		err = fmt.Errorf("unknown target '%s'", target)
@@ -344,16 +323,15 @@ func (handler *Handler) Annotations(name, query string, args *grafana_json.Annot
 		"endTime": args.Range.To,
 	}).Info("annotations")
 
-	responseChannel := make(vaccines.ResponseChannel)
-	handler.Vaccines.Request <- responseChannel
-
-	batches := <-responseChannel
-	for _, batch := range batches {
-		annotations = append(annotations, grafana_json.Annotation{
-			Time:  time.Time(batch.Date),
-			Title: batch.Manufacturer,
-			Text:  "Amount: " + strconv.FormatInt(batch.Amount, 10),
-		})
+	var batches []vaccines.Batch
+	if batches, err = handler.Vaccines.GetBatches(); err == nil {
+		for _, batch := range batches {
+			annotations = append(annotations, grafana_json.Annotation{
+				Time:  time.Time(batch.Date),
+				Title: batch.Manufacturer,
+				Text:  "Amount: " + strconv.FormatInt(batch.Amount, 10),
+			})
+		}
 	}
 	return
 }

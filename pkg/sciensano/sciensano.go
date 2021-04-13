@@ -2,6 +2,7 @@ package sciensano
 
 import (
 	"net/http"
+	"sync"
 	"time"
 )
 
@@ -14,6 +15,7 @@ type Client struct {
 	testCache               []apiTestResponse
 	vaccinationsCacheExpiry time.Time
 	vaccinationsCache       []apiVaccinationsResponse
+	lock                    sync.Mutex
 }
 
 const baseURL = "https://epistat.sciensano.be/Data/"

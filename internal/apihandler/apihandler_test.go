@@ -3,7 +3,7 @@ package apihandler_test
 import (
 	"github.com/clambin/grafana-json"
 	"github.com/clambin/sciensano/internal/apihandler"
-	"github.com/clambin/sciensano/internal/cache"
+	"github.com/clambin/sciensano/internal/vaccines/mock"
 	"github.com/clambin/sciensano/pkg/sciensano"
 	"github.com/clambin/sciensano/pkg/sciensano/mockapi"
 	"github.com/stretchr/testify/assert"
@@ -46,7 +46,9 @@ func TestAPIHandler_Search(t *testing.T) {
 
 func TestAPIHandler_TableQuery(t *testing.T) {
 	apiHandler, _ := apihandler.Create()
-	apiHandler.Cache.API = &mockapi.API{Tests: mockapi.DefaultTests, Vaccinations: mockapi.DefaultVaccinations}
+
+	apiHandler.Sciensano = &mockapi.API{Tests: mockapi.DefaultTests, Vaccinations: mockapi.DefaultVaccinations}
+	apiHandler.Vaccines.HTTPClient = mock.GetServer()
 
 	endDate := time.Date(2021, 01, 06, 0, 0, 0, 0, time.UTC)
 	request := &grafana_json.TableQueryArgs{
@@ -200,6 +202,29 @@ func TestAPIHandler_TableQuery(t *testing.T) {
 		}
 	}
 
+	// Vaccines
+	if response, err = apiHandler.Endpoints().TableQuery("vaccines", request); assert.Nil(t, err) {
+		for _, column := range response.Columns {
+			switch data := column.Data.(type) {
+			case grafana_json.TableQueryResponseTimeColumn:
+				assert.Equal(t, "timestamp", column.Text)
+				if assert.NotZero(t, len(data)) {
+					lastDate := data[len(data)-1]
+					assert.Equal(t, 2021, lastDate.Year())
+					assert.Equal(t, time.Month(3), lastDate.Month())
+					assert.Equal(t, 18, lastDate.Day())
+				}
+			case grafana_json.TableQueryResponseNumberColumn:
+				switch column.Text {
+				case "vaccines":
+					if assert.NotZero(t, len(data)) {
+						assert.Equal(t, 600.0, data[len(data)-1])
+					}
+				}
+			}
+		}
+	}
+
 	// Unknown target should return an error
 	_, err = apiHandler.TableQuery("invalid", request)
 	assert.NotNil(t, err)
@@ -207,33 +232,34 @@ func TestAPIHandler_TableQuery(t *testing.T) {
 }
 
 func BenchmarkHandler_QueryTable(b *testing.B) {
-	handler := apihandler.Handler{Cache: cache.New(0 * time.Minute)}
-	handler.Cache.API = &mockapi.API{Tests: buildTestTable(720), Vaccinations: buildVaccinationTable(720)}
-	go handler.Cache.Run()
+	handler, err := apihandler.Create()
 
-	endDate := time.Date(2021, 01, 06, 0, 0, 0, 0, time.UTC)
-	request := &grafana_json.TableQueryArgs{
-		CommonQueryArgs: grafana_json.CommonQueryArgs{
-			Range: grafana_json.QueryRequestRange{
-				To: endDate,
+	if assert.Nil(b, err) {
+		handler.Sciensano = &mockapi.API{Tests: buildTestTable(720), Vaccinations: buildVaccinationTable(720)}
+
+		endDate := time.Date(2021, 01, 06, 0, 0, 0, 0, time.UTC)
+		request := &grafana_json.TableQueryArgs{
+			CommonQueryArgs: grafana_json.CommonQueryArgs{
+				Range: grafana_json.QueryRequestRange{
+					To: endDate,
+				},
 			},
-		},
-	}
+		}
 
-	var wg sync.WaitGroup
-	wg.Add(1)
-	go func() {
-		for j := 0; j < 1000; j++ {
+		b.ResetTimer()
+		var wg sync.WaitGroup
+		wg.Add(1)
+		go func() {
 			for target := range realTargets {
 				if target == "vaccines" {
 					continue
 				}
 				_, _ = handler.Endpoints().TableQuery(target, request)
 			}
-		}
-		wg.Done()
-	}()
-	wg.Wait()
+			wg.Done()
+		}()
+		wg.Wait()
+	}
 }
 
 func buildTestTable(size int) (table []sciensano.Test) {

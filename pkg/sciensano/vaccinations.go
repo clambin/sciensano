@@ -64,6 +64,9 @@ type apiVaccinationsResponse struct {
 }
 
 func (client *Client) getVaccinations() (result []apiVaccinationsResponse, err error) {
+	client.lock.Lock()
+	defer client.lock.Unlock()
+
 	if client.vaccinationsCache == nil || time.Now().After(client.vaccinationsCacheExpiry) {
 		var resp *http.Response
 		var stats []apiVaccinationsResponse

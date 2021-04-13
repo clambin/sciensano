@@ -7,19 +7,17 @@ import (
 	"io"
 	"net/http"
 	"sort"
+	"sync"
 	"time"
 )
 
-type Handler struct {
-	CacheTime time.Duration
-	Request   chan ResponseChannel
-
-	HTTPClient *http.Client
-	cache      []Batch
-	expiry     time.Time
+type Server struct {
+	HTTPClient    *http.Client
+	cacheDuration time.Duration
+	cache         []Batch
+	expiry        time.Time
+	lock          sync.Mutex
 }
-
-type ResponseChannel chan []Batch
 
 type Batch struct {
 	Date         Time
@@ -27,31 +25,19 @@ type Batch struct {
 	Amount       int64
 }
 
-func Create() (handler *Handler) {
-	handler = &Handler{
-		CacheTime:  6 * time.Hour,
-		Request:    make(chan ResponseChannel),
-		HTTPClient: &http.Client{},
+func New() (server *Server) {
+	server = &Server{
+		HTTPClient:    &http.Client{},
+		cacheDuration: 6 * time.Hour,
 	}
-	go handler.Run()
 	return
 }
 
-func (handler *Handler) Run() {
-	for {
-		select {
-		case channel := <-handler.Request:
-			// TODO: is this a race condition? does channel get its own copy of the batches?
-			batches, _ := handler.getBatches()
-			channel <- batches
-		}
-	}
-}
+func (server *Server) GetBatches() (batches []Batch, err error) {
+	server.lock.Lock()
+	defer server.lock.Unlock()
 
-type apiResult struct {
-	Result struct {
-		Delivered []Batch `json:"delivered"`
-	} `json:"result"`
+	return server.getBatches()
 }
 
 type Time time.Time
@@ -64,12 +50,16 @@ func (date *Time) UnmarshalJSON(b []byte) (err error) {
 	return
 }
 
-func (handler *Handler) getBatches() (batches []Batch, err error) {
-	if handler.cache == nil || time.Now().After(handler.expiry) {
+func (server *Server) getBatches() (batches []Batch, err error) {
+	if server.cache == nil || time.Now().After(server.expiry) {
 		var resp *http.Response
-		var stats apiResult
+		var stats struct {
+			Result struct {
+				Delivered []Batch `json:"delivered"`
+			} `json:"result"`
+		}
 
-		if resp, err = handler.HTTPClient.Get("https://covid-vaccinatie.be/api/v1/delivered.json"); err == nil {
+		if resp, err = server.HTTPClient.Get("https://covid-vaccinatie.be/api/v1/delivered.json"); err == nil {
 			defer resp.Body.Close()
 			if resp.StatusCode == 200 {
 				var body []byte
@@ -88,12 +78,11 @@ func (handler *Handler) getBatches() (batches []Batch, err error) {
 
 		if err == nil {
 			sort.Slice(batches, func(i, j int) bool { return time.Time(batches[i].Date).Before(time.Time(batches[j].Date)) })
-			handler.cache = batches
-			handler.expiry = time.Now().Add(handler.CacheTime)
+			server.cache = batches
+			server.expiry = time.Now().Add(server.cacheDuration)
 		}
-
 	}
-	batches = handler.cache
+	batches = server.cache
 	return
 }
 

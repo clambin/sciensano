@@ -35,6 +35,9 @@ type apiTestResponse struct {
 }
 
 func (client *Client) getTests() (response []apiTestResponse, err error) {
+	client.lock.Lock()
+	defer client.lock.Unlock()
+
 	if client.testCache == nil || time.Now().After(client.testCacheExpiry) {
 		var resp *http.Response
 		var stats []apiTestResponse
