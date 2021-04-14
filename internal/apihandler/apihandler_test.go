@@ -25,6 +25,7 @@ var realTargets = map[string]bool{
 	"vacc-region-rate-full":    false,
 	"vaccination-lag":          false,
 	"vaccines":                 false,
+	"vaccines-reserve":         false,
 }
 
 func TestAPIHandler_Search(t *testing.T) {
@@ -211,8 +212,8 @@ func TestAPIHandler_TableQuery(t *testing.T) {
 				if assert.NotZero(t, len(data)) {
 					lastDate := data[len(data)-1]
 					assert.Equal(t, 2021, lastDate.Year())
-					assert.Equal(t, time.Month(3), lastDate.Month())
-					assert.Equal(t, 18, lastDate.Day())
+					assert.Equal(t, time.Month(1), lastDate.Month())
+					assert.Equal(t, 3, lastDate.Day())
 				}
 			case grafana_json.TableQueryResponseNumberColumn:
 				switch column.Text {
@@ -222,6 +223,30 @@ func TestAPIHandler_TableQuery(t *testing.T) {
 					}
 				}
 			}
+		}
+
+		// Reserve
+		if response, err = apiHandler.Endpoints().TableQuery("vaccines-reserve", request); assert.Nil(t, err) {
+			for _, column := range response.Columns {
+				switch data := column.Data.(type) {
+				case grafana_json.TableQueryResponseTimeColumn:
+					assert.Equal(t, "timestamp", column.Text)
+					if assert.NotZero(t, len(data)) {
+						lastDate := data[len(data)-1]
+						assert.Equal(t, 2021, lastDate.Year())
+						assert.Equal(t, time.Month(1), lastDate.Month())
+						assert.Equal(t, 6, lastDate.Day())
+					}
+				case grafana_json.TableQueryResponseNumberColumn:
+					switch column.Text {
+					case "reserve":
+						if assert.NotZero(t, len(data)) {
+							assert.Equal(t, 575.0, data[len(data)-1])
+						}
+					}
+				}
+			}
+
 		}
 	}
 

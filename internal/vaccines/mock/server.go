@@ -10,9 +10,9 @@ import (
 const vaccinesResponse = `{
 	"result":{
 		"delivered":[
-			{"date":"2021-03-18","amount":100,"manufacturer":"C"},
-			{"date":"2021-03-15","amount":200,"manufacturer":"B"},
-			{"date":"2021-03-12","amount":300,"manufacturer":"A"}
+			{"date":"2021-01-03","amount":100,"manufacturer":"C"},
+			{"date":"2021-01-02","amount":200,"manufacturer":"B"},
+			{"date":"2021-01-01","amount":300,"manufacturer":"A"}
 		]
 	}
 }`

@@ -53,6 +53,7 @@ func (handler *Handler) Search() []string {
 		"vacc-region-partial", "vacc-region-full", "vacc-region-rate-partial", "vacc-region-rate-full",
 		"vaccination-lag",
 		"vaccines",
+		"vaccines-reserve",
 	}
 }
 
@@ -104,9 +105,22 @@ func (handler *Handler) TableQuery(target string, args *grafana_json.TableQueryA
 		}
 
 	case "vaccines":
-		if batches, err := handler.Vaccines.GetBatches(); err == nil {
+		var batches []vaccines.Batch
+		if batches, err = handler.Vaccines.GetBatches(); err == nil {
 			batches = vaccines.AccumulateBatches(batches)
 			response = buildVaccineTableResponse(batches)
+		}
+
+	case "vaccines-reserve":
+		var batches []vaccines.Batch
+		var stats []sciensano.Vaccination
+		if batches, err = handler.Vaccines.GetBatches(); err == nil {
+			batches = vaccines.AccumulateBatches(batches)
+			if stats, err = handler.Sciensano.GetVaccinations(args.Range.To); err == nil {
+				stats = sciensano.AccumulateVaccinations(stats)
+
+				response = buildVaccineReserveTableResponse(batches, stats)
+			}
 		}
 
 	default:
@@ -311,6 +325,34 @@ func buildVaccineTableResponse(batches []vaccines.Batch) (response *grafana_json
 	response.Columns = []grafana_json.TableQueryResponseColumn{
 		{Text: "timestamp", Data: timestampColumn},
 		{Text: "vaccines", Data: batchColumn},
+	}
+	return
+}
+
+func buildVaccineReserveTableResponse(batches []vaccines.Batch, vaccinations []sciensano.Vaccination) (response *grafana_json.TableQueryResponse) {
+	rows := len(vaccinations)
+	timestampColumn := make(grafana_json.TableQueryResponseTimeColumn, rows)
+	reserveColumn := make(grafana_json.TableQueryResponseNumberColumn, rows)
+
+	batchIndex := 0
+	lastBatch := 0
+
+	for index, entry := range vaccinations {
+		timestampColumn[index] = entry.Timestamp
+
+		for batchIndex < len(batches) &&
+			time.Time(batches[batchIndex].Date).Before(entry.Timestamp) {
+			lastBatch = int(batches[batchIndex].Amount)
+			batchIndex++
+		}
+
+		reserveColumn[index] = float64(lastBatch - entry.SecondDose - entry.FirstDose)
+	}
+
+	response = new(grafana_json.TableQueryResponse)
+	response.Columns = []grafana_json.TableQueryResponseColumn{
+		{Text: "timestamp", Data: timestampColumn},
+		{Text: "reserve", Data: reserveColumn},
 	}
 	return
 }
