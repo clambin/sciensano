@@ -341,7 +341,7 @@ func buildVaccineReserveTableResponse(batches []vaccines.Batch, vaccinations []s
 		timestampColumn[index] = entry.Timestamp
 
 		for batchIndex < len(batches) &&
-			time.Time(batches[batchIndex].Date).Before(entry.Timestamp) {
+			!time.Time(batches[batchIndex].Date).After(entry.Timestamp) {
 			lastBatch = int(batches[batchIndex].Amount)
 			batchIndex++
 		}
