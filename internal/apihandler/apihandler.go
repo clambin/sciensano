@@ -26,7 +26,7 @@ type Handler struct {
 func Create() (*Handler, error) {
 	handler := Handler{
 		Sciensano: &sciensano.Client{
-			HTTPClient:    http.Client{Timeout: 20 * time.Second},
+			HTTPClient:    &http.Client{Timeout: 20 * time.Second},
 			CacheDuration: 15 * time.Minute,
 		},
 		Vaccines: vaccines.New(),
@@ -334,7 +334,7 @@ func (handler *Handler) buildVaccineReserveTableResponse(endTime time.Time) (res
 
 			for batchIndex < len(batches) &&
 				!time.Time(batches[batchIndex].Date).After(entry.Timestamp) {
-				lastBatch = int(batches[batchIndex].Amount)
+				lastBatch = batches[batchIndex].Amount
 				batchIndex++
 			}
 

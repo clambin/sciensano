@@ -9,7 +9,7 @@ import (
 )
 
 func TestGetTests(t *testing.T) {
-	client := sciensano.Client{CacheDuration: 1 * time.Hour, HTTPClient: *httpstub.NewTestClient(server)}
+	client := sciensano.Client{CacheDuration: 1 * time.Hour, HTTPClient: httpstub.NewTestClient(server)}
 	firstDay := time.Date(2021, 03, 10, 0, 0, 0, 0, time.UTC)
 	result, err := client.GetTests(firstDay)
 

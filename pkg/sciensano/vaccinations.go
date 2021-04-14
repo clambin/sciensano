@@ -31,9 +31,18 @@ func (client *Client) GetVaccinationsByAge(end time.Time) (results map[string][]
 
 	if apiResult, err = client.getVaccinations(); err == nil {
 		results = make(map[string][]Vaccination)
-		for _, ageGroup := range getAgeGroups(apiResult) {
-			result := filterByAgeGroup(apiResult, ageGroup)
-			results[ageGroup] = groupVaccinations(result, end)
+		ageGroups := getAgeGroups(apiResult)
+		responses := make(map[string]chan []Vaccination)
+
+		for _, ageGroup := range ageGroups {
+			responses[ageGroup] = make(chan []Vaccination)
+			go func(ageGroup string, response chan []Vaccination) {
+				result := filterByAgeGroup(apiResult, ageGroup)
+				response <- groupVaccinations(result, end)
+			}(ageGroup, responses[ageGroup])
+		}
+		for _, ageGroup := range ageGroups {
+			results[ageGroup] = <-responses[ageGroup]
 		}
 	}
 
@@ -45,9 +54,18 @@ func (client *Client) GetVaccinationsByRegion(end time.Time) (results map[string
 
 	if apiResult, err = client.getVaccinations(); err == nil {
 		results = make(map[string][]Vaccination)
-		for _, region := range getRegions(apiResult) {
-			result := filterByRegion(apiResult, region)
-			results[region] = groupVaccinations(result, end)
+		regions := getRegions(apiResult)
+		responses := make(map[string]chan []Vaccination)
+
+		for _, region := range regions {
+			responses[region] = make(chan []Vaccination)
+			go func(region string, response chan []Vaccination) {
+				result := filterByRegion(apiResult, region)
+				response <- groupVaccinations(result, end)
+			}(region, responses[region])
+		}
+		for _, region := range regions {
+			results[region] = <-responses[region]
 		}
 	}
 

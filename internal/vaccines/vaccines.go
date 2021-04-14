@@ -28,7 +28,7 @@ type Batch struct {
 func New() (server *Server) {
 	server = &Server{
 		HTTPClient:    &http.Client{},
-		cacheDuration: 6 * time.Hour,
+		cacheDuration: 1 * time.Hour,
 	}
 	return
 }
