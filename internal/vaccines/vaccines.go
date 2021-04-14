@@ -22,7 +22,7 @@ type Server struct {
 type Batch struct {
 	Date Time
 	// Manufacturer string
-	Amount int64
+	Amount int
 }
 
 func New() (server *Server) {
@@ -83,7 +83,7 @@ func (server *Server) GetBatches() (batches []Batch, err error) {
 }
 
 func AccumulateBatches(batches []Batch) (accumulated []Batch) {
-	var total int64
+	var total int
 	for _, batch := range batches {
 		total += batch.Amount
 		accumulated = append(accumulated, Batch{

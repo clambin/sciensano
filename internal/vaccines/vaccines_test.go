@@ -21,9 +21,9 @@ func TestVaccines(t *testing.T) {
 		accu := vaccines.AccumulateBatches(batches)
 
 		if assert.Len(t, accu, 3) {
-			assert.Equal(t, int64(300), accu[0].Amount)
-			assert.Equal(t, int64(500), accu[1].Amount)
-			assert.Equal(t, int64(600), accu[2].Amount)
+			assert.Equal(t, 300, accu[0].Amount)
+			assert.Equal(t, 500, accu[1].Amount)
+			assert.Equal(t, 600, accu[2].Amount)
 		}
 	}
 

@@ -363,7 +363,7 @@ func (handler *Handler) Annotations(name, query string, args *grafana_json.Annot
 			annotations = append(annotations, grafana_json.Annotation{
 				Time: time.Time(batch.Date),
 				// Title: batch.Manufacturer,
-				Text: "Amount: " + strconv.FormatInt(batch.Amount, 10),
+				Text: "Amount: " + strconv.Itoa(batch.Amount),
 			})
 		}
 	}
