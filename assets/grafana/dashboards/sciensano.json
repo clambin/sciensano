@@ -37,9 +37,7 @@
       "dashes": false,
       "datasource": "sciensano",
       "fieldConfig": {
-        "defaults": {
-          "custom": {}
-        },
+        "defaults": {},
         "overrides": []
       },
       "fill": 1,
@@ -68,7 +66,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "7.4.5",
+      "pluginVersion": "7.5.4",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -140,9 +138,7 @@
       "dashes": false,
       "datasource": "sciensano",
       "fieldConfig": {
-        "defaults": {
-          "custom": {}
-        },
+        "defaults": {},
         "overrides": []
       },
       "fill": 1,
@@ -171,7 +167,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "7.4.5",
+      "pluginVersion": "7.5.4",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -243,9 +239,7 @@
       "dashes": false,
       "datasource": "sciensano",
       "fieldConfig": {
-        "defaults": {
-          "custom": {}
-        },
+        "defaults": {},
         "overrides": []
       },
       "fill": 1,
@@ -274,7 +268,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "7.4.5",
+      "pluginVersion": "7.5.4",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -339,11 +333,9 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "json-test",
+      "datasource": "sciensano",
       "fieldConfig": {
-        "defaults": {
-          "custom": {}
-        },
+        "defaults": {},
         "overrides": []
       },
       "fill": 1,
@@ -372,7 +364,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "7.4.5",
+      "pluginVersion": "7.5.4",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -381,6 +373,14 @@
           "$$hashKey": "object:320",
           "alias": "vaccines",
           "stack": false,
+          "steppedLine": true,
+          "yaxis": 2
+        },
+        {
+          "$$hashKey": "object:114",
+          "alias": "reserve",
+          "stack": false,
+          "steppedLine": true,
           "yaxis": 2
         }
       ],
@@ -399,6 +399,12 @@
           "hide": false,
           "refId": "B",
           "target": "vaccines",
+          "type": "table"
+        },
+        {
+          "hide": false,
+          "refId": "C",
+          "target": "vaccines-reserve",
           "type": "table"
         }
       ],
@@ -465,9 +471,7 @@
       "dashes": false,
       "datasource": "sciensano",
       "fieldConfig": {
-        "defaults": {
-          "custom": {}
-        },
+        "defaults": {},
         "overrides": []
       },
       "fill": 1,
@@ -496,7 +500,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "7.4.5",
+      "pluginVersion": "7.5.4",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -568,9 +572,7 @@
       "dashes": false,
       "datasource": "sciensano",
       "fieldConfig": {
-        "defaults": {
-          "custom": {}
-        },
+        "defaults": {},
         "overrides": []
       },
       "fill": 1,
@@ -599,7 +601,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "7.4.5",
+      "pluginVersion": "7.5.4",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -672,7 +674,6 @@
       "datasource": "sciensano",
       "fieldConfig": {
         "defaults": {
-          "custom": {},
           "unit": "percentunit"
         },
         "overrides": []
@@ -703,7 +704,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "7.4.5",
+      "pluginVersion": "7.5.4",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -776,7 +777,6 @@
       "datasource": "sciensano",
       "fieldConfig": {
         "defaults": {
-          "custom": {},
           "unit": "percentunit"
         },
         "overrides": []
@@ -807,7 +807,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "7.4.5",
+      "pluginVersion": "7.5.4",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -879,7 +879,7 @@
           "color": {
             "mode": "thresholds"
           },
-          "custom": {},
+          "decimals": 1,
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -887,10 +887,6 @@
               {
                 "color": "green",
                 "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
               }
             ]
           },
@@ -918,7 +914,7 @@
         "showUnfilled": true,
         "text": {}
       },
-      "pluginVersion": "7.4.5",
+      "pluginVersion": "7.5.4",
       "targets": [
         {
           "hide": false,
@@ -945,7 +941,7 @@
           "color": {
             "mode": "thresholds"
           },
-          "custom": {},
+          "decimals": 1,
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -984,7 +980,7 @@
         "showUnfilled": true,
         "text": {}
       },
-      "pluginVersion": "7.4.5",
+      "pluginVersion": "7.5.4",
       "targets": [
         {
           "hide": false,
@@ -1024,7 +1020,6 @@
       "datasource": "sciensano",
       "fieldConfig": {
         "defaults": {
-          "custom": {},
           "unit": "short"
         },
         "overrides": []
@@ -1055,7 +1050,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "7.4.5",
+      "pluginVersion": "7.5.4",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -1122,7 +1117,6 @@
       "datasource": "sciensano",
       "fieldConfig": {
         "defaults": {
-          "custom": {},
           "unit": "short"
         },
         "overrides": []
@@ -1153,7 +1147,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "7.4.5",
+      "pluginVersion": "7.5.4",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -1220,7 +1214,6 @@
       "datasource": "sciensano",
       "fieldConfig": {
         "defaults": {
-          "custom": {},
           "unit": "percentunit"
         },
         "overrides": []
@@ -1251,7 +1244,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "7.4.5",
+      "pluginVersion": "7.5.4",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -1318,7 +1311,6 @@
       "datasource": "sciensano",
       "fieldConfig": {
         "defaults": {
-          "custom": {},
           "unit": "percentunit"
         },
         "overrides": []
@@ -1349,7 +1341,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "7.4.5",
+      "pluginVersion": "7.5.4",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -1415,7 +1407,7 @@
           "color": {
             "mode": "thresholds"
           },
-          "custom": {},
+          "decimals": 1,
           "mappings": [],
           "max": 1,
           "min": 0,
@@ -1456,7 +1448,7 @@
         "showUnfilled": true,
         "text": {}
       },
-      "pluginVersion": "7.4.5",
+      "pluginVersion": "7.5.4",
       "targets": [
         {
           "hide": false,
@@ -1483,7 +1475,7 @@
           "color": {
             "mode": "thresholds"
           },
-          "custom": {},
+          "decimals": 1,
           "mappings": [],
           "max": 1,
           "min": 0,
@@ -1524,7 +1516,7 @@
         "showUnfilled": true,
         "text": {}
       },
-      "pluginVersion": "7.4.5",
+      "pluginVersion": "7.5.4",
       "targets": [
         {
           "hide": false,
@@ -1545,7 +1537,7 @@
       "type": "bargauge"
     }
   ],
-  "refresh": "15m",
+  "refresh": "1m",
   "schemaVersion": 27,
   "style": "dark",
   "tags": [],
@@ -1560,5 +1552,5 @@
   "timezone": "",
   "title": "Sciensano",
   "uid": "KU9aRfgRz",
-  "version": 21
+  "version": 29
 }

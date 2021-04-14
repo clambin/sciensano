@@ -45,7 +45,7 @@ func TestAPIHandler_Search(t *testing.T) {
 
 }
 
-func TestAPIHandler_TableQuery(t *testing.T) {
+func TestAPIHandler_Tests(t *testing.T) {
 	apiHandler, _ := apihandler.Create()
 
 	apiHandler.Sciensano = &mockapi.API{Tests: mockapi.DefaultTests, Vaccinations: mockapi.DefaultVaccinations}
@@ -82,6 +82,23 @@ func TestAPIHandler_TableQuery(t *testing.T) {
 			}
 		}
 	}
+}
+
+func TestAPIHandler_Vaccinations(t *testing.T) {
+	apiHandler, _ := apihandler.Create()
+
+	apiHandler.Sciensano = &mockapi.API{Tests: mockapi.DefaultTests, Vaccinations: mockapi.DefaultVaccinations}
+	apiHandler.Vaccines.HTTPClient = mock.GetServer()
+
+	endDate := time.Date(2021, 01, 06, 0, 0, 0, 0, time.UTC)
+	request := &grafana_json.TableQueryArgs{
+		CommonQueryArgs: grafana_json.CommonQueryArgs{
+			Range: grafana_json.QueryRequestRange{To: endDate},
+		},
+	}
+
+	var response *grafana_json.TableQueryResponse
+	var err error
 
 	// Vaccinations
 	if response, err = apiHandler.Endpoints().TableQuery("vaccinations", request); assert.Nil(t, err) {
@@ -102,6 +119,23 @@ func TestAPIHandler_TableQuery(t *testing.T) {
 			}
 		}
 	}
+}
+
+func TestAPIHandler_VaccinationsByAge(t *testing.T) {
+	apiHandler, _ := apihandler.Create()
+
+	apiHandler.Sciensano = &mockapi.API{Tests: mockapi.DefaultTests, Vaccinations: mockapi.DefaultVaccinations}
+	apiHandler.Vaccines.HTTPClient = mock.GetServer()
+
+	endDate := time.Date(2021, 01, 06, 0, 0, 0, 0, time.UTC)
+	request := &grafana_json.TableQueryArgs{
+		CommonQueryArgs: grafana_json.CommonQueryArgs{
+			Range: grafana_json.QueryRequestRange{To: endDate},
+		},
+	}
+
+	var response *grafana_json.TableQueryResponse
+	var err error
 
 	// Vaccinations grouped by Age
 	if response, err = apiHandler.Endpoints().TableQuery("vacc-age-full", request); assert.Nil(t, err) {
@@ -122,6 +156,23 @@ func TestAPIHandler_TableQuery(t *testing.T) {
 			}
 		}
 	}
+}
+
+func TestAPIHandler_VaccinationByAge_Rate(t *testing.T) {
+	apiHandler, _ := apihandler.Create()
+
+	apiHandler.Sciensano = &mockapi.API{Tests: mockapi.DefaultTests, Vaccinations: mockapi.DefaultVaccinations}
+	apiHandler.Vaccines.HTTPClient = mock.GetServer()
+
+	endDate := time.Date(2021, 01, 06, 0, 0, 0, 0, time.UTC)
+	request := &grafana_json.TableQueryArgs{
+		CommonQueryArgs: grafana_json.CommonQueryArgs{
+			Range: grafana_json.QueryRequestRange{To: endDate},
+		},
+	}
+
+	var response *grafana_json.TableQueryResponse
+	var err error
 
 	// Vaccination rate grouped by Age
 	if response, err = apiHandler.Endpoints().TableQuery("vacc-age-rate-full", request); assert.Nil(t, err) {
@@ -142,6 +193,23 @@ func TestAPIHandler_TableQuery(t *testing.T) {
 			}
 		}
 	}
+}
+
+func TestAPIHandler_VaccinationByRegion(t *testing.T) {
+	apiHandler, _ := apihandler.Create()
+
+	apiHandler.Sciensano = &mockapi.API{Tests: mockapi.DefaultTests, Vaccinations: mockapi.DefaultVaccinations}
+	apiHandler.Vaccines.HTTPClient = mock.GetServer()
+
+	endDate := time.Date(2021, 01, 06, 0, 0, 0, 0, time.UTC)
+	request := &grafana_json.TableQueryArgs{
+		CommonQueryArgs: grafana_json.CommonQueryArgs{
+			Range: grafana_json.QueryRequestRange{To: endDate},
+		},
+	}
+
+	var response *grafana_json.TableQueryResponse
+	var err error
 
 	// Vaccinations grouped by Region
 	if response, err = apiHandler.Endpoints().TableQuery("vacc-region-full", request); assert.Nil(t, err) {
@@ -162,6 +230,23 @@ func TestAPIHandler_TableQuery(t *testing.T) {
 			}
 		}
 	}
+}
+
+func TestAPIHandler_VaccinationByRegion_Rate(t *testing.T) {
+	apiHandler, _ := apihandler.Create()
+
+	apiHandler.Sciensano = &mockapi.API{Tests: mockapi.DefaultTests, Vaccinations: mockapi.DefaultVaccinations}
+	apiHandler.Vaccines.HTTPClient = mock.GetServer()
+
+	endDate := time.Date(2021, 01, 06, 0, 0, 0, 0, time.UTC)
+	request := &grafana_json.TableQueryArgs{
+		CommonQueryArgs: grafana_json.CommonQueryArgs{
+			Range: grafana_json.QueryRequestRange{To: endDate},
+		},
+	}
+
+	var response *grafana_json.TableQueryResponse
+	var err error
 
 	// Vaccination rate grouped by Region
 	if response, err = apiHandler.Endpoints().TableQuery("vacc-region-rate-full", request); assert.Nil(t, err) {
@@ -182,6 +267,23 @@ func TestAPIHandler_TableQuery(t *testing.T) {
 			}
 		}
 	}
+}
+
+func TestAPIHandler_Vaccination_Lag(t *testing.T) {
+	apiHandler, _ := apihandler.Create()
+
+	apiHandler.Sciensano = &mockapi.API{Tests: mockapi.DefaultTests, Vaccinations: mockapi.DefaultVaccinations}
+	apiHandler.Vaccines.HTTPClient = mock.GetServer()
+
+	endDate := time.Date(2021, 01, 06, 0, 0, 0, 0, time.UTC)
+	request := &grafana_json.TableQueryArgs{
+		CommonQueryArgs: grafana_json.CommonQueryArgs{
+			Range: grafana_json.QueryRequestRange{To: endDate},
+		},
+	}
+
+	var response *grafana_json.TableQueryResponse
+	var err error
 
 	// Lag
 	if response, err = apiHandler.Endpoints().TableQuery("vaccination-lag", request); assert.Nil(t, err) {
@@ -202,6 +304,23 @@ func TestAPIHandler_TableQuery(t *testing.T) {
 			}
 		}
 	}
+}
+
+func TestAPIHandler_Vaccines(t *testing.T) {
+	apiHandler, _ := apihandler.Create()
+
+	apiHandler.Sciensano = &mockapi.API{Tests: mockapi.DefaultTests, Vaccinations: mockapi.DefaultVaccinations}
+	apiHandler.Vaccines.HTTPClient = mock.GetServer()
+
+	endDate := time.Date(2021, 01, 06, 0, 0, 0, 0, time.UTC)
+	request := &grafana_json.TableQueryArgs{
+		CommonQueryArgs: grafana_json.CommonQueryArgs{
+			Range: grafana_json.QueryRequestRange{To: endDate},
+		},
+	}
+
+	var response *grafana_json.TableQueryResponse
+	var err error
 
 	// Vaccines
 	if response, err = apiHandler.Endpoints().TableQuery("vaccines", request); assert.Nil(t, err) {
@@ -224,31 +343,64 @@ func TestAPIHandler_TableQuery(t *testing.T) {
 				}
 			}
 		}
+	}
+}
 
-		// Reserve
-		if response, err = apiHandler.Endpoints().TableQuery("vaccines-reserve", request); assert.Nil(t, err) {
-			for _, column := range response.Columns {
-				switch data := column.Data.(type) {
-				case grafana_json.TableQueryResponseTimeColumn:
-					assert.Equal(t, "timestamp", column.Text)
+func TestAPIHandler_Vaccines_Reserve(t *testing.T) {
+	apiHandler, _ := apihandler.Create()
+
+	apiHandler.Sciensano = &mockapi.API{Tests: mockapi.DefaultTests, Vaccinations: mockapi.DefaultVaccinations}
+	apiHandler.Vaccines.HTTPClient = mock.GetServer()
+
+	endDate := time.Date(2021, 01, 06, 0, 0, 0, 0, time.UTC)
+	request := &grafana_json.TableQueryArgs{
+		CommonQueryArgs: grafana_json.CommonQueryArgs{
+			Range: grafana_json.QueryRequestRange{To: endDate},
+		},
+	}
+
+	var response *grafana_json.TableQueryResponse
+	var err error
+
+	// Reserve
+	if response, err = apiHandler.Endpoints().TableQuery("vaccines-reserve", request); assert.Nil(t, err) {
+		for _, column := range response.Columns {
+			switch data := column.Data.(type) {
+			case grafana_json.TableQueryResponseTimeColumn:
+				assert.Equal(t, "timestamp", column.Text)
+				if assert.NotZero(t, len(data)) {
+					lastDate := data[len(data)-1]
+					assert.Equal(t, 2021, lastDate.Year())
+					assert.Equal(t, time.Month(1), lastDate.Month())
+					assert.Equal(t, 6, lastDate.Day())
+				}
+			case grafana_json.TableQueryResponseNumberColumn:
+				switch column.Text {
+				case "reserve":
 					if assert.NotZero(t, len(data)) {
-						lastDate := data[len(data)-1]
-						assert.Equal(t, 2021, lastDate.Year())
-						assert.Equal(t, time.Month(1), lastDate.Month())
-						assert.Equal(t, 6, lastDate.Day())
-					}
-				case grafana_json.TableQueryResponseNumberColumn:
-					switch column.Text {
-					case "reserve":
-						if assert.NotZero(t, len(data)) {
-							assert.Equal(t, 575.0, data[len(data)-1])
-						}
+						assert.Equal(t, 575.0, data[len(data)-1])
 					}
 				}
 			}
-
 		}
+
 	}
+}
+
+func TestAPIHandler_Invalid(t *testing.T) {
+	apiHandler, _ := apihandler.Create()
+
+	apiHandler.Sciensano = &mockapi.API{Tests: mockapi.DefaultTests, Vaccinations: mockapi.DefaultVaccinations}
+	apiHandler.Vaccines.HTTPClient = mock.GetServer()
+
+	endDate := time.Date(2021, 01, 06, 0, 0, 0, 0, time.UTC)
+	request := &grafana_json.TableQueryArgs{
+		CommonQueryArgs: grafana_json.CommonQueryArgs{
+			Range: grafana_json.QueryRequestRange{To: endDate},
+		},
+	}
+
+	var err error
 
 	// Unknown target should return an error
 	_, err = apiHandler.TableQuery("invalid", request)
@@ -314,9 +466,9 @@ func buildVaccinationTable(size int) (table []sciensano.Vaccination) {
 
 func TestHandler_Annotations(t *testing.T) {
 	handler, _ := apihandler.Create()
-	// TODO: stub the API
+	handler.Vaccines.HTTPClient = mock.GetServer()
 
-	args := grafana_json.AnnotationRequestArgs{
+	args := &grafana_json.AnnotationRequestArgs{
 		CommonQueryArgs: grafana_json.CommonQueryArgs{
 			Range: grafana_json.QueryRequestRange{
 				To: time.Now(),
@@ -324,7 +476,7 @@ func TestHandler_Annotations(t *testing.T) {
 		},
 	}
 
-	annotations, err := handler.Endpoints().Annotations("foo", "bar", &args)
+	annotations, err := handler.Endpoints().Annotations("foo", "bar", args)
 	assert.Nil(t, err)
-	assert.Greater(t, len(annotations), 0)
+	assert.Len(t, annotations, 3)
 }
