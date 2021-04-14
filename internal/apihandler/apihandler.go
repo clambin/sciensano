@@ -175,7 +175,6 @@ func buildTestTableResponse(tests []sciensano.Test) (response *grafana_json.Tabl
 }
 
 func buildVaccinationTableResponse(vaccinations []sciensano.Vaccination) (response *grafana_json.TableQueryResponse) {
-	// TODO: pre-allocating size is more efficient
 	rows := len(vaccinations)
 	timestamps := make(grafana_json.TableQueryResponseTimeColumn, rows)
 	partial := make(grafana_json.TableQueryResponseNumberColumn, rows)
@@ -327,9 +326,9 @@ func (handler *Handler) Annotations(name, query string, args *grafana_json.Annot
 	if batches, err = handler.Vaccines.GetBatches(); err == nil {
 		for _, batch := range batches {
 			annotations = append(annotations, grafana_json.Annotation{
-				Time:  time.Time(batch.Date),
-				Title: batch.Manufacturer,
-				Text:  "Amount: " + strconv.FormatInt(batch.Amount, 10),
+				Time: time.Time(batch.Date),
+				// Title: batch.Manufacturer,
+				Text: "Amount: " + strconv.FormatInt(batch.Amount, 10),
 			})
 		}
 	}

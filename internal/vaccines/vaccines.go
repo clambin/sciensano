@@ -20,9 +20,9 @@ type Server struct {
 }
 
 type Batch struct {
-	Date         Time
-	Manufacturer string
-	Amount       int64
+	Date Time
+	// Manufacturer string
+	Amount int64
 }
 
 func New() (server *Server) {
@@ -31,13 +31,6 @@ func New() (server *Server) {
 		cacheDuration: 6 * time.Hour,
 	}
 	return
-}
-
-func (server *Server) GetBatches() (batches []Batch, err error) {
-	server.lock.Lock()
-	defer server.lock.Unlock()
-
-	return server.getBatches()
 }
 
 type Time time.Time
@@ -50,7 +43,10 @@ func (date *Time) UnmarshalJSON(b []byte) (err error) {
 	return
 }
 
-func (server *Server) getBatches() (batches []Batch, err error) {
+func (server *Server) GetBatches() (batches []Batch, err error) {
+	server.lock.Lock()
+	defer server.lock.Unlock()
+
 	if server.cache == nil || time.Now().After(server.expiry) {
 		var resp *http.Response
 		var stats struct {
