@@ -1,6 +1,7 @@
 package apihandler
 
 import (
+	"errors"
 	"fmt"
 	"github.com/clambin/grafana-json"
 	"github.com/clambin/sciensano/internal/demographics"
@@ -180,7 +181,18 @@ func (handler *Handler) buildVaccinationTableResponse(endTime time.Time) (respon
 }
 
 func (handler *Handler) buildGroupedVaccinationTableResponse(endTime time.Time, target string) (response *grafana_json.TableQueryResponse) {
-	if vaccinations, err := handler.Sciensano.GetVaccinationsByAge(endTime); err == nil {
+	var vaccinations map[string][]sciensano.Vaccination
+	var err error
+
+	if strings.HasPrefix(target, "vacc-age-") {
+		vaccinations, err = handler.Sciensano.GetVaccinationsByAge(endTime)
+	} else if strings.HasPrefix(target, "vacc-region-") {
+		vaccinations, err = handler.Sciensano.GetVaccinationsByRegion(endTime)
+	} else {
+		err = errors.New("invalid target: " + target)
+	}
+
+	if err == nil {
 		for ageGroup, data := range vaccinations {
 			vaccinations[ageGroup] = sciensano.AccumulateVaccinations(data)
 		}
