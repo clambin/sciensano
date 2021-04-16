@@ -7,7 +7,6 @@ import (
 	"github.com/clambin/sciensano/pkg/sciensano"
 	"github.com/clambin/sciensano/pkg/sciensano/mockapi"
 	"github.com/stretchr/testify/assert"
-	"sync"
 	"testing"
 	"time"
 )
@@ -424,18 +423,12 @@ func BenchmarkHandler_QueryTable(b *testing.B) {
 		}
 
 		b.ResetTimer()
-		var wg sync.WaitGroup
-		wg.Add(1)
-		go func() {
-			for target := range realTargets {
-				if target == "vaccines" {
-					continue
-				}
-				_, _ = handler.Endpoints().TableQuery(target, request)
+		for target := range realTargets {
+			if target == "vaccines" {
+				continue
 			}
-			wg.Done()
-		}()
-		wg.Wait()
+			_, _ = handler.Endpoints().TableQuery(target, request)
+		}
 	}
 }
 
