@@ -9,7 +9,6 @@ import (
 	"github.com/clambin/sciensano/pkg/sciensano"
 	log "github.com/sirupsen/logrus"
 	"net/http"
-	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -193,48 +192,29 @@ func (handler *Handler) buildGroupedVaccinationTableResponse(endTime time.Time, 
 	}
 
 	if err == nil {
+		// grouped vaccinations are shown incrementally
 		for ageGroup, data := range vaccinations {
 			vaccinations[ageGroup] = sciensano.AccumulateVaccinations(data)
 		}
 
 		// sort group names so they always show up in the same order
-		groups := make([]string, len(vaccinations))
-		index := 0
-		for group := range vaccinations {
-			groups[index] = group
-			index++
-		}
-		sort.Strings(groups)
-
-		// build the columns
-		// TODO: pre-allocating size is more efficient
-		timestampColumn := make(grafana_json.TableQueryResponseTimeColumn, 0)
-		dataColumns := make(map[string]grafana_json.TableQueryResponseNumberColumn, len(vaccinations))
-		for _, group := range groups {
-			dataColumns[group] = make(grafana_json.TableQueryResponseNumberColumn, 0)
-		}
+		groups := getGroups(vaccinations)
 
 		// get all timestamps across all groups & populate the timestamp column
 		timestamps := getTimestamps(vaccinations)
-		timestampColumn = append(timestampColumn, timestamps...)
-
-		// do we want partial or complete vaccination figures?
-		complete := false
-		if strings.HasSuffix(target, "-full") {
-			complete = true
-		}
+		timestampCount := len(timestamps)
 
 		// fill out each group, so all groups have all timestamps
-		// use goroutines to perform this in parallel
-		results := make(map[string]chan []float64)
-		for group := range vaccinations {
-			results[group] = make(chan []float64)
-			go func(groupName string, channel chan []float64) {
-				channel <- getFilledVaccinations(timestamps, vaccinations[groupName], complete)
-			}(group, results[group])
-		}
-		// populate the data columns
-		for group := range vaccinations {
+		results := fillVaccinations(timestamps, vaccinations, strings.HasSuffix(target, "-full"))
+
+		// build & populate the timestamp columns
+		timestampColumn := make(grafana_json.TableQueryResponseTimeColumn, 0, timestampCount)
+		timestampColumn = append(timestampColumn, timestamps...)
+
+		// build & populate the data columns
+		dataColumns := make(map[string]grafana_json.TableQueryResponseNumberColumn, len(groups))
+		for _, group := range groups {
+			dataColumns[group] = make(grafana_json.TableQueryResponseNumberColumn, 0, timestampCount)
 			data := <-results[group]
 			dataColumns[group] = append(dataColumns[group], data...)
 		}
@@ -331,7 +311,6 @@ func (handler *Handler) buildVaccineReserveTableResponse(endTime time.Time) (res
 		batches = vaccines.AccumulateBatches(batches)
 		if vaccinations, err = handler.Sciensano.GetVaccinations(endTime); err == nil {
 			vaccinations = sciensano.AccumulateVaccinations(vaccinations)
-
 		}
 
 		rows := len(vaccinations)

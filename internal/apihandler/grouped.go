@@ -8,17 +8,17 @@ import (
 
 func getTimestamps(vaccinations map[string][]sciensano.Vaccination) (timestamps []time.Time) {
 	// get unique timestamps
-	uniqueTimestamps := make(map[time.Time]bool, len(vaccinations))
+	uniqueTimestamps := make(map[time.Time]bool)
 	for _, groupData := range vaccinations {
 		for _, data := range groupData {
-			uniqueTimestamps[data.Timestamp] = true
+			if _, ok := uniqueTimestamps[data.Timestamp]; ok == false {
+				uniqueTimestamps[data.Timestamp] = true
+				timestamps = append(timestamps, data.Timestamp)
+			}
 		}
 	}
-	timestamps = make([]time.Time, 0, len(uniqueTimestamps))
-	for timestamp := range uniqueTimestamps {
-		timestamps = append(timestamps, timestamp)
-	}
 	sort.Slice(timestamps, func(i, j int) bool { return timestamps[i].Before(timestamps[j]) })
+
 	return
 }
 
@@ -52,11 +52,30 @@ func getFilledVaccinations(timestamps []time.Time, vaccinations []sciensano.Vacc
 	return
 }
 
+func fillVaccinations(timestamps []time.Time, vaccinations map[string][]sciensano.Vaccination, complete bool) (results map[string]chan []float64) {
+	results = make(map[string]chan []float64)
+	for group := range vaccinations {
+		results[group] = make(chan []float64)
+		go func(groupName string, channel chan []float64) {
+			channel <- getFilledVaccinations(timestamps, vaccinations[groupName], complete)
+		}(group, results[group])
+	}
+	return
+}
+
 func getVaccination(vaccination sciensano.Vaccination, complete bool) (value int) {
 	if complete == false {
 		value = vaccination.FirstDose
 	} else {
 		value = vaccination.SecondDose
 	}
+	return
+}
+
+func getGroups(vaccinations map[string][]sciensano.Vaccination) (groups []string) {
+	for group := range vaccinations {
+		groups = append(groups, group)
+	}
+	sort.Strings(groups)
 	return
 }

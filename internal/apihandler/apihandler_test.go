@@ -424,10 +424,12 @@ func BenchmarkHandler_QueryTable(b *testing.B) {
 
 		b.ResetTimer()
 		for target := range realTargets {
-			if target == "vaccines" {
+			if target == "vaccines" || target == "vaccines-reserve" {
 				continue
 			}
-			_, _ = handler.Endpoints().TableQuery(target, request)
+			for i := 0; i < 100; i++ {
+				_, _ = handler.Endpoints().TableQuery(target, request)
+			}
 		}
 	}
 }
