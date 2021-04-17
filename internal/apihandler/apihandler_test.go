@@ -25,6 +25,7 @@ var realTargets = map[string]bool{
 	"vaccination-lag":          false,
 	"vaccines":                 false,
 	"vaccines-stats":           false,
+	"vaccines-time":            false,
 }
 
 func TestAPIHandler_Search(t *testing.T) {
@@ -375,18 +376,57 @@ func TestAPIHandler_Vaccines_Stats(t *testing.T) {
 				}
 			case grafana_json.TableQueryResponseNumberColumn:
 				switch column.Text {
+				case "vaccinations":
+					if assert.NotZero(t, len(data)) {
+						assert.Equal(t, 25.0, data[len(data)-1])
+					}
 				case "reserve":
 					if assert.NotZero(t, len(data)) {
 						assert.Equal(t, 575.0, data[len(data)-1])
 					}
-				case "delay":
+				}
+			}
+		}
+	}
+}
+
+func TestAPIHandler_Vaccines_Time(t *testing.T) {
+	apiHandler, _ := apihandler.Create()
+
+	apiHandler.Sciensano = &mockapi.API{Tests: mockapi.DefaultTests, Vaccinations: mockapi.DefaultVaccinations}
+	apiHandler.Vaccines.HTTPClient = mock.GetServer()
+
+	endDate := time.Date(2021, 01, 06, 0, 0, 0, 0, time.UTC)
+	request := &grafana_json.TableQueryArgs{
+		CommonQueryArgs: grafana_json.CommonQueryArgs{
+			Range: grafana_json.QueryRequestRange{To: endDate},
+		},
+	}
+
+	var response *grafana_json.TableQueryResponse
+	var err error
+
+	// Reserve
+	if response, err = apiHandler.Endpoints().TableQuery("vaccines-time", request); assert.Nil(t, err) {
+		for _, column := range response.Columns {
+			switch data := column.Data.(type) {
+			case grafana_json.TableQueryResponseTimeColumn:
+				assert.Equal(t, "timestamp", column.Text)
+				if assert.NotZero(t, len(data)) {
+					lastDate := data[len(data)-1]
+					assert.Equal(t, 2021, lastDate.Year())
+					assert.Equal(t, time.Month(1), lastDate.Month())
+					assert.Equal(t, 6, lastDate.Day())
+				}
+			case grafana_json.TableQueryResponseNumberColumn:
+				switch column.Text {
+				case "time":
 					if assert.NotZero(t, len(data)) {
 						assert.Equal(t, 5.0, data[len(data)-1])
 					}
 				}
 			}
 		}
-
 	}
 }
 
@@ -429,9 +469,6 @@ func BenchmarkHandler_QueryTable(b *testing.B) {
 
 		b.ResetTimer()
 		for target := range realTargets {
-			//if target == "vaccines" || target == "vaccines-reserve" {
-			//	continue
-			//}
 			for i := 0; i < 100; i++ {
 				_, _ = handler.Endpoints().TableQuery(target, request)
 			}

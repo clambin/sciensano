@@ -55,6 +55,7 @@ func (handler *Handler) Search() []string {
 		"vaccination-lag",
 		"vaccines",
 		"vaccines-stats",
+		"vaccines-time",
 	}
 }
 
@@ -86,6 +87,9 @@ func (handler *Handler) TableQuery(target string, args *grafana_json.TableQueryA
 
 	case "vaccines-stats":
 		response = handler.buildVaccineStatsTableResponse(args.Range.To)
+
+	case "vaccines-time":
+		response = handler.buildVaccineTimeTableResponse(args.Range.To)
 
 	default:
 		err = fmt.Errorf("unknown target '%s'", target)
@@ -316,15 +320,16 @@ func (handler *Handler) buildVaccineStatsTableResponse(endTime time.Time) (respo
 
 		rows := len(vaccinations)
 		timestampColumn := make(grafana_json.TableQueryResponseTimeColumn, 0, rows)
+		vaccinationsColumn := make(grafana_json.TableQueryResponseNumberColumn, 0, rows)
 		reserveColumn := make(grafana_json.TableQueryResponseNumberColumn, 0, rows)
-		delayColumn := make(grafana_json.TableQueryResponseNumberColumn, 0, rows)
 
 		var wg sync.WaitGroup
-		wg.Add(3)
+		wg.Add(2)
 
 		go func() {
 			for _, entry := range vaccinations {
 				timestampColumn = append(timestampColumn, entry.Timestamp)
+				vaccinationsColumn = append(vaccinationsColumn, float64(entry.FirstDose+entry.SecondDose))
 			}
 			wg.Done()
 		}()
@@ -336,9 +341,45 @@ func (handler *Handler) buildVaccineStatsTableResponse(endTime time.Time) (respo
 			wg.Done()
 		}()
 
+		wg.Wait()
+
+		response = new(grafana_json.TableQueryResponse)
+		response.Columns = []grafana_json.TableQueryResponseColumn{
+			{Text: "timestamp", Data: timestampColumn},
+			{Text: "vaccinations", Data: vaccinationsColumn},
+			{Text: "reserve", Data: reserveColumn},
+		}
+	}
+	return
+}
+
+func (handler *Handler) buildVaccineTimeTableResponse(endTime time.Time) (response *grafana_json.TableQueryResponse) {
+	var batches []vaccines.Batch
+	var vaccinations []sciensano.Vaccination
+	var err error
+	if batches, err = handler.Vaccines.GetBatches(); err == nil {
+		batches = vaccines.AccumulateBatches(batches)
+		if vaccinations, err = handler.Sciensano.GetVaccinations(endTime); err == nil {
+			vaccinations = sciensano.AccumulateVaccinations(vaccinations)
+		}
+
+		rows := len(vaccinations)
+		timestampColumn := make(grafana_json.TableQueryResponseTimeColumn, 0, rows)
+		timeColumn := make(grafana_json.TableQueryResponseNumberColumn, 0, rows)
+
+		var wg sync.WaitGroup
+		wg.Add(2)
+
+		go func() {
+			for _, entry := range vaccinations {
+				timestampColumn = append(timestampColumn, entry.Timestamp)
+			}
+			wg.Done()
+		}()
+
 		go func() {
 			for _, value := range calculateVaccineDelay(vaccinations, batches) {
-				delayColumn = append(delayColumn, value)
+				timeColumn = append(timeColumn, value)
 			}
 			wg.Done()
 		}()
@@ -348,8 +389,7 @@ func (handler *Handler) buildVaccineStatsTableResponse(endTime time.Time) (respo
 		response = new(grafana_json.TableQueryResponse)
 		response.Columns = []grafana_json.TableQueryResponseColumn{
 			{Text: "timestamp", Data: timestampColumn},
-			{Text: "reserve", Data: reserveColumn},
-			{Text: "delay", Data: delayColumn},
+			{Text: "time", Data: timeColumn},
 		}
 	}
 	return
