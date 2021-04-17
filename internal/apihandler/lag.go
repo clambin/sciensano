@@ -34,7 +34,7 @@ func buildLag(vaccinations []sciensano.Vaccination) (lag []VaccinationLag) {
 	}
 
 	for index, full = range lag {
-		// find the time when firstDose equaled the secondDose
+		// find the time when firstDose equals secondDose
 		// we may not find any occurrence of when firstDose was the recorded lastDose (initial data may be complete).
 		// don't report a delta larger than vs. the first recorded vaccination
 		lastTime := lag[0].Timestamp

@@ -1,12 +1,13 @@
 package apihandler
 
 import (
+	grafana_json "github.com/clambin/grafana-json"
 	"github.com/clambin/sciensano/internal/vaccines"
 	"github.com/clambin/sciensano/pkg/sciensano"
 	"time"
 )
 
-func calculateVaccineDelay(vaccinations []sciensano.Vaccination, batches []vaccines.Batch) (timestamps []time.Time, delays []float64) {
+func calculateVaccineDelay(vaccinations []sciensano.Vaccination, batches []vaccines.Batch) (timestamps grafana_json.TableQueryResponseTimeColumn, delays grafana_json.TableQueryResponseNumberColumn) {
 	var batchIndex int
 
 	for _, entry := range vaccinations {

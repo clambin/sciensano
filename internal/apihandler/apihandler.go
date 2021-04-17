@@ -248,13 +248,14 @@ func (handler *Handler) buildVaccinationLagTableResponse(endTime time.Time) (res
 	if vaccinations, err := handler.Sciensano.GetVaccinations(endTime); err == nil {
 		vaccinations = sciensano.AccumulateVaccinations(vaccinations)
 
+		// TODO: build columns directly in buildLag to avoid having to copy all data into the columns
 		vaccinationLag := buildLag(vaccinations)
 		rows := len(vaccinationLag)
 
 		timestamps := make(grafana_json.TableQueryResponseTimeColumn, rows)
 		lag := make(grafana_json.TableQueryResponseNumberColumn, rows)
 
-		for index, entry := range buildLag(vaccinations) {
+		for index, entry := range vaccinationLag {
 			timestamps[index] = entry.Timestamp
 			lag[index] = entry.Lag
 		}
@@ -363,30 +364,7 @@ func (handler *Handler) buildVaccineTimeTableResponse(endTime time.Time) (respon
 			vaccinations = sciensano.AccumulateVaccinations(vaccinations)
 		}
 
-		rows := len(vaccinations)
-		timestampColumn := make(grafana_json.TableQueryResponseTimeColumn, 0, rows)
-		timeColumn := make(grafana_json.TableQueryResponseNumberColumn, 0, rows)
-
-		timestamps, delays := calculateVaccineDelay(vaccinations, batches)
-
-		var wg sync.WaitGroup
-		wg.Add(2)
-
-		go func() {
-			for _, entry := range timestamps {
-				timestampColumn = append(timestampColumn, entry)
-			}
-			wg.Done()
-		}()
-
-		go func() {
-			for _, entry := range delays {
-				timeColumn = append(timeColumn, entry)
-			}
-			wg.Done()
-		}()
-
-		wg.Wait()
+		timestampColumn, timeColumn := calculateVaccineDelay(vaccinations, batches)
 
 		response = new(grafana_json.TableQueryResponse)
 		response.Columns = []grafana_json.TableQueryResponseColumn{
