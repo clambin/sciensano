@@ -367,19 +367,21 @@ func (handler *Handler) buildVaccineTimeTableResponse(endTime time.Time) (respon
 		timestampColumn := make(grafana_json.TableQueryResponseTimeColumn, 0, rows)
 		timeColumn := make(grafana_json.TableQueryResponseNumberColumn, 0, rows)
 
+		timestamps, delays := calculateVaccineDelay(vaccinations, batches)
+
 		var wg sync.WaitGroup
 		wg.Add(2)
 
 		go func() {
-			for _, entry := range vaccinations {
-				timestampColumn = append(timestampColumn, entry.Timestamp)
+			for _, entry := range timestamps {
+				timestampColumn = append(timestampColumn, entry)
 			}
 			wg.Done()
 		}()
 
 		go func() {
-			for _, value := range calculateVaccineDelay(vaccinations, batches) {
-				timeColumn = append(timeColumn, value)
+			for _, entry := range delays {
+				timeColumn = append(timeColumn, entry)
 			}
 			wg.Done()
 		}()

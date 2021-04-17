@@ -6,23 +6,23 @@ import (
 	"time"
 )
 
-func calculateVaccineDelay(vaccinations []sciensano.Vaccination, batches []vaccines.Batch) (delays []float64) {
+func calculateVaccineDelay(vaccinations []sciensano.Vaccination, batches []vaccines.Batch) (timestamps []time.Time, delays []float64) {
 	var batchIndex int
 
 	for _, entry := range vaccinations {
 		// how many vaccines did we need to perform this many vaccinations?
 		vaccinesNeeded := entry.FirstDose + entry.SecondDose
 
-		// find when we reached the number of vaccines to perform this number
+		// find when we reached that number of vaccines
 		for batchIndex < len(batches) &&
 			batches[batchIndex].Amount < vaccinesNeeded {
 			batchIndex++
 		}
 
-		// add it to the list
-		if batchIndex < len(batches) {
-			delay := entry.Timestamp.Sub(time.Time(batches[batchIndex].Date)).Hours() / 24
-			delays = append(delays, delay)
+		// we depleted the *previous* batch. report the time difference between now and when we received that batch
+		if batchIndex > 0 {
+			timestamps = append(timestamps, entry.Timestamp)
+			delays = append(delays, entry.Timestamp.Sub(time.Time(batches[batchIndex-1].Date)).Hours()/24)
 		}
 	}
 	return

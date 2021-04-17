@@ -393,7 +393,7 @@ func TestAPIHandler_Vaccines_Stats(t *testing.T) {
 func TestAPIHandler_Vaccines_Time(t *testing.T) {
 	apiHandler, _ := apihandler.Create()
 
-	apiHandler.Sciensano = &mockapi.API{Tests: mockapi.DefaultTests, Vaccinations: mockapi.DefaultVaccinations}
+	apiHandler.Sciensano = &mockapi.API{Tests: mockapi.DefaultTests, Vaccinations: mockapi.AltVaccinations}
 	apiHandler.Vaccines.HTTPClient = mock.GetServer()
 
 	endDate := time.Date(2021, 01, 06, 0, 0, 0, 0, time.UTC)
@@ -416,13 +416,13 @@ func TestAPIHandler_Vaccines_Time(t *testing.T) {
 					lastDate := data[len(data)-1]
 					assert.Equal(t, 2021, lastDate.Year())
 					assert.Equal(t, time.Month(1), lastDate.Month())
-					assert.Equal(t, 6, lastDate.Day())
+					assert.Equal(t, 4, lastDate.Day())
 				}
 			case grafana_json.TableQueryResponseNumberColumn:
 				switch column.Text {
 				case "time":
 					if assert.NotZero(t, len(data)) {
-						assert.Equal(t, 5.0, data[len(data)-1])
+						assert.Equal(t, 1.0, data[len(data)-1])
 					}
 				}
 			}

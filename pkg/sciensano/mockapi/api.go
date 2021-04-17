@@ -25,6 +25,12 @@ var DefaultVaccinations = []sciensano.Vaccination{
 	{Timestamp: time.Date(2021, 1, 7, 0, 0, 0, 0, time.UTC), FirstDose: 6, SecondDose: 5},
 }
 
+var AltVaccinations = []sciensano.Vaccination{
+	{Timestamp: time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC), FirstDose: 250, SecondDose: 25},
+	{Timestamp: time.Date(2021, 1, 3, 0, 0, 0, 0, time.UTC), FirstDose: 275, SecondDose: 50},
+	{Timestamp: time.Date(2021, 1, 4, 0, 0, 0, 0, time.UTC), FirstDose: 375, SecondDose: 150},
+}
+
 type API struct {
 	Tests        []sciensano.Test
 	Vaccinations []sciensano.Vaccination
