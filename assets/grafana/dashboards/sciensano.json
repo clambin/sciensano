@@ -19,6 +19,7 @@
   "links": [],
   "panels": [
     {
+      "collapsed": false,
       "datasource": null,
       "gridPos": {
         "h": 1,
@@ -27,6 +28,7 @@
         "y": 0
       },
       "id": 27,
+      "panels": [],
       "title": "Overall",
       "type": "row"
     },
@@ -246,7 +248,7 @@
       "fillGradient": 0,
       "gridPos": {
         "h": 9,
-        "w": 12,
+        "w": 6,
         "x": 0,
         "y": 10
       },
@@ -288,7 +290,103 @@
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "Time till complete vaccination",
+      "title": "Time to get 2nd vaccination",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "transformations": [],
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "$$hashKey": "object:844",
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "$$hashKey": "object:845",
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "sciensano",
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 9,
+        "w": 6,
+        "x": 6,
+        "y": 10
+      },
+      "hiddenSeries": false,
+      "id": 34,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": false,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "null",
+      "options": {
+        "alertThreshold": true
+      },
+      "percentage": false,
+      "pluginVersion": "7.5.4",
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "hide": false,
+          "refId": "B",
+          "target": "vaccines-time",
+          "type": "table"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Time to administer received vaccines",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -373,28 +471,24 @@
           "$$hashKey": "object:320",
           "alias": "vaccines",
           "stack": false,
-          "steppedLine": true,
-          "yaxis": 2
+          "steppedLine": true
         },
         {
           "$$hashKey": "object:114",
           "alias": "reserve",
           "stack": false,
-          "steppedLine": true,
+          "steppedLine": true
+        },
+        {
+          "$$hashKey": "object:679",
+          "alias": "time",
           "yaxis": 2
         }
       ],
       "spaceLength": 10,
-      "stack": true,
+      "stack": false,
       "steppedLine": false,
       "targets": [
-        {
-          "hide": false,
-          "queryType": "randomWalk",
-          "refId": "A",
-          "target": "vaccinations",
-          "type": "table"
-        },
         {
           "hide": false,
           "refId": "B",
@@ -404,7 +498,7 @@
         {
           "hide": false,
           "refId": "C",
-          "target": "vaccines-reserve",
+          "target": "vaccines-stats",
           "type": "table"
         }
       ],
@@ -444,11 +538,11 @@
           "logBase": 1,
           "max": null,
           "min": null,
-          "show": true
+          "show": false
         }
       ],
       "yaxis": {
-        "align": true,
+        "align": false,
         "alignLevel": 1
       }
     },
@@ -1552,5 +1646,5 @@
   "timezone": "",
   "title": "Sciensano",
   "uid": "KU9aRfgRz",
-  "version": 29
+  "version": 31
 }
