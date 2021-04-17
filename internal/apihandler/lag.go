@@ -1,6 +1,7 @@
 package apihandler
 
 import (
+	grafana_json "github.com/clambin/grafana-json"
 	"github.com/clambin/sciensano/pkg/sciensano"
 	"time"
 )
@@ -13,40 +14,39 @@ type VaccinationLag struct {
 	index int
 }
 
-func buildLag(vaccinations []sciensano.Vaccination) (lag []VaccinationLag) {
+func buildLag(vaccinations []sciensano.Vaccination) (timestamps grafana_json.TableQueryResponseTimeColumn, lag grafana_json.TableQueryResponseNumberColumn) {
 	// record all full vaccinations
 	var (
-		currentFull, firstAtFull, index int
-		vaccination                     sciensano.Vaccination
-		full                            VaccinationLag
+		firstDoseIndex int
+		lastSecondDose int
 	)
 
-	for index, vaccination = range vaccinations {
-		if vaccination.SecondDose != 0 && (vaccination.SecondDose > currentFull || vaccination.FirstDose != firstAtFull) {
-			lag = append(lag, VaccinationLag{
-				Timestamp: vaccination.Timestamp,
-				FullDose:  vaccination.SecondDose,
-				index:     index,
-			})
-			currentFull = vaccination.SecondDose
-			firstAtFull = vaccination.FirstDose
+	vaccinationCount := len(vaccinations)
+
+	// run through all vaccinations
+	for index := 0; index < vaccinationCount; index++ {
+		// we only measure lag when there is actually a second dose
+		if vaccinations[index].SecondDose == 0 {
+			continue
 		}
+		// we don't report when the 2nd dose doesn't change
+		if vaccinations[index].SecondDose == lastSecondDose {
+			continue
+		}
+
+		// find the time when we reached the number of first Doses that equals the current Second Dose number
+		for firstDoseIndex <= index && vaccinations[firstDoseIndex].FirstDose < vaccinations[index].SecondDose {
+			firstDoseIndex++
+		}
+
+		// if we found it, add it to the columns
+		if firstDoseIndex <= index {
+			timestamps = append(timestamps, vaccinations[index].Timestamp)
+			lag = append(lag, vaccinations[index].Timestamp.Sub(vaccinations[firstDoseIndex].Timestamp).Hours()/24)
+		}
+
+		lastSecondDose = vaccinations[index].SecondDose
 	}
 
-	for index, full = range lag {
-		// find the time when firstDose equals secondDose
-		// we may not find any occurrence of when firstDose was the recorded lastDose (initial data may be complete).
-		// don't report a delta larger than vs. the first recorded vaccination
-		lastTime := lag[0].Timestamp
-		var index2 int
-		for index2, vaccination = range vaccinations {
-			if vaccination.FirstDose <= full.FullDose && index2 <= full.index {
-				lastTime = vaccination.Timestamp
-			} else {
-				break
-			}
-		}
-		lag[index].Lag = full.Timestamp.Sub(lastTime).Hours() / 24.0
-	}
 	return
 }

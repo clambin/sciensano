@@ -248,17 +248,7 @@ func (handler *Handler) buildVaccinationLagTableResponse(endTime time.Time) (res
 	if vaccinations, err := handler.Sciensano.GetVaccinations(endTime); err == nil {
 		vaccinations = sciensano.AccumulateVaccinations(vaccinations)
 
-		// TODO: build columns directly in buildLag to avoid having to copy all data into the columns
-		vaccinationLag := buildLag(vaccinations)
-		rows := len(vaccinationLag)
-
-		timestamps := make(grafana_json.TableQueryResponseTimeColumn, rows)
-		lag := make(grafana_json.TableQueryResponseNumberColumn, rows)
-
-		for index, entry := range vaccinationLag {
-			timestamps[index] = entry.Timestamp
-			lag[index] = entry.Lag
-		}
+		timestamps, lag := buildLag(vaccinations)
 
 		response = new(grafana_json.TableQueryResponse)
 		response.Columns = []grafana_json.TableQueryResponseColumn{
