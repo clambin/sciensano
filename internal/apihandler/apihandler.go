@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -53,7 +54,7 @@ func (handler *Handler) Search() []string {
 		"vacc-region-partial", "vacc-region-full", "vacc-region-rate-partial", "vacc-region-rate-full",
 		"vaccination-lag",
 		"vaccines",
-		"vaccines-reserve",
+		"vaccines-stats",
 	}
 }
 
@@ -83,8 +84,8 @@ func (handler *Handler) TableQuery(target string, args *grafana_json.TableQueryA
 	case "vaccines":
 		response = handler.buildVaccineTableResponse(args.Range.To)
 
-	case "vaccines-reserve":
-		response = handler.buildVaccineReserveTableResponse(args.Range.To)
+	case "vaccines-stats":
+		response = handler.buildVaccineStatsTableResponse(args.Range.To)
 
 	default:
 		err = fmt.Errorf("unknown target '%s'", target)
@@ -303,7 +304,7 @@ func (handler *Handler) buildVaccineTableResponse(_ time.Time) (response *grafan
 	return
 }
 
-func (handler *Handler) buildVaccineReserveTableResponse(endTime time.Time) (response *grafana_json.TableQueryResponse) {
+func (handler *Handler) buildVaccineStatsTableResponse(endTime time.Time) (response *grafana_json.TableQueryResponse) {
 	var batches []vaccines.Batch
 	var vaccinations []sciensano.Vaccination
 	var err error
@@ -314,28 +315,41 @@ func (handler *Handler) buildVaccineReserveTableResponse(endTime time.Time) (res
 		}
 
 		rows := len(vaccinations)
-		timestampColumn := make(grafana_json.TableQueryResponseTimeColumn, rows)
-		reserveColumn := make(grafana_json.TableQueryResponseNumberColumn, rows)
+		timestampColumn := make(grafana_json.TableQueryResponseTimeColumn, 0, rows)
+		reserveColumn := make(grafana_json.TableQueryResponseNumberColumn, 0, rows)
+		delayColumn := make(grafana_json.TableQueryResponseNumberColumn, 0, rows)
 
-		batchIndex := 0
-		lastBatch := 0
+		var wg sync.WaitGroup
+		wg.Add(3)
 
-		for index, entry := range vaccinations {
-			timestampColumn[index] = entry.Timestamp
-
-			for batchIndex < len(batches) &&
-				!time.Time(batches[batchIndex].Date).After(entry.Timestamp) {
-				lastBatch = batches[batchIndex].Amount
-				batchIndex++
+		go func() {
+			for _, entry := range vaccinations {
+				timestampColumn = append(timestampColumn, entry.Timestamp)
 			}
+			wg.Done()
+		}()
 
-			reserveColumn[index] = float64(lastBatch - entry.SecondDose - entry.FirstDose)
-		}
+		go func() {
+			for _, value := range calculateVaccineReserve(vaccinations, batches) {
+				reserveColumn = append(reserveColumn, value)
+			}
+			wg.Done()
+		}()
+
+		go func() {
+			for _, value := range calculateVaccineDelay(vaccinations, batches) {
+				delayColumn = append(delayColumn, value)
+			}
+			wg.Done()
+		}()
+
+		wg.Wait()
 
 		response = new(grafana_json.TableQueryResponse)
 		response.Columns = []grafana_json.TableQueryResponseColumn{
 			{Text: "timestamp", Data: timestampColumn},
 			{Text: "reserve", Data: reserveColumn},
+			{Text: "delay", Data: delayColumn},
 		}
 	}
 	return

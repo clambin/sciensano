@@ -24,7 +24,7 @@ var realTargets = map[string]bool{
 	"vacc-region-rate-full":    false,
 	"vaccination-lag":          false,
 	"vaccines":                 false,
-	"vaccines-reserve":         false,
+	"vaccines-stats":           false,
 }
 
 func TestAPIHandler_Search(t *testing.T) {
@@ -345,7 +345,7 @@ func TestAPIHandler_Vaccines(t *testing.T) {
 	}
 }
 
-func TestAPIHandler_Vaccines_Reserve(t *testing.T) {
+func TestAPIHandler_Vaccines_Stats(t *testing.T) {
 	apiHandler, _ := apihandler.Create()
 
 	apiHandler.Sciensano = &mockapi.API{Tests: mockapi.DefaultTests, Vaccinations: mockapi.DefaultVaccinations}
@@ -362,7 +362,7 @@ func TestAPIHandler_Vaccines_Reserve(t *testing.T) {
 	var err error
 
 	// Reserve
-	if response, err = apiHandler.Endpoints().TableQuery("vaccines-reserve", request); assert.Nil(t, err) {
+	if response, err = apiHandler.Endpoints().TableQuery("vaccines-stats", request); assert.Nil(t, err) {
 		for _, column := range response.Columns {
 			switch data := column.Data.(type) {
 			case grafana_json.TableQueryResponseTimeColumn:
@@ -378,6 +378,10 @@ func TestAPIHandler_Vaccines_Reserve(t *testing.T) {
 				case "reserve":
 					if assert.NotZero(t, len(data)) {
 						assert.Equal(t, 575.0, data[len(data)-1])
+					}
+				case "delay":
+					if assert.NotZero(t, len(data)) {
+						assert.Equal(t, 5.0, data[len(data)-1])
 					}
 				}
 			}
@@ -412,6 +416,7 @@ func BenchmarkHandler_QueryTable(b *testing.B) {
 
 	if assert.Nil(b, err) {
 		handler.Sciensano = &mockapi.API{Tests: buildTestTable(720), Vaccinations: buildVaccinationTable(720)}
+		handler.Vaccines.HTTPClient = mock.GetServer()
 
 		endDate := time.Date(2021, 01, 06, 0, 0, 0, 0, time.UTC)
 		request := &grafana_json.TableQueryArgs{
@@ -424,9 +429,9 @@ func BenchmarkHandler_QueryTable(b *testing.B) {
 
 		b.ResetTimer()
 		for target := range realTargets {
-			if target == "vaccines" || target == "vaccines-reserve" {
-				continue
-			}
+			//if target == "vaccines" || target == "vaccines-reserve" {
+			//	continue
+			//}
 			for i := 0; i < 100; i++ {
 				_, _ = handler.Endpoints().TableQuery(target, request)
 			}
@@ -459,6 +464,19 @@ func buildVaccinationTable(size int) (table []sciensano.Vaccination) {
 	return
 }
 
+/*
+func buildVaccineTable(size int) (table []vaccines.Batch) {
+	testDate := time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)
+	for i := 0; i < size; i++ {
+		table = append(table, vaccines.Batch{
+			Date:  vaccines.Time(testDate),
+			Amount: 200+i,
+		})
+		testDate = testDate.Add(24 * time.Hour)
+	}
+	return
+}
+*/
 func TestHandler_Annotations(t *testing.T) {
 	handler, _ := apihandler.Create()
 	handler.Vaccines.HTTPClient = mock.GetServer()
