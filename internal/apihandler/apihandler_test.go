@@ -466,7 +466,7 @@ func BenchmarkHandler_QueryTable(b *testing.B) {
 				},
 			},
 		}
-
+		handler.Benchmark = true
 		b.ResetTimer()
 		for target := range realTargets {
 			for i := 0; i < 100; i++ {
