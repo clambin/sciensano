@@ -19,10 +19,8 @@ import (
 type Handler struct {
 	Sciensano sciensano.API
 	Vaccines  *vaccines.Server
-
 	Benchmark bool
-
-	lastDate map[string]time.Time
+	lastDate  map[string]time.Time
 }
 
 // Create a Handler
