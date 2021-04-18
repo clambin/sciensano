@@ -35,10 +35,10 @@ type apiTestResponse struct {
 }
 
 func (client *Client) getTests() (response []apiTestResponse, err error) {
-	client.lock.Lock()
-	defer client.lock.Unlock()
+	client.testsLock.Lock()
+	defer client.testsLock.Unlock()
 
-	if client.testCache == nil || time.Now().After(client.testCacheExpiry) {
+	if client.testsCache == nil || time.Now().After(client.testsCacheExpiry) {
 		var resp *http.Response
 		var stats []apiTestResponse
 
@@ -49,8 +49,8 @@ func (client *Client) getTests() (response []apiTestResponse, err error) {
 
 				if body, err = io.ReadAll(resp.Body); err == nil {
 					if err = json.Unmarshal(body, &stats); err == nil {
-						client.testCache = stats
-						client.testCacheExpiry = time.Now().Add(client.CacheDuration)
+						client.testsCache = stats
+						client.testsCacheExpiry = time.Now().Add(client.CacheDuration)
 					}
 				}
 			} else {
@@ -58,7 +58,7 @@ func (client *Client) getTests() (response []apiTestResponse, err error) {
 			}
 		}
 	}
-	return client.testCache, err
+	return client.testsCache, err
 }
 
 func groupTests(apiResult []apiTestResponse, end time.Time) (results []Test) {
