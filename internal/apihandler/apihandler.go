@@ -19,7 +19,6 @@ import (
 type Handler struct {
 	Sciensano sciensano.API
 	Vaccines  *vaccines.Server
-	Benchmark bool
 	lastDate  map[string]time.Time
 }
 
@@ -60,8 +59,6 @@ func (handler *Handler) Search() []string {
 }
 
 func (handler *Handler) TableQuery(target string, args *grafana_json.TableQueryArgs) (response *grafana_json.TableQueryResponse, err error) {
-	before := time.Now()
-
 	switch target {
 	case "tests":
 		response = handler.buildTestTableResponse(args.Range.To)
@@ -100,10 +97,6 @@ func (handler *Handler) TableQuery(target string, args *grafana_json.TableQueryA
 	// log if there's a new update
 	if err == nil && response != nil {
 		handler.logUpdates(target, response)
-
-		if handler.Benchmark == false {
-			log.WithFields(log.Fields{"target": target, "duration": time.Now().Sub(before).String()}).Info("table query")
-		}
 	}
 
 	return
