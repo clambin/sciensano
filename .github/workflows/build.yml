@@ -16,7 +16,6 @@ jobs:
           go-version: 1.16
       - name: test
         run: |
-          env
           go test ./... -race -coverprofile=coverage.txt -covermode=atomic
       - uses: codecov/codecov-action@v1
         with:
