@@ -8,15 +8,15 @@ import (
 )
 
 func calculateVaccineDelay(vaccinations []sciensano.Vaccination, batches []vaccines.Batch) (timestamps grafana_json.TableQueryResponseTimeColumn, delays grafana_json.TableQueryResponseNumberColumn) {
-	var batchIndex int
+	batchIndex := 0
+	batchCount := len(batches)
 
 	for _, entry := range vaccinations {
 		// how many vaccines did we need to perform this many vaccinations?
 		vaccinesNeeded := entry.FirstDose + entry.SecondDose
 
 		// find when we reached that number of vaccines
-		for batchIndex < len(batches) &&
-			batches[batchIndex].Amount < vaccinesNeeded {
+		for batchIndex < batchCount && batches[batchIndex].Amount < vaccinesNeeded {
 			batchIndex++
 		}
 
