@@ -68,13 +68,13 @@ func (handler *Handler) TableQuery(target string, args *grafana_json.TableQueryA
 
 	case "vacc-age-partial", "vacc-age-full", "vacc-age-rate-partial", "vacc-age-rate-full":
 		response = handler.buildGroupedVaccinationTableResponse(args.Range.To, target)
-		if strings.HasPrefix(target, "vacc-age-rate-") {
+		if response != nil && strings.HasPrefix(target, "vacc-age-rate-") {
 			prorateFigures(response, demographics.GetAgeGroupFigures())
 		}
 
 	case "vacc-region-partial", "vacc-region-full", "vacc-region-rate-partial", "vacc-region-rate-full":
 		response = handler.buildGroupedVaccinationTableResponse(args.Range.To, target)
-		if strings.HasPrefix(target, "vacc-region-rate-") {
+		if response != nil && strings.HasPrefix(target, "vacc-region-rate-") {
 			prorateFigures(response, demographics.GetRegionFigures())
 		}
 
