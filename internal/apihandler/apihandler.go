@@ -107,9 +107,11 @@ func (handler *Handler) logUpdates(target string, response *grafana_json.TableQu
 		handler.lastDate = make(map[string]time.Time)
 	}
 
-	key := "vaccinations"
-	if target == "tests" {
-		key = "tests"
+	key := target
+	if strings.HasPrefix(target, "vaccines") {
+		key = "vaccines"
+	} else if strings.HasPrefix(target, "vacc") {
+		key = "vaccinations"
 	}
 
 	latest := time.Time{}
