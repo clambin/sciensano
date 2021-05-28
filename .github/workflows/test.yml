@@ -9,20 +9,6 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres
-        env:
-          POSTGRES_DB: postgres
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
     steps:
       - uses: actions/checkout@v2.3.4
       - uses: actions/setup-go@v2
@@ -30,11 +16,6 @@ jobs:
           go-version: 1.16
       - name: test
         run: |
-          export pg_host=postgres
-          export pg_port=5432
-          export pg_database=postgres
-          export pg_user=postgres
-          export pg_password=postgres
           go test ./... -race -coverprofile=coverage.txt -covermode=atomic
       - uses: codecov/codecov-action@v1.5.0
         with:
