@@ -74,7 +74,7 @@ func groupTests(apiResult []apiTestResponse, end time.Time) (results []Test) {
 			var current Test
 			var ok bool
 			if current, ok = totals[ts]; ok == false {
-				current = Test{Timestamp: ts}
+				current.Timestamp = ts
 			}
 			current.Total += entry.Total
 			current.Positive += entry.Positive

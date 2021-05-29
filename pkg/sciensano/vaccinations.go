@@ -140,7 +140,7 @@ func groupVaccinations(apiResult []apiVaccinationsResponse, end time.Time) (tota
 			var current Vaccination
 			var ok bool
 			if current, ok = accumTotal[ts]; ok == false {
-				current = Vaccination{Timestamp: ts}
+				current.Timestamp = ts
 			}
 			switch entry.Dose {
 			case "A":
@@ -170,12 +170,10 @@ func AccumulateVaccinations(entries []Vaccination) (totals []Vaccination) {
 	totals = make([]Vaccination, len(entries))
 	for index, entry := range entries {
 		first += entry.FirstDose
+		entry.FirstDose = first
 		second += entry.SecondDose
-		totals[index] = Vaccination{
-			Timestamp:  entry.Timestamp,
-			FirstDose:  first,
-			SecondDose: second,
-		}
+		entry.SecondDose = second
+		totals[index] = entry
 	}
 	return
 }
