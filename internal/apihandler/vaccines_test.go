@@ -1,13 +1,141 @@
-package apihandler
+package apihandler_test
 
 import (
 	"fmt"
+	grafana_json "github.com/clambin/grafana-json"
+	"github.com/clambin/sciensano/internal/apihandler"
 	"github.com/clambin/sciensano/internal/vaccines"
+	"github.com/clambin/sciensano/internal/vaccines/mock"
 	"github.com/clambin/sciensano/pkg/sciensano"
+	"github.com/clambin/sciensano/pkg/sciensano/mockapi"
 	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
 )
+
+func TestAPIHandler_Vaccines(t *testing.T) {
+	apiHandler, _ := apihandler.Create()
+
+	apiHandler.Sciensano = &mockapi.API{Tests: mockapi.DefaultTests, Vaccinations: mockapi.DefaultVaccinations}
+	apiHandler.Vaccines.HTTPClient = mock.GetServer()
+
+	endDate := time.Date(2021, 01, 06, 0, 0, 0, 0, time.UTC)
+	request := &grafana_json.TableQueryArgs{
+		CommonQueryArgs: grafana_json.CommonQueryArgs{
+			Range: grafana_json.QueryRequestRange{To: endDate},
+		},
+	}
+
+	var response *grafana_json.TableQueryResponse
+	var err error
+
+	// Vaccines
+	if response, err = apiHandler.Endpoints().TableQuery("vaccines", request); assert.Nil(t, err) {
+		for _, column := range response.Columns {
+			switch data := column.Data.(type) {
+			case grafana_json.TableQueryResponseTimeColumn:
+				assert.Equal(t, "timestamp", column.Text)
+				if assert.NotZero(t, len(data)) {
+					lastDate := data[len(data)-1]
+					assert.Equal(t, 2021, lastDate.Year())
+					assert.Equal(t, time.Month(1), lastDate.Month())
+					assert.Equal(t, 3, lastDate.Day())
+				}
+			case grafana_json.TableQueryResponseNumberColumn:
+				switch column.Text {
+				case "vaccines":
+					if assert.NotZero(t, len(data)) {
+						assert.Equal(t, 600.0, data[len(data)-1])
+					}
+				}
+			}
+		}
+	}
+}
+
+func TestAPIHandler_Vaccines_Stats(t *testing.T) {
+	apiHandler, _ := apihandler.Create()
+
+	apiHandler.Sciensano = &mockapi.API{Tests: mockapi.DefaultTests, Vaccinations: mockapi.DefaultVaccinations}
+	apiHandler.Vaccines.HTTPClient = mock.GetServer()
+
+	endDate := time.Date(2021, 01, 06, 0, 0, 0, 0, time.UTC)
+	request := &grafana_json.TableQueryArgs{
+		CommonQueryArgs: grafana_json.CommonQueryArgs{
+			Range: grafana_json.QueryRequestRange{To: endDate},
+		},
+	}
+
+	var response *grafana_json.TableQueryResponse
+	var err error
+
+	// Reserve
+	if response, err = apiHandler.Endpoints().TableQuery("vaccines-stats", request); assert.Nil(t, err) {
+		for _, column := range response.Columns {
+			switch data := column.Data.(type) {
+			case grafana_json.TableQueryResponseTimeColumn:
+				assert.Equal(t, "timestamp", column.Text)
+				if assert.NotZero(t, len(data)) {
+					lastDate := data[len(data)-1]
+					assert.Equal(t, 2021, lastDate.Year())
+					assert.Equal(t, time.Month(1), lastDate.Month())
+					assert.Equal(t, 6, lastDate.Day())
+				}
+			case grafana_json.TableQueryResponseNumberColumn:
+				switch column.Text {
+				case "vaccinations":
+					if assert.NotZero(t, len(data)) {
+						assert.Equal(t, 25.0, data[len(data)-1])
+					}
+				case "reserve":
+					if assert.NotZero(t, len(data)) {
+						assert.Equal(t, 575.0, data[len(data)-1])
+					}
+				}
+			}
+		}
+	}
+}
+
+func TestAPIHandler_Vaccines_Time(t *testing.T) {
+	apiHandler, _ := apihandler.Create()
+
+	apiHandler.Sciensano = &mockapi.API{Tests: mockapi.DefaultTests, Vaccinations: mockapi.AltVaccinations}
+	apiHandler.Vaccines.HTTPClient = mock.GetServer()
+
+	endDate := time.Date(2021, 01, 06, 0, 0, 0, 0, time.UTC)
+	request := &grafana_json.TableQueryArgs{
+		CommonQueryArgs: grafana_json.CommonQueryArgs{
+			Range: grafana_json.QueryRequestRange{To: endDate},
+		},
+	}
+
+	var response *grafana_json.TableQueryResponse
+	var err error
+
+	// Reserve
+	if response, err = apiHandler.Endpoints().TableQuery("vaccines-time", request); assert.Nil(t, err) {
+		for _, column := range response.Columns {
+			switch data := column.Data.(type) {
+			case grafana_json.TableQueryResponseTimeColumn:
+				assert.Equal(t, "timestamp", column.Text)
+				if assert.NotZero(t, len(data)) {
+					lastDate := data[len(data)-1]
+					assert.Equal(t, 2021, lastDate.Year())
+					assert.Equal(t, time.Month(1), lastDate.Month())
+					assert.Equal(t, 4, lastDate.Day())
+				}
+			case grafana_json.TableQueryResponseNumberColumn:
+				switch column.Text {
+				case "time":
+					if assert.NotZero(t, len(data)) {
+						assert.Equal(t, 1.0, data[len(data)-1])
+					}
+				}
+			}
+		}
+	}
+}
 
 func TestVaccineDelay(t *testing.T) {
 	vaccinations := []sciensano.Vaccination{{
@@ -61,7 +189,7 @@ func TestVaccineDelay(t *testing.T) {
 		Value:     42,
 	}}
 
-	timestamps, delays := calculateVaccineDelay(vaccinations, batches)
+	timestamps, delays := apihandler.CalculateVaccineDelay(vaccinations, batches)
 
 	if assert.Equal(t, len(expected), len(timestamps)) && assert.Equal(t, len(expected), len(delays)) {
 		for index, entry := range expected {

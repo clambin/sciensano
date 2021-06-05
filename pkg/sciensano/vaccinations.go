@@ -30,7 +30,6 @@ func (client *Client) GetVaccinationsByAge(end time.Time) (results map[string][]
 	var apiResult []apiVaccinationsResponse
 
 	if apiResult, err = client.getVaccinations(); err == nil {
-		results = make(map[string][]Vaccination)
 		ageGroups := getAgeGroups(apiResult)
 		responses := make(map[string]chan []Vaccination)
 
@@ -41,6 +40,8 @@ func (client *Client) GetVaccinationsByAge(end time.Time) (results map[string][]
 				response <- groupVaccinations(result, end)
 			}(ageGroup, responses[ageGroup])
 		}
+
+		results = make(map[string][]Vaccination)
 		for _, ageGroup := range ageGroups {
 			results[ageGroup] = <-responses[ageGroup]
 		}
@@ -53,7 +54,6 @@ func (client *Client) GetVaccinationsByRegion(end time.Time) (results map[string
 	var apiResult []apiVaccinationsResponse
 
 	if apiResult, err = client.getVaccinations(); err == nil {
-		results = make(map[string][]Vaccination)
 		regions := getRegions(apiResult)
 		responses := make(map[string]chan []Vaccination)
 
@@ -64,6 +64,8 @@ func (client *Client) GetVaccinationsByRegion(end time.Time) (results map[string
 				response <- groupVaccinations(result, end)
 			}(region, responses[region])
 		}
+
+		results = make(map[string][]Vaccination)
 		for _, region := range regions {
 			results[region] = <-responses[region]
 		}
@@ -90,7 +92,9 @@ func (client *Client) getVaccinations() (result []apiVaccinationsResponse, err e
 		var stats []apiVaccinationsResponse
 
 		if resp, err = client.HTTPClient.Get(baseURL + "COVID19BE_VACC.json"); err == nil {
-			defer resp.Body.Close()
+			defer func(Body io.ReadCloser) {
+				_ = Body.Close()
+			}(resp.Body)
 			if resp.StatusCode == 200 {
 				var body []byte
 
