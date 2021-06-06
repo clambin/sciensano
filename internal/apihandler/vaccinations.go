@@ -4,6 +4,7 @@ import (
 	"fmt"
 	grafana_json "github.com/clambin/grafana-json"
 	"github.com/clambin/sciensano/internal/demographics"
+	"github.com/clambin/sciensano/internal/predictor"
 	"github.com/clambin/sciensano/pkg/sciensano"
 	"strings"
 	"time"
@@ -12,6 +13,38 @@ import (
 func (handler *Handler) buildVaccinationTableResponse(endTime time.Time, _ string) (response *grafana_json.TableQueryResponse) {
 	if vaccinations, err := handler.Sciensano.GetVaccinations(endTime); err == nil {
 		vaccinations = sciensano.AccumulateVaccinations(vaccinations)
+
+		rows := len(vaccinations)
+		timestamps := make(grafana_json.TableQueryResponseTimeColumn, rows)
+		partial := make(grafana_json.TableQueryResponseNumberColumn, rows)
+		full := make(grafana_json.TableQueryResponseNumberColumn, rows)
+
+		for index, entry := range vaccinations {
+			timestamps[index] = entry.Timestamp
+			partial[index] = float64(entry.FirstDose)
+			full[index] = float64(entry.SecondDose)
+		}
+
+		response = new(grafana_json.TableQueryResponse)
+		response.Columns = []grafana_json.TableQueryResponseColumn{
+			{Text: "timestamp", Data: timestamps},
+			{Text: "partial", Data: partial},
+			{Text: "full", Data: full},
+		}
+	}
+	return
+}
+
+func (handler *Handler) buildVaccinationForecastTableResponse(_ time.Time, _ string) (response *grafana_json.TableQueryResponse) {
+	if vaccinations, err := handler.Sciensano.GetVaccinations(time.Now()); err == nil {
+		vaccinations = sciensano.AccumulateVaccinations(vaccinations)
+
+		// var score float64
+		vaccinations, _, err = predictor.ForecastVaccinations(vaccinations)
+
+		if err != nil {
+			return nil
+		}
 
 		rows := len(vaccinations)
 		timestamps := make(grafana_json.TableQueryResponseTimeColumn, rows)

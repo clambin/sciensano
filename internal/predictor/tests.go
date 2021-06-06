@@ -9,9 +9,8 @@ import (
 )
 
 const (
-	batchSize       = 56
-	historyBatches  = 8
-	forecastBatches = 1
+	batchSize       = 7
+	forecastBatches = 3
 )
 
 func getDates(tests []sciensano.Test) (from, to time.Time, delta time.Duration) {
@@ -23,8 +22,8 @@ func getDates(tests []sciensano.Test) (from, to time.Time, delta time.Duration) 
 }
 
 func ForecastTests(tests []sciensano.Test) (forecast []sciensano.Test, err error) {
-	if len(tests) < batchSize*historyBatches {
-		return nil, fmt.Errorf("not enough data: at least %d samples required", batchSize*historyBatches)
+	if len(tests) < batchSize {
+		return nil, fmt.Errorf("not enough data: at least %d samples required", batchSize)
 	}
 
 	var totals []float64
@@ -68,7 +67,7 @@ func forecastTestsAttribute(tests []sciensano.Test, attribute func(test sciensan
 	output := make([]float64, batchSize)
 	copy(output, input[len(input)-batchSize:])
 
-	for i := 0; i < forecastBatches; i++ {
+	for i := 0; err == nil && i < forecastBatches; i++ {
 		output, err = p.PredictN(output, batchSize)
 
 		if err == nil {

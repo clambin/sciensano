@@ -33,6 +33,7 @@ func Create() (*Handler, error) {
 		"tests":                    {tableResponseBuild: handler.buildTestTableResponse},
 		"tests-forecast":           {tableResponseBuild: handler.buildTestForecastTableResponse},
 		"vaccinations":             {tableResponseBuild: handler.buildVaccinationTableResponse},
+		"vaccinations-forecast":    {tableResponseBuild: handler.buildVaccinationForecastTableResponse},
 		"vacc-age-partial":         {tableResponseBuild: handler.buildGroupedVaccinationTableResponse},
 		"vacc-age-full":            {tableResponseBuild: handler.buildGroupedVaccinationTableResponse},
 		"vacc-age-rate-partial":    {tableResponseBuild: handler.buildGroupedVaccinationRateTableResponse},

@@ -15,6 +15,7 @@ var realTargets = map[string]bool{
 	"tests":                    false,
 	"tests-forecast":           false,
 	"vaccinations":             false,
+	"vaccinations-forecast":    false,
 	"vacc-age-partial":         false,
 	"vacc-age-full":            false,
 	"vacc-age-rate-partial":    false,
