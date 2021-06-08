@@ -96,8 +96,12 @@ func (handler *Handler) buildGroupedVaccinationTableResponse(endTime time.Time, 
 
 func (handler *Handler) buildGroupedVaccinationRateTableResponse(endTime time.Time, target string) (response *grafana_json.TableQueryResponse) {
 	response = handler.buildGroupedVaccinationTableResponse(endTime, target)
-	if response != nil && strings.HasPrefix(target, "vacc-age-rate-") {
-		prorateFigures(response, demographics.GetAgeGroupFigures())
+	if response != nil {
+		if strings.HasPrefix(target, "vacc-age-rate-") {
+			prorateFigures(response, demographics.GetAgeGroupFigures())
+		} else if strings.HasPrefix(target, "vacc-region-rate-") {
+			prorateFigures(response, demographics.GetRegionFigures())
+		}
 	}
 	return
 }

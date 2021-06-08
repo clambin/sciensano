@@ -7,6 +7,7 @@ import (
 	"github.com/clambin/sciensano/pkg/sciensano"
 	log "github.com/sirupsen/logrus"
 	"net/http"
+	"sort"
 	"strings"
 	"time"
 )
@@ -71,6 +72,7 @@ func (handler *Handler) Search() (targets []string) {
 	for target := range handler.targetTable {
 		targets = append(targets, target)
 	}
+	sort.Strings(targets)
 	return
 }
 
