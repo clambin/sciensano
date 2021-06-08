@@ -29,12 +29,12 @@ func TestForecastVaccinations(t *testing.T) {
 
 	predicted, score, err = predictor.ForecastVaccinations(input)
 	if assert.NoError(t, err) {
-		assert.Greater(t, score, 0.8)
-		assert.Len(t, predicted, 21)
+		assert.Greater(t, score, 0.9)
+		assert.Len(t, predicted, 28)
 		start := 365
-		for i := 0; i < 7; i++ {
-			assert.Less(t, math.Abs(float64(start-predicted[i].FirstDose)), 40.0, i)
-			assert.Less(t, math.Abs(float64(start/2-predicted[i].SecondDose)), 20.0, i)
+		for i := 0; i < 28; i++ {
+			assert.Less(t, math.Abs(float64(start-predicted[i].FirstDose)), 5.0, i)
+			assert.Less(t, math.Abs(float64(start/2-predicted[i].SecondDose)), 2.5, i)
 			start++
 		}
 	}

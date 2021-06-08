@@ -20,13 +20,15 @@ func TestPredictor(t *testing.T) {
 	}
 
 	score := p.Learn(values[:dataSize-batchSize])
-	assert.Greater(t, score, 0.9)
+	assert.Greater(t, score, 0.99)
 
-	predicted, err := p.PredictN(values[dataSize-2*batchSize:dataSize-batchSize], batchSize)
+	difference := 0.0
+	predicted, err := p.PredictN(values[dataSize-batchSize-1:dataSize-1], batchSize)
 	if assert.NoError(t, err) {
 		for i := 0; i < batchSize; i++ {
-			assert.Less(t, math.Abs(predicted[i]-values[dataSize-2*batchSize+1]), 10.0)
+			difference += math.Abs(predicted[i] - values[dataSize-batchSize-1+i])
 		}
+		assert.Less(t, difference/batchSize, 1.0)
 	}
 }
 

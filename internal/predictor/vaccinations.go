@@ -61,11 +61,12 @@ func forecastVaccinations(vaccinations []sciensano.Vaccination, getAttribute fun
 
 	p := New(batchSize, 10000)
 
-	for score < 0.94 {
+	var i int
+	for i = 0; score < 0.98 && i < 20; i++ {
 		score = p.Learn(input)
 	}
 
-	log.WithField("score", score).Infof("learned from %d samples", len(input))
+	log.WithField("score", score).Infof("learned from %d samples after %d attempts", len(input), i+1)
 
 	output := make([]float64, batchSize)
 	copy(output, input[len(input)-batchSize:])

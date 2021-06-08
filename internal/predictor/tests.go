@@ -8,11 +8,6 @@ import (
 	"time"
 )
 
-const (
-	batchSize       = 7
-	forecastBatches = 3
-)
-
 func getDates(tests []sciensano.Test) (from, to time.Time, delta time.Duration) {
 	from = tests[0].Timestamp
 	to = tests[len(tests)-1].Timestamp
@@ -59,7 +54,7 @@ func forecastTestsAttribute(tests []sciensano.Test, attribute func(test sciensan
 	}
 
 	score := 0.0
-	for i := 0; score < 0.80 && i < 20; i++ {
+	for i := 0; score < 0.98 && i < 20; i++ {
 		score = p.Learn(input)
 	}
 	log.WithField("score", score).Infof("analyzing %d samples for total tests", len(input))

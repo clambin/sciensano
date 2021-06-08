@@ -6,6 +6,11 @@ import (
 	"gonum.org/v1/gonum/mat"
 )
 
+const (
+	batchSize       = 14
+	forecastBatches = 2
+)
+
 type Predictor struct {
 	regressor *nn.MLPRegressor
 	batchSize int
@@ -32,10 +37,10 @@ func (r *Predictor) Learn(values []float64) (score float64) {
 	//
 	// trainX holds rows of length 'window' of training data
 	// trainY holds the next expected value for that window
-	rows := 0
 	trainXData := make([]float64, 0)
 	trainYData := make([]float64, 0)
-	for i := 0; i < len(values)-r.batchSize; i++ {
+	rows := 0
+	for i := 0; i+1+r.batchSize < len(values); i++ {
 		trainXData = append(trainXData, values[i:i+r.batchSize]...)
 		trainYData = append(trainYData, values[i+r.batchSize])
 		rows++

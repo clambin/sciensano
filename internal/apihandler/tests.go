@@ -20,7 +20,11 @@ func (handler *Handler) buildTestTableResponse(endTime time.Time, _ string) (res
 			timestamps[index] = test.Timestamp
 			allTests[index] = float64(test.Total)
 			positiveTests[index] = float64(test.Positive)
-			positiveRate[index] = float64(test.Positive) / float64(test.Total)
+			if test.Total != 0 {
+				positiveRate[index] = float64(test.Positive) / float64(test.Total)
+			} else {
+				positiveRate[index] = 0
+			}
 		}
 
 		response = new(grafana_json.TableQueryResponse)
@@ -51,7 +55,11 @@ func (handler *Handler) buildTestForecastTableResponse(endTime time.Time, _ stri
 				timestamps[index] = test.Timestamp
 				totalTests[index] = float64(test.Total)
 				positiveTests[index] = float64(test.Positive)
-				positiveRate[index] = float64(test.Positive) / float64(test.Total)
+				if test.Total != 0 {
+					positiveRate[index] = float64(test.Positive) / float64(test.Total)
+				} else {
+					positiveRate[index] = 0
+				}
 			}
 
 			response = new(grafana_json.TableQueryResponse)

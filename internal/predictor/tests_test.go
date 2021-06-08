@@ -28,9 +28,9 @@ func TestForecastTests(t *testing.T) {
 
 	predicted, err = predictor.ForecastTests(tests)
 	if assert.NoError(t, err) {
-		assert.Len(t, predicted, 21)
+		assert.Len(t, predicted, 28)
 		start := 365
-		for i := 0; i < 7; i++ {
+		for i := 0; i < 28; i++ {
 			assert.Less(t, math.Abs(float64(start-predicted[i].Total)), 20.0, i)
 			assert.Less(t, math.Abs(float64(start/2-predicted[i].Positive)), 20.0, i)
 			start++
