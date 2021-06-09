@@ -9,32 +9,56 @@ import (
 )
 
 func ForecastVaccinations(vaccinations []sciensano.Vaccination) (forecast []sciensano.Vaccination, score float64, err error) {
-	var partials []float64
-	var score1 float64
+	partialsResponse := make(chan struct {
+		forecast []float64
+		score    float64
+		err      error
+	})
+	go func() {
+		resp := struct {
+			forecast []float64
+			score    float64
+			err      error
+		}{}
+		resp.forecast, resp.score, resp.err = forecastVaccinations(vaccinations, func(vaccination sciensano.Vaccination) int { return vaccination.FirstDose })
+		partialsResponse <- resp
+	}()
 
-	partials, score1, err = forecastVaccinations(vaccinations, func(vaccination sciensano.Vaccination) int { return vaccination.FirstDose })
+	fullResponse := make(chan struct {
+		forecast []float64
+		score    float64
+		err      error
+	})
+	go func() {
+		resp := struct {
+			forecast []float64
+			score    float64
+			err      error
+		}{}
+		resp.forecast, resp.score, resp.err = forecastVaccinations(vaccinations, func(vaccination sciensano.Vaccination) int { return vaccination.SecondDose })
+		fullResponse <- resp
+	}()
 
-	if err != nil {
-		return nil, 0, err
+	partials := <-partialsResponse
+	full := <-fullResponse
+
+	if partials.err != nil {
+		return nil, 0, partials.err
 	}
 
-	var full []float64
-	var score2 float64
-	full, score2, err = forecastVaccinations(vaccinations, func(vaccination sciensano.Vaccination) int { return vaccination.SecondDose })
-
-	if err != nil {
-		return nil, 0, err
+	if full.err != nil {
+		return nil, 0, full.err
 	}
 
-	score = (score1 + score2) / 2
+	score = (partials.score + full.score) / 2
 
 	_, endDate, delta := getVaccinationDates(vaccinations)
 
-	for i := 0; i < len(partials); i++ {
+	for i := 0; i < len(partials.forecast); i++ {
 		forecast = append(forecast, sciensano.Vaccination{
 			Timestamp:  endDate,
-			FirstDose:  int(partials[i]),
-			SecondDose: int(full[i]),
+			FirstDose:  int(partials.forecast[i]),
+			SecondDose: int(full.forecast[i]),
 		})
 		endDate = endDate.Add(delta)
 	}

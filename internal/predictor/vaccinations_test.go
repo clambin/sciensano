@@ -34,7 +34,7 @@ func TestForecastVaccinations(t *testing.T) {
 		start := 365
 		for i := 0; i < 28; i++ {
 			assert.Less(t, math.Abs(float64(start-predicted[i].FirstDose)), 5.0, i)
-			assert.Less(t, math.Abs(float64(start/2-predicted[i].SecondDose)), 2.5, i)
+			assert.Less(t, math.Abs(float64(start/2-predicted[i].SecondDose)), 4.0, i)
 			start++
 		}
 	}
