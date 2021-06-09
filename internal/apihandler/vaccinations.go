@@ -131,6 +131,8 @@ func (handler *Handler) buildGroupedVaccinationRateTableResponse(endTime time.Ti
 	response = handler.buildGroupedVaccinationTableResponse(endTime, target)
 	if response != nil && strings.HasPrefix(target, "vacc-age-rate-") {
 		prorateFigures(response, demographics.GetAgeGroupFigures())
+	} else if response != nil && strings.HasPrefix(target, "vacc-region-rate-") {
+		prorateFigures(response, demographics.GetRegionFigures())
 	}
 	return
 }

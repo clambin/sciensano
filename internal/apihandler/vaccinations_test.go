@@ -187,7 +187,7 @@ func TestAPIHandler_VaccinationByRegion_Rate(t *testing.T) {
 				switch column.Text {
 				case "Flanders":
 					if assert.NotZero(t, len(data)) {
-						assert.Equal(t, 10, int(data[len(data)-1]))
+						assert.Equal(t, 1, int(1000000*data[len(data)-1]))
 					}
 				}
 			}
