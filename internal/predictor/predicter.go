@@ -16,6 +16,12 @@ type Predictor struct {
 	batchSize int
 }
 
+type forecastFigures struct {
+	figures []float64
+	score   float64
+	err     error
+}
+
 func New(batchSize int, maxIter int) *Predictor {
 	var (
 		hiddenLayerSizes []int

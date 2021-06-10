@@ -42,7 +42,7 @@ func (handler *Handler) buildTestForecastTableResponse(endTime time.Time, _ stri
 	if tests, err := handler.Sciensano.GetTests(endTime); err == nil {
 
 		var forecast []sciensano.Test
-		forecast, err = predictor.ForecastTests(tests)
+		forecast, _, err = predictor.ForecastTests(tests)
 
 		if err == nil {
 			rows := len(forecast)

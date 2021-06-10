@@ -12,7 +12,7 @@ import (
 func TestForecastTests(t *testing.T) {
 	tests := make([]sciensano.Test, 0)
 
-	predicted, err := predictor.ForecastTests(tests)
+	predicted, score, err := predictor.ForecastTests(tests)
 	assert.Error(t, err)
 
 	timestamp := time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)
@@ -26,8 +26,9 @@ func TestForecastTests(t *testing.T) {
 		timestamp = timestamp.Add(24 * time.Hour)
 	}
 
-	predicted, err = predictor.ForecastTests(tests)
+	predicted, score, err = predictor.ForecastTests(tests)
 	if assert.NoError(t, err) {
+		assert.Greater(t, score, 0.98)
 		assert.Len(t, predicted, 28)
 		start := 365
 		for i := 0; i < 28; i++ {
@@ -36,4 +37,25 @@ func TestForecastTests(t *testing.T) {
 			start++
 		}
 	}
+}
+
+func BenchmarkForecastTests(b *testing.B) {
+	tests := make([]sciensano.Test, 0)
+
+	timestamp := time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)
+
+	for i := 0; i < 365; i++ {
+		tests = append(tests, sciensano.Test{
+			Timestamp: timestamp,
+			Total:     i,
+			Positive:  i / 2,
+		})
+		timestamp = timestamp.Add(24 * time.Hour)
+	}
+
+	predicted, score, err := predictor.ForecastTests(tests)
+	assert.NoError(b, err)
+	assert.Greater(b, score, 0.98)
+	assert.Len(b, predicted, 28)
+
 }

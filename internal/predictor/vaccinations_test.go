@@ -33,9 +33,29 @@ func TestForecastVaccinations(t *testing.T) {
 		assert.Len(t, predicted, 28)
 		start := 365
 		for i := 0; i < 28; i++ {
-			assert.Less(t, math.Abs(float64(start-predicted[i].FirstDose)), 5.0, i)
-			assert.Less(t, math.Abs(float64(start/2-predicted[i].SecondDose)), 4.0, i)
+			assert.Less(t, math.Abs(100*float64(start-predicted[i].FirstDose)/float64(start)), 5.0, i)
+			assert.Less(t, math.Abs(100*float64(start/2-predicted[i].SecondDose)/float64(start/2)), 5.0, i)
 			start++
 		}
+	}
+}
+
+func BenchmarkForecastVaccinations(b *testing.B) {
+	input := make([]sciensano.Vaccination, 0)
+	timestamp := time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)
+
+	for i := 0; i < 365; i++ {
+		input = append(input, sciensano.Vaccination{
+			Timestamp:  timestamp,
+			FirstDose:  i,
+			SecondDose: i / 2,
+		})
+		timestamp = timestamp.Add(24 * time.Hour)
+	}
+
+	predicted, score, err := predictor.ForecastVaccinations(input)
+	if assert.NoError(b, err) {
+		assert.Greater(b, score, 0.9)
+		assert.Len(b, predicted, 28)
 	}
 }

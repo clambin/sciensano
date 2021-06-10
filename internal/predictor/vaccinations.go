@@ -9,34 +9,15 @@ import (
 )
 
 func ForecastVaccinations(vaccinations []sciensano.Vaccination) (forecast []sciensano.Vaccination, score float64, err error) {
-	partialsResponse := make(chan struct {
-		forecast []float64
-		score    float64
-		err      error
-	})
+	partialsResponse := make(chan forecastFigures)
+	fullResponse := make(chan forecastFigures)
+
 	go func() {
-		resp := struct {
-			forecast []float64
-			score    float64
-			err      error
-		}{}
-		resp.forecast, resp.score, resp.err = forecastVaccinations(vaccinations, func(vaccination sciensano.Vaccination) int { return vaccination.FirstDose })
-		partialsResponse <- resp
+		partialsResponse <- forecastVaccinations(vaccinations, func(vaccination sciensano.Vaccination) int { return vaccination.FirstDose })
 	}()
 
-	fullResponse := make(chan struct {
-		forecast []float64
-		score    float64
-		err      error
-	})
 	go func() {
-		resp := struct {
-			forecast []float64
-			score    float64
-			err      error
-		}{}
-		resp.forecast, resp.score, resp.err = forecastVaccinations(vaccinations, func(vaccination sciensano.Vaccination) int { return vaccination.SecondDose })
-		fullResponse <- resp
+		fullResponse <- forecastVaccinations(vaccinations, func(vaccination sciensano.Vaccination) int { return vaccination.SecondDose })
 	}()
 
 	partials := <-partialsResponse
@@ -54,11 +35,11 @@ func ForecastVaccinations(vaccinations []sciensano.Vaccination) (forecast []scie
 
 	_, endDate, delta := getVaccinationDates(vaccinations)
 
-	for i := 0; i < len(partials.forecast); i++ {
+	for i := 0; i < len(partials.figures); i++ {
 		forecast = append(forecast, sciensano.Vaccination{
 			Timestamp:  endDate,
-			FirstDose:  int(partials.forecast[i]),
-			SecondDose: int(full.forecast[i]),
+			FirstDose:  int(partials.figures[i]),
+			SecondDose: int(full.figures[i]),
 		})
 		endDate = endDate.Add(delta)
 	}
@@ -73,9 +54,10 @@ func getVaccinationDates(vaccinations []sciensano.Vaccination) (from, to time.Ti
 	return
 }
 
-func forecastVaccinations(vaccinations []sciensano.Vaccination, getAttribute func(vaccination sciensano.Vaccination) int) (forecast []float64, score float64, err error) {
+func forecastVaccinations(vaccinations []sciensano.Vaccination, getAttribute func(vaccination sciensano.Vaccination) int) (forecast forecastFigures) {
 	if len(vaccinations) < batchSize {
-		return nil, 0.0, fmt.Errorf("need at least %d samples", batchSize)
+		forecast.err = fmt.Errorf("need at least %d samples", batchSize)
+		return
 	}
 
 	input := make([]float64, len(vaccinations))
@@ -86,26 +68,24 @@ func forecastVaccinations(vaccinations []sciensano.Vaccination, getAttribute fun
 	p := New(batchSize, 10000)
 
 	var i int
-	for i = 0; score < 0.98 && i < 20; i++ {
-		score = p.Learn(input)
+	for i = 0; forecast.score < 0.99 && i < 20; i++ {
+		forecast.score = p.Learn(input)
+		log.WithField("score", forecast.score).Debugf("learned from %d vaccination samples after %d attempts", len(input), i+1)
 	}
-
-	log.WithField("score", score).Infof("learned from %d samples after %d attempts", len(input), i+1)
 
 	output := make([]float64, batchSize)
 	copy(output, input[len(input)-batchSize:])
 
 	lastValue := input[len(input)-1]
 
-	for i := 0; err == nil && i < forecastBatches; i++ {
-		if output, err = p.PredictN(output, batchSize); err == nil {
+	for i := 0; forecast.err == nil && i < forecastBatches; i++ {
+		if output, forecast.err = p.PredictN(output, batchSize); forecast.err == nil {
 			for _, value := range output {
-				if value > lastValue {
-					forecast = append(forecast, value)
-					lastValue = value
-				} else {
-					forecast = append(forecast, lastValue)
+				if value <= lastValue {
+					value = lastValue
 				}
+				forecast.figures = append(forecast.figures, value)
+				lastValue = value
 			}
 		}
 	}
