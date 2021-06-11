@@ -28,13 +28,14 @@ func TestForecastTests(t *testing.T) {
 
 	predicted, score, err = predictor.ForecastTests(tests)
 	if assert.NoError(t, err) {
-		assert.Greater(t, score, 0.98)
-		assert.Len(t, predicted, 28)
-		start := 365
-		for i := 0; i < 28; i++ {
-			assert.Less(t, math.Abs(float64(start-predicted[i].Total)), 20.0, i)
-			assert.Less(t, math.Abs(float64(start/2-predicted[i].Positive)), 20.0, i)
-			start++
+		assert.Greater(t, score, 0.99)
+		if assert.Len(t, predicted, predictor.ForecastBatches*predictor.BatchSize) {
+			start := 365
+			for i := 0; i < predictor.ForecastBatches*predictor.BatchSize; i++ {
+				assert.LessOrEqual(t, math.Abs(float64(start-predicted[i].Total)), 51.0, i)
+				assert.LessOrEqual(t, math.Abs(float64(start/2-predicted[i].Positive)), 50.0, i)
+				start++
+			}
 		}
 	}
 }
@@ -56,6 +57,6 @@ func BenchmarkForecastTests(b *testing.B) {
 	predicted, score, err := predictor.ForecastTests(tests)
 	assert.NoError(b, err)
 	assert.Greater(b, score, 0.98)
-	assert.Len(b, predicted, 28)
+	assert.Len(b, predicted, predictor.ForecastBatches*predictor.BatchSize)
 
 }

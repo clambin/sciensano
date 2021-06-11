@@ -8,6 +8,7 @@ import (
 )
 
 func main() {
+	log.SetLevel(log.DebugLevel)
 	log.WithField("version", version.BuildVersion).Info("sciensano API starting")
 	handler, _ := apihandler.Create()
 	server := grafana_json.Create(handler, 8080)

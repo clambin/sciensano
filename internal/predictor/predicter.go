@@ -6,25 +6,14 @@ import (
 	"gonum.org/v1/gonum/mat"
 )
 
-const (
-	batchSize       = 14
-	forecastBatches = 2
-)
-
 type Predictor struct {
 	regressor *nn.MLPRegressor
 	batchSize int
 }
 
-type forecastFigures struct {
-	figures []float64
-	score   float64
-	err     error
-}
-
 func New(batchSize int, maxIter int) *Predictor {
 	var (
-		hiddenLayerSizes []int
+		hiddenLayerSizes []int   // = []int{ 2*batchSize }
 		Alpha            float64 = 0
 	)
 
@@ -61,7 +50,7 @@ func (r *Predictor) Learn(values []float64) (score float64) {
 
 func (r *Predictor) Predict(values []float64) (value float64, err error) {
 	if len(values) != r.batchSize {
-		return 0, errors.New("input must be a full batchSize")
+		return 0, errors.New("input must be a full BatchSize")
 	}
 
 	input := mat.NewDense(1, r.regressor.BatchSize, values)
@@ -74,7 +63,7 @@ func (r *Predictor) Predict(values []float64) (value float64, err error) {
 
 func (r *Predictor) PredictN(input []float64, count int) (output []float64, err error) {
 	if len(input) != r.batchSize {
-		return nil, errors.New("input must be a full batchSize")
+		return nil, errors.New("input must be a full BatchSize")
 	}
 
 	buffer := make([]float64, r.batchSize)

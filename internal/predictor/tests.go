@@ -17,8 +17,8 @@ func getDates(tests []sciensano.Test) (from, to time.Time, delta time.Duration) 
 }
 
 func ForecastTests(tests []sciensano.Test) (forecast []sciensano.Test, score float64, err error) {
-	if len(tests) < batchSize {
-		return nil, 0.0, fmt.Errorf("not enough data: at least %d samples required", batchSize)
+	if len(tests) < BatchSize {
+		return nil, 0.0, fmt.Errorf("not enough data: at least %d samples required", BatchSize)
 	}
 
 	totalsResponse := make(chan forecastFigures)
@@ -57,25 +57,28 @@ func ForecastTests(tests []sciensano.Test) (forecast []sciensano.Test, score flo
 }
 
 func forecastTestsAttribute(tests []sciensano.Test, attribute func(test sciensano.Test) float64) (forecast forecastFigures) {
-	p := New(batchSize, 100000)
+	if len(tests) < BatchSize {
+		forecast.err = fmt.Errorf("need at least %d samples", BatchSize)
+		return
+	}
 
 	input := make([]float64, len(tests))
 	for i, test := range tests {
 		input[i] = attribute(test)
 	}
 
-	var i int
-	for i = 0; forecast.score < 0.98 && i < 20; i++ {
+	p := New(BatchSize, 100000)
+
+	for i := 0; forecast.score < 0.99 && i < learnRetries; i++ {
 		forecast.score = p.Learn(input)
+		log.WithField("score", forecast.score).Debugf("learned from %d test samples after %d attempts", len(input), 1+i)
 	}
 
-	log.WithField("score", forecast.score).Debugf("learned from %d test samples after %d attempts", len(input), i+1)
+	output := make([]float64, BatchSize)
+	copy(output, input[len(input)-BatchSize:])
 
-	output := make([]float64, batchSize)
-	copy(output, input[len(input)-batchSize:])
-
-	for i = 0; forecast.err == nil && i < forecastBatches; i++ {
-		output, forecast.err = p.PredictN(output, batchSize)
+	for i := 0; forecast.err == nil && i < ForecastBatches; i++ {
+		output, forecast.err = p.PredictN(output, BatchSize)
 
 		if forecast.err == nil {
 			forecast.figures = append(forecast.figures, output...)

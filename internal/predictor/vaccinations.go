@@ -55,8 +55,8 @@ func getVaccinationDates(vaccinations []sciensano.Vaccination) (from, to time.Ti
 }
 
 func forecastVaccinations(vaccinations []sciensano.Vaccination, getAttribute func(vaccination sciensano.Vaccination) int) (forecast forecastFigures) {
-	if len(vaccinations) < batchSize {
-		forecast.err = fmt.Errorf("need at least %d samples", batchSize)
+	if len(vaccinations) < BatchSize {
+		forecast.err = fmt.Errorf("need at least %d samples", BatchSize)
 		return
 	}
 
@@ -65,21 +65,20 @@ func forecastVaccinations(vaccinations []sciensano.Vaccination, getAttribute fun
 		input[index] = float64(getAttribute(vaccination))
 	}
 
-	p := New(batchSize, 10000)
+	p := New(BatchSize, 10000)
 
-	var i int
-	for i = 0; forecast.score < 0.99 && i < 20; i++ {
+	for i := 0; forecast.score < 0.99 && i < learnRetries; i++ {
 		forecast.score = p.Learn(input)
 		log.WithField("score", forecast.score).Debugf("learned from %d vaccination samples after %d attempts", len(input), i+1)
 	}
 
-	output := make([]float64, batchSize)
-	copy(output, input[len(input)-batchSize:])
+	output := make([]float64, BatchSize)
+	copy(output, input[len(input)-BatchSize:])
 
 	lastValue := input[len(input)-1]
 
-	for i := 0; forecast.err == nil && i < forecastBatches; i++ {
-		if output, forecast.err = p.PredictN(output, batchSize); forecast.err == nil {
+	for i := 0; forecast.err == nil && i < ForecastBatches; i++ {
+		if output, forecast.err = p.PredictN(output, BatchSize); forecast.err == nil {
 			for _, value := range output {
 				if value <= lastValue {
 					value = lastValue

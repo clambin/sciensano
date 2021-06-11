@@ -30,11 +30,11 @@ func TestForecastVaccinations(t *testing.T) {
 	predicted, score, err = predictor.ForecastVaccinations(input)
 	if assert.NoError(t, err) {
 		assert.Greater(t, score, 0.9)
-		assert.Len(t, predicted, 28)
+		assert.Len(t, predicted, predictor.ForecastBatches*predictor.BatchSize)
 		start := 365
-		for i := 0; i < 28; i++ {
-			assert.Less(t, math.Abs(100*float64(start-predicted[i].FirstDose)/float64(start)), 5.0, i)
-			assert.Less(t, math.Abs(100*float64(start/2-predicted[i].SecondDose)/float64(start/2)), 5.0, i)
+		for i := 0; i < predictor.ForecastBatches*predictor.BatchSize; i++ {
+			assert.Less(t, math.Abs(100*float64(start-predicted[i].FirstDose)/float64(start)), 20.0, i)
+			assert.Less(t, math.Abs(100*float64(start/2-predicted[i].SecondDose)/float64(start/2)), 20.0, i)
 			start++
 		}
 	}
@@ -56,6 +56,6 @@ func BenchmarkForecastVaccinations(b *testing.B) {
 	predicted, score, err := predictor.ForecastVaccinations(input)
 	if assert.NoError(b, err) {
 		assert.Greater(b, score, 0.9)
-		assert.Len(b, predicted, 28)
+		assert.Len(b, predicted, predictor.ForecastBatches*predictor.BatchSize)
 	}
 }
