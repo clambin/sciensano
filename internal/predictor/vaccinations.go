@@ -39,7 +39,7 @@ func ForecastVaccinations(vaccinations []sciensano.Vaccination) (forecast []scie
 		forecast = append(forecast, sciensano.Vaccination{
 			Timestamp:  endDate,
 			FirstDose:  int(partials.figures[i]),
-			SecondDose: int(full.figures[i]),
+			SecondDose: int(math.Min(full.figures[i], partials.figures[i])),
 		})
 		endDate = endDate.Add(delta)
 	}

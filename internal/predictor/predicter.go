@@ -14,7 +14,7 @@ type Predictor struct {
 func New(batchSize int, maxIter int) *Predictor {
 	var (
 		hiddenLayerSizes []int   // = []int{ 2*batchSize }
-		Alpha            float64 = 0
+		Alpha            float64 // = 0.0001
 	)
 
 	r := nn.NewMLPRegressor(hiddenLayerSizes, "relu", "adam", Alpha)
