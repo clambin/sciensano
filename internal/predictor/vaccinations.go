@@ -3,45 +3,48 @@ package predictor
 import (
 	"fmt"
 	"github.com/clambin/sciensano/pkg/sciensano"
-	log "github.com/sirupsen/logrus"
 	"math"
 	"time"
 )
 
 func ForecastVaccinations(vaccinations []sciensano.Vaccination) (forecast []sciensano.Vaccination, score float64, err error) {
-	partialsResponse := make(chan forecastFigures)
-	fullResponse := make(chan forecastFigures)
-
-	go func() {
-		partialsResponse <- forecastVaccinations(vaccinations, func(vaccination sciensano.Vaccination) int { return vaccination.FirstDose })
-	}()
-
-	go func() {
-		fullResponse <- forecastVaccinations(vaccinations, func(vaccination sciensano.Vaccination) int { return vaccination.SecondDose })
-	}()
-
-	partials := <-partialsResponse
-	full := <-fullResponse
-
-	if partials.err != nil {
-		return nil, 0, partials.err
+	if len(vaccinations) < BatchSize {
+		return nil, 0.0, fmt.Errorf("not enough data: at least %d samples required", BatchSize)
 	}
 
-	if full.err != nil {
-		return nil, 0, full.err
-	}
+	firstDoses := make(chan float64)
+	secondDoses := make(chan float64)
 
-	score = (partials.score + full.score) / 2
+	input := buildVaccinationInput(vaccinations)
 
-	_, endDate, delta := getVaccinationDates(vaccinations)
+	go forecastSamples(input[0], input[1], ForecastBatches*BatchSize, "vaccination", firstDoses)
+	go forecastSamples(input[1], input[0], ForecastBatches*BatchSize, "vaccination", secondDoses)
 
-	for i := 0; i < len(partials.figures); i++ {
+	_, end, delta := getVaccinationDates(vaccinations)
+
+	score1 := <-firstDoses
+	score2 := <-secondDoses
+
+	score = score1 * score2
+
+	for i := 0; i < ForecastBatches*BatchSize; i++ {
+		end = end.Add(delta)
+
 		forecast = append(forecast, sciensano.Vaccination{
-			Timestamp:  endDate,
-			FirstDose:  int(partials.figures[i]),
-			SecondDose: int(math.Min(full.figures[i], partials.figures[i])),
+			Timestamp:  end,
+			FirstDose:  int(<-firstDoses),
+			SecondDose: int(<-secondDoses),
 		})
-		endDate = endDate.Add(delta)
+	}
+
+	return
+}
+
+func buildVaccinationInput(vaccinations []sciensano.Vaccination) (output [][]float64) {
+	output = make([][]float64, 2)
+	for _, test := range vaccinations[len(vaccinations)-HistoryBatches*BatchSize:] {
+		output[0] = append(output[0], float64(test.FirstDose))
+		output[1] = append(output[1], float64(test.SecondDose))
 	}
 	return
 }
@@ -51,43 +54,5 @@ func getVaccinationDates(vaccinations []sciensano.Vaccination) (from, to time.Ti
 	to = vaccinations[len(vaccinations)-1].Timestamp
 	avg := math.Round(to.Sub(from).Hours() / float64(len(vaccinations)))
 	delta = time.Duration(avg) * time.Hour
-	return
-}
-
-func forecastVaccinations(vaccinations []sciensano.Vaccination, getAttribute func(vaccination sciensano.Vaccination) int) (forecast forecastFigures) {
-	if len(vaccinations) < BatchSize {
-		forecast.err = fmt.Errorf("need at least %d samples", BatchSize)
-		return
-	}
-
-	input := make([]float64, len(vaccinations))
-	for index, vaccination := range vaccinations {
-		input[index] = float64(getAttribute(vaccination))
-	}
-
-	p := New(BatchSize, 10000)
-
-	for i := 0; forecast.score < 0.99 && i < learnRetries; i++ {
-		forecast.score = p.Learn(input)
-		log.WithField("score", forecast.score).Debugf("learned from %d vaccination samples after %d attempts", len(input), i+1)
-	}
-
-	output := make([]float64, BatchSize)
-	copy(output, input[len(input)-BatchSize:])
-
-	lastValue := input[len(input)-1]
-
-	for i := 0; forecast.err == nil && i < ForecastBatches; i++ {
-		if output, forecast.err = p.PredictN(output, BatchSize); forecast.err == nil {
-			for _, value := range output {
-				if value <= lastValue {
-					value = lastValue
-				}
-				forecast.figures = append(forecast.figures, value)
-				lastValue = value
-			}
-		}
-	}
-
 	return
 }

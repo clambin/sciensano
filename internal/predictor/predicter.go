@@ -13,7 +13,7 @@ type Predictor struct {
 
 func New(batchSize int, maxIter int) *Predictor {
 	var (
-		hiddenLayerSizes []int   // = []int{ 2*batchSize }
+		hiddenLayerSizes []int   = []int{100}
 		Alpha            float64 // = 0.0001
 	)
 
@@ -27,7 +27,7 @@ func New(batchSize int, maxIter int) *Predictor {
 	}
 }
 
-func (r *Predictor) Learn(values []float64) (score float64) {
+func (r *Predictor) Learn(values [][]float64) (score float64) {
 	// create the trainX and trainY matrices
 	//
 	// trainX holds rows of length 'window' of training data
@@ -35,46 +35,35 @@ func (r *Predictor) Learn(values []float64) (score float64) {
 	trainXData := make([]float64, 0)
 	trainYData := make([]float64, 0)
 	rows := 0
-	for i := 0; i+1+r.batchSize < len(values); i++ {
-		trainXData = append(trainXData, values[i:i+r.batchSize]...)
-		trainYData = append(trainYData, values[i+r.batchSize])
+	for i := 0; i+1+r.batchSize < len(values[0]); i++ {
+		trainXData = append(trainXData, values[0][i:i+r.batchSize]...)
+		for j := 0; j < len(values); j++ {
+			trainYData = append(trainYData, values[j][i+r.batchSize])
+		}
 		rows++
 	}
 
-	trainX, trainY := mat.NewDense(rows, r.batchSize, trainXData), mat.NewDense(rows, 1, trainYData)
+	trainX, trainY := mat.NewDense(rows, r.batchSize, trainXData), mat.NewDense(rows, len(values), trainYData)
 
 	r.regressor.Fit(trainX, trainY)
 
 	return r.regressor.Score(trainX, trainY)
 }
 
-func (r *Predictor) Predict(values []float64) (value float64, err error) {
-	if len(values) != r.batchSize {
-		return 0, errors.New("input must be a full BatchSize")
-	}
-
-	input := mat.NewDense(1, r.regressor.BatchSize, values)
-
-	var predictions mat.Dense
-	forecast := r.regressor.Predict(input, &predictions)
-
-	return forecast.At(0, 0), nil
-}
-
-func (r *Predictor) PredictN(input []float64, count int) (output []float64, err error) {
+func (r *Predictor) Predict(input []float64) (output []float64, err error) {
 	if len(input) != r.batchSize {
 		return nil, errors.New("input must be a full BatchSize")
 	}
 
-	buffer := make([]float64, r.batchSize)
-	copy(buffer, input)
+	X := mat.NewDense(1, r.regressor.BatchSize, input)
 
-	var value float64
-	for i := 0; i < count && err == nil; i++ {
-		if value, err = r.Predict(buffer); err == nil {
-			output = append(output, value)
-			buffer = append(buffer[1:], value)
-		}
+	var predictions mat.Dense
+	forecast := r.regressor.Predict(X, &predictions)
+
+	_, cols := forecast.Dims()
+
+	for j := 0; j < cols; j++ {
+		output = append(output, forecast.At(0, j))
 	}
-	return
+	return output, nil
 }

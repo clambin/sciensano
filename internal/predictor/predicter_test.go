@@ -1,15 +1,16 @@
 package predictor_test
 
 import (
+	"fmt"
 	"github.com/clambin/sciensano/internal/predictor"
 	"github.com/stretchr/testify/assert"
 	"math"
 	"testing"
 )
 
-func TestPredictor(t *testing.T) {
+func TestSinglePredictor(t *testing.T) {
 	const (
-		batchSize = 10
+		batchSize = 14
 		dataSize  = 40 * batchSize
 	)
 	p := predictor.New(batchSize, 1000)
@@ -17,39 +18,86 @@ func TestPredictor(t *testing.T) {
 	values := make([]float64, dataSize)
 	for i := 0; i < dataSize; i++ {
 		values[i] = 50.0 + (360.0/float64(i+1))*math.Cos(float64(i)*10*math.Pi*2/360) - float64(i)/10.0
+		// values[i] = float64(i)
 	}
 
-	score := p.Learn(values[:dataSize-batchSize])
-	assert.Greater(t, score, 0.99)
+	input := [][]float64{values[:dataSize-batchSize]}
 
-	difference := 0.0
-	predicted, err := p.PredictN(values[dataSize-batchSize-1:dataSize-1], batchSize)
-	if assert.NoError(t, err) {
-		for i := 0; i < batchSize; i++ {
-			difference += math.Abs(predicted[i] - values[dataSize-batchSize-1+i])
+	const targetScore = 0.98
+	score := 0.0
+	attempts := 10
+
+	for score < targetScore && attempts > 0 {
+		score = p.Learn(input)
+		attempts--
+	}
+	assert.Greater(t, score, targetScore)
+
+	buffer := make([]float64, batchSize)
+	copy(buffer, values[dataSize-2*batchSize:dataSize-batchSize])
+
+	for i := 0; i < batchSize; i++ {
+		predicted, err := p.Predict(buffer)
+		if assert.NoError(t, err) {
+			target := values[dataSize-batchSize+i]
+			difference := math.Abs(predicted[0] - target)
+			assert.Less(t, difference, 4.0, fmt.Sprintf("%d: %.1f <-> %.1f", i, target, predicted[0]))
+			buffer = append(buffer[1:], predicted[0])
+
+		} else {
+			break
 		}
-		assert.Less(t, difference/batchSize, 1.0)
 	}
 }
 
-func BenchmarkPredictor(b *testing.B) {
+func TestMultiPredictor(t *testing.T) {
 	const (
-		batchSize = 10
+		batchSize = 14
 		dataSize  = 40 * batchSize
 	)
 	p := predictor.New(batchSize, 1000)
 
-	values := make([]float64, dataSize)
+	series1 := make([]float64, dataSize)
 	for i := 0; i < dataSize; i++ {
-		values[i] = 50.0 + (360.0/float64(i+1))*math.Cos(float64(i)*10*math.Pi*2/360) - float64(i)/10.0
+		series1[i] = float64(i)
+	}
+	series2 := make([]float64, dataSize)
+	for i := 0; i < dataSize; i++ {
+		series2[i] = 50.0 + (360.0/float64(i+1))*math.Cos(float64(i)*10*math.Pi*2/360) - float64(i)/10.0
 	}
 
-	score := p.Learn(values[:dataSize-batchSize])
-	assert.Greater(b, score, 0.9)
+	input := [][]float64{series1[:dataSize-batchSize], series2[:dataSize-batchSize]}
 
-	for i := 0; i+batchSize+1 < dataSize; i++ {
-		_, err := p.Predict(values[i : i+batchSize])
-		assert.NoError(b, err)
+	const targetScore = 0.98
+	score := 0.0
+	attempts := 10
+
+	for score < targetScore && attempts > 0 {
+		score = p.Learn(input)
+		attempts--
 	}
+	assert.Greater(t, score, targetScore)
 
+	fmt.Printf("Attempts left: %d\n", attempts)
+
+	buffer := make([]float64, batchSize)
+	copy(buffer, series1[dataSize-2*batchSize:dataSize-batchSize])
+
+	for i := 0; i < batchSize; i++ {
+		predicted, err := p.Predict(buffer)
+		if assert.NoError(t, err) {
+			target := series1[dataSize-batchSize+i]
+			difference := math.Abs(predicted[0] - target)
+			assert.Less(t, difference, 5.0, fmt.Sprintf("series 1, index:%d, target: %.1f, predicted: %.1f", i, target, predicted[0]))
+
+			target = series2[dataSize-batchSize+i]
+			difference = math.Abs(predicted[1] - target)
+			assert.Less(t, difference, 5.0, fmt.Sprintf("series2, index:%d, target: %.1f, predicted: %.1f", i, target, predicted[1]))
+
+			buffer = append(buffer[1:], predicted[0])
+
+		} else {
+			break
+		}
+	}
 }

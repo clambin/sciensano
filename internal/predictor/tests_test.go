@@ -58,5 +58,4 @@ func BenchmarkForecastTests(b *testing.B) {
 	assert.NoError(b, err)
 	assert.Greater(b, score, 0.98)
 	assert.Len(b, predicted, predictor.ForecastBatches*predictor.BatchSize)
-
 }
