@@ -27,7 +27,7 @@ func TestForecastTests(t *testing.T) {
 
 	predicted, err = predictor.ForecastTests(tests)
 	assert.NoError(t, err)
-	assert.Len(t, predicted, 365-predictor.BatchSize+predictor.ForecastSamples)
+	assert.Len(t, predicted, 224)
 }
 
 func BenchmarkForecastTests(b *testing.B) {
@@ -44,7 +44,7 @@ func BenchmarkForecastTests(b *testing.B) {
 		timestamp = timestamp.Add(24 * time.Hour)
 	}
 
-	predicted, err := predictor.ForecastTests(tests)
+	b.ResetTimer()
+	_, err := predictor.ForecastTests(tests)
 	assert.NoError(b, err)
-	assert.Len(b, predicted, predictor.ForecastSamples)
 }

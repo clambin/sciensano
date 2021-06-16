@@ -7,16 +7,23 @@ import (
 	"time"
 )
 
+const HistoryBatches = 30
+
 func ForecastTests(tests []sciensano.Test) (forecast []sciensano.Test, err error) {
 	if len(tests) < BatchSize {
 		return nil, fmt.Errorf("not enough data: at least %d samples required", BatchSize)
+	}
+
+	history := tests
+	if len(tests) > HistoryBatches*BatchSize {
+		history = tests[len(tests)-HistoryBatches*BatchSize:]
 	}
 
 	totalTests := make(chan []float64)
 	positiveTests := make(chan []float64)
 	output := make(chan []float64)
 
-	input := buildTestsInput(tests) // [len(tests)-HistoryBatches*BatchSize:])
+	input := buildTestsInput(history)
 
 	// sklearn doesn't give us forecasts for both data sets in one prediction (gonum doesn't support n-dimensional arrays),
 	// so we run both forecasts in parallel.  we're still passing both streams to train the models for both input streams
@@ -26,7 +33,7 @@ func ForecastTests(tests []sciensano.Test) (forecast []sciensano.Test, err error
 	go forecastSamples([][]float64{input[1], input[0]}, ForecastSamples, "positive test", positiveTests)
 	go consolidateSamples(output, []chan []float64{totalTests, positiveTests}, standardConsolidator)
 
-	begin, _, delta := getTestDates(tests)
+	begin, _, delta := getTestDates(history)
 	end := begin.Add(BatchSize * delta)
 
 	for figures := range output {
