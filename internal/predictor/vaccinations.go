@@ -7,35 +7,20 @@ import (
 	"time"
 )
 
-func ForecastVaccinations(vaccinations []sciensano.Vaccination) (forecast []sciensano.Vaccination, score float64, err error) {
+func ForecastVaccinations(vaccinations []sciensano.Vaccination) (forecast []sciensano.Vaccination, err error) {
 	if len(vaccinations) < BatchSize {
-		return nil, 0.0, fmt.Errorf("not enough data: at least %d samples required", BatchSize)
+		return nil, fmt.Errorf("not enough data: at least %d samples required", BatchSize)
 	}
 
 	firstDoses := make(chan []float64)
 	secondDoses := make(chan []float64)
 	output := make(chan []float64)
 
-	input := buildVaccinationInput(vaccinations /*[len(vaccinations)-HistoryBatches*BatchSize:]*/)
+	input := buildVaccinationInput(vaccinations)
 
-	go forecastSamples(input[0], input[1], ForecastBatches*BatchSize, "first vaccination", firstDoses)
-	go forecastSamples(input[1], input[0], ForecastBatches*BatchSize, "second vaccination", secondDoses)
-
-	score1 := <-firstDoses
-	score2 := <-secondDoses
-
-	score = score1[0] * score2[0]
-
-	const (
-		a = 10
-		b = 0
-	)
-	go consolidateSamples(output, []chan []float64{firstDoses, secondDoses}, func(input [][]float64) []float64 {
-		firstDose := math.Max(0.0, (a*input[0][0]+b*input[1][1])/(a+b))
-		secondDose := math.Max(0.0, (b*input[0][1]+a*input[1][0])/(a+b))
-
-		return []float64{firstDose, secondDose}
-	})
+	go forecastSamples(input, ForecastSamples, "first vaccination", firstDoses)
+	go forecastSamples([][]float64{input[1], input[0]}, ForecastSamples, "second vaccination", secondDoses)
+	go consolidateSamples(output, []chan []float64{firstDoses, secondDoses}, standardConsolidator)
 
 	begin, _, delta := getVaccinationDates(vaccinations)
 	end := begin.Add(BatchSize * delta)

@@ -7,9 +7,9 @@ import (
 	"time"
 )
 
-func ForecastTests(tests []sciensano.Test) (forecast []sciensano.Test, score float64, err error) {
-	if len(tests) < HistoryBatches*BatchSize {
-		return nil, 0.0, fmt.Errorf("not enough data: at least %d samples required", HistoryBatches*BatchSize)
+func ForecastTests(tests []sciensano.Test) (forecast []sciensano.Test, err error) {
+	if len(tests) < BatchSize {
+		return nil, fmt.Errorf("not enough data: at least %d samples required", BatchSize)
 	}
 
 	totalTests := make(chan []float64)
@@ -22,25 +22,10 @@ func ForecastTests(tests []sciensano.Test) (forecast []sciensano.Test, score flo
 	// so we run both forecasts in parallel.  we're still passing both streams to train the models for both input streams
 	// (though not really clear if this works at all ...)
 
-	go forecastSamples(input[0], input[1], ForecastBatches*BatchSize, "total test", totalTests)
-	go forecastSamples(input[1], input[0], ForecastBatches*BatchSize, "positive test", positiveTests)
+	go forecastSamples(input, ForecastSamples, "total test", totalTests)
+	go forecastSamples([][]float64{input[1], input[0]}, ForecastSamples, "positive test", positiveTests)
+	go consolidateSamples(output, []chan []float64{totalTests, positiveTests}, standardConsolidator)
 
-	score1 := <-totalTests
-	score2 := <-positiveTests
-	score = score1[0] * score2[0]
-
-	const (
-		a = 10
-		b = 0
-	)
-	go consolidateSamples(output, []chan []float64{totalTests, positiveTests}, func(input [][]float64) []float64 {
-		total := math.Max(0.0, (a*input[0][0]+b*input[1][1])/(a+b))
-		positive := math.Max(0.0, (b*input[0][1]+a*input[1][0])/(a+b))
-
-		return []float64{total, positive}
-	})
-
-	// _, end, delta := getTestDates(tests)
 	begin, _, delta := getTestDates(tests)
 	end := begin.Add(BatchSize * delta)
 

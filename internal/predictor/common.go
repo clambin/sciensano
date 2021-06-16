@@ -1,23 +1,26 @@
 package predictor
 
-import log "github.com/sirupsen/logrus"
+import (
+	log "github.com/sirupsen/logrus"
+	"math"
+)
 
 const (
 	BatchSize       = 7
-	ForecastBatches = 3
-	HistoryBatches  = 12
+	ForecastSamples = 3 * BatchSize
 	learnThreshold  = 0.945
 	learnRetries    = 3
 )
 
-func forecastSamples(series1, series2 []float64, forecastCount int, label string, responses chan []float64) {
+func forecastSamples(series [][]float64, forecastCount int, label string, responses chan []float64) {
 	p := New(BatchSize, 1000)
 
 	totalSeries := make([][]float64, 0)
 
-	totalSeries = append(totalSeries, series1)
-	if len(series2) != 0 {
-		totalSeries = append(totalSeries, series2)
+	for _, serie := range series {
+		if len(serie) != 0 {
+			totalSeries = append(totalSeries, serie)
+		}
 	}
 
 	var score float64
@@ -30,24 +33,17 @@ func forecastSamples(series1, series2 []float64, forecastCount int, label string
 	log.WithFields(log.Fields{
 		"score":    score,
 		"attempts": learnRetries - retries,
-	}).Debugf("learned from %d %s samples", len(series1), label)
-
-	responses <- []float64{score}
+	}).Debugf("learned from %d %s samples", len(totalSeries[0]), label)
 
 	buffer := make([]float64, BatchSize)
-	copy(buffer, series1[:BatchSize])
+	copy(buffer, series[0][:BatchSize])
 
-	for i := BatchSize; i < len(series1)+forecastCount; i++ {
-		prediction, err := p.Predict(buffer)
-
-		if err != nil {
-			log.WithError(err).Warning("failed to predict vaccination evolution")
-		}
-
+	for i := BatchSize; i < len(totalSeries[0])+forecastCount; i++ {
+		prediction, _ := p.Predict(buffer)
 		responses <- prediction
 
-		if i < len(series1) {
-			buffer = append(buffer[1:], series1[i])
+		if i < len(totalSeries[0]) {
+			buffer = append(buffer[1:], totalSeries[0][i])
 		} else {
 			buffer = append(buffer[1:], prediction[0])
 		}
@@ -68,4 +64,16 @@ func consolidateSamples(output chan []float64, input []chan []float64, processor
 	}
 
 	close(output)
+}
+
+func standardConsolidator(input [][]float64) []float64 {
+	const (
+		a = 10
+		b = 0
+	)
+
+	return []float64{
+		math.Max(0.0, (a*input[0][0]+b*input[1][1])/(a+b)),
+		math.Max(0.0, (b*input[0][1]+a*input[1][0])/(a+b)),
+	}
 }

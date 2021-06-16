@@ -8,7 +8,28 @@ import (
 	"testing"
 )
 
-func TestSinglePredictor(t *testing.T) {
+func TestPredictor_Failures(t *testing.T) {
+	const (
+		batchSize = 7
+		dataSize  = 3 * batchSize
+	)
+	p := predictor.New(batchSize, 1000)
+
+	values := make([]float64, dataSize)
+	for i := 0; i < dataSize; i++ {
+		values[i] = float64(i)
+	}
+
+	_ = p.Learn([][]float64{values})
+	_, err := p.Predict([]float64{})
+
+	assert.Error(t, err)
+}
+
+// TODO: validating accuracy of models during testing is very expensive
+// should move this to separate tuning testing rather than automated unit testing
+
+func TestPredictor_Single(t *testing.T) {
 	const (
 		batchSize = 14
 		dataSize  = 40 * batchSize
@@ -21,14 +42,12 @@ func TestSinglePredictor(t *testing.T) {
 		// values[i] = float64(i)
 	}
 
-	input := [][]float64{values[:dataSize-batchSize]}
-
 	const targetScore = 0.98
 	score := 0.0
 	attempts := 10
 
 	for score < targetScore && attempts > 0 {
-		score = p.Learn(input)
+		score = p.Learn([][]float64{values[:dataSize-batchSize]})
 		attempts--
 	}
 	assert.Greater(t, score, targetScore)
@@ -50,7 +69,7 @@ func TestSinglePredictor(t *testing.T) {
 	}
 }
 
-func TestMultiPredictor(t *testing.T) {
+func TestPredictor_Multi(t *testing.T) {
 	const (
 		batchSize = 14
 		dataSize  = 40 * batchSize
@@ -77,28 +96,4 @@ func TestMultiPredictor(t *testing.T) {
 		attempts--
 	}
 	assert.Greater(t, score, targetScore)
-
-	fmt.Printf("Attempts left: %d\n", attempts)
-
-	buffer := make([]float64, batchSize)
-	copy(buffer, series1[dataSize-2*batchSize:dataSize-batchSize])
-	/*
-		for i := 0; i < batchSize; i++ {
-			predicted, err := p.Predict(buffer)
-			if assert.NoError(t, err) {
-				target := series1[dataSize-batchSize+i]
-				difference := math.Abs(predicted[0] - target)
-				assert.Less(t, difference, 5.0, fmt.Sprintf("series 1, index:%d, target: %.1f, predicted: %.1f", i, target, predicted[0]))
-
-				target = series2[dataSize-batchSize+i]
-				difference = math.Abs(predicted[1] - target)
-				assert.Less(t, difference, 5.0, fmt.Sprintf("series2, index:%d, target: %.1f, predicted: %.1f", i, target, predicted[1]))
-
-				buffer = append(buffer[1:], predicted[0])
-
-			} else {
-				break
-			}
-		}
-	*/
 }

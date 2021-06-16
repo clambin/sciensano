@@ -40,7 +40,7 @@ func (handler *Handler) buildVaccinationForecastTableResponse(_ time.Time, _ str
 		vaccinations = sciensano.AccumulateVaccinations(vaccinations)
 
 		// var score float64
-		vaccinations, _, err = predictor.ForecastVaccinations(vaccinations)
+		vaccinations, err = predictor.ForecastVaccinations(vaccinations)
 
 		if err != nil {
 			return nil

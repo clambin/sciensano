@@ -9,10 +9,9 @@ import (
 )
 
 func TestForecastVaccinations(t *testing.T) {
-	var score float64
 	input := make([]sciensano.Vaccination, 0)
 
-	predicted, score, err := predictor.ForecastVaccinations(input)
+	predicted, err := predictor.ForecastVaccinations(input)
 	assert.Error(t, err)
 
 	timestamp := time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)
@@ -26,11 +25,9 @@ func TestForecastVaccinations(t *testing.T) {
 		timestamp = timestamp.Add(24 * time.Hour)
 	}
 
-	predicted, score, err = predictor.ForecastVaccinations(input)
-	if assert.NoError(t, err) {
-		assert.Greater(t, score, 0.9)
-		assert.Len(t, predicted, 365-predictor.BatchSize+predictor.ForecastBatches*predictor.BatchSize)
-	}
+	predicted, err = predictor.ForecastVaccinations(input)
+	assert.NoError(t, err)
+	assert.Len(t, predicted, 365-predictor.BatchSize+predictor.ForecastSamples)
 }
 
 func BenchmarkForecastVaccinations(b *testing.B) {
@@ -46,9 +43,7 @@ func BenchmarkForecastVaccinations(b *testing.B) {
 		timestamp = timestamp.Add(24 * time.Hour)
 	}
 
-	predicted, score, err := predictor.ForecastVaccinations(input)
-	if assert.NoError(b, err) {
-		assert.Greater(b, score, 0.9)
-		assert.Len(b, predicted, predictor.ForecastBatches*predictor.BatchSize)
-	}
+	predicted, err := predictor.ForecastVaccinations(input)
+	assert.NoError(b, err)
+	assert.Len(b, predicted, 365-predictor.BatchSize+predictor.ForecastSamples)
 }
