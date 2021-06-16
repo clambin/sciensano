@@ -15,10 +15,10 @@ func ForecastVaccinations(vaccinations []sciensano.Vaccination) (forecast []scie
 	firstDoses := make(chan float64)
 	secondDoses := make(chan float64)
 
-	input := buildVaccinationInput(vaccinations)
+	input := buildVaccinationInput(vaccinations /*[len(vaccinations)-HistoryBatches*BatchSize:]*/)
 
-	go forecastSamples(input[0], input[1], ForecastBatches*BatchSize, "vaccination", firstDoses)
-	go forecastSamples(input[1], input[0], ForecastBatches*BatchSize, "vaccination", secondDoses)
+	go forecastSamples(input[0], []float64{} /*input[1]*/, ForecastBatches*BatchSize, "first vaccination", firstDoses)
+	go forecastSamples(input[1], []float64{} /*input[0]*/, ForecastBatches*BatchSize, "second vaccination", secondDoses)
 
 	_, end, delta := getVaccinationDates(vaccinations)
 
@@ -42,7 +42,7 @@ func ForecastVaccinations(vaccinations []sciensano.Vaccination) (forecast []scie
 
 func buildVaccinationInput(vaccinations []sciensano.Vaccination) (output [][]float64) {
 	output = make([][]float64, 2)
-	for _, test := range vaccinations[len(vaccinations)-HistoryBatches*BatchSize:] {
+	for _, test := range vaccinations {
 		output[0] = append(output[0], float64(test.FirstDose))
 		output[1] = append(output[1], float64(test.SecondDose))
 	}

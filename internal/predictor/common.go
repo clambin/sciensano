@@ -5,7 +5,7 @@ import log "github.com/sirupsen/logrus"
 const (
 	BatchSize       = 7
 	ForecastBatches = 3
-	HistoryBatches  = 10
+	HistoryBatches  = 12
 	learnThreshold  = 0.98
 	learnRetries    = 3
 )
@@ -27,7 +27,10 @@ func forecastSamples(series1, series2 []float64, samples int, label string, resp
 		retries--
 	}
 
-	log.WithField("score", score).Debugf("learned from %d %s samples", len(series1), label)
+	log.WithFields(log.Fields{
+		"score":    score,
+		"attempts": learnRetries - retries,
+	}).Debugf("learned from %d %s samples", len(series1), label)
 
 	responses <- score
 
@@ -41,7 +44,10 @@ func forecastSamples(series1, series2 []float64, samples int, label string, resp
 			log.WithError(err).Warning("failed to predict vaccination evolution")
 		}
 
-		responses <- prediction[0]
+		for _, value := range prediction {
+			responses <- value
+		}
+
 		buffer = append(buffer[1:], prediction[0])
 	}
 }

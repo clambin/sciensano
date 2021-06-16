@@ -31,7 +31,7 @@ func (r *Predictor) Learn(values [][]float64) (score float64) {
 	// create the trainX and trainY matrices
 	//
 	// trainX holds rows of length 'window' of training data
-	// trainY holds the next expected value for that window
+	// trainY holds the next expected values for that window
 	trainXData := make([]float64, 0)
 	trainYData := make([]float64, 0)
 	rows := 0
