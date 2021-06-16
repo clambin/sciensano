@@ -12,10 +12,11 @@ func ForecastTests(tests []sciensano.Test) (forecast []sciensano.Test, score flo
 		return nil, 0.0, fmt.Errorf("not enough data: at least %d samples required", HistoryBatches*BatchSize)
 	}
 
-	totalTests := make(chan float64)
-	positiveTests := make(chan float64)
+	totalTests := make(chan []float64)
+	positiveTests := make(chan []float64)
+	output := make(chan []float64)
 
-	input := buildTestsInput(tests[len(tests)-HistoryBatches*BatchSize:])
+	input := buildTestsInput(tests) // [len(tests)-HistoryBatches*BatchSize:])
 
 	// sklearn doesn't give us forecasts for both data sets in one prediction (gonum doesn't support n-dimensional arrays),
 	// so we run both forecasts in parallel.  we're still passing both streams to train the models for both input streams
@@ -24,29 +25,33 @@ func ForecastTests(tests []sciensano.Test) (forecast []sciensano.Test, score flo
 	go forecastSamples(input[0], input[1], ForecastBatches*BatchSize, "total test", totalTests)
 	go forecastSamples(input[1], input[0], ForecastBatches*BatchSize, "positive test", positiveTests)
 
-	_, end, delta := getTestDates(tests)
-
 	score1 := <-totalTests
 	score2 := <-positiveTests
+	score = score1[0] * score2[0]
 
-	score = score1 * score2
+	const (
+		a = 10
+		b = 0
+	)
+	go consolidateSamples(output, []chan []float64{totalTests, positiveTests}, func(input [][]float64) []float64 {
+		total := math.Max(0.0, (a*input[0][0]+b*input[1][1])/(a+b))
+		positive := math.Max(0.0, (b*input[0][1]+a*input[1][0])/(a+b))
 
-	for i := 0; i < ForecastBatches*BatchSize; i++ {
-		end = end.Add(delta)
+		return []float64{total, positive}
+	})
 
-		total1 := <-totalTests
-		positive1 := <-totalTests
-		positive2 := <-positiveTests
-		total2 := <-positiveTests
+	// _, end, delta := getTestDates(tests)
+	begin, _, delta := getTestDates(tests)
+	end := begin.Add(BatchSize * delta)
 
-		total := (8*total1 + 2*total2) / 10
-		positive := (2*positive1 + 8*positive2) / 10
-
+	for figures := range output {
 		forecast = append(forecast, sciensano.Test{
 			Timestamp: end,
-			Total:     int(math.Max(0.0, total)),
-			Positive:  int(math.Max(0.0, positive)),
+			Total:     int(figures[0]),
+			Positive:  int(math.Min(figures[1], figures[0])),
 		})
+
+		end = end.Add(delta)
 	}
 
 	return

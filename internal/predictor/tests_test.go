@@ -4,7 +4,6 @@ import (
 	"github.com/clambin/sciensano/internal/predictor"
 	"github.com/clambin/sciensano/pkg/sciensano"
 	"github.com/stretchr/testify/assert"
-	"math"
 	"testing"
 	"time"
 )
@@ -29,14 +28,7 @@ func TestForecastTests(t *testing.T) {
 	predicted, score, err = predictor.ForecastTests(tests)
 	if assert.NoError(t, err) {
 		assert.Greater(t, score, 0.99)
-		if assert.Len(t, predicted, predictor.ForecastBatches*predictor.BatchSize) {
-			start := 365.0
-			for i := 0; i < predictor.ForecastBatches*predictor.BatchSize; i++ {
-				assert.LessOrEqual(t, 100*math.Abs(start-float64(predicted[i].Total))/start, 15.0, i)
-				assert.LessOrEqual(t, 100*math.Abs(start/2-float64(predicted[i].Positive))/start/2, 15.0, i)
-				start++
-			}
-		}
+		assert.Len(t, predicted, 365-predictor.BatchSize+predictor.ForecastBatches*predictor.BatchSize)
 	}
 }
 

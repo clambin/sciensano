@@ -41,7 +41,7 @@ func TestSinglePredictor(t *testing.T) {
 		if assert.NoError(t, err) {
 			target := values[dataSize-batchSize+i]
 			difference := math.Abs(predicted[0] - target)
-			assert.Less(t, difference, 4.0, fmt.Sprintf("%d: %.1f <-> %.1f", i, target, predicted[0]))
+			assert.Less(t, difference, 5.0, fmt.Sprintf("%d: %.1f <-> %.1f", i, target, predicted[0]))
 			buffer = append(buffer[1:], predicted[0])
 
 		} else {
