@@ -19,19 +19,15 @@ func ForecastTests(tests []sciensano.Test) (forecast []sciensano.Test, err error
 		history = tests[len(tests)-HistoryBatches*BatchSize:]
 	}
 
-	totalTests := make(chan []float64)
-	positiveTests := make(chan []float64)
-	output := make(chan []float64)
-
 	input := buildTestsInput(history)
 
 	// sklearn doesn't give us forecasts for both data sets in one prediction (gonum doesn't support n-dimensional arrays),
 	// so we run both forecasts in parallel.  we're still passing both streams to train the models for both input streams
 	// (though not really clear if this works at all ...)
 
-	go forecastSamples(input, ForecastSamples, "total test", totalTests)
-	go forecastSamples([][]float64{input[1], input[0]}, ForecastSamples, "positive test", positiveTests)
-	go consolidateSamples(output, []chan []float64{totalTests, positiveTests}, standardConsolidator)
+	totalTests := forecastSamples(input, ForecastSamples, "total test")
+	positiveTests := forecastSamples([][]float64{input[1], input[0]}, ForecastSamples, "positive test")
+	output := consolidateSamples([]chan []float64{totalTests, positiveTests}, standardConsolidator)
 
 	begin, _, delta := getTestDates(history)
 	end := begin.Add(BatchSize * delta)

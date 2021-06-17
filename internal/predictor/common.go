@@ -12,7 +12,13 @@ const (
 	learnRetries    = 3
 )
 
-func forecastSamples(series [][]float64, forecastCount int, label string, responses chan []float64) {
+func forecastSamples(series [][]float64, forecastCount int, label string) (output chan []float64) {
+	output = make(chan []float64)
+	go forecast(output, series, forecastCount, label)
+	return
+}
+
+func forecast(responses chan []float64, series [][]float64, forecastCount int, label string) {
 	p := New(BatchSize, 1000)
 
 	totalSeries := make([][]float64, 0)
@@ -52,7 +58,13 @@ func forecastSamples(series [][]float64, forecastCount int, label string, respon
 	close(responses)
 }
 
-func consolidateSamples(output chan []float64, input []chan []float64, processor func([][]float64) []float64) {
+func consolidateSamples(input []chan []float64, processor func([][]float64) []float64) (output chan []float64) {
+	output = make(chan []float64)
+	go consolidate(output, input, processor)
+	return
+}
+
+func consolidate(output chan []float64, input []chan []float64, processor func([][]float64) []float64) {
 	for values := range input[0] {
 		allValues := [][]float64{values}
 
@@ -67,13 +79,15 @@ func consolidateSamples(output chan []float64, input []chan []float64, processor
 }
 
 func standardConsolidator(input [][]float64) []float64 {
-	const (
-		a = 10
-		b = 0
-	)
+	const a = 10
+	const b = 0
 
 	return []float64{
 		math.Max(0.0, (a*input[0][0]+b*input[1][1])/(a+b)),
 		math.Max(0.0, (b*input[0][1]+a*input[1][0])/(a+b)),
 	}
+}
+
+func singleConsolidator(input [][]float64) []float64 {
+	return []float64{input[0][0], input[1][0]}
 }

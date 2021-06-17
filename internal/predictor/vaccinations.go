@@ -12,24 +12,22 @@ func ForecastVaccinations(vaccinations []sciensano.Vaccination) (forecast []scie
 		return nil, fmt.Errorf("not enough data: at least %d samples required", BatchSize)
 	}
 
-	firstDoses := make(chan []float64)
-	secondDoses := make(chan []float64)
-	output := make(chan []float64)
-
 	input := buildVaccinationInput(vaccinations)
 
-	go forecastSamples(input, ForecastSamples, "first vaccination", firstDoses)
-	go forecastSamples([][]float64{input[1], input[0]}, ForecastSamples, "second vaccination", secondDoses)
-	go consolidateSamples(output, []chan []float64{firstDoses, secondDoses}, standardConsolidator)
+	firstDoses := forecastSamples([][]float64{input[0]}, ForecastSamples, "first vaccination")
+	secondDoses := forecastSamples([][]float64{input[1]}, ForecastSamples, "second vaccination")
+	output := consolidateSamples([]chan []float64{firstDoses, secondDoses}, singleConsolidator)
 
 	begin, _, delta := getVaccinationDates(vaccinations)
 	end := begin.Add(BatchSize * delta)
 
 	for values := range output {
+		first := values[0]
+		ratio := math.Min(1.0, values[1])
 		forecast = append(forecast, sciensano.Vaccination{
 			Timestamp:  end,
-			FirstDose:  int(values[0]),
-			SecondDose: int(math.Min(values[0], values[1])),
+			FirstDose:  int(first),
+			SecondDose: int(math.Min(first, ratio*first)),
 		})
 
 		end = end.Add(delta)
@@ -42,7 +40,11 @@ func buildVaccinationInput(vaccinations []sciensano.Vaccination) (output [][]flo
 	output = make([][]float64, 2)
 	for _, test := range vaccinations {
 		output[0] = append(output[0], float64(test.FirstDose))
-		output[1] = append(output[1], float64(test.SecondDose))
+		if test.FirstDose > 0 {
+			output[1] = append(output[1], float64(test.SecondDose)/float64(test.FirstDose))
+		} else {
+			output[1] = append(output[1], 0.0)
+		}
 	}
 	return
 }
