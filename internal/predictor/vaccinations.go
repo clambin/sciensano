@@ -23,11 +23,11 @@ func ForecastVaccinations(vaccinations []sciensano.Vaccination) (forecast []scie
 
 	for values := range output {
 		first := values[0]
-		ratio := math.Min(1.0, values[1])
+		second := math.Min(first, values[1])
 		forecast = append(forecast, sciensano.Vaccination{
 			Timestamp:  end,
 			FirstDose:  int(first),
-			SecondDose: int(math.Min(first, ratio*first)),
+			SecondDose: int(second),
 		})
 
 		end = end.Add(delta)
@@ -40,11 +40,7 @@ func buildVaccinationInput(vaccinations []sciensano.Vaccination) (output [][]flo
 	output = make([][]float64, 2)
 	for _, test := range vaccinations {
 		output[0] = append(output[0], float64(test.FirstDose))
-		if test.FirstDose > 0 {
-			output[1] = append(output[1], float64(test.SecondDose)/float64(test.FirstDose))
-		} else {
-			output[1] = append(output[1], 0.0)
-		}
+		output[1] = append(output[1], float64(test.SecondDose))
 	}
 	return
 }

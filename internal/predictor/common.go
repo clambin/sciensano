@@ -2,14 +2,13 @@ package predictor
 
 import (
 	log "github.com/sirupsen/logrus"
-	"math"
 )
 
 const (
 	BatchSize       = 7
 	ForecastSamples = 3 * BatchSize
 	learnThreshold  = 0.945
-	learnRetries    = 3
+	learnRetries    = 1
 )
 
 func forecastSamples(series [][]float64, forecastCount int, label string) (output chan []float64) {
@@ -78,8 +77,9 @@ func consolidate(output chan []float64, input []chan []float64, processor func([
 	close(output)
 }
 
+/*
 func standardConsolidator(input [][]float64) []float64 {
-	const a = 10
+	const a = 1
 	const b = 0
 
 	return []float64{
@@ -87,6 +87,7 @@ func standardConsolidator(input [][]float64) []float64 {
 		math.Max(0.0, (b*input[0][1]+a*input[1][0])/(a+b)),
 	}
 }
+*/
 
 func singleConsolidator(input [][]float64) []float64 {
 	return []float64{input[0][0], input[1][0]}
