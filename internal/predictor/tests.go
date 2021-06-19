@@ -24,8 +24,9 @@ func ForecastTests(tests []sciensano.Test) (forecast []sciensano.Test, err error
 	input := buildTestsInput(history)
 
 	// sklearn doesn't give us forecasts for both data sets in one prediction (gonum doesn't support n-dimensional arrays),
-	// so we run both forecasts in parallel.  we're still passing both streams to train the models for both input streams
-	// (though not really clear if this works at all ...)
+	// so we run both forecasts in parallel.
+	//
+	// tried training the two models for both datasets, but that didn't yield any improvements
 
 	totalTests := ForecastSamples(ForecastSampleCount, BatchSize, "total test", input[0])
 	positiveTests := ForecastSamples(ForecastSampleCount, BatchSize, "positive test", input[1])
