@@ -9,32 +9,25 @@ import (
 )
 
 func TestForecastVaccinations(t *testing.T) {
-	input := make([]sciensano.Vaccination, 0)
-
-	predicted, err := predictor.ForecastVaccinations(input)
+	predicted, err := predictVaccinations(0)
 	assert.Error(t, err)
 
-	timestamp := time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)
-
-	for i := 0; i < 365; i++ {
-		input = append(input, sciensano.Vaccination{
-			Timestamp:  timestamp,
-			FirstDose:  i,
-			SecondDose: i / 2,
-		})
-		timestamp = timestamp.Add(24 * time.Hour)
-	}
-
-	predicted, err = predictor.ForecastVaccinations(input)
+	predicted, err = predictVaccinations(28)
 	assert.NoError(t, err)
-	assert.Len(t, predicted, 365-predictor.BatchSize+predictor.ForecastSamples)
+	assert.Len(t, predicted, 28-predictor.BatchSize+predictor.ForecastSampleCount)
 }
 
 func BenchmarkForecastVaccinations(b *testing.B) {
+	predicted, err := predictVaccinations(365)
+	assert.NoError(b, err)
+	assert.Len(b, predicted, 365-predictor.BatchSize+predictor.ForecastSampleCount)
+}
+
+func predictVaccinations(history int) ([]sciensano.Vaccination, error) {
 	input := make([]sciensano.Vaccination, 0)
 	timestamp := time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)
 
-	for i := 0; i < 365; i++ {
+	for i := 0; i < history; i++ {
 		input = append(input, sciensano.Vaccination{
 			Timestamp:  timestamp,
 			FirstDose:  i,
@@ -43,7 +36,5 @@ func BenchmarkForecastVaccinations(b *testing.B) {
 		timestamp = timestamp.Add(24 * time.Hour)
 	}
 
-	predicted, err := predictor.ForecastVaccinations(input)
-	assert.NoError(b, err)
-	assert.Len(b, predicted, 365-predictor.BatchSize+predictor.ForecastSamples)
+	return predictor.ForecastVaccinations(input)
 }

@@ -14,9 +14,9 @@ func ForecastVaccinations(vaccinations []sciensano.Vaccination) (forecast []scie
 
 	input := buildVaccinationInput(vaccinations)
 
-	firstDoses := forecastSamples([][]float64{input[0]}, ForecastSamples, "first vaccination")
-	secondDoses := forecastSamples([][]float64{input[1]}, ForecastSamples, "second vaccination")
-	output := consolidateSamples([]chan []float64{firstDoses, secondDoses}, singleConsolidator)
+	firstDoses := ForecastSamples(ForecastSampleCount, BatchSize, "first vaccination", input[0])
+	secondDoses := ForecastSamples(ForecastSampleCount, BatchSize, "second vaccination", input[1])
+	output := ConsolidateSamples(SingleConsolidator, firstDoses, secondDoses)
 
 	begin, _, delta := getVaccinationDates(vaccinations)
 	end := begin.Add(BatchSize * delta)

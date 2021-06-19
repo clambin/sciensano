@@ -27,9 +27,9 @@ func ForecastTests(tests []sciensano.Test) (forecast []sciensano.Test, err error
 	// so we run both forecasts in parallel.  we're still passing both streams to train the models for both input streams
 	// (though not really clear if this works at all ...)
 
-	totalTests := forecastSamples([][]float64{input[0]}, ForecastSamples, "total test")
-	positiveTests := forecastSamples([][]float64{input[1]}, ForecastSamples, "positive test")
-	output := consolidateSamples([]chan []float64{totalTests, positiveTests}, singleConsolidator)
+	totalTests := ForecastSamples(ForecastSampleCount, BatchSize, "total test", input[0])
+	positiveTests := ForecastSamples(ForecastSampleCount, BatchSize, "positive test", input[1])
+	output := ConsolidateSamples(SingleConsolidator, totalTests, positiveTests)
 
 	begin, _, delta := getTestDates(history)
 	end := begin.Add(BatchSize * delta)

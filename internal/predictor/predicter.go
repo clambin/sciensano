@@ -58,12 +58,12 @@ func (r *Predictor) Predict(input []float64) (output []float64, err error) {
 	X := mat.NewDense(1, r.regressor.BatchSize, input)
 
 	var predictions mat.Dense
-	forecast := r.regressor.Predict(X, &predictions)
+	fc := r.regressor.Predict(X, &predictions)
 
-	_, cols := forecast.Dims()
+	_, cols := fc.Dims()
 
 	for j := 0; j < cols; j++ {
-		output = append(output, forecast.At(0, j))
+		output = append(output, fc.At(0, j))
 	}
 	return output, nil
 }

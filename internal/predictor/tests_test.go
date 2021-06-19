@@ -9,33 +9,32 @@ import (
 )
 
 func TestForecastTests(t *testing.T) {
-	tests := make([]sciensano.Test, 0)
-
-	predicted, err := predictor.ForecastTests(tests)
+	predicted, err := predictTests(0)
 	assert.Error(t, err)
 
-	timestamp := time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)
-
-	for i := 0; i < 365; i++ {
-		tests = append(tests, sciensano.Test{
-			Timestamp: timestamp,
-			Total:     i,
-			Positive:  i / 2,
-		})
-		timestamp = timestamp.Add(24 * time.Hour)
-	}
-
-	predicted, err = predictor.ForecastTests(tests)
+	History := 28
+	predicted, err = predictTests(History)
 	assert.NoError(t, err)
-	assert.Len(t, predicted, 224)
+	assert.Len(t, predicted, History-predictor.BatchSize+predictor.ForecastSampleCount)
+
+	History = 365
+	predicted, err = predictTests(History)
+	assert.NoError(t, err)
+	assert.Len(t, predicted, predictor.BatchSize*(predictor.HistoryBatches-1)+predictor.ForecastSampleCount)
 }
 
 func BenchmarkForecastTests(b *testing.B) {
-	tests := make([]sciensano.Test, 0)
+	const History = 365
+	predicted, err := predictTests(History)
+	assert.NoError(b, err)
+	assert.Len(b, predicted, predictor.BatchSize*(predictor.HistoryBatches-1)+predictor.ForecastSampleCount)
+}
 
+func predictTests(history int) ([]sciensano.Test, error) {
+	tests := make([]sciensano.Test, 0)
 	timestamp := time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)
 
-	for i := 0; i < 365; i++ {
+	for i := 0; i < history; i++ {
 		tests = append(tests, sciensano.Test{
 			Timestamp: timestamp,
 			Total:     i,
@@ -44,7 +43,5 @@ func BenchmarkForecastTests(b *testing.B) {
 		timestamp = timestamp.Add(24 * time.Hour)
 	}
 
-	b.ResetTimer()
-	_, err := predictor.ForecastTests(tests)
-	assert.NoError(b, err)
+	return predictor.ForecastTests(tests)
 }
