@@ -48,3 +48,46 @@ func TestAPIHandler_Tests(t *testing.T) {
 		}
 	}
 }
+
+func TestAPIHandler_TestsForecast(t *testing.T) {
+	apiHandler, _ := apihandler.Create()
+
+	apiHandler.Sciensano = &mockapi.API{Tests: mockapi.DefaultTests, Vaccinations: mockapi.DefaultVaccinations}
+	apiHandler.Vaccines.HTTPClient = mock.GetServer()
+
+	endDate := time.Date(2021, 1, 31, 0, 0, 0, 0, time.UTC)
+	request := &grafana_json.TableQueryArgs{
+		CommonQueryArgs: grafana_json.CommonQueryArgs{
+			Range: grafana_json.QueryRequestRange{To: endDate},
+		},
+	}
+
+	var response *grafana_json.TableQueryResponse
+	var err error
+
+	// Tests
+	response, err = apiHandler.Endpoints().TableQuery("tests-forecast", request)
+	if assert.NoError(t, err) && assert.NotNil(t, response) {
+		count := 0
+		for _, column := range response.Columns {
+			switch data := column.Data.(type) {
+			case grafana_json.TableQueryResponseTimeColumn:
+				assert.Equal(t, "timestamp", column.Text)
+				assert.Len(t, data, 30)
+			case grafana_json.TableQueryResponseNumberColumn:
+				assert.Len(t, data, 30)
+				switch column.Text {
+				case "total":
+					count++
+				case "positive":
+					count++
+				case "rate":
+					count++
+				default:
+					assert.Fail(t, "unexpected column", column.Text)
+				}
+			}
+		}
+		assert.Equal(t, 3, count)
+	}
+}

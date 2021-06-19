@@ -86,8 +86,10 @@ func (handler *Handler) TableQuery(target string, args *grafana_json.TableQueryA
 
 	response = builder.tableResponseBuild(args.Range.To, target)
 
-	// log if there's a new update
-	if response != nil {
+	if response == nil {
+		err = fmt.Errorf("unable to create response table")
+	} else {
+		// log if there's a new update
 		handler.logUpdates(target, response)
 	}
 

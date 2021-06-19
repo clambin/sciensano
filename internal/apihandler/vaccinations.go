@@ -6,6 +6,7 @@ import (
 	"github.com/clambin/sciensano/internal/demographics"
 	"github.com/clambin/sciensano/internal/predictor"
 	"github.com/clambin/sciensano/pkg/sciensano"
+	log "github.com/sirupsen/logrus"
 	"strings"
 	"time"
 )
@@ -43,6 +44,7 @@ func (handler *Handler) buildVaccinationForecastTableResponse(_ time.Time, _ str
 		vaccinations, err = predictor.ForecastVaccinations(vaccinations)
 
 		if err != nil {
+			log.WithError(err).Warning("unable to forecast vaccinations")
 			return nil
 		}
 

@@ -231,3 +231,42 @@ func TestAPIHandler_Vaccination_Lag(t *testing.T) {
 		}
 	}
 }
+
+func TestAPIHandler_VaccinationsForecast(t *testing.T) {
+	apiHandler, _ := apihandler.Create()
+
+	apiHandler.Sciensano = &mockapi.API{Tests: mockapi.DefaultTests, Vaccinations: mockapi.DefaultVaccinations}
+	apiHandler.Vaccines.HTTPClient = mock.GetServer()
+
+	endDate := time.Date(2021, 01, 06, 0, 0, 0, 0, time.UTC)
+	request := &grafana_json.TableQueryArgs{
+		CommonQueryArgs: grafana_json.CommonQueryArgs{
+			Range: grafana_json.QueryRequestRange{To: endDate},
+		},
+	}
+
+	// Vaccinations
+	response, err := apiHandler.Endpoints().TableQuery("vaccinations-forecast", request)
+
+	if assert.NoError(t, err) && assert.NotNil(t, response) {
+		count := 0
+		for _, column := range response.Columns {
+			switch data := column.Data.(type) {
+			case grafana_json.TableQueryResponseTimeColumn:
+				assert.Equal(t, "timestamp", column.Text)
+				assert.Len(t, data, 30)
+			case grafana_json.TableQueryResponseNumberColumn:
+				assert.Len(t, data, 30)
+				switch column.Text {
+				case "partial":
+					count++
+				case "full":
+					count++
+				default:
+					assert.Fail(t, "unexpected column", column.Text)
+				}
+			}
+		}
+		assert.Equal(t, 2, count)
+	}
+}

@@ -13,6 +13,15 @@ var DefaultTests = []sciensano.Test{
 	{Timestamp: time.Date(2021, 1, 5, 0, 0, 0, 0, time.UTC), Total: 9, Positive: 4},
 	{Timestamp: time.Date(2021, 1, 6, 0, 0, 0, 0, time.UTC), Total: 10, Positive: 5},
 	{Timestamp: time.Date(2021, 1, 7, 0, 0, 0, 0, time.UTC), Total: 15, Positive: 7},
+	{Timestamp: time.Date(2021, 1, 8, 0, 0, 0, 0, time.UTC), Total: 20, Positive: 8},
+	{Timestamp: time.Date(2021, 1, 9, 0, 0, 0, 0, time.UTC), Total: 21, Positive: 8},
+	{Timestamp: time.Date(2021, 1, 10, 0, 0, 0, 0, time.UTC), Total: 22, Positive: 10},
+	{Timestamp: time.Date(2021, 1, 11, 0, 0, 0, 0, time.UTC), Total: 23, Positive: 12},
+	{Timestamp: time.Date(2021, 1, 12, 0, 0, 0, 0, time.UTC), Total: 24, Positive: 14},
+	{Timestamp: time.Date(2021, 1, 13, 0, 0, 0, 0, time.UTC), Total: 25, Positive: 15},
+	{Timestamp: time.Date(2021, 1, 14, 0, 0, 0, 0, time.UTC), Total: 26, Positive: 18},
+	{Timestamp: time.Date(2021, 1, 15, 0, 0, 0, 0, time.UTC), Total: 27, Positive: 14},
+	{Timestamp: time.Date(2021, 1, 16, 0, 0, 0, 0, time.UTC), Total: 28, Positive: 12},
 }
 
 var DefaultVaccinations = []sciensano.Vaccination{
@@ -23,6 +32,15 @@ var DefaultVaccinations = []sciensano.Vaccination{
 	{Timestamp: time.Date(2021, 1, 5, 0, 0, 0, 0, time.UTC), FirstDose: 4, SecondDose: 3},
 	{Timestamp: time.Date(2021, 1, 6, 0, 0, 0, 0, time.UTC), FirstDose: 5, SecondDose: 4},
 	{Timestamp: time.Date(2021, 1, 7, 0, 0, 0, 0, time.UTC), FirstDose: 6, SecondDose: 5},
+	{Timestamp: time.Date(2021, 1, 8, 0, 0, 0, 0, time.UTC), FirstDose: 7, SecondDose: 6},
+	{Timestamp: time.Date(2021, 1, 9, 0, 0, 0, 0, time.UTC), FirstDose: 8, SecondDose: 7},
+	{Timestamp: time.Date(2021, 1, 10, 0, 0, 0, 0, time.UTC), FirstDose: 9, SecondDose: 8},
+	{Timestamp: time.Date(2021, 1, 11, 0, 0, 0, 0, time.UTC), FirstDose: 10, SecondDose: 9},
+	{Timestamp: time.Date(2021, 1, 12, 0, 0, 0, 0, time.UTC), FirstDose: 11, SecondDose: 10},
+	{Timestamp: time.Date(2021, 1, 13, 0, 0, 0, 0, time.UTC), FirstDose: 12, SecondDose: 11},
+	{Timestamp: time.Date(2021, 1, 14, 0, 0, 0, 0, time.UTC), FirstDose: 13, SecondDose: 12},
+	{Timestamp: time.Date(2021, 1, 15, 0, 0, 0, 0, time.UTC), FirstDose: 14, SecondDose: 13},
+	{Timestamp: time.Date(2021, 1, 16, 0, 0, 0, 0, time.UTC), FirstDose: 15, SecondDose: 14},
 }
 
 var AltVaccinations = []sciensano.Vaccination{
