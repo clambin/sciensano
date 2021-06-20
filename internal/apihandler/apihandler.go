@@ -60,11 +60,11 @@ func (handler *Handler) Endpoints() grafana_json.Endpoints {
 	}
 }
 
-type ResponseBuildFunc func(endTime time.Time, target string) (response *grafana_json.QueryResponse)
-type TableResponseBuildFunc func(endTime time.Time, target string) (response *grafana_json.TableQueryResponse)
+type SeriesResponseBuildFunc func(beginTime, endTime time.Time, target string) (response *grafana_json.QueryResponse)
+type TableResponseBuildFunc func(beginTime, endTime time.Time, target string) (response *grafana_json.TableQueryResponse)
 
 type TargetTable map[string]struct {
-	responseBuild      ResponseBuildFunc
+	responseBuild      SeriesResponseBuildFunc
 	tableResponseBuild TableResponseBuildFunc
 }
 
@@ -84,7 +84,7 @@ func (handler *Handler) TableQuery(target string, args *grafana_json.TableQueryA
 		return nil, fmt.Errorf("unknown target '%s'", target)
 	}
 
-	response = builder.tableResponseBuild(args.Range.To, target)
+	response = builder.tableResponseBuild(args.Range.From, args.Range.To, target)
 
 	if response == nil {
 		err = fmt.Errorf("unable to create response table")

@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-func (handler *Handler) buildVaccineTableResponse(_ time.Time, _ string) (response *grafana_json.TableQueryResponse) {
+func (handler *Handler) buildVaccineTableResponse(_, _ time.Time, _ string) (response *grafana_json.TableQueryResponse) {
 	if batches, err := handler.Vaccines.GetBatches(); err == nil {
 		batches = vaccines.AccumulateBatches(batches)
 
@@ -30,7 +30,7 @@ func (handler *Handler) buildVaccineTableResponse(_ time.Time, _ string) (respon
 	return
 }
 
-func (handler *Handler) buildVaccineStatsTableResponse(endTime time.Time, _ string) (response *grafana_json.TableQueryResponse) {
+func (handler *Handler) buildVaccineStatsTableResponse(_, endTime time.Time, _ string) (response *grafana_json.TableQueryResponse) {
 	var batches []vaccines.Batch
 	var vaccinations []sciensano.Vaccination
 	var err error
@@ -75,7 +75,7 @@ func (handler *Handler) buildVaccineStatsTableResponse(endTime time.Time, _ stri
 	return
 }
 
-func (handler *Handler) buildVaccineTimeTableResponse(endTime time.Time, _ string) (response *grafana_json.TableQueryResponse) {
+func (handler *Handler) buildVaccineTimeTableResponse(_, endTime time.Time, _ string) (response *grafana_json.TableQueryResponse) {
 	var batches []vaccines.Batch
 	var vaccinations []sciensano.Vaccination
 	var err error

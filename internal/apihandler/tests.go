@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-func (handler *Handler) buildTestTableResponse(endTime time.Time, _ string) (response *grafana_json.TableQueryResponse) {
+func (handler *Handler) buildTestTableResponse(_, endTime time.Time, _ string) (response *grafana_json.TableQueryResponse) {
 	if tests, err := handler.Sciensano.GetTests(endTime); err == nil {
 
 		rows := len(tests)
@@ -39,7 +39,7 @@ func (handler *Handler) buildTestTableResponse(endTime time.Time, _ string) (res
 	return
 }
 
-func (handler *Handler) buildTestForecastTableResponse(endTime time.Time, _ string) (response *grafana_json.TableQueryResponse) {
+func (handler *Handler) buildTestForecastTableResponse(_, endTime time.Time, _ string) (response *grafana_json.TableQueryResponse) {
 	if tests, err := handler.Sciensano.GetTests(endTime); err == nil {
 
 		var forecast []sciensano.Test

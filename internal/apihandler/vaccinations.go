@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-func (handler *Handler) buildVaccinationTableResponse(endTime time.Time, _ string) (response *grafana_json.TableQueryResponse) {
+func (handler *Handler) buildVaccinationTableResponse(_, endTime time.Time, _ string) (response *grafana_json.TableQueryResponse) {
 	if vaccinations, err := handler.Sciensano.GetVaccinations(endTime); err == nil {
 		vaccinations = sciensano.AccumulateVaccinations(vaccinations)
 
@@ -36,7 +36,7 @@ func (handler *Handler) buildVaccinationTableResponse(endTime time.Time, _ strin
 	return
 }
 
-func (handler *Handler) buildVaccinationForecastTableResponse(_ time.Time, _ string) (response *grafana_json.TableQueryResponse) {
+func (handler *Handler) buildVaccinationForecastTableResponse(_, _ time.Time, _ string) (response *grafana_json.TableQueryResponse) {
 	if vaccinations, err := handler.Sciensano.GetVaccinations(time.Now()); err == nil {
 		vaccinations = sciensano.AccumulateVaccinations(vaccinations)
 
@@ -69,7 +69,7 @@ func (handler *Handler) buildVaccinationForecastTableResponse(_ time.Time, _ str
 	return
 }
 
-func (handler *Handler) buildGroupedVaccinationTableResponse(endTime time.Time, target string) (response *grafana_json.TableQueryResponse) {
+func (handler *Handler) buildGroupedVaccinationTableResponse(_, endTime time.Time, target string) (response *grafana_json.TableQueryResponse) {
 	var vaccinations map[string][]sciensano.Vaccination
 	var err error
 
@@ -129,8 +129,8 @@ func (handler *Handler) buildGroupedVaccinationTableResponse(endTime time.Time, 
 	return
 }
 
-func (handler *Handler) buildGroupedVaccinationRateTableResponse(endTime time.Time, target string) (response *grafana_json.TableQueryResponse) {
-	response = handler.buildGroupedVaccinationTableResponse(endTime, target)
+func (handler *Handler) buildGroupedVaccinationRateTableResponse(beginTime, endTime time.Time, target string) (response *grafana_json.TableQueryResponse) {
+	response = handler.buildGroupedVaccinationTableResponse(beginTime, endTime, target)
 	if response != nil && strings.HasPrefix(target, "vacc-age-rate-") {
 		prorateFigures(response, demographics.GetAgeGroupFigures())
 	} else if response != nil && strings.HasPrefix(target, "vacc-region-rate-") {
@@ -139,7 +139,7 @@ func (handler *Handler) buildGroupedVaccinationRateTableResponse(endTime time.Ti
 	return
 }
 
-func (handler *Handler) buildVaccinationLagTableResponse(endTime time.Time, _ string) (response *grafana_json.TableQueryResponse) {
+func (handler *Handler) buildVaccinationLagTableResponse(_, endTime time.Time, _ string) (response *grafana_json.TableQueryResponse) {
 	if vaccinations, err := handler.Sciensano.GetVaccinations(endTime); err == nil {
 		vaccinations = sciensano.AccumulateVaccinations(vaccinations)
 
