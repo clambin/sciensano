@@ -2,21 +2,21 @@ package apihandler
 
 import (
 	"fmt"
-	grafana_json "github.com/clambin/grafana-json"
+	grafanaJson "github.com/clambin/grafana-json"
 	"github.com/clambin/sciensano/internal/demographics"
 	"github.com/clambin/sciensano/pkg/sciensano"
 	"strings"
 	"time"
 )
 
-func (handler *Handler) buildVaccinationTableResponse(endTime time.Time, _ string) (response *grafana_json.TableQueryResponse) {
+func (handler *Handler) buildVaccinationTableResponse(_, endTime time.Time, _ string) (response *grafanaJson.TableQueryResponse) {
 	if vaccinations, err := handler.Sciensano.GetVaccinations(endTime); err == nil {
 		vaccinations = sciensano.AccumulateVaccinations(vaccinations)
 
 		rows := len(vaccinations)
-		timestamps := make(grafana_json.TableQueryResponseTimeColumn, rows)
-		partial := make(grafana_json.TableQueryResponseNumberColumn, rows)
-		full := make(grafana_json.TableQueryResponseNumberColumn, rows)
+		timestamps := make(grafanaJson.TableQueryResponseTimeColumn, rows)
+		partial := make(grafanaJson.TableQueryResponseNumberColumn, rows)
+		full := make(grafanaJson.TableQueryResponseNumberColumn, rows)
 
 		for index, entry := range vaccinations {
 			timestamps[index] = entry.Timestamp
@@ -24,8 +24,8 @@ func (handler *Handler) buildVaccinationTableResponse(endTime time.Time, _ strin
 			full[index] = float64(entry.SecondDose)
 		}
 
-		response = new(grafana_json.TableQueryResponse)
-		response.Columns = []grafana_json.TableQueryResponseColumn{
+		response = new(grafanaJson.TableQueryResponse)
+		response.Columns = []grafanaJson.TableQueryResponseColumn{
 			{Text: "timestamp", Data: timestamps},
 			{Text: "partial", Data: partial},
 			{Text: "full", Data: full},
@@ -34,7 +34,7 @@ func (handler *Handler) buildVaccinationTableResponse(endTime time.Time, _ strin
 	return
 }
 
-func (handler *Handler) buildGroupedVaccinationTableResponse(endTime time.Time, target string) (response *grafana_json.TableQueryResponse) {
+func (handler *Handler) buildGroupedVaccinationTableResponse(_, endTime time.Time, target string) (response *grafanaJson.TableQueryResponse) {
 	var vaccinations map[string][]sciensano.Vaccination
 	var err error
 
@@ -63,20 +63,20 @@ func (handler *Handler) buildGroupedVaccinationTableResponse(endTime time.Time, 
 		results := fillVaccinations(timestamps, vaccinations, strings.HasSuffix(target, "-full"))
 
 		// build & populate the timestamp columns
-		timestampColumn := make(grafana_json.TableQueryResponseTimeColumn, 0, timestampCount)
+		timestampColumn := make(grafanaJson.TableQueryResponseTimeColumn, 0, timestampCount)
 		timestampColumn = append(timestampColumn, timestamps...)
 
 		// build & populate the data columns
-		dataColumns := make(map[string]grafana_json.TableQueryResponseNumberColumn, len(groups))
+		dataColumns := make(map[string]grafanaJson.TableQueryResponseNumberColumn, len(groups))
 		for _, group := range groups {
-			dataColumns[group] = make(grafana_json.TableQueryResponseNumberColumn, 0, timestampCount)
+			dataColumns[group] = make(grafanaJson.TableQueryResponseNumberColumn, 0, timestampCount)
 			data := <-results[group]
 			dataColumns[group] = append(dataColumns[group], data...)
 		}
 
 		// build the response
-		response = new(grafana_json.TableQueryResponse)
-		response.Columns = []grafana_json.TableQueryResponseColumn{{
+		response = new(grafanaJson.TableQueryResponse)
+		response.Columns = []grafanaJson.TableQueryResponseColumn{{
 			Text: "timestamp",
 			Data: timestampColumn,
 		}}
@@ -85,7 +85,7 @@ func (handler *Handler) buildGroupedVaccinationTableResponse(endTime time.Time, 
 			if label == "" {
 				label = "(empty)"
 			}
-			response.Columns = append(response.Columns, grafana_json.TableQueryResponseColumn{
+			response.Columns = append(response.Columns, grafanaJson.TableQueryResponseColumn{
 				Text: label,
 				Data: dataColumns[group],
 			})
@@ -94,8 +94,8 @@ func (handler *Handler) buildGroupedVaccinationTableResponse(endTime time.Time, 
 	return
 }
 
-func (handler *Handler) buildGroupedVaccinationRateTableResponse(endTime time.Time, target string) (response *grafana_json.TableQueryResponse) {
-	response = handler.buildGroupedVaccinationTableResponse(endTime, target)
+func (handler *Handler) buildGroupedVaccinationRateTableResponse(beginTime, endTime time.Time, target string) (response *grafanaJson.TableQueryResponse) {
+	response = handler.buildGroupedVaccinationTableResponse(beginTime, endTime, target)
 	if response != nil {
 		if strings.HasPrefix(target, "vacc-age-rate-") {
 			prorateFigures(response, demographics.GetAgeGroupFigures())
@@ -106,14 +106,14 @@ func (handler *Handler) buildGroupedVaccinationRateTableResponse(endTime time.Ti
 	return
 }
 
-func (handler *Handler) buildVaccinationLagTableResponse(endTime time.Time, _ string) (response *grafana_json.TableQueryResponse) {
+func (handler *Handler) buildVaccinationLagTableResponse(_, endTime time.Time, _ string) (response *grafanaJson.TableQueryResponse) {
 	if vaccinations, err := handler.Sciensano.GetVaccinations(endTime); err == nil {
 		vaccinations = sciensano.AccumulateVaccinations(vaccinations)
 
 		timestamps, lag := buildLag(vaccinations)
 
-		response = new(grafana_json.TableQueryResponse)
-		response.Columns = []grafana_json.TableQueryResponseColumn{
+		response = new(grafanaJson.TableQueryResponse)
+		response.Columns = []grafanaJson.TableQueryResponseColumn{
 			{Text: "timestamp", Data: timestamps},
 			{Text: "lag", Data: lag},
 		}
@@ -121,12 +121,12 @@ func (handler *Handler) buildVaccinationLagTableResponse(endTime time.Time, _ st
 	return
 }
 
-func prorateFigures(result *grafana_json.TableQueryResponse, groups map[string]int) {
-	newColumns := make([]grafana_json.TableQueryResponseColumn, 0, len(result.Columns))
+func prorateFigures(result *grafanaJson.TableQueryResponse, groups map[string]int) {
+	newColumns := make([]grafanaJson.TableQueryResponseColumn, 0, len(result.Columns))
 	for _, column := range result.Columns {
 		if column.Text != "(empty)" {
 			switch data := column.Data.(type) {
-			case grafana_json.TableQueryResponseNumberColumn:
+			case grafanaJson.TableQueryResponseNumberColumn:
 				if figure, ok := groups[column.Text]; ok && figure != 0 {
 					for index, entry := range data {
 						data[index] = entry / float64(figure)
