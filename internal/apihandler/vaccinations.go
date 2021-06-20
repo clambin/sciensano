@@ -36,17 +36,18 @@ func (handler *Handler) buildVaccinationTableResponse(_, endTime time.Time, _ st
 	return
 }
 
-func (handler *Handler) buildVaccinationForecastTableResponse(_, _ time.Time, _ string) (response *grafana_json.TableQueryResponse) {
+func (handler *Handler) buildVaccinationForecastTableResponse(beginTime, _ time.Time, _ string) (response *grafana_json.TableQueryResponse) {
 	if vaccinations, err := handler.Sciensano.GetVaccinations(time.Now()); err == nil {
 		vaccinations = sciensano.AccumulateVaccinations(vaccinations)
 
-		// var score float64
 		vaccinations, err = predictor.ForecastVaccinations(vaccinations)
 
 		if err != nil {
 			log.WithError(err).Warning("unable to forecast vaccinations")
 			return nil
 		}
+
+		vaccinations = filterVaccinations(vaccinations, beginTime)
 
 		rows := len(vaccinations)
 		timestamps := make(grafana_json.TableQueryResponseTimeColumn, rows)
@@ -170,4 +171,16 @@ func prorateFigures(result *grafana_json.TableQueryResponse, groups map[string]i
 		}
 	}
 	result.Columns = newColumns
+}
+
+func filterVaccinations(vaccinations []sciensano.Vaccination, beginTime time.Time) (result []sciensano.Vaccination) {
+	index := 0
+	for index < len(vaccinations) && vaccinations[index].Timestamp.Before(beginTime) {
+		index++
+	}
+	if index == len(vaccinations) {
+		return []sciensano.Vaccination{}
+	}
+	return vaccinations[index:]
+
 }

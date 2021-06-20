@@ -39,7 +39,7 @@ func (handler *Handler) buildTestTableResponse(_, endTime time.Time, _ string) (
 	return
 }
 
-func (handler *Handler) buildTestForecastTableResponse(_, endTime time.Time, _ string) (response *grafana_json.TableQueryResponse) {
+func (handler *Handler) buildTestForecastTableResponse(beginTime, endTime time.Time, _ string) (response *grafana_json.TableQueryResponse) {
 	if tests, err := handler.Sciensano.GetTests(endTime); err == nil {
 
 		var forecast []sciensano.Test
@@ -49,6 +49,10 @@ func (handler *Handler) buildTestForecastTableResponse(_, endTime time.Time, _ s
 			log.WithError(err).Warning("unable to forecast tests")
 			return nil
 		}
+
+		log.WithField("count", len(forecast)).Debug("before")
+		forecast = filterTests(forecast, beginTime)
+		log.WithField("count", len(forecast)).Debug("after")
 
 		rows := len(forecast)
 		timestamps := make(grafana_json.TableQueryResponseTimeColumn, rows)
@@ -76,4 +80,15 @@ func (handler *Handler) buildTestForecastTableResponse(_, endTime time.Time, _ s
 		}
 	}
 	return
+}
+
+func filterTests(tests []sciensano.Test, beginTime time.Time) (result []sciensano.Test) {
+	index := 0
+	for index < len(tests) && tests[index].Timestamp.Before(beginTime) {
+		index++
+	}
+	if index == len(tests) {
+		return []sciensano.Test{}
+	}
+	return tests[index:]
 }
