@@ -1,14 +1,15 @@
-package predictor_test
+package forecast_test
 
 import (
-	"github.com/clambin/sciensano/internal/predictor"
+	"github.com/clambin/sciensano/internal/forecast"
+	"github.com/clambin/sciensano/pkg/predictor"
 	"github.com/clambin/sciensano/pkg/sciensano"
 	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
 )
 
-func TestForecastVaccinations(t *testing.T) {
+func TestPredictVaccinations(t *testing.T) {
 	predicted, err := predictVaccinations(0)
 	assert.Error(t, err)
 
@@ -17,7 +18,7 @@ func TestForecastVaccinations(t *testing.T) {
 	assert.Len(t, predicted, 28-predictor.BatchSize+predictor.ForecastSampleCount)
 }
 
-func BenchmarkForecastVaccinations(b *testing.B) {
+func BenchmarkPredictVaccinations(b *testing.B) {
 	predicted, err := predictVaccinations(365)
 	assert.NoError(b, err)
 	assert.Len(b, predicted, 365-predictor.BatchSize+predictor.ForecastSampleCount)
@@ -36,5 +37,5 @@ func predictVaccinations(history int) ([]sciensano.Vaccination, error) {
 		timestamp = timestamp.Add(24 * time.Hour)
 	}
 
-	return predictor.ForecastVaccinations(input)
+	return forecast.PredictVaccinations(input)
 }

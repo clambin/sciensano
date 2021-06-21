@@ -1,7 +1,7 @@
 package apihandler_test
 
 import (
-	grafana_json "github.com/clambin/grafana-json"
+	"github.com/clambin/grafana-json"
 	"github.com/clambin/sciensano/internal/apihandler"
 	"github.com/clambin/sciensano/internal/vaccines/mock"
 	"github.com/stretchr/testify/assert"

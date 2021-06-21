@@ -2,7 +2,7 @@ package apihandler_test
 
 import (
 	"fmt"
-	grafana_json "github.com/clambin/grafana-json"
+	"github.com/clambin/grafana-json"
 	"github.com/clambin/sciensano/internal/apihandler"
 	"github.com/clambin/sciensano/internal/vaccines"
 	"github.com/clambin/sciensano/internal/vaccines/mock"

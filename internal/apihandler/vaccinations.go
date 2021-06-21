@@ -2,9 +2,9 @@ package apihandler
 
 import (
 	"fmt"
-	grafana_json "github.com/clambin/grafana-json"
+	"github.com/clambin/grafana-json"
 	"github.com/clambin/sciensano/internal/demographics"
-	"github.com/clambin/sciensano/internal/predictor"
+	"github.com/clambin/sciensano/internal/forecast"
 	"github.com/clambin/sciensano/pkg/sciensano"
 	log "github.com/sirupsen/logrus"
 	"strings"
@@ -40,7 +40,7 @@ func (handler *Handler) buildVaccinationForecastTableResponse(beginTime, _ time.
 	if vaccinations, err := handler.Sciensano.GetVaccinations(time.Now()); err == nil {
 		vaccinations = sciensano.AccumulateVaccinations(vaccinations)
 
-		vaccinations, err = predictor.ForecastVaccinations(vaccinations)
+		vaccinations, err = forecast.PredictVaccinations(vaccinations)
 
 		if err != nil {
 			log.WithError(err).Warning("unable to forecast vaccinations")

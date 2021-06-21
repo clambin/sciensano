@@ -1,7 +1,7 @@
 package predictor_test
 
 import (
-	"github.com/clambin/sciensano/internal/predictor"
+	predictor2 "github.com/clambin/sciensano/pkg/predictor"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -11,7 +11,7 @@ func TestPredictor_Failures(t *testing.T) {
 		batchSize = 7
 		dataSize  = 3 * batchSize
 	)
-	p := predictor.New(batchSize, 1000)
+	p := predictor2.New(batchSize, 1000)
 
 	values := make([]float64, dataSize)
 	for i := 0; i < dataSize; i++ {
@@ -35,7 +35,7 @@ func TestForecastSamples_Single(t *testing.T) {
 		values[i] = float64(i)
 	}
 
-	forecast := predictor.ForecastSamples(batchSize*2, batchSize, "samples", values)
+	forecast := predictor2.ForecastSamples(batchSize*2, batchSize, "samples", values)
 
 	result := make([]float64, 0)
 	for x := range forecast {
@@ -58,9 +58,9 @@ func TestForecastSamples_Double(t *testing.T) {
 		series2[i] = float64(-i)
 	}
 
-	fc1 := predictor.ForecastSamples(batchSize*2, batchSize, "samples", series1)
-	fc2 := predictor.ForecastSamples(batchSize*2, batchSize, "samples", series2)
-	output := predictor.ConsolidateSamples(predictor.SingleConsolidator, fc1, fc2)
+	fc1 := predictor2.ForecastSamples(batchSize*2, batchSize, "samples", series1)
+	fc2 := predictor2.ForecastSamples(batchSize*2, batchSize, "samples", series2)
+	output := predictor2.ConsolidateSamples(predictor2.SingleConsolidator, fc1, fc2)
 
 	result := make([]float64, 0)
 	for x := range output {
@@ -83,9 +83,9 @@ func BenchmarkForecastSamples(b *testing.B) {
 		series2[i] = float64(-i)
 	}
 
-	fc1 := predictor.ForecastSamples(batchSize*2, batchSize, "samples", series1)
-	fc2 := predictor.ForecastSamples(batchSize*2, batchSize, "samples", series2)
-	output := predictor.ConsolidateSamples(predictor.SingleConsolidator, fc1, fc2)
+	fc1 := predictor2.ForecastSamples(batchSize*2, batchSize, "samples", series1)
+	fc2 := predictor2.ForecastSamples(batchSize*2, batchSize, "samples", series2)
+	output := predictor2.ConsolidateSamples(predictor2.SingleConsolidator, fc1, fc2)
 
 	result := make([]float64, 0)
 	for x := range output {

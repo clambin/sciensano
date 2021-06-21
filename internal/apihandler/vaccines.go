@@ -1,7 +1,7 @@
 package apihandler
 
 import (
-	grafana_json "github.com/clambin/grafana-json"
+	"github.com/clambin/grafana-json"
 	"github.com/clambin/sciensano/internal/vaccines"
 	"github.com/clambin/sciensano/pkg/sciensano"
 	"sync"

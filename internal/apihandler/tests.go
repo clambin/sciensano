@@ -1,8 +1,8 @@
 package apihandler
 
 import (
-	grafana_json "github.com/clambin/grafana-json"
-	"github.com/clambin/sciensano/internal/predictor"
+	"github.com/clambin/grafana-json"
+	"github.com/clambin/sciensano/internal/forecast"
 	"github.com/clambin/sciensano/pkg/sciensano"
 	log "github.com/sirupsen/logrus"
 	"time"
@@ -42,25 +42,25 @@ func (handler *Handler) buildTestTableResponse(_, endTime time.Time, _ string) (
 func (handler *Handler) buildTestForecastTableResponse(beginTime, endTime time.Time, _ string) (response *grafana_json.TableQueryResponse) {
 	if tests, err := handler.Sciensano.GetTests(endTime); err == nil {
 
-		var forecast []sciensano.Test
-		forecast, err = predictor.ForecastTests(tests)
+		var fc []sciensano.Test
+		fc, err = forecast.PredictTests(tests)
 
 		if err != nil {
-			log.WithError(err).Warning("unable to forecast tests")
+			log.WithError(err).Warning("unable to fc tests")
 			return nil
 		}
 
-		log.WithField("count", len(forecast)).Debug("before")
-		forecast = filterTests(forecast, beginTime)
-		log.WithField("count", len(forecast)).Debug("after")
+		log.WithField("count", len(fc)).Debug("before")
+		fc = filterTests(fc, beginTime)
+		log.WithField("count", len(fc)).Debug("after")
 
-		rows := len(forecast)
+		rows := len(fc)
 		timestamps := make(grafana_json.TableQueryResponseTimeColumn, rows)
 		totalTests := make(grafana_json.TableQueryResponseNumberColumn, rows)
 		positiveTests := make(grafana_json.TableQueryResponseNumberColumn, rows)
 		positiveRate := make(grafana_json.TableQueryResponseNumberColumn, rows)
 
-		for index, test := range forecast {
+		for index, test := range fc {
 			timestamps[index] = test.Timestamp
 			totalTests[index] = float64(test.Total)
 			positiveTests[index] = float64(test.Positive)

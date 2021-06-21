@@ -1,7 +1,8 @@
-package predictor
+package forecast
 
 import (
 	"fmt"
+	"github.com/clambin/sciensano/pkg/predictor"
 	"github.com/clambin/sciensano/pkg/sciensano"
 	"math"
 	"time"
@@ -9,14 +10,14 @@ import (
 
 const HistoryBatches = 30
 
-func ForecastTests(tests []sciensano.Test) (forecast []sciensano.Test, err error) {
-	if len(tests) < BatchSize {
-		return nil, fmt.Errorf("not enough data: at least %d samples required", BatchSize)
+func PredictTests(tests []sciensano.Test) (forecast []sciensano.Test, err error) {
+	if len(tests) < predictor.BatchSize {
+		return nil, fmt.Errorf("not enough data: at least %d samples required", predictor.BatchSize)
 	}
 
 	var history []sciensano.Test
-	if len(tests) > HistoryBatches*BatchSize {
-		history = tests[len(tests)-HistoryBatches*BatchSize:]
+	if len(tests) > HistoryBatches*predictor.BatchSize {
+		history = tests[len(tests)-HistoryBatches*predictor.BatchSize:]
 	} else {
 		history = tests
 	}
@@ -28,12 +29,12 @@ func ForecastTests(tests []sciensano.Test) (forecast []sciensano.Test, err error
 	//
 	// tried training the two models for both datasets, but that didn't yield any improvements
 
-	totalTests := ForecastSamples(ForecastSampleCount, BatchSize, "total test", input[0])
-	positiveTests := ForecastSamples(ForecastSampleCount, BatchSize, "positive test", input[1])
-	output := ConsolidateSamples(SingleConsolidator, totalTests, positiveTests)
+	totalTests := predictor.ForecastSamples(predictor.ForecastSampleCount, predictor.BatchSize, "total test", input[0])
+	positiveTests := predictor.ForecastSamples(predictor.ForecastSampleCount, predictor.BatchSize, "positive test", input[1])
+	output := predictor.ConsolidateSamples(predictor.SingleConsolidator, totalTests, positiveTests)
 
 	begin, _, delta := getTestDates(history)
-	end := begin.Add(BatchSize * delta)
+	end := begin.Add(predictor.BatchSize * delta)
 
 	for figures := range output {
 		forecast = append(forecast, sciensano.Test{

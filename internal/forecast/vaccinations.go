@@ -1,25 +1,26 @@
-package predictor
+package forecast
 
 import (
 	"fmt"
+	"github.com/clambin/sciensano/pkg/predictor"
 	"github.com/clambin/sciensano/pkg/sciensano"
 	"math"
 	"time"
 )
 
-func ForecastVaccinations(vaccinations []sciensano.Vaccination) (forecast []sciensano.Vaccination, err error) {
-	if len(vaccinations) < BatchSize {
-		return nil, fmt.Errorf("not enough data: at least %d samples required", BatchSize)
+func PredictVaccinations(vaccinations []sciensano.Vaccination) (forecast []sciensano.Vaccination, err error) {
+	if len(vaccinations) < predictor.BatchSize {
+		return nil, fmt.Errorf("not enough data: at least %d samples required", predictor.BatchSize)
 	}
 
 	input := buildVaccinationInput(vaccinations)
 
-	firstDoses := ForecastSamples(ForecastSampleCount, BatchSize, "first vaccination", input[0])
-	secondDoses := ForecastSamples(ForecastSampleCount, BatchSize, "second vaccination", input[1])
-	output := ConsolidateSamples(SingleConsolidator, firstDoses, secondDoses)
+	firstDoses := predictor.ForecastSamples(predictor.ForecastSampleCount, predictor.BatchSize, "first vaccination", input[0])
+	secondDoses := predictor.ForecastSamples(predictor.ForecastSampleCount, predictor.BatchSize, "second vaccination", input[1])
+	output := predictor.ConsolidateSamples(predictor.SingleConsolidator, firstDoses, secondDoses)
 
 	begin, _, delta := getVaccinationDates(vaccinations)
-	end := begin.Add(BatchSize * delta)
+	end := begin.Add(predictor.BatchSize * delta)
 
 	for values := range output {
 		first := values[0]
