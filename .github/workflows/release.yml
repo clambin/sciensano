@@ -79,7 +79,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       - name: docker metadata
         id: docker_meta
-        uses: docker/metadata-action@v3.3.0
+        uses: docker/metadata-action@v3.4.0
         with:
           images: clambin/sciensano
           tags: |
