@@ -56,7 +56,9 @@ func (server *Server) GetBatches() (batches []Batch, err error) {
 		}
 
 		if resp, err = server.HTTPClient.Get("https://covid-vaccinatie.be/api/v1/delivered.json"); err == nil {
-			defer resp.Body.Close()
+			defer func(Body io.ReadCloser) {
+				_ = Body.Close()
+			}(resp.Body)
 			if resp.StatusCode == 200 {
 				var body []byte
 
