@@ -12,7 +12,7 @@ func Handler(w http.ResponseWriter, req *http.Request) {
 	if req.URL.Path == "/api/v1/delivered.json" {
 		_, _ = w.Write([]byte(vaccinesResponse))
 	} else {
-		http.Error(w, "endpoint not implemented: "+req.URL.Path, http.StatusForbidden)
+		http.Error(w, "endpoint not implemented: "+html.EscapeString(req.URL.Path), http.StatusForbidden)
 	}
 }
 
