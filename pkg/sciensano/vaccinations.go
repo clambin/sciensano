@@ -85,17 +85,22 @@ func (client *Client) getVaccinations() (result []apiVaccinationsResponse, err e
 	client.vaccinationsLock.Lock()
 	defer client.vaccinationsLock.Unlock()
 
+	client.init()
+
 	if client.vaccinationsCache == nil || time.Now().After(client.vaccinationsCacheExpiry) {
 		var resp *http.Response
-		var stats []apiVaccinationsResponse
+		resp, err = client.HTTPClient.Get(client.URL + "/Data/COVID19BE_VACC.json")
 
-		if resp, err = client.HTTPClient.Get(baseURL + "COVID19BE_VACC.json"); err == nil {
-			defer resp.Body.Close()
-			if resp.StatusCode == 200 {
+		if err == nil {
+			if resp.StatusCode == http.StatusOK {
 				var body []byte
+				body, err = io.ReadAll(resp.Body)
 
-				if body, err = io.ReadAll(resp.Body); err == nil {
-					if err = json.Unmarshal(body, &stats); err == nil {
+				if err == nil {
+					var stats []apiVaccinationsResponse
+					err = json.Unmarshal(body, &stats)
+
+					if err == nil {
 						client.vaccinationsCache = stats
 						client.vaccinationsCacheExpiry = time.Now().Add(client.CacheDuration)
 					}
@@ -103,6 +108,7 @@ func (client *Client) getVaccinations() (result []apiVaccinationsResponse, err e
 			} else {
 				err = errors.New(resp.Status)
 			}
+			_ = resp.Body.Close()
 		}
 	}
 	return client.vaccinationsCache, err

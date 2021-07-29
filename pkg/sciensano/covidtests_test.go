@@ -1,15 +1,20 @@
 package sciensano_test
 
 import (
-	"github.com/clambin/gotools/httpstub"
 	"github.com/clambin/sciensano/pkg/sciensano"
+	"github.com/clambin/sciensano/pkg/sciensano/server"
 	"github.com/stretchr/testify/assert"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 	"time"
 )
 
 func TestGetTests(t *testing.T) {
-	client := sciensano.Client{CacheDuration: 1 * time.Hour, HTTPClient: httpstub.NewTestClient(server)}
+	testServer := server.Handler{}
+	apiServer := httptest.NewServer(http.HandlerFunc(testServer.Handle))
+
+	client := sciensano.Client{CacheDuration: 1 * time.Hour, URL: apiServer.URL}
 	firstDay := time.Date(2021, 03, 10, 0, 0, 0, 0, time.UTC)
 	result, err := client.GetTests(firstDay)
 

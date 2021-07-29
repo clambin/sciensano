@@ -38,17 +38,22 @@ func (client *Client) getTests() (response []apiTestResponse, err error) {
 	client.testsLock.Lock()
 	defer client.testsLock.Unlock()
 
+	client.init()
+
 	if client.testsCache == nil || time.Now().After(client.testsCacheExpiry) {
 		var resp *http.Response
-		var stats []apiTestResponse
+		resp, err = client.HTTPClient.Get(client.URL + "/Data/COVID19BE_tests.json")
 
-		if resp, err = client.HTTPClient.Get(baseURL + "COVID19BE_tests.json"); err == nil {
-			defer resp.Body.Close()
-			if resp.StatusCode == 200 {
+		if err == nil {
+			if resp.StatusCode == http.StatusOK {
 				var body []byte
+				body, err = io.ReadAll(resp.Body)
 
-				if body, err = io.ReadAll(resp.Body); err == nil {
-					if err = json.Unmarshal(body, &stats); err == nil {
+				if err == nil {
+					var stats []apiTestResponse
+					err = json.Unmarshal(body, &stats)
+
+					if err == nil {
 						client.testsCache = stats
 						client.testsCacheExpiry = time.Now().Add(client.CacheDuration)
 					}
@@ -56,6 +61,7 @@ func (client *Client) getTests() (response []apiTestResponse, err error) {
 			} else {
 				err = errors.New(resp.Status)
 			}
+			_ = resp.Body.Close()
 		}
 	}
 	return client.testsCache, err
