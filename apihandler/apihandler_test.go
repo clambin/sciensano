@@ -5,8 +5,10 @@ import (
 	"github.com/clambin/sciensano/apihandler"
 	"github.com/clambin/sciensano/sciensano"
 	"github.com/clambin/sciensano/sciensano/mockapi"
-	mockVaccines "github.com/clambin/sciensano/vaccines/mock"
+	"github.com/clambin/sciensano/vaccines/mock"
 	"github.com/stretchr/testify/assert"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 	"time"
 )
@@ -46,10 +48,12 @@ func TestAPIHandler_Search(t *testing.T) {
 }
 
 func TestAPIHandler_Invalid(t *testing.T) {
-	apiHandler, _ := apihandler.Create()
+	server := httptest.NewServer(http.HandlerFunc(mock.Handler))
+	defer server.Close()
 
+	apiHandler, _ := apihandler.Create()
 	apiHandler.Sciensano = &mockapi.API{Tests: mockapi.DefaultTests, Vaccinations: mockapi.DefaultVaccinations}
-	apiHandler.Vaccines.HTTPClient = mockVaccines.GetServer()
+	apiHandler.Vaccines.URL = server.URL
 
 	endDate := time.Date(2021, 01, 06, 0, 0, 0, 0, time.UTC)
 	request := &grafana_json.TableQueryArgs{
@@ -70,8 +74,11 @@ func BenchmarkHandler_QueryTable(b *testing.B) {
 	handler, err := apihandler.Create()
 
 	if assert.Nil(b, err) {
+		server := httptest.NewServer(http.HandlerFunc(mock.Handler))
+		defer server.Close()
+
 		handler.Sciensano = &mockapi.API{Tests: buildTestTable(720), Vaccinations: buildVaccinationTable(720)}
-		handler.Vaccines.HTTPClient = mockVaccines.GetServer()
+		handler.Vaccines.URL = server.URL
 
 		endDate := time.Date(2021, 01, 06, 0, 0, 0, 0, time.UTC)
 		request := &grafana_json.TableQueryArgs{

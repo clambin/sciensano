@@ -5,13 +5,18 @@ import (
 	"github.com/clambin/sciensano/apihandler"
 	"github.com/clambin/sciensano/vaccines/mock"
 	"github.com/stretchr/testify/assert"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 	"time"
 )
 
 func TestHandler_Annotations(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(mock.Handler))
+	defer server.Close()
+
 	handler, _ := apihandler.Create()
-	handler.Vaccines.HTTPClient = mock.GetServer()
+	handler.Vaccines.URL = server.URL
 
 	args := &grafanaJson.AnnotationRequestArgs{
 		CommonQueryArgs: grafanaJson.CommonQueryArgs{

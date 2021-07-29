@@ -13,6 +13,7 @@ import (
 
 type Server struct {
 	HTTPClient    *http.Client
+	URL           string
 	cacheDuration time.Duration
 	cache         []Batch
 	expiry        time.Time
@@ -29,6 +30,7 @@ func New() (server *Server) {
 	server = &Server{
 		HTTPClient:    &http.Client{},
 		cacheDuration: 1 * time.Hour,
+		URL:           "https://covid-vaccinatie.be",
 	}
 	return
 }
@@ -49,7 +51,7 @@ func (server *Server) GetBatches() (batches []Batch, err error) {
 
 	if server.cache == nil || time.Now().After(server.expiry) {
 		var resp *http.Response
-		resp, err = server.HTTPClient.Get("https://covid-vaccinatie.be/api/v1/delivered.json")
+		resp, err = server.HTTPClient.Get(server.URL + "/api/v1/delivered.json")
 
 		if err == nil {
 			if resp.StatusCode == http.StatusOK {

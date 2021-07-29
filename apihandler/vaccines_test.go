@@ -9,15 +9,20 @@ import (
 	vaccines2 "github.com/clambin/sciensano/vaccines"
 	mock2 "github.com/clambin/sciensano/vaccines/mock"
 	"github.com/stretchr/testify/assert"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 	"time"
 )
 
 func TestAPIHandler_Vaccines(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(mock2.Handler))
+	defer server.Close()
+
 	apiHandler, _ := apihandler2.Create()
 
 	apiHandler.Sciensano = &mockapi2.API{Tests: mockapi2.DefaultTests, Vaccinations: mockapi2.DefaultVaccinations}
-	apiHandler.Vaccines.HTTPClient = mock2.GetServer()
+	apiHandler.Vaccines.URL = server.URL
 
 	endDate := time.Date(2021, 01, 06, 0, 0, 0, 0, time.UTC)
 	request := &grafana_json.TableQueryArgs{
@@ -54,10 +59,13 @@ func TestAPIHandler_Vaccines(t *testing.T) {
 }
 
 func TestAPIHandler_Vaccines_Stats(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(mock2.Handler))
+	defer server.Close()
+
 	apiHandler, _ := apihandler2.Create()
 
 	apiHandler.Sciensano = &mockapi2.API{Tests: mockapi2.DefaultTests, Vaccinations: mockapi2.DefaultVaccinations}
-	apiHandler.Vaccines.HTTPClient = mock2.GetServer()
+	apiHandler.Vaccines.URL = server.URL
 
 	endDate := time.Date(2021, 01, 06, 0, 0, 0, 0, time.UTC)
 	request := &grafana_json.TableQueryArgs{
@@ -98,10 +106,13 @@ func TestAPIHandler_Vaccines_Stats(t *testing.T) {
 }
 
 func TestAPIHandler_Vaccines_Time(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(mock2.Handler))
+	defer server.Close()
+
 	apiHandler, _ := apihandler2.Create()
 
 	apiHandler.Sciensano = &mockapi2.API{Tests: mockapi2.DefaultTests, Vaccinations: mockapi2.AltVaccinations}
-	apiHandler.Vaccines.HTTPClient = mock2.GetServer()
+	apiHandler.Vaccines.URL = server.URL
 
 	endDate := time.Date(2021, 01, 06, 0, 0, 0, 0, time.UTC)
 	request := &grafana_json.TableQueryArgs{

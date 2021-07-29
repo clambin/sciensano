@@ -6,15 +6,20 @@ import (
 	"github.com/clambin/sciensano/sciensano/mockapi"
 	mockVaccines "github.com/clambin/sciensano/vaccines/mock"
 	"github.com/stretchr/testify/assert"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 	"time"
 )
 
 func TestAPIHandler_Vaccinations(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(mockVaccines.Handler))
+	defer server.Close()
+
 	apiHandler, _ := apihandler.Create()
 
 	apiHandler.Sciensano = &mockapi.API{Tests: mockapi.DefaultTests, Vaccinations: mockapi.DefaultVaccinations}
-	apiHandler.Vaccines.HTTPClient = mockVaccines.GetServer()
+	apiHandler.Vaccines.URL = server.URL
 
 	endDate := time.Date(2021, 01, 06, 0, 0, 0, 0, time.UTC)
 	request := &grafanaJson.TableQueryArgs{
@@ -48,10 +53,13 @@ func TestAPIHandler_Vaccinations(t *testing.T) {
 }
 
 func TestAPIHandler_VaccinationsByAge(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(mockVaccines.Handler))
+	defer server.Close()
+
 	apiHandler, _ := apihandler.Create()
 
 	apiHandler.Sciensano = &mockapi.API{Tests: mockapi.DefaultTests, Vaccinations: mockapi.DefaultVaccinations}
-	apiHandler.Vaccines.HTTPClient = mockVaccines.GetServer()
+	apiHandler.Vaccines.URL = server.URL
 
 	endDate := time.Date(2021, 01, 06, 0, 0, 0, 0, time.UTC)
 	request := &grafanaJson.TableQueryArgs{
@@ -85,10 +93,13 @@ func TestAPIHandler_VaccinationsByAge(t *testing.T) {
 }
 
 func TestAPIHandler_VaccinationByAge_Rate(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(mockVaccines.Handler))
+	defer server.Close()
+
 	apiHandler, _ := apihandler.Create()
 
 	apiHandler.Sciensano = &mockapi.API{Tests: mockapi.DefaultTests, Vaccinations: mockapi.DefaultVaccinations}
-	apiHandler.Vaccines.HTTPClient = mockVaccines.GetServer()
+	apiHandler.Vaccines.URL = server.URL
 
 	endDate := time.Date(2021, 01, 06, 0, 0, 0, 0, time.UTC)
 	request := &grafanaJson.TableQueryArgs{
@@ -122,10 +133,13 @@ func TestAPIHandler_VaccinationByAge_Rate(t *testing.T) {
 }
 
 func TestAPIHandler_VaccinationByRegion(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(mockVaccines.Handler))
+	defer server.Close()
+
 	apiHandler, _ := apihandler.Create()
 
 	apiHandler.Sciensano = &mockapi.API{Tests: mockapi.DefaultTests, Vaccinations: mockapi.DefaultVaccinations}
-	apiHandler.Vaccines.HTTPClient = mockVaccines.GetServer()
+	apiHandler.Vaccines.URL = server.URL
 
 	endDate := time.Date(2021, 01, 06, 0, 0, 0, 0, time.UTC)
 	request := &grafanaJson.TableQueryArgs{
@@ -159,10 +173,13 @@ func TestAPIHandler_VaccinationByRegion(t *testing.T) {
 }
 
 func TestAPIHandler_VaccinationByRegion_Rate(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(mockVaccines.Handler))
+	defer server.Close()
+
 	apiHandler, _ := apihandler.Create()
 
 	apiHandler.Sciensano = &mockapi.API{Tests: mockapi.DefaultTests, Vaccinations: mockapi.DefaultVaccinations}
-	apiHandler.Vaccines.HTTPClient = mockVaccines.GetServer()
+	apiHandler.Vaccines.URL = server.URL
 
 	endDate := time.Date(2021, 01, 06, 0, 0, 0, 0, time.UTC)
 	request := &grafanaJson.TableQueryArgs{
@@ -196,10 +213,13 @@ func TestAPIHandler_VaccinationByRegion_Rate(t *testing.T) {
 }
 
 func TestAPIHandler_Vaccination_Lag(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(mockVaccines.Handler))
+	defer server.Close()
+
 	apiHandler, _ := apihandler.Create()
 
 	apiHandler.Sciensano = &mockapi.API{Tests: mockapi.DefaultTests, Vaccinations: mockapi.DefaultVaccinations}
-	apiHandler.Vaccines.HTTPClient = mockVaccines.GetServer()
+	apiHandler.Vaccines.URL = server.URL
 
 	endDate := time.Date(2021, 01, 06, 0, 0, 0, 0, time.UTC)
 	request := &grafanaJson.TableQueryArgs{

@@ -1,11 +1,20 @@
 package mock
 
 import (
-	"bytes"
-	"github.com/clambin/gotools/httpstub"
-	"io"
+	log "github.com/sirupsen/logrus"
+	"html"
 	"net/http"
 )
+
+func Handler(w http.ResponseWriter, req *http.Request) {
+	log.Debug("apiHandler: " + html.EscapeString(req.URL.Path))
+
+	if req.URL.Path == "/api/v1/delivered.json" {
+		_, _ = w.Write([]byte(vaccinesResponse))
+	} else {
+		http.Error(w, "endpoint not implemented: "+req.URL.Path, http.StatusForbidden)
+	}
+}
 
 const vaccinesResponse = `{
 	"result":{
@@ -16,22 +25,3 @@ const vaccinesResponse = `{
 		]
 	}
 }`
-
-func GetServer() *http.Client {
-	return httpstub.NewTestClient(server)
-}
-
-func server(req *http.Request) (resp *http.Response) {
-	if req.URL.Path == "/api/v1/delivered.json" {
-		resp = &http.Response{
-			StatusCode: http.StatusOK,
-			Body:       io.NopCloser(bytes.NewBufferString(vaccinesResponse)),
-		}
-	} else {
-		resp = &http.Response{
-			Status:     req.URL.Path + " not found",
-			StatusCode: http.StatusNotFound,
-		}
-	}
-	return
-}

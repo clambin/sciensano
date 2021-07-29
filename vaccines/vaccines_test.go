@@ -1,24 +1,29 @@
 package vaccines_test
 
 import (
-	vaccines2 "github.com/clambin/sciensano/vaccines"
-	mock2 "github.com/clambin/sciensano/vaccines/mock"
+	"github.com/clambin/sciensano/vaccines"
+	"github.com/clambin/sciensano/vaccines/mock"
 	"github.com/stretchr/testify/assert"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 )
 
 func TestVaccines(t *testing.T) {
-	srv := vaccines2.New()
-	srv.HTTPClient = mock2.GetServer()
+	server := httptest.NewServer(http.HandlerFunc(mock.Handler))
+	defer server.Close()
 
-	batches, err := srv.GetBatches()
+	client := vaccines.New()
+	client.URL = server.URL
+
+	batches, err := client.GetBatches()
 
 	if assert.Nil(t, err) && assert.Len(t, batches, 3) {
 		// assert.Equal(t, "A", batches[0].Manufacturer)
 		// assert.Equal(t, "B", batches[1].Manufacturer)
 		// assert.Equal(t, "C", batches[2].Manufacturer)
 
-		accu := vaccines2.AccumulateBatches(batches)
+		accu := vaccines.AccumulateBatches(batches)
 
 		if assert.Len(t, accu, 3) {
 			assert.Equal(t, 300, accu[0].Amount)
