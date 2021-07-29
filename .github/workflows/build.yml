@@ -45,7 +45,7 @@ jobs:
         run: |
           GOOS=$PLATFORM GOARCH=$ARCH \
             go build \
-              -ldflags "-X github.com/clambin/sciensano/internal/version.BuildVersion=$RELEASE_VERSION" \
+              -ldflags "-X github.com/clambin/sciensano/version.BuildVersion=$RELEASE_VERSION" \
               -o bld/$TARGET-$PLATFORM-$ARCH \
               $TARGET.go
       - uses: actions/upload-artifact@v2

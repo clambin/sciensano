@@ -1,28 +1,28 @@
 package apihandler
 
 import (
-	grafana_json "github.com/clambin/grafana-json"
-	"github.com/clambin/sciensano/internal/vaccines"
-	"github.com/clambin/sciensano/pkg/sciensano"
+	grafanaJson "github.com/clambin/grafana-json"
+	"github.com/clambin/sciensano/sciensano"
+	"github.com/clambin/sciensano/vaccines"
 	"sync"
 	"time"
 )
 
-func (handler *Handler) buildVaccineTableResponse(_, _ time.Time, _ string) (response *grafana_json.TableQueryResponse) {
+func (handler *Handler) buildVaccineTableResponse(_, _ time.Time, _ string) (response *grafanaJson.TableQueryResponse) {
 	if batches, err := handler.Vaccines.GetBatches(); err == nil {
 		batches = vaccines.AccumulateBatches(batches)
 
 		rows := len(batches)
-		timestampColumn := make(grafana_json.TableQueryResponseTimeColumn, rows)
-		batchColumn := make(grafana_json.TableQueryResponseNumberColumn, rows)
+		timestampColumn := make(grafanaJson.TableQueryResponseTimeColumn, rows)
+		batchColumn := make(grafanaJson.TableQueryResponseNumberColumn, rows)
 
 		for index, entry := range batches {
 			timestampColumn[index] = time.Time(entry.Date)
 			batchColumn[index] = float64(entry.Amount)
 		}
 
-		response = new(grafana_json.TableQueryResponse)
-		response.Columns = []grafana_json.TableQueryResponseColumn{
+		response = new(grafanaJson.TableQueryResponse)
+		response.Columns = []grafanaJson.TableQueryResponseColumn{
 			{Text: "timestamp", Data: timestampColumn},
 			{Text: "vaccines", Data: batchColumn},
 		}
@@ -30,7 +30,7 @@ func (handler *Handler) buildVaccineTableResponse(_, _ time.Time, _ string) (res
 	return
 }
 
-func (handler *Handler) buildVaccineStatsTableResponse(_, endTime time.Time, _ string) (response *grafana_json.TableQueryResponse) {
+func (handler *Handler) buildVaccineStatsTableResponse(_, endTime time.Time, _ string) (response *grafanaJson.TableQueryResponse) {
 	var batches []vaccines.Batch
 	var vaccinations []sciensano.Vaccination
 	var err error
@@ -41,9 +41,9 @@ func (handler *Handler) buildVaccineStatsTableResponse(_, endTime time.Time, _ s
 		}
 
 		rows := len(vaccinations)
-		timestampColumn := make(grafana_json.TableQueryResponseTimeColumn, 0, rows)
-		vaccinationsColumn := make(grafana_json.TableQueryResponseNumberColumn, 0, rows)
-		reserveColumn := make(grafana_json.TableQueryResponseNumberColumn, 0, rows)
+		timestampColumn := make(grafanaJson.TableQueryResponseTimeColumn, 0, rows)
+		vaccinationsColumn := make(grafanaJson.TableQueryResponseNumberColumn, 0, rows)
+		reserveColumn := make(grafanaJson.TableQueryResponseNumberColumn, 0, rows)
 
 		var wg sync.WaitGroup
 		wg.Add(2)
@@ -65,8 +65,8 @@ func (handler *Handler) buildVaccineStatsTableResponse(_, endTime time.Time, _ s
 
 		wg.Wait()
 
-		response = new(grafana_json.TableQueryResponse)
-		response.Columns = []grafana_json.TableQueryResponseColumn{
+		response = new(grafanaJson.TableQueryResponse)
+		response.Columns = []grafanaJson.TableQueryResponseColumn{
 			{Text: "timestamp", Data: timestampColumn},
 			{Text: "vaccinations", Data: vaccinationsColumn},
 			{Text: "reserve", Data: reserveColumn},
@@ -75,7 +75,7 @@ func (handler *Handler) buildVaccineStatsTableResponse(_, endTime time.Time, _ s
 	return
 }
 
-func (handler *Handler) buildVaccineTimeTableResponse(_, endTime time.Time, _ string) (response *grafana_json.TableQueryResponse) {
+func (handler *Handler) buildVaccineTimeTableResponse(_, endTime time.Time, _ string) (response *grafanaJson.TableQueryResponse) {
 	var batches []vaccines.Batch
 	var vaccinations []sciensano.Vaccination
 	var err error
@@ -87,8 +87,8 @@ func (handler *Handler) buildVaccineTimeTableResponse(_, endTime time.Time, _ st
 
 		timestampColumn, timeColumn := CalculateVaccineDelay(vaccinations, batches)
 
-		response = new(grafana_json.TableQueryResponse)
-		response.Columns = []grafana_json.TableQueryResponseColumn{
+		response = new(grafanaJson.TableQueryResponse)
+		response.Columns = []grafanaJson.TableQueryResponseColumn{
 			{Text: "timestamp", Data: timestampColumn},
 			{Text: "time", Data: timeColumn},
 		}
@@ -96,7 +96,7 @@ func (handler *Handler) buildVaccineTimeTableResponse(_, endTime time.Time, _ st
 	return
 }
 
-func CalculateVaccineDelay(vaccinations []sciensano.Vaccination, batches []vaccines.Batch) (timestamps grafana_json.TableQueryResponseTimeColumn, delays grafana_json.TableQueryResponseNumberColumn) {
+func CalculateVaccineDelay(vaccinations []sciensano.Vaccination, batches []vaccines.Batch) (timestamps grafanaJson.TableQueryResponseTimeColumn, delays grafanaJson.TableQueryResponseNumberColumn) {
 	batchIndex := 0
 	batchCount := len(batches)
 

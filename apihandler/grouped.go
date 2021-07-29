@@ -1,7 +1,7 @@
 package apihandler
 
 import (
-	"github.com/clambin/sciensano/pkg/sciensano"
+	"github.com/clambin/sciensano/sciensano"
 	"sort"
 	"time"
 )

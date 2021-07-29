@@ -2,8 +2,8 @@ package main
 
 import (
 	"github.com/clambin/grafana-json"
-	"github.com/clambin/sciensano/internal/apihandler"
-	"github.com/clambin/sciensano/internal/version"
+	"github.com/clambin/sciensano/apihandler"
+	"github.com/clambin/sciensano/version"
 	log "github.com/sirupsen/logrus"
 )
 

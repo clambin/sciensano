@@ -3,8 +3,8 @@ package apihandler
 import (
 	"fmt"
 	"github.com/clambin/grafana-json"
-	"github.com/clambin/sciensano/internal/vaccines"
-	"github.com/clambin/sciensano/pkg/sciensano"
+	"github.com/clambin/sciensano/sciensano"
+	"github.com/clambin/sciensano/vaccines"
 	log "github.com/sirupsen/logrus"
 	"net/http"
 	"sort"

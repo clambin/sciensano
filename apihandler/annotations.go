@@ -1,14 +1,14 @@
 package apihandler
 
 import (
-	grafana_json "github.com/clambin/grafana-json"
-	"github.com/clambin/sciensano/internal/vaccines"
+	grafanaJson "github.com/clambin/grafana-json"
+	"github.com/clambin/sciensano/vaccines"
 	log "github.com/sirupsen/logrus"
 	"strconv"
 	"time"
 )
 
-func (handler *Handler) Annotations(name, query string, args *grafana_json.AnnotationRequestArgs) (annotations []grafana_json.Annotation, err error) {
+func (handler *Handler) Annotations(name, query string, args *grafanaJson.AnnotationRequestArgs) (annotations []grafanaJson.Annotation, err error) {
 	log.WithFields(log.Fields{
 		"name":    name,
 		"query":   query,
@@ -18,7 +18,7 @@ func (handler *Handler) Annotations(name, query string, args *grafana_json.Annot
 	var batches []vaccines.Batch
 	if batches, err = handler.Vaccines.GetBatches(); err == nil {
 		for _, batch := range batches {
-			annotations = append(annotations, grafana_json.Annotation{
+			annotations = append(annotations, grafanaJson.Annotation{
 				Time: time.Time(batch.Date),
 				// Title: batch.Manufacturer,
 				Text: "Amount: " + strconv.Itoa(batch.Amount),

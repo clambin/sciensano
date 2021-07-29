@@ -49,19 +49,22 @@ func (server *Server) GetBatches() (batches []Batch, err error) {
 
 	if server.cache == nil || time.Now().After(server.expiry) {
 		var resp *http.Response
-		var stats struct {
-			Result struct {
-				Delivered []Batch `json:"delivered"`
-			} `json:"result"`
-		}
+		resp, err = server.HTTPClient.Get("https://covid-vaccinatie.be/api/v1/delivered.json")
 
-		if resp, err = server.HTTPClient.Get("https://covid-vaccinatie.be/api/v1/delivered.json"); err == nil {
-			defer resp.Body.Close()
-			if resp.StatusCode == 200 {
+		if err == nil {
+			if resp.StatusCode == http.StatusOK {
 				var body []byte
+				body, err = io.ReadAll(resp.Body)
 
-				if body, err = io.ReadAll(resp.Body); err == nil {
-					if err = json.Unmarshal(body, &stats); err == nil {
+				if err == nil {
+					var stats struct {
+						Result struct {
+							Delivered []Batch `json:"delivered"`
+						} `json:"result"`
+					}
+					err = json.Unmarshal(body, &stats)
+
+					if err == nil {
 						batches = stats.Result.Delivered
 					} else {
 						log.Error(err)
@@ -70,6 +73,7 @@ func (server *Server) GetBatches() (batches []Batch, err error) {
 			} else {
 				err = errors.New(resp.Status)
 			}
+			_ = resp.Body.Close()
 		}
 
 		if err == nil {

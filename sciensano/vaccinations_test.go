@@ -1,8 +1,8 @@
 package sciensano_test
 
 import (
-	"github.com/clambin/sciensano/pkg/sciensano"
-	"github.com/clambin/sciensano/pkg/sciensano/server"
+	"github.com/clambin/sciensano/sciensano"
+	"github.com/clambin/sciensano/sciensano/server"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"

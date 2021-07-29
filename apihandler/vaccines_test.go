@@ -3,21 +3,21 @@ package apihandler_test
 import (
 	"fmt"
 	grafana_json "github.com/clambin/grafana-json"
-	"github.com/clambin/sciensano/internal/apihandler"
-	"github.com/clambin/sciensano/internal/vaccines"
-	"github.com/clambin/sciensano/internal/vaccines/mock"
-	"github.com/clambin/sciensano/pkg/sciensano"
-	"github.com/clambin/sciensano/pkg/sciensano/mockapi"
+	apihandler2 "github.com/clambin/sciensano/apihandler"
+	sciensano2 "github.com/clambin/sciensano/sciensano"
+	mockapi2 "github.com/clambin/sciensano/sciensano/mockapi"
+	vaccines2 "github.com/clambin/sciensano/vaccines"
+	mock2 "github.com/clambin/sciensano/vaccines/mock"
 	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
 )
 
 func TestAPIHandler_Vaccines(t *testing.T) {
-	apiHandler, _ := apihandler.Create()
+	apiHandler, _ := apihandler2.Create()
 
-	apiHandler.Sciensano = &mockapi.API{Tests: mockapi.DefaultTests, Vaccinations: mockapi.DefaultVaccinations}
-	apiHandler.Vaccines.HTTPClient = mock.GetServer()
+	apiHandler.Sciensano = &mockapi2.API{Tests: mockapi2.DefaultTests, Vaccinations: mockapi2.DefaultVaccinations}
+	apiHandler.Vaccines.HTTPClient = mock2.GetServer()
 
 	endDate := time.Date(2021, 01, 06, 0, 0, 0, 0, time.UTC)
 	request := &grafana_json.TableQueryArgs{
@@ -54,10 +54,10 @@ func TestAPIHandler_Vaccines(t *testing.T) {
 }
 
 func TestAPIHandler_Vaccines_Stats(t *testing.T) {
-	apiHandler, _ := apihandler.Create()
+	apiHandler, _ := apihandler2.Create()
 
-	apiHandler.Sciensano = &mockapi.API{Tests: mockapi.DefaultTests, Vaccinations: mockapi.DefaultVaccinations}
-	apiHandler.Vaccines.HTTPClient = mock.GetServer()
+	apiHandler.Sciensano = &mockapi2.API{Tests: mockapi2.DefaultTests, Vaccinations: mockapi2.DefaultVaccinations}
+	apiHandler.Vaccines.HTTPClient = mock2.GetServer()
 
 	endDate := time.Date(2021, 01, 06, 0, 0, 0, 0, time.UTC)
 	request := &grafana_json.TableQueryArgs{
@@ -98,10 +98,10 @@ func TestAPIHandler_Vaccines_Stats(t *testing.T) {
 }
 
 func TestAPIHandler_Vaccines_Time(t *testing.T) {
-	apiHandler, _ := apihandler.Create()
+	apiHandler, _ := apihandler2.Create()
 
-	apiHandler.Sciensano = &mockapi.API{Tests: mockapi.DefaultTests, Vaccinations: mockapi.AltVaccinations}
-	apiHandler.Vaccines.HTTPClient = mock.GetServer()
+	apiHandler.Sciensano = &mockapi2.API{Tests: mockapi2.DefaultTests, Vaccinations: mockapi2.AltVaccinations}
+	apiHandler.Vaccines.HTTPClient = mock2.GetServer()
 
 	endDate := time.Date(2021, 01, 06, 0, 0, 0, 0, time.UTC)
 	request := &grafana_json.TableQueryArgs{
@@ -138,7 +138,7 @@ func TestAPIHandler_Vaccines_Time(t *testing.T) {
 }
 
 func TestVaccineDelay(t *testing.T) {
-	vaccinations := []sciensano.Vaccination{{
+	vaccinations := []sciensano2.Vaccination{{
 		Timestamp:  time.Date(2021, 01, 01, 0, 0, 0, 0, time.UTC),
 		FirstDose:  10,
 		SecondDose: 0,
@@ -164,14 +164,14 @@ func TestVaccineDelay(t *testing.T) {
 		SecondDose: 15,
 	}}
 
-	batches := []vaccines.Batch{{
-		Date:   vaccines.Time(time.Date(2021, 01, 01, 0, 0, 0, 0, time.UTC)),
+	batches := []vaccines2.Batch{{
+		Date:   vaccines2.Time(time.Date(2021, 01, 01, 0, 0, 0, 0, time.UTC)),
 		Amount: 20,
 	}, {
-		Date:   vaccines.Time(time.Date(2021, 02, 01, 0, 0, 0, 0, time.UTC)),
+		Date:   vaccines2.Time(time.Date(2021, 02, 01, 0, 0, 0, 0, time.UTC)),
 		Amount: 40,
 	}, {
-		Date:   vaccines.Time(time.Date(2021, 03, 01, 0, 0, 0, 0, time.UTC)),
+		Date:   vaccines2.Time(time.Date(2021, 03, 01, 0, 0, 0, 0, time.UTC)),
 		Amount: 50,
 	}}
 
@@ -189,7 +189,7 @@ func TestVaccineDelay(t *testing.T) {
 		Value:     42,
 	}}
 
-	timestamps, delays := apihandler.CalculateVaccineDelay(vaccinations, batches)
+	timestamps, delays := apihandler2.CalculateVaccineDelay(vaccinations, batches)
 
 	if assert.Equal(t, len(expected), len(timestamps)) && assert.Equal(t, len(expected), len(delays)) {
 		for index, entry := range expected {

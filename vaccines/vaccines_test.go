@@ -1,15 +1,15 @@
 package vaccines_test
 
 import (
-	"github.com/clambin/sciensano/internal/vaccines"
-	"github.com/clambin/sciensano/internal/vaccines/mock"
+	vaccines2 "github.com/clambin/sciensano/vaccines"
+	mock2 "github.com/clambin/sciensano/vaccines/mock"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
 func TestVaccines(t *testing.T) {
-	srv := vaccines.New()
-	srv.HTTPClient = mock.GetServer()
+	srv := vaccines2.New()
+	srv.HTTPClient = mock2.GetServer()
 
 	batches, err := srv.GetBatches()
 
@@ -18,7 +18,7 @@ func TestVaccines(t *testing.T) {
 		// assert.Equal(t, "B", batches[1].Manufacturer)
 		// assert.Equal(t, "C", batches[2].Manufacturer)
 
-		accu := vaccines.AccumulateBatches(batches)
+		accu := vaccines2.AccumulateBatches(batches)
 
 		if assert.Len(t, accu, 3) {
 			assert.Equal(t, 300, accu[0].Amount)

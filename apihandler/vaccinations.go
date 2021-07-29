@@ -3,8 +3,8 @@ package apihandler
 import (
 	"fmt"
 	grafanaJson "github.com/clambin/grafana-json"
-	"github.com/clambin/sciensano/internal/demographics"
-	"github.com/clambin/sciensano/pkg/sciensano"
+	"github.com/clambin/sciensano/demographics"
+	"github.com/clambin/sciensano/sciensano"
 	"strings"
 	"time"
 )

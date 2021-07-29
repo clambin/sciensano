@@ -1,8 +1,8 @@
 package apihandler
 
 import (
-	grafana_json "github.com/clambin/grafana-json"
-	"github.com/clambin/sciensano/pkg/sciensano"
+	grafanaJson "github.com/clambin/grafana-json"
+	"github.com/clambin/sciensano/sciensano"
 	"time"
 )
 
@@ -14,7 +14,7 @@ type VaccinationLag struct {
 	index int
 }
 
-func buildLag(vaccinations []sciensano.Vaccination) (timestamps grafana_json.TableQueryResponseTimeColumn, lag grafana_json.TableQueryResponseNumberColumn) {
+func buildLag(vaccinations []sciensano.Vaccination) (timestamps grafanaJson.TableQueryResponseTimeColumn, lag grafanaJson.TableQueryResponseNumberColumn) {
 	// record all full vaccinations
 	var (
 		firstDoseIndex int

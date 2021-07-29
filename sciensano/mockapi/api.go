@@ -1,7 +1,7 @@
 package mockapi
 
 import (
-	"github.com/clambin/sciensano/pkg/sciensano"
+	"github.com/clambin/sciensano/sciensano"
 	"time"
 )
 
