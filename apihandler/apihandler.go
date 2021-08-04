@@ -9,15 +9,17 @@ import (
 	"net/http"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 )
 
 // Handler implements a Grafana SimpleJson API Handler that gets BE covid stats
 type Handler struct {
-	Sciensano   sciensano.API
-	Vaccines    *vaccines.Server
-	lastDate    map[string]time.Time
-	targetTable TargetTable
+	Sciensano    sciensano.API
+	Vaccines     *vaccines.Server
+	lastDate     map[string]time.Time
+	lastDateLock sync.Mutex
+	targetTable  TargetTable
 }
 
 // Create a Handler
@@ -95,6 +97,9 @@ func (handler *Handler) TableQuery(target string, args *grafana_json.TableQueryA
 }
 
 func (handler *Handler) logUpdates(target string, response *grafana_json.TableQueryResponse) {
+	handler.lastDateLock.Lock()
+	defer handler.lastDateLock.Unlock()
+
 	if handler.lastDate == nil {
 		handler.lastDate = make(map[string]time.Time)
 	}
