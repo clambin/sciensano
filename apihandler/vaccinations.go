@@ -127,9 +127,12 @@ func prorateFigures(result *grafanaJson.TableQueryResponse, groups map[string]in
 		if column.Text != "(empty)" {
 			switch data := column.Data.(type) {
 			case grafanaJson.TableQueryResponseNumberColumn:
-				if figure, ok := groups[column.Text]; ok && figure != 0 {
-					for index, entry := range data {
+				figure, ok := groups[column.Text]
+				for index, entry := range data {
+					if ok && figure != 0 {
 						data[index] = entry / float64(figure)
+					} else {
+						data[index] = 0
 					}
 				}
 			}
