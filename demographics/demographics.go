@@ -4,7 +4,7 @@ package demographics
 
 func GetAgeGroupFigures() (groups map[string]int) {
 	return map[string]int{
-		"0-11":  1525064,
+		"00-11": 1525064,
 		"12-15": 533441,
 		"16-17": 253617,
 		"18-24": 922803,
