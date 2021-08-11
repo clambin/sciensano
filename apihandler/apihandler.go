@@ -3,6 +3,7 @@ package apihandler
 import (
 	"fmt"
 	"github.com/clambin/grafana-json"
+	"github.com/clambin/sciensano/demographics"
 	"github.com/clambin/sciensano/sciensano"
 	"github.com/clambin/sciensano/vaccines"
 	log "github.com/sirupsen/logrus"
@@ -17,19 +18,21 @@ import (
 type Handler struct {
 	Sciensano    sciensano.API
 	Vaccines     *vaccines.Server
+	demographics *demographics.Server
 	lastDate     map[string]time.Time
 	lastDateLock sync.Mutex
 	targetTable  TargetTable
 }
 
 // Create a Handler
-func Create() (*Handler, error) {
+func Create(server *demographics.Server) (*Handler, error) {
 	handler := Handler{
 		Sciensano: &sciensano.Client{
 			HTTPClient:    &http.Client{Timeout: 20 * time.Second},
 			CacheDuration: 15 * time.Minute,
 		},
-		Vaccines: vaccines.New(),
+		Vaccines:     vaccines.New(),
+		demographics: server,
 	}
 
 	handler.targetTable = TargetTable{

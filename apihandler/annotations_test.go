@@ -15,7 +15,7 @@ func TestHandler_Annotations(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(mock.Handler))
 	defer server.Close()
 
-	handler, _ := apihandler.Create()
+	handler, _ := apihandler.Create(nil)
 	handler.Vaccines.URL = server.URL
 
 	args := &grafanaJson.AnnotationRequestArgs{

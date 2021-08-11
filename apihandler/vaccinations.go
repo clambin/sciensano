@@ -3,7 +3,6 @@ package apihandler
 import (
 	"fmt"
 	grafanaJson "github.com/clambin/grafana-json"
-	"github.com/clambin/sciensano/demographics"
 	"github.com/clambin/sciensano/sciensano"
 	"strings"
 	"time"
@@ -98,9 +97,9 @@ func (handler *Handler) buildGroupedVaccinationRateTableResponse(beginTime, endT
 	response = handler.buildGroupedVaccinationTableResponse(beginTime, endTime, target)
 	if response != nil {
 		if strings.HasPrefix(target, "vacc-age-rate-") {
-			prorateFigures(response, demographics.GetAgeGroupFigures())
+			prorateFigures(response, handler.demographics.GetAgeGroupFigures())
 		} else if strings.HasPrefix(target, "vacc-region-rate-") {
-			prorateFigures(response, demographics.GetRegionFigures())
+			prorateFigures(response, handler.demographics.GetRegionFigures())
 		}
 	}
 	return

@@ -31,7 +31,7 @@ var realTargets = map[string]bool{
 }
 
 func TestAPIHandler_Search(t *testing.T) {
-	apiHandler, _ := apihandler.Create()
+	apiHandler, _ := apihandler.Create(nil)
 	targets := apiHandler.Endpoints().Search()
 
 	for _, target := range targets {
@@ -51,7 +51,7 @@ func TestAPIHandler_Invalid(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(mock.Handler))
 	defer server.Close()
 
-	apiHandler, _ := apihandler.Create()
+	apiHandler, _ := apihandler.Create(nil)
 	apiHandler.Sciensano = &mockapi.API{Tests: mockapi.DefaultTests, Vaccinations: mockapi.DefaultVaccinations}
 	apiHandler.Vaccines.URL = server.URL
 
@@ -71,7 +71,7 @@ func TestAPIHandler_Invalid(t *testing.T) {
 }
 
 func BenchmarkHandler_QueryTable(b *testing.B) {
-	handler, err := apihandler.Create()
+	handler, err := apihandler.Create(nil)
 
 	if assert.Nil(b, err) {
 		server := httptest.NewServer(http.HandlerFunc(mock.Handler))

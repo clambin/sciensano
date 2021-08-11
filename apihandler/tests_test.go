@@ -16,7 +16,7 @@ func TestAPIHandler_Tests(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(mockVaccines.Handler))
 	defer server.Close()
 
-	apiHandler, _ := apihandler.Create()
+	apiHandler, _ := apihandler.Create(nil)
 	apiHandler.Sciensano = &mockapi.API{Tests: mockapi.DefaultTests, Vaccinations: mockapi.DefaultVaccinations}
 	apiHandler.Vaccines.URL = server.URL
 
