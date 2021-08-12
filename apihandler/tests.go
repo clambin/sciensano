@@ -1,12 +1,13 @@
 package apihandler
 
 import (
+	"context"
 	grafanaJson "github.com/clambin/grafana-json"
 	"time"
 )
 
-func (handler *Handler) buildTestTableResponse(_, endTime time.Time, _ string) (response *grafanaJson.TableQueryResponse) {
-	if tests, err := handler.Sciensano.GetTests(endTime); err == nil {
+func (handler *Handler) buildTestTableResponse(ctx context.Context, _, endTime time.Time, _ string) (response *grafanaJson.TableQueryResponse) {
+	if tests, err := handler.Sciensano.GetTests(ctx, endTime); err == nil {
 
 		rows := len(tests)
 		timestamps := make(grafanaJson.TableQueryResponseTimeColumn, rows)

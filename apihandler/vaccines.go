@@ -1,6 +1,7 @@
 package apihandler
 
 import (
+	"context"
 	grafanaJson "github.com/clambin/grafana-json"
 	"github.com/clambin/sciensano/sciensano"
 	"github.com/clambin/sciensano/vaccines"
@@ -8,8 +9,8 @@ import (
 	"time"
 )
 
-func (handler *Handler) buildVaccineTableResponse(_, _ time.Time, _ string) (response *grafanaJson.TableQueryResponse) {
-	if batches, err := handler.Vaccines.GetBatches(); err == nil {
+func (handler *Handler) buildVaccineTableResponse(ctx context.Context, _, _ time.Time, _ string) (response *grafanaJson.TableQueryResponse) {
+	if batches, err := handler.Vaccines.GetBatches(ctx); err == nil {
 		batches = vaccines.AccumulateBatches(batches)
 
 		rows := len(batches)
@@ -30,13 +31,13 @@ func (handler *Handler) buildVaccineTableResponse(_, _ time.Time, _ string) (res
 	return
 }
 
-func (handler *Handler) buildVaccineStatsTableResponse(_, endTime time.Time, _ string) (response *grafanaJson.TableQueryResponse) {
+func (handler *Handler) buildVaccineStatsTableResponse(ctx context.Context, _, endTime time.Time, _ string) (response *grafanaJson.TableQueryResponse) {
 	var batches []vaccines.Batch
 	var vaccinations []sciensano.Vaccination
 	var err error
-	if batches, err = handler.Vaccines.GetBatches(); err == nil {
+	if batches, err = handler.Vaccines.GetBatches(ctx); err == nil {
 		batches = vaccines.AccumulateBatches(batches)
-		if vaccinations, err = handler.Sciensano.GetVaccinations(endTime); err == nil {
+		if vaccinations, err = handler.Sciensano.GetVaccinations(ctx, endTime); err == nil {
 			vaccinations = sciensano.AccumulateVaccinations(vaccinations)
 		}
 
@@ -75,13 +76,13 @@ func (handler *Handler) buildVaccineStatsTableResponse(_, endTime time.Time, _ s
 	return
 }
 
-func (handler *Handler) buildVaccineTimeTableResponse(_, endTime time.Time, _ string) (response *grafanaJson.TableQueryResponse) {
+func (handler *Handler) buildVaccineTimeTableResponse(ctx context.Context, _, endTime time.Time, _ string) (response *grafanaJson.TableQueryResponse) {
 	var batches []vaccines.Batch
 	var vaccinations []sciensano.Vaccination
 	var err error
-	if batches, err = handler.Vaccines.GetBatches(); err == nil {
+	if batches, err = handler.Vaccines.GetBatches(ctx); err == nil {
 		batches = vaccines.AccumulateBatches(batches)
-		if vaccinations, err = handler.Sciensano.GetVaccinations(endTime); err == nil {
+		if vaccinations, err = handler.Sciensano.GetVaccinations(ctx, endTime); err == nil {
 			vaccinations = sciensano.AccumulateVaccinations(vaccinations)
 		}
 

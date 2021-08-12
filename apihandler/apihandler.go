@@ -1,6 +1,7 @@
 package apihandler
 
 import (
+	"context"
 	"fmt"
 	"github.com/clambin/grafana-json"
 	"github.com/clambin/sciensano/demographics"
@@ -64,8 +65,8 @@ func (handler *Handler) Endpoints() grafana_json.Endpoints {
 	}
 }
 
-type SeriesResponseBuildFunc func(begin, end time.Time, target string) (response *grafana_json.QueryResponse)
-type TableResponseBuildFunc func(begin, end time.Time, target string) (response *grafana_json.TableQueryResponse)
+type SeriesResponseBuildFunc func(ctx context.Context, begin, end time.Time, target string) (response *grafana_json.QueryResponse)
+type TableResponseBuildFunc func(ctx context.Context, begin, end time.Time, target string) (response *grafana_json.TableQueryResponse)
 
 type TargetTable map[string]struct {
 	seriesResponseBuild SeriesResponseBuildFunc
@@ -81,7 +82,7 @@ func (handler *Handler) Search() (targets []string) {
 	return
 }
 
-func (handler *Handler) TableQuery(target string, args *grafana_json.TableQueryArgs) (response *grafana_json.TableQueryResponse, err error) {
+func (handler *Handler) TableQuery(ctx context.Context, target string, args *grafana_json.TableQueryArgs) (response *grafana_json.TableQueryResponse, err error) {
 
 	builder, ok := handler.targetTable[target]
 
@@ -89,7 +90,7 @@ func (handler *Handler) TableQuery(target string, args *grafana_json.TableQueryA
 		return nil, fmt.Errorf("unknown target '%s'", target)
 	}
 
-	response = builder.tableResponseBuild(args.Range.From, args.Range.To, target)
+	response = builder.tableResponseBuild(ctx, args.Range.From, args.Range.To, target)
 
 	// log if there's a new update
 	if response != nil {

@@ -1,6 +1,7 @@
 package apihandler_test
 
 import (
+	"context"
 	"github.com/clambin/grafana-json"
 	"github.com/clambin/sciensano/apihandler"
 	"github.com/clambin/sciensano/sciensano"
@@ -65,7 +66,7 @@ func TestAPIHandler_Invalid(t *testing.T) {
 	var err error
 
 	// Unknown target should return an error
-	_, err = apiHandler.TableQuery("invalid", request)
+	_, err = apiHandler.TableQuery(context.Background(), "invalid", request)
 	assert.NotNil(t, err)
 
 }
@@ -91,7 +92,7 @@ func BenchmarkHandler_QueryTable(b *testing.B) {
 		b.ResetTimer()
 		for target := range realTargets {
 			for i := 0; i < 100; i++ {
-				_, _ = handler.Endpoints().TableQuery(target, request)
+				_, _ = handler.Endpoints().TableQuery(context.Background(), target, request)
 			}
 		}
 	}

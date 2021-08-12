@@ -1,6 +1,7 @@
 package apihandler
 
 import (
+	"context"
 	grafanaJson "github.com/clambin/grafana-json"
 	"github.com/clambin/sciensano/vaccines"
 	log "github.com/sirupsen/logrus"
@@ -16,7 +17,7 @@ func (handler *Handler) Annotations(name, query string, args *grafanaJson.Annota
 	}).Info("annotations")
 
 	var batches []vaccines.Batch
-	if batches, err = handler.Vaccines.GetBatches(); err == nil {
+	if batches, err = handler.Vaccines.GetBatches(context.TODO()); err == nil {
 		for _, batch := range batches {
 			annotations = append(annotations, grafanaJson.Annotation{
 				Time: time.Time(batch.Date),

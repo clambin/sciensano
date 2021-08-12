@@ -4,7 +4,7 @@ on:
   push:
     branches-ignore:
       - master
-      - demographics
+      - context
   pull_request_target:
 
 jobs:

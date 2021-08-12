@@ -1,6 +1,7 @@
 package sciensano_test
 
 import (
+	"context"
 	"github.com/clambin/sciensano/sciensano"
 	"github.com/clambin/sciensano/sciensano/server"
 	"github.com/stretchr/testify/assert"
@@ -17,7 +18,7 @@ func TestAPIClient_GetVaccinations(t *testing.T) {
 
 	client := sciensano.Client{CacheDuration: 1 * time.Hour, URL: apiServer.URL}
 	lastDay := time.Date(2021, 3, 10, 0, 0, 0, 0, time.UTC)
-	result, err := client.GetVaccinations(lastDay)
+	result, err := client.GetVaccinations(context.Background(), lastDay)
 
 	if assert.Nil(t, err) {
 		if assert.Len(t, result, 2) {
@@ -39,11 +40,11 @@ func TestAPIClient_GetVaccinationsByAge(t *testing.T) {
 
 	client := sciensano.Client{CacheDuration: 1 * time.Hour, URL: apiServer.URL}
 	testDate := time.Now()
-	totals, err = client.GetVaccinations(testDate)
+	totals, err = client.GetVaccinations(context.Background(), testDate)
 	assert.Nil(t, err)
 
 	if assert.Greater(t, len(totals), 0) {
-		vaccinationsByAge, err = client.GetVaccinationsByAge(testDate)
+		vaccinationsByAge, err = client.GetVaccinationsByAge(context.Background(), testDate)
 		if assert.Nil(t, err) {
 
 			var firstDose, secondDose int
@@ -76,11 +77,11 @@ func TestAPIClient_GetVaccinationsByRegion(t *testing.T) {
 
 	client := sciensano.Client{CacheDuration: 1 * time.Hour, URL: apiServer.URL}
 	testDate := time.Now()
-	totals, err = client.GetVaccinations(testDate)
+	totals, err = client.GetVaccinations(context.Background(), testDate)
 	assert.Nil(t, err)
 
 	if assert.Greater(t, len(totals), 0) {
-		vaccinationsByRegion, err = client.GetVaccinationsByRegion(testDate)
+		vaccinationsByRegion, err = client.GetVaccinationsByRegion(context.Background(), testDate)
 		if assert.Nil(t, err) {
 			var firstDose, secondDose int
 			for _, vaccinations := range vaccinationsByRegion {
@@ -109,16 +110,16 @@ func BenchmarkClient_GetVaccinationsByRegion(b *testing.B) {
 
 	client := sciensano.Client{CacheDuration: 0 * time.Hour, URL: apiServer.URL}
 	testDate := time.Now()
-	totals, err = client.GetVaccinations(testDate)
+	totals, err = client.GetVaccinations(context.Background(), testDate)
 	assert.Nil(b, err)
 
 	b.ResetTimer()
 
-	totals, err = client.GetVaccinations(testDate)
+	totals, err = client.GetVaccinations(context.Background(), testDate)
 	assert.Nil(b, err)
 
 	if assert.Greater(b, len(totals), 0) {
-		vaccinationsByRegion, err = client.GetVaccinationsByRegion(testDate)
+		vaccinationsByRegion, err = client.GetVaccinationsByRegion(context.Background(), testDate)
 		if assert.Nil(b, err) {
 			var firstDose, secondDose int
 			for _, vaccinations := range vaccinationsByRegion {
@@ -146,11 +147,11 @@ func BenchmarkClient_GetVaccinationsByAgeGroup(b *testing.B) {
 
 	client := sciensano.Client{CacheDuration: 0 * time.Hour, URL: apiServer.URL}
 	testDate := time.Now()
-	totals, err = client.GetVaccinations(testDate)
+	totals, err = client.GetVaccinations(context.Background(), testDate)
 	assert.Nil(b, err)
 
 	if assert.Greater(b, len(totals), 0) {
-		vaccinationsByAge, err = client.GetVaccinationsByAge(testDate)
+		vaccinationsByAge, err = client.GetVaccinationsByAge(context.Background(), testDate)
 		if assert.Nil(b, err) {
 			var firstDose, secondDose int
 			for _, vaccinations := range vaccinationsByAge {

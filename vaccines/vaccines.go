@@ -1,6 +1,7 @@
 package vaccines
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	log "github.com/sirupsen/logrus"
@@ -45,13 +46,15 @@ func (date *Time) UnmarshalJSON(b []byte) (err error) {
 	return
 }
 
-func (server *Server) GetBatches() (batches []Batch, err error) {
+func (server *Server) GetBatches(ctx context.Context) (batches []Batch, err error) {
 	server.lock.Lock()
 	defer server.lock.Unlock()
 
 	if server.cache == nil || time.Now().After(server.expiry) {
+		req, _ := http.NewRequestWithContext(ctx, http.MethodGet, server.URL+"/api/v1/delivered.json", nil)
+
 		var resp *http.Response
-		resp, err = server.HTTPClient.Get(server.URL + "/api/v1/delivered.json")
+		resp, err = server.HTTPClient.Do(req)
 
 		if err == nil {
 			if resp.StatusCode == http.StatusOK {

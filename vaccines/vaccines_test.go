@@ -1,6 +1,7 @@
 package vaccines_test
 
 import (
+	"context"
 	"github.com/clambin/sciensano/vaccines"
 	"github.com/clambin/sciensano/vaccines/mock"
 	"github.com/stretchr/testify/assert"
@@ -16,7 +17,7 @@ func TestVaccines(t *testing.T) {
 	client := vaccines.New()
 	client.URL = server.URL
 
-	batches, err := client.GetBatches()
+	batches, err := client.GetBatches(context.Background())
 
 	if assert.Nil(t, err) && assert.Len(t, batches, 3) {
 		// assert.Equal(t, "A", batches[0].Manufacturer)

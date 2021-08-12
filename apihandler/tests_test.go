@@ -1,6 +1,7 @@
 package apihandler_test
 
 import (
+	"context"
 	grafanaJson "github.com/clambin/grafana-json"
 	"github.com/clambin/sciensano/apihandler"
 	"github.com/clambin/sciensano/sciensano/mockapi"
@@ -31,7 +32,7 @@ func TestAPIHandler_Tests(t *testing.T) {
 	var err error
 
 	// Tests
-	if response, err = apiHandler.Endpoints().TableQuery("tests", request); assert.Nil(t, err) {
+	if response, err = apiHandler.Endpoints().TableQuery(context.Background(), "tests", request); assert.Nil(t, err) {
 		for _, column := range response.Columns {
 			switch data := column.Data.(type) {
 			case grafanaJson.TableQueryResponseTimeColumn:

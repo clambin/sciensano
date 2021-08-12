@@ -1,6 +1,7 @@
 package sciensano
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	log "github.com/sirupsen/logrus"
@@ -16,10 +17,10 @@ type Test struct {
 	Positive  int
 }
 
-func (client *Client) GetTests(end time.Time) (results []Test, err error) {
+func (client *Client) GetTests(ctx context.Context, end time.Time) (results []Test, err error) {
 	var apiResult []apiTestResponse
 
-	if apiResult, err = client.getTests(); err == nil {
+	if apiResult, err = client.getTests(ctx); err == nil {
 		results = groupTests(apiResult, end)
 	}
 
@@ -34,15 +35,17 @@ type apiTestResponse struct {
 	Positive  int    `json:"TESTS_ALL_POS"`
 }
 
-func (client *Client) getTests() (response []apiTestResponse, err error) {
+func (client *Client) getTests(ctx context.Context) (response []apiTestResponse, err error) {
 	client.testsLock.Lock()
 	defer client.testsLock.Unlock()
 
 	client.init()
 
 	if client.testsCache == nil || time.Now().After(client.testsCacheExpiry) {
+		req, _ := http.NewRequestWithContext(ctx, http.MethodGet, client.URL+"/Data/COVID19BE_tests.json", nil)
+
 		var resp *http.Response
-		resp, err = client.HTTPClient.Get(client.URL + "/Data/COVID19BE_tests.json")
+		resp, err = client.HTTPClient.Do(req)
 
 		if err == nil {
 			if resp.StatusCode == http.StatusOK {

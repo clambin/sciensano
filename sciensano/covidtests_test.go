@@ -1,6 +1,7 @@
 package sciensano_test
 
 import (
+	"context"
 	"github.com/clambin/sciensano/sciensano"
 	"github.com/clambin/sciensano/sciensano/server"
 	"github.com/stretchr/testify/assert"
@@ -16,7 +17,7 @@ func TestGetTests(t *testing.T) {
 
 	client := sciensano.Client{CacheDuration: 1 * time.Hour, URL: apiServer.URL}
 	firstDay := time.Date(2021, 03, 10, 0, 0, 0, 0, time.UTC)
-	result, err := client.GetTests(firstDay)
+	result, err := client.GetTests(context.Background(), firstDay)
 
 	if assert.Nil(t, err) && assert.Len(t, result, 2) {
 		assert.Equal(t, firstDay, result[1].Timestamp)

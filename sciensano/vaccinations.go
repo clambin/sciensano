@@ -1,6 +1,7 @@
 package sciensano
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	log "github.com/sirupsen/logrus"
@@ -16,20 +17,20 @@ type Vaccination struct {
 	SecondDose int
 }
 
-func (client *Client) GetVaccinations(end time.Time) (results []Vaccination, err error) {
+func (client *Client) GetVaccinations(ctx context.Context, end time.Time) (results []Vaccination, err error) {
 	var apiResult []apiVaccinationsResponse
 
-	if apiResult, err = client.getVaccinations(); err == nil {
+	if apiResult, err = client.getVaccinations(ctx); err == nil {
 		results = groupVaccinations(apiResult, end)
 	}
 
 	return
 }
 
-func (client *Client) GetVaccinationsByAge(end time.Time) (results map[string][]Vaccination, err error) {
+func (client *Client) GetVaccinationsByAge(ctx context.Context, end time.Time) (results map[string][]Vaccination, err error) {
 	var apiResult []apiVaccinationsResponse
 
-	if apiResult, err = client.getVaccinations(); err == nil {
+	if apiResult, err = client.getVaccinations(ctx); err == nil {
 		results = make(map[string][]Vaccination)
 		ageGroups := getAgeGroups(apiResult)
 		responses := make(map[string]chan []Vaccination)
@@ -49,10 +50,10 @@ func (client *Client) GetVaccinationsByAge(end time.Time) (results map[string][]
 	return
 }
 
-func (client *Client) GetVaccinationsByRegion(end time.Time) (results map[string][]Vaccination, err error) {
+func (client *Client) GetVaccinationsByRegion(ctx context.Context, end time.Time) (results map[string][]Vaccination, err error) {
 	var apiResult []apiVaccinationsResponse
 
-	if apiResult, err = client.getVaccinations(); err == nil {
+	if apiResult, err = client.getVaccinations(ctx); err == nil {
 		results = make(map[string][]Vaccination)
 		regions := getRegions(apiResult)
 		responses := make(map[string]chan []Vaccination)
@@ -81,15 +82,17 @@ type apiVaccinationsResponse struct {
 	Count     int    `json:"Count"`
 }
 
-func (client *Client) getVaccinations() (result []apiVaccinationsResponse, err error) {
+func (client *Client) getVaccinations(ctx context.Context) (result []apiVaccinationsResponse, err error) {
 	client.vaccinationsLock.Lock()
 	defer client.vaccinationsLock.Unlock()
 
 	client.init()
 
 	if client.vaccinationsCache == nil || time.Now().After(client.vaccinationsCacheExpiry) {
+		req, _ := http.NewRequestWithContext(ctx, http.MethodGet, client.URL+"/Data/COVID19BE_VACC.json", nil)
+
 		var resp *http.Response
-		resp, err = client.HTTPClient.Get(client.URL + "/Data/COVID19BE_VACC.json")
+		resp, err = client.HTTPClient.Do(req)
 
 		if err == nil {
 			if resp.StatusCode == http.StatusOK {

@@ -4,7 +4,7 @@ on:
   push:
     branches:
     - master
-    - demographics
+    - context
 jobs:
   test:
     runs-on: ubuntu-latest

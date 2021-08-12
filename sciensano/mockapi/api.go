@@ -1,6 +1,7 @@
 package mockapi
 
 import (
+	"context"
 	"github.com/clambin/sciensano/sciensano"
 	"time"
 )
@@ -36,7 +37,7 @@ type API struct {
 	Vaccinations []sciensano.Vaccination
 }
 
-func (client *API) GetTests(end time.Time) (results []sciensano.Test, err error) {
+func (client *API) GetTests(_ context.Context, end time.Time) (results []sciensano.Test, err error) {
 	for _, test := range client.Tests {
 		if test.Timestamp.After(end) == false {
 			results = append(results, test)
@@ -45,7 +46,7 @@ func (client *API) GetTests(end time.Time) (results []sciensano.Test, err error)
 	return
 }
 
-func (client *API) GetVaccinations(end time.Time) (results []sciensano.Vaccination, err error) {
+func (client *API) GetVaccinations(_ context.Context, end time.Time) (results []sciensano.Vaccination, err error) {
 	for _, vaccination := range client.Vaccinations {
 		if vaccination.Timestamp.After(end) == false {
 			results = append(results, vaccination)
@@ -54,14 +55,14 @@ func (client *API) GetVaccinations(end time.Time) (results []sciensano.Vaccinati
 	return
 }
 
-func (client *API) GetVaccinationsByAge(end time.Time) (results map[string][]sciensano.Vaccination, err error) {
+func (client *API) GetVaccinationsByAge(ctx context.Context, end time.Time) (results map[string][]sciensano.Vaccination, err error) {
 	results = make(map[string][]sciensano.Vaccination)
-	results["45-54"], err = client.GetVaccinations(end)
+	results["45-54"], err = client.GetVaccinations(ctx, end)
 	return
 }
 
-func (client *API) GetVaccinationsByRegion(end time.Time) (results map[string][]sciensano.Vaccination, err error) {
+func (client *API) GetVaccinationsByRegion(ctx context.Context, end time.Time) (results map[string][]sciensano.Vaccination, err error) {
 	results = make(map[string][]sciensano.Vaccination)
-	results["Flanders"], err = client.GetVaccinations(end)
+	results["Flanders"], err = client.GetVaccinations(ctx, end)
 	return
 }

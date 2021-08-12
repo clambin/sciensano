@@ -35,7 +35,7 @@ func TestAPIHandler_Vaccinations(t *testing.T) {
 	var err error
 
 	// Vaccinations
-	if response, err = apiHandler.Endpoints().TableQuery("vaccinations", request); assert.Nil(t, err) {
+	if response, err = apiHandler.Endpoints().TableQuery(context.Background(), "vaccinations", request); assert.Nil(t, err) {
 		for _, column := range response.Columns {
 			switch data := column.Data.(type) {
 			case grafanaJson.TableQueryResponseTimeColumn:
@@ -75,7 +75,7 @@ func TestAPIHandler_VaccinationsByAge(t *testing.T) {
 	var err error
 
 	// Vaccinations grouped by Age
-	if response, err = apiHandler.Endpoints().TableQuery("vacc-age-full", request); assert.Nil(t, err) {
+	if response, err = apiHandler.Endpoints().TableQuery(context.Background(), "vacc-age-full", request); assert.Nil(t, err) {
 		for _, column := range response.Columns {
 			switch data := column.Data.(type) {
 			case grafanaJson.TableQueryResponseTimeColumn:
@@ -130,7 +130,7 @@ func TestAPIHandler_VaccinationByAge_Rate(t *testing.T) {
 	var err error
 
 	// Vaccination rate grouped by Age
-	if response, err = apiHandler.Endpoints().TableQuery("vacc-age-rate-full", request); assert.Nil(t, err) {
+	if response, err = apiHandler.Endpoints().TableQuery(context.Background(), "vacc-age-rate-full", request); assert.Nil(t, err) {
 		for _, column := range response.Columns {
 			switch data := column.Data.(type) {
 			case grafanaJson.TableQueryResponseTimeColumn:
@@ -170,7 +170,7 @@ func TestAPIHandler_VaccinationByRegion(t *testing.T) {
 	var err error
 
 	// Vaccinations grouped by Region
-	if response, err = apiHandler.Endpoints().TableQuery("vacc-region-full", request); assert.Nil(t, err) {
+	if response, err = apiHandler.Endpoints().TableQuery(context.Background(), "vacc-region-full", request); assert.Nil(t, err) {
 		for _, column := range response.Columns {
 			switch data := column.Data.(type) {
 			case grafanaJson.TableQueryResponseTimeColumn:
@@ -224,7 +224,7 @@ func TestAPIHandler_VaccinationByRegion_Rate(t *testing.T) {
 	var err error
 
 	// Vaccination rate grouped by Region
-	if response, err = apiHandler.Endpoints().TableQuery("vacc-region-rate-full", request); assert.Nil(t, err) {
+	if response, err = apiHandler.Endpoints().TableQuery(context.Background(), "vacc-region-rate-full", request); assert.Nil(t, err) {
 		for _, column := range response.Columns {
 			switch data := column.Data.(type) {
 			case grafanaJson.TableQueryResponseTimeColumn:
@@ -264,7 +264,7 @@ func TestAPIHandler_Vaccination_Lag(t *testing.T) {
 	var err error
 
 	// Lag
-	if response, err = apiHandler.Endpoints().TableQuery("vaccination-lag", request); assert.Nil(t, err) {
+	if response, err = apiHandler.Endpoints().TableQuery(context.Background(), "vaccination-lag", request); assert.Nil(t, err) {
 		for _, column := range response.Columns {
 			switch data := column.Data.(type) {
 			case grafanaJson.TableQueryResponseTimeColumn:

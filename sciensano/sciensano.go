@@ -1,6 +1,7 @@
 package sciensano
 
 import (
+	"context"
 	"net/http"
 	"sync"
 	"time"
@@ -22,10 +23,10 @@ type Client struct {
 const baseURL = "https://epistat.sciensano.be"
 
 type API interface {
-	GetTests(end time.Time) (results []Test, err error)
-	GetVaccinations(end time.Time) (results []Vaccination, err error)
-	GetVaccinationsByAge(end time.Time) (results map[string][]Vaccination, err error)
-	GetVaccinationsByRegion(end time.Time) (results map[string][]Vaccination, err error)
+	GetTests(ctx context.Context, end time.Time) (results []Test, err error)
+	GetVaccinations(ctx context.Context, end time.Time) (results []Vaccination, err error)
+	GetVaccinationsByAge(ctx context.Context, end time.Time) (results map[string][]Vaccination, err error)
+	GetVaccinationsByRegion(ctx context.Context, end time.Time) (results map[string][]Vaccination, err error)
 }
 
 func (client *Client) init() {
