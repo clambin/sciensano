@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-var DefaultTests = []sciensano.Test{
+var DefaultTests = []sciensano.TestResult{
 	{Timestamp: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC), Total: 0, Positive: 0},
 	{Timestamp: time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC), Total: 1, Positive: 0},
 	{Timestamp: time.Date(2021, 1, 3, 0, 0, 0, 0, time.UTC), Total: 2, Positive: 1},
@@ -33,11 +33,11 @@ var AltVaccinations = []sciensano.Vaccination{
 }
 
 type API struct {
-	Tests        []sciensano.Test
+	Tests        []sciensano.TestResult
 	Vaccinations []sciensano.Vaccination
 }
 
-func (client *API) GetTests(_ context.Context, end time.Time) (results []sciensano.Test, err error) {
+func (client *API) GetTests(_ context.Context, end time.Time) (results []sciensano.TestResult, err error) {
 	for _, test := range client.Tests {
 		if test.Timestamp.After(end) == false {
 			results = append(results, test)

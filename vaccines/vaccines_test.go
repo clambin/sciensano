@@ -11,11 +11,12 @@ import (
 )
 
 func TestVaccines(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(mock.Handler))
-	defer server.Close()
+	server := mock.Server{}
+	apiServer := httptest.NewServer(http.HandlerFunc(server.Handler))
+	defer apiServer.Close()
 
 	client := vaccines.New()
-	client.URL = server.URL
+	client.URL = apiServer.URL
 
 	batches, err := client.GetBatches(context.Background())
 
@@ -32,5 +33,10 @@ func TestVaccines(t *testing.T) {
 			assert.Equal(t, 600, accu[2].Amount)
 		}
 	}
+
+	_, err = client.GetBatches(context.Background())
+	assert.NoError(t, err)
+
+	assert.Equal(t, 1, server.Called)
 
 }

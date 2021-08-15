@@ -8,7 +8,6 @@ import (
 	"github.com/clambin/sciensano/sciensano"
 	"github.com/clambin/sciensano/vaccines"
 	log "github.com/sirupsen/logrus"
-	"net/http"
 	"sort"
 	"strings"
 	"sync"
@@ -28,10 +27,7 @@ type Handler struct {
 // Create a Handler
 func Create(server *demographics.Server) (*Handler, error) {
 	handler := Handler{
-		Sciensano: &sciensano.Client{
-			HTTPClient:    &http.Client{Timeout: 20 * time.Second},
-			CacheDuration: 15 * time.Minute,
-		},
+		Sciensano:    sciensano.NewClient(15 * time.Minute),
 		Vaccines:     vaccines.New(),
 		demographics: server,
 	}
@@ -84,6 +80,7 @@ func (handler *Handler) Search() (targets []string) {
 
 func (handler *Handler) TableQuery(ctx context.Context, target string, args *grafana_json.TableQueryArgs) (response *grafana_json.TableQueryResponse, err error) {
 
+	start := time.Now()
 	builder, ok := handler.targetTable[target]
 
 	if ok == false || builder.tableResponseBuild == nil {
@@ -96,6 +93,8 @@ func (handler *Handler) TableQuery(ctx context.Context, target string, args *gra
 	if response != nil {
 		handler.logUpdates(target, response)
 	}
+
+	log.WithFields(log.Fields{"duration": time.Now().Sub(start), "target": target}).Info("TableQuery called")
 
 	return
 }

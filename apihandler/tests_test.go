@@ -14,12 +14,13 @@ import (
 )
 
 func TestAPIHandler_Tests(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(mockVaccines.Handler))
-	defer server.Close()
+	server := mockVaccines.Server{}
+	apiServer := httptest.NewServer(http.HandlerFunc(server.Handler))
+	defer apiServer.Close()
 
 	apiHandler, _ := apihandler.Create(nil)
 	apiHandler.Sciensano = &mockapi.API{Tests: mockapi.DefaultTests, Vaccinations: mockapi.DefaultVaccinations}
-	apiHandler.Vaccines.URL = server.URL
+	apiHandler.Vaccines.URL = apiServer.URL
 
 	endDate := time.Date(2021, 01, 06, 0, 0, 0, 0, time.UTC)
 	request := &grafanaJson.TableQueryArgs{

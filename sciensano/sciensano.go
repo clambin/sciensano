@@ -2,38 +2,35 @@ package sciensano
 
 import (
 	"context"
-	"net/http"
-	"sync"
 	"time"
 )
 
 // Client queries different Sciensano APIs
 type Client struct {
-	HTTPClient              *http.Client
-	URL                     string
-	CacheDuration           time.Duration
-	testsCacheExpiry        time.Time
-	testsCache              []apiTestResponse
-	testsLock               sync.Mutex
-	vaccinationsCacheExpiry time.Time
-	vaccinationsCache       []apiVaccinationsResponse
-	vaccinationsLock        sync.Mutex
+	testResultsCache  *TestResultsCache
+	vaccinationsCache *VaccinationsCache
 }
 
 const baseURL = "https://epistat.sciensano.be"
 
 type API interface {
-	GetTests(ctx context.Context, end time.Time) (results []Test, err error)
+	GetTests(ctx context.Context, end time.Time) (results []TestResult, err error)
 	GetVaccinations(ctx context.Context, end time.Time) (results []Vaccination, err error)
 	GetVaccinationsByAge(ctx context.Context, end time.Time) (results map[string][]Vaccination, err error)
 	GetVaccinationsByRegion(ctx context.Context, end time.Time) (results map[string][]Vaccination, err error)
 }
 
-func (client *Client) init() {
-	if client.URL == "" {
-		client.URL = baseURL
+// NewClient creates a new Client
+func NewClient(duration time.Duration) *Client {
+	return &Client{
+		testResultsCache:  NewTestResultsCache(duration),
+		vaccinationsCache: NewVaccinationsCache(duration),
 	}
-	if client.HTTPClient == nil {
-		client.HTTPClient = &http.Client{}
-	}
+}
+
+// SetURL overrides the server's URL.
+// Used for unit testing. Not thread-safe. Use with caution
+func (client *Client) SetURL(url string) {
+	client.testResultsCache.URL = url
+	client.vaccinationsCache.URL = url
 }

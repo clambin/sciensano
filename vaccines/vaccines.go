@@ -16,9 +16,10 @@ type Server struct {
 	HTTPClient    *http.Client
 	URL           string
 	cacheDuration time.Duration
-	cache         []Batch
+	batches       []Batch
 	expiry        time.Time
 	lock          sync.Mutex
+	once          *sync.Once
 }
 
 type Batch struct {
@@ -48,9 +49,13 @@ func (date *Time) UnmarshalJSON(b []byte) (err error) {
 
 func (server *Server) GetBatches(ctx context.Context) (batches []Batch, err error) {
 	server.lock.Lock()
-	defer server.lock.Unlock()
+	if server.once == nil || time.Now().After(server.expiry) {
+		server.once = &sync.Once{}
+		server.expiry = time.Now().Add(server.cacheDuration)
+	}
+	server.lock.Unlock()
 
-	if server.cache == nil || time.Now().After(server.expiry) {
+	server.once.Do(func() {
 		req, _ := http.NewRequestWithContext(ctx, http.MethodGet, server.URL+"/api/v1/delivered.json", nil)
 
 		var resp *http.Response
@@ -71,6 +76,8 @@ func (server *Server) GetBatches(ctx context.Context) (batches []Batch, err erro
 
 					if err == nil {
 						batches = stats.Result.Delivered
+						sort.Slice(batches, func(i, j int) bool { return time.Time(batches[i].Date).Before(time.Time(batches[j].Date)) })
+						server.batches = batches
 					} else {
 						log.Error(err)
 					}
@@ -80,15 +87,9 @@ func (server *Server) GetBatches(ctx context.Context) (batches []Batch, err erro
 			}
 			_ = resp.Body.Close()
 		}
+	})
 
-		if err == nil {
-			sort.Slice(batches, func(i, j int) bool { return time.Time(batches[i].Date).Before(time.Time(batches[j].Date)) })
-			server.cache = batches
-			server.expiry = time.Now().Add(server.cacheDuration)
-		}
-	}
-	batches = server.cache
-	return
+	return server.batches, err
 }
 
 func AccumulateBatches(batches []Batch) (accumulated []Batch) {

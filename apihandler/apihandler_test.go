@@ -49,12 +49,16 @@ func TestAPIHandler_Search(t *testing.T) {
 }
 
 func TestAPIHandler_Invalid(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(mock.Handler))
-	defer server.Close()
+	server := mock.Server{}
+	apiServer := httptest.NewServer(http.HandlerFunc(server.Handler))
+	defer apiServer.Close()
+
+	handler, _ := apihandler.Create(nil)
+	handler.Vaccines.URL = apiServer.URL
 
 	apiHandler, _ := apihandler.Create(nil)
 	apiHandler.Sciensano = &mockapi.API{Tests: mockapi.DefaultTests, Vaccinations: mockapi.DefaultVaccinations}
-	apiHandler.Vaccines.URL = server.URL
+	apiHandler.Vaccines.URL = apiServer.URL
 
 	endDate := time.Date(2021, 01, 06, 0, 0, 0, 0, time.UTC)
 	request := &grafana_json.TableQueryArgs{
@@ -75,11 +79,12 @@ func BenchmarkHandler_QueryTable(b *testing.B) {
 	handler, err := apihandler.Create(nil)
 
 	if assert.Nil(b, err) {
-		server := httptest.NewServer(http.HandlerFunc(mock.Handler))
-		defer server.Close()
+		server := mock.Server{}
+		apiServer := httptest.NewServer(http.HandlerFunc(server.Handler))
+		defer apiServer.Close()
 
 		handler.Sciensano = &mockapi.API{Tests: buildTestTable(720), Vaccinations: buildVaccinationTable(720)}
-		handler.Vaccines.URL = server.URL
+		handler.Vaccines.URL = apiServer.URL
 
 		endDate := time.Date(2021, 01, 06, 0, 0, 0, 0, time.UTC)
 		request := &grafana_json.TableQueryArgs{
@@ -98,10 +103,10 @@ func BenchmarkHandler_QueryTable(b *testing.B) {
 	}
 }
 
-func buildTestTable(size int) (table []sciensano.Test) {
+func buildTestTable(size int) (table []sciensano.TestResult) {
 	testDate := time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)
 	for i := 0; i < size; i++ {
-		table = append(table, sciensano.Test{
+		table = append(table, sciensano.TestResult{
 			Timestamp: testDate,
 			Total:     i + 1,
 			Positive:  i,

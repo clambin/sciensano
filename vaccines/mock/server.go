@@ -6,9 +6,13 @@ import (
 	"net/http"
 )
 
-func Handler(w http.ResponseWriter, req *http.Request) {
-	log.Debug("apiHandler: " + html.EscapeString(req.URL.Path))
+type Server struct {
+	Called int
+}
 
+func (server *Server) Handler(w http.ResponseWriter, req *http.Request) {
+	log.Debug("apiHandler: " + html.EscapeString(req.URL.Path))
+	server.Called++
 	if req.URL.Path == "/api/v1/delivered.json" {
 		_, _ = w.Write([]byte(vaccinesResponse))
 	} else {

@@ -13,12 +13,15 @@ import (
 type Handler struct {
 	Slow      bool
 	Responses map[string]string
+	Count     int
 }
 
 func (handler *Handler) Handle(w http.ResponseWriter, req *http.Request) {
 	log.WithField("path", req.URL.Path).Debug("Handler")
 
-	if handler.Slow && wait(req.Context(), 5*time.Second) == false {
+	handler.Count++
+
+	if handler.Slow && wait(req.Context(), 1*time.Second) == false {
 		http.Error(w, "context exceeded", http.StatusRequestTimeout)
 		return
 	}

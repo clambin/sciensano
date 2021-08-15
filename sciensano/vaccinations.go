@@ -2,11 +2,7 @@ package sciensano
 
 import (
 	"context"
-	"encoding/json"
-	"errors"
 	log "github.com/sirupsen/logrus"
-	"io"
-	"net/http"
 	"sort"
 	"time"
 )
@@ -20,7 +16,7 @@ type Vaccination struct {
 func (client *Client) GetVaccinations(ctx context.Context, end time.Time) (results []Vaccination, err error) {
 	var apiResult []apiVaccinationsResponse
 
-	if apiResult, err = client.getVaccinations(ctx); err == nil {
+	if apiResult, err = client.vaccinationsCache.GetVaccinations(ctx); err == nil {
 		results = groupVaccinations(apiResult, end)
 	}
 
@@ -30,7 +26,7 @@ func (client *Client) GetVaccinations(ctx context.Context, end time.Time) (resul
 func (client *Client) GetVaccinationsByAge(ctx context.Context, end time.Time) (results map[string][]Vaccination, err error) {
 	var apiResult []apiVaccinationsResponse
 
-	if apiResult, err = client.getVaccinations(ctx); err == nil {
+	if apiResult, err = client.vaccinationsCache.GetVaccinations(ctx); err == nil {
 		results = make(map[string][]Vaccination)
 		ageGroups := getAgeGroups(apiResult)
 		responses := make(map[string]chan []Vaccination)
@@ -53,7 +49,7 @@ func (client *Client) GetVaccinationsByAge(ctx context.Context, end time.Time) (
 func (client *Client) GetVaccinationsByRegion(ctx context.Context, end time.Time) (results map[string][]Vaccination, err error) {
 	var apiResult []apiVaccinationsResponse
 
-	if apiResult, err = client.getVaccinations(ctx); err == nil {
+	if apiResult, err = client.vaccinationsCache.GetVaccinations(ctx); err == nil {
 		results = make(map[string][]Vaccination)
 		regions := getRegions(apiResult)
 		responses := make(map[string]chan []Vaccination)
@@ -80,41 +76,6 @@ type apiVaccinationsResponse struct {
 	Gender    string `json:"SEX"`
 	Dose      string `json:"DOSE"`
 	Count     int    `json:"Count"`
-}
-
-func (client *Client) getVaccinations(ctx context.Context) (result []apiVaccinationsResponse, err error) {
-	client.vaccinationsLock.Lock()
-	defer client.vaccinationsLock.Unlock()
-
-	client.init()
-
-	if client.vaccinationsCache == nil || time.Now().After(client.vaccinationsCacheExpiry) {
-		req, _ := http.NewRequestWithContext(ctx, http.MethodGet, client.URL+"/Data/COVID19BE_VACC.json", nil)
-
-		var resp *http.Response
-		resp, err = client.HTTPClient.Do(req)
-
-		if err == nil {
-			if resp.StatusCode == http.StatusOK {
-				var body []byte
-				body, err = io.ReadAll(resp.Body)
-
-				if err == nil {
-					var stats []apiVaccinationsResponse
-					err = json.Unmarshal(body, &stats)
-
-					if err == nil {
-						client.vaccinationsCache = stats
-						client.vaccinationsCacheExpiry = time.Now().Add(client.CacheDuration)
-					}
-				}
-			} else {
-				err = errors.New(resp.Status)
-			}
-			_ = resp.Body.Close()
-		}
-	}
-	return client.vaccinationsCache, err
 }
 
 func filterByAgeGroup(apiResult []apiVaccinationsResponse, ageGroup string) (output []apiVaccinationsResponse) {

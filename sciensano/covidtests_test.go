@@ -14,8 +14,11 @@ import (
 func TestGetTests(t *testing.T) {
 	testServer := server.Handler{}
 	apiServer := httptest.NewServer(http.HandlerFunc(testServer.Handle))
+	defer apiServer.Close()
 
-	client := sciensano.Client{CacheDuration: 1 * time.Hour, URL: apiServer.URL}
+	client := sciensano.NewClient(time.Hour)
+	client.SetURL(apiServer.URL)
+
 	firstDay := time.Date(2021, 03, 10, 0, 0, 0, 0, time.UTC)
 	result, err := client.GetTests(context.Background(), firstDay)
 
@@ -24,4 +27,10 @@ func TestGetTests(t *testing.T) {
 		assert.Equal(t, 11, result[1].Total)
 		assert.Equal(t, 5, result[1].Positive)
 	}
+
+	_, err = client.GetTests(context.Background(), firstDay)
+	assert.NoError(t, err)
+
+	assert.Equal(t, 1, testServer.Count)
+
 }

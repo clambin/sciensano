@@ -12,11 +12,12 @@ import (
 )
 
 func TestHandler_Annotations(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(mock.Handler))
-	defer server.Close()
+	server := mock.Server{}
+	apiServer := httptest.NewServer(http.HandlerFunc(server.Handler))
+	defer apiServer.Close()
 
 	handler, _ := apihandler.Create(nil)
-	handler.Vaccines.URL = server.URL
+	handler.Vaccines.URL = apiServer.URL
 
 	args := &grafanaJson.AnnotationRequestArgs{
 		CommonQueryArgs: grafanaJson.CommonQueryArgs{
