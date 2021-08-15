@@ -3,7 +3,7 @@ package sciensano_test
 import (
 	"context"
 	"github.com/clambin/sciensano/sciensano"
-	"github.com/clambin/sciensano/sciensano/server"
+	"github.com/clambin/sciensano/sciensano/mock"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
@@ -13,7 +13,7 @@ import (
 )
 
 func TestAPIClient_GetVaccinations(t *testing.T) {
-	testServer := server.Handler{}
+	testServer := mock.Handler{}
 	apiServer := httptest.NewServer(http.HandlerFunc(testServer.Handle))
 	defer apiServer.Close()
 
@@ -38,7 +38,7 @@ func TestAPIClient_GetVaccinationsByAge(t *testing.T) {
 		totals            []sciensano.Vaccination
 		vaccinationsByAge map[string][]sciensano.Vaccination
 	)
-	testServer := server.Handler{}
+	testServer := mock.Handler{}
 	apiServer := httptest.NewServer(http.HandlerFunc(testServer.Handle))
 	defer apiServer.Close()
 
@@ -78,7 +78,7 @@ func TestAPIClient_GetVaccinationsByRegion(t *testing.T) {
 		totals               []sciensano.Vaccination
 		vaccinationsByRegion map[string][]sciensano.Vaccination
 	)
-	testServer := server.Handler{}
+	testServer := mock.Handler{}
 	apiServer := httptest.NewServer(http.HandlerFunc(testServer.Handle))
 	defer apiServer.Close()
 
@@ -113,7 +113,7 @@ func BenchmarkClient_GetVaccinationsByRegion(b *testing.B) {
 		vaccinationsByRegion map[string][]sciensano.Vaccination
 	)
 
-	testServer := server.Handler{}
+	testServer := mock.Handler{}
 	testServer.BigResponse()
 	apiServer := httptest.NewServer(http.HandlerFunc(testServer.Handle))
 	defer apiServer.Close()
@@ -148,7 +148,7 @@ func BenchmarkClient_GetVaccinationsByRegion(b *testing.B) {
 }
 
 func BenchmarkClient_GetVaccinationsByAgeGroup(b *testing.B) {
-	testServer := server.Handler{}
+	testServer := mock.Handler{}
 	testServer.BigResponse()
 	apiServer := httptest.NewServer(http.HandlerFunc(testServer.Handle))
 	defer apiServer.Close()

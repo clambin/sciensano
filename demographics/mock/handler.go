@@ -8,13 +8,13 @@ import (
 	"os"
 )
 
-// Server runs a demographics test server
+// Server runs a demographics test mock
 type Server struct {
 	filename   string
 	httpServer *httptest.Server
 }
 
-// New creates a new test server.  If filename is left blank, the standard test file is used
+// New creates a new test mock.  If filename is left blank, the standard test file is used
 func New(filename string) (server *Server) {
 	if filename == "" {
 		filename = "../data/demographics.zip"
@@ -28,12 +28,12 @@ func New(filename string) (server *Server) {
 	return
 }
 
-// Close closes the underlying httptest server
+// Close closes the underlying httptest mock
 func (server *Server) Close() {
 	server.httpServer.Close()
 }
 
-// URL returns the URL of the underling httptest server
+// URL returns the URL of the underling httptest mock
 func (server *Server) URL() string {
 	return server.httpServer.URL
 }

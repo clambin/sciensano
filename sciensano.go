@@ -7,6 +7,8 @@ import (
 	"github.com/clambin/sciensano/demographics"
 	"github.com/clambin/sciensano/version"
 	log "github.com/sirupsen/logrus"
+	"net/http"
+	// _ "net/http/pprof"
 	"time"
 )
 
@@ -16,7 +18,11 @@ func main() {
 	go func() {
 		_ = demo.Run(context.Background(), 24*time.Hour)
 	}()
-	handler, _ := apihandler.Create(demo)
-	server := grafana_json.Create(handler, 8080)
-	_ = server.Run()
+	server := grafana_json.Create(apihandler.Create(demo))
+	r := server.GetRouter()
+	r.PathPrefix("/debug/pprof/").Handler(http.DefaultServeMux)
+	err := http.ListenAndServe(":8080", r)
+	if err != nil {
+		panic(r)
+	}
 }

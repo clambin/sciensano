@@ -3,7 +3,7 @@ package sciensano_test
 import (
 	"context"
 	"github.com/clambin/sciensano/sciensano"
-	"github.com/clambin/sciensano/sciensano/server"
+	"github.com/clambin/sciensano/sciensano/mock"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
@@ -13,7 +13,7 @@ import (
 )
 
 func TestVaccinationCache(t *testing.T) {
-	testServer := server.Handler{}
+	testServer := mock.Handler{}
 	apiServer := httptest.NewServer(http.HandlerFunc(testServer.Handle))
 
 	cache := sciensano.NewVaccinationsCache(time.Hour)
@@ -31,7 +31,7 @@ func TestVaccinationCache(t *testing.T) {
 }
 
 func TestVaccinationCache_Parallel(t *testing.T) {
-	testServer := server.Handler{Slow: true}
+	testServer := mock.Handler{Slow: true}
 	apiServer := httptest.NewServer(http.HandlerFunc(testServer.Handle))
 
 	cache := sciensano.NewVaccinationsCache(time.Hour)
@@ -61,8 +61,36 @@ func TestVaccinationCache_Parallel(t *testing.T) {
 	assert.Equal(t, 1, testServer.Count)
 }
 
+func TestVaccinationCacheByAge(t *testing.T) {
+	testServer := mock.Handler{}
+	apiServer := httptest.NewServer(http.HandlerFunc(testServer.Handle))
+
+	cache := sciensano.NewVaccinationsCache(time.Hour)
+	cache.URL = apiServer.URL
+
+	results, err := cache.GetVaccinationsByAge(context.Background())
+	assert.NoError(t, err)
+	assert.Len(t, results, 2)
+	assert.Contains(t, results, "35-44")
+	assert.Contains(t, results, "45-54")
+}
+
+func TestVaccinationCacheByRegion(t *testing.T) {
+	testServer := mock.Handler{}
+	apiServer := httptest.NewServer(http.HandlerFunc(testServer.Handle))
+
+	cache := sciensano.NewVaccinationsCache(time.Hour)
+	cache.URL = apiServer.URL
+
+	results, err := cache.GetVaccinationsByRegion(context.Background())
+	assert.NoError(t, err)
+	assert.Len(t, results, 2)
+	assert.Contains(t, results, "Flanders")
+	assert.Contains(t, results, "Brussels")
+}
+
 func TestTestResultsCache(t *testing.T) {
-	testServer := server.Handler{}
+	testServer := mock.Handler{}
 	apiServer := httptest.NewServer(http.HandlerFunc(testServer.Handle))
 
 	cache := sciensano.NewTestResultsCache(time.Hour)
@@ -80,7 +108,7 @@ func TestTestResultsCache(t *testing.T) {
 }
 
 func TestTestResultCache_Parallel(t *testing.T) {
-	testServer := server.Handler{Slow: true}
+	testServer := mock.Handler{Slow: true}
 	apiServer := httptest.NewServer(http.HandlerFunc(testServer.Handle))
 
 	cache := sciensano.NewTestResultsCache(time.Hour)

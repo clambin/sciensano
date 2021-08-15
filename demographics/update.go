@@ -118,11 +118,11 @@ func (server *Server) get(ctx context.Context, filename string) (err error) {
 	}
 
 	defer func(body io.ReadCloser) {
-		_ = resp.Body.Close()
+		_ = body.Close()
 	}(resp.Body)
 
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("server returned %s", resp.Status)
+		return fmt.Errorf("mock returned %s", resp.Status)
 	}
 
 	// Create the file

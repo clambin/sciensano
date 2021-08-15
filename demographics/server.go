@@ -16,7 +16,7 @@ type Server struct {
 	AgeBrackets []float64
 	// TempDirectory specifies the directory to use for temporary files. Uses system-specified tempdir is left blank
 	TempDirectory string
-	// HTTPClient used to retrieve the data from the server
+	// HTTPClient used to retrieve the data from the mock
 	HTTPClient *http.Client
 	// URL is the URL that will be used to retrieve the data. Used for unit testing
 	URL      string
@@ -25,7 +25,7 @@ type Server struct {
 	lock     sync.RWMutex
 }
 
-// New creates a new demographics server
+// New creates a new demographics mock
 func New() *Server {
 	return &Server{
 		AgeBrackets: DefaultAgeBrackets,
@@ -33,7 +33,7 @@ func New() *Server {
 	}
 }
 
-// Run the server, updating demographics at the specified interval
+// Run the mock, updating demographics at the specified interval
 func (server *Server) Run(ctx context.Context, interval time.Duration) (err error) {
 	err = server.update(ctx)
 
@@ -51,7 +51,7 @@ func (server *Server) Run(ctx context.Context, interval time.Duration) (err erro
 	return
 }
 
-// AvailableData returns true if the server has downloaded demographics data
+// AvailableData returns true if the mock has downloaded demographics data
 func (server *Server) AvailableData() bool {
 	server.lock.RLock()
 	defer server.lock.RUnlock()

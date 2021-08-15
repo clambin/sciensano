@@ -6,26 +6,13 @@ import (
 	grafana_json "github.com/clambin/grafana-json"
 	"github.com/clambin/sciensano/apihandler"
 	"github.com/clambin/sciensano/sciensano"
-	"github.com/clambin/sciensano/sciensano/mockapi"
 	"github.com/clambin/sciensano/vaccines"
-	"github.com/clambin/sciensano/vaccines/mock"
 	"github.com/stretchr/testify/assert"
-	"net/http"
-	"net/http/httptest"
 	"testing"
 	"time"
 )
 
 func TestAPIHandler_Vaccines(t *testing.T) {
-	server := mock.Server{}
-	apiServer := httptest.NewServer(http.HandlerFunc(server.Handler))
-	defer apiServer.Close()
-
-	apiHandler, _ := apihandler.Create(nil)
-
-	apiHandler.Sciensano = &mockapi.API{Tests: mockapi.DefaultTests, Vaccinations: mockapi.DefaultVaccinations}
-	apiHandler.Vaccines.URL = apiServer.URL
-
 	endDate := time.Date(2021, 01, 06, 0, 0, 0, 0, time.UTC)
 	request := &grafana_json.TableQueryArgs{
 		CommonQueryArgs: grafana_json.CommonQueryArgs{
@@ -61,27 +48,16 @@ func TestAPIHandler_Vaccines(t *testing.T) {
 }
 
 func TestAPIHandler_Vaccines_Stats(t *testing.T) {
-	server := mock.Server{}
-	apiServer := httptest.NewServer(http.HandlerFunc(server.Handler))
-	defer apiServer.Close()
-
-	apiHandler, _ := apihandler.Create(nil)
-
-	apiHandler.Sciensano = &mockapi.API{Tests: mockapi.DefaultTests, Vaccinations: mockapi.DefaultVaccinations}
-	apiHandler.Vaccines.URL = apiServer.URL
-
-	endDate := time.Date(2021, 01, 06, 0, 0, 0, 0, time.UTC)
+	endDate := time.Date(2021, 03, 10, 0, 0, 0, 0, time.UTC)
 	request := &grafana_json.TableQueryArgs{
 		CommonQueryArgs: grafana_json.CommonQueryArgs{
 			Range: grafana_json.QueryRequestRange{To: endDate},
 		},
 	}
 
-	var response *grafana_json.TableQueryResponse
-	var err error
+	response, err := apiHandler.Endpoints().TableQuery(context.Background(), "vaccines-stats", request)
 
-	// Reserve
-	if response, err = apiHandler.Endpoints().TableQuery(context.Background(), "vaccines-stats", request); assert.Nil(t, err) {
+	if assert.Nil(t, err) {
 		for _, column := range response.Columns {
 			switch data := column.Data.(type) {
 			case grafana_json.TableQueryResponseTimeColumn:
@@ -89,18 +65,18 @@ func TestAPIHandler_Vaccines_Stats(t *testing.T) {
 				if assert.NotZero(t, len(data)) {
 					lastDate := data[len(data)-1]
 					assert.Equal(t, 2021, lastDate.Year())
-					assert.Equal(t, time.Month(1), lastDate.Month())
-					assert.Equal(t, 6, lastDate.Day())
+					assert.Equal(t, time.Month(3), lastDate.Month())
+					assert.Equal(t, 10, lastDate.Day())
 				}
 			case grafana_json.TableQueryResponseNumberColumn:
 				switch column.Text {
 				case "vaccinations":
 					if assert.NotZero(t, len(data)) {
-						assert.Equal(t, 25.0, data[len(data)-1])
+						assert.Equal(t, 400.0, data[len(data)-1])
 					}
 				case "reserve":
 					if assert.NotZero(t, len(data)) {
-						assert.Equal(t, 575.0, data[len(data)-1])
+						assert.Equal(t, 200.0, data[len(data)-1])
 					}
 				}
 			}
@@ -109,27 +85,17 @@ func TestAPIHandler_Vaccines_Stats(t *testing.T) {
 }
 
 func TestAPIHandler_Vaccines_Time(t *testing.T) {
-	server := mock.Server{}
-	apiServer := httptest.NewServer(http.HandlerFunc(server.Handler))
-	defer apiServer.Close()
-
-	apiHandler, _ := apihandler.Create(nil)
-
-	apiHandler.Sciensano = &mockapi.API{Tests: mockapi.DefaultTests, Vaccinations: mockapi.AltVaccinations}
-	apiHandler.Vaccines.URL = apiServer.URL
-
-	endDate := time.Date(2021, 01, 06, 0, 0, 0, 0, time.UTC)
+	endDate := time.Date(2021, 03, 10, 0, 0, 0, 0, time.UTC)
 	request := &grafana_json.TableQueryArgs{
 		CommonQueryArgs: grafana_json.CommonQueryArgs{
 			Range: grafana_json.QueryRequestRange{To: endDate},
 		},
 	}
 
-	var response *grafana_json.TableQueryResponse
-	var err error
-
 	// Reserve
-	if response, err = apiHandler.Endpoints().TableQuery(context.Background(), "vaccines-time", request); assert.Nil(t, err) {
+	response, err := apiHandler.Endpoints().TableQuery(context.Background(), "vaccines-time", request)
+
+	if assert.Nil(t, err) {
 		for _, column := range response.Columns {
 			switch data := column.Data.(type) {
 			case grafana_json.TableQueryResponseTimeColumn:
@@ -137,14 +103,14 @@ func TestAPIHandler_Vaccines_Time(t *testing.T) {
 				if assert.NotZero(t, len(data)) {
 					lastDate := data[len(data)-1]
 					assert.Equal(t, 2021, lastDate.Year())
-					assert.Equal(t, time.Month(1), lastDate.Month())
-					assert.Equal(t, 4, lastDate.Day())
+					assert.Equal(t, time.Month(3), lastDate.Month())
+					assert.Equal(t, 10, lastDate.Day())
 				}
 			case grafana_json.TableQueryResponseNumberColumn:
 				switch column.Text {
 				case "time":
 					if assert.NotZero(t, len(data)) {
-						assert.Equal(t, 1.0, data[len(data)-1])
+						assert.Equal(t, 68.0, data[len(data)-1])
 					}
 				}
 			}

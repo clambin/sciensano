@@ -52,6 +52,10 @@ github.com/clambin/grafana-json v0.4.1 h1:8+r4dMnKzqEG2Caf3gIA76tXC+XayzFmul0DuQ
 github.com/clambin/grafana-json v0.4.1/go.mod h1:NVK7C3CFKgYr3te31H8NJ/v6YJEWuatfGnurE17KvpA=
 github.com/clambin/grafana-json v0.5.0 h1:pRq0EaZy3oeTVMjnsdhxXy2jBycI/j2J58nLkSU9ISs=
 github.com/clambin/grafana-json v0.5.0/go.mod h1:ZV9Jhps3pAKuwGhec84iQDEm0l3NhytnSvEg0Vl1Djs=
+github.com/clambin/grafana-json v0.5.1-rc1 h1:Mx58hThLKM/gZut+hphWKi2iB6LtmDHiHyMn2Upv8K8=
+github.com/clambin/grafana-json v0.5.1-rc1/go.mod h1:ZV9Jhps3pAKuwGhec84iQDEm0l3NhytnSvEg0Vl1Djs=
+github.com/clambin/grafana-json v0.5.1 h1:IaeDrU1EbZ1axJ96IauMRlRsVC9BW+5qkVnywfPC1cg=
+github.com/clambin/grafana-json v0.5.1/go.mod h1:ZV9Jhps3pAKuwGhec84iQDEm0l3NhytnSvEg0Vl1Djs=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
 github.com/cncf/udpa/go v0.0.0-20191209042840-269d4d468f6f/go.mod h1:M8M6+tZqaGXZJjfX53e64911xZQV5JYwmTeXPW+k8Sc=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=

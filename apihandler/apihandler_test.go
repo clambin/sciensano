@@ -4,15 +4,55 @@ import (
 	"context"
 	"github.com/clambin/grafana-json"
 	"github.com/clambin/sciensano/apihandler"
+	"github.com/clambin/sciensano/demographics"
+	mockDemographics "github.com/clambin/sciensano/demographics/mock"
 	"github.com/clambin/sciensano/sciensano"
-	"github.com/clambin/sciensano/sciensano/mockapi"
-	"github.com/clambin/sciensano/vaccines/mock"
+	mockSciensano "github.com/clambin/sciensano/sciensano/mock"
+	mockVaccines "github.com/clambin/sciensano/vaccines/mock"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
 )
+
+var (
+	sciensanoServer    mockSciensano.Handler
+	sciensanoAPIServer *httptest.Server
+	vaccinesServer     mockVaccines.Server
+	vaccinesAPIServer  *httptest.Server
+	demoServer         *mockDemographics.Server
+	demoAPIServer      *demographics.Server
+	apiHandler         *apihandler.Handler
+)
+
+func TestMain(m *testing.M) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	sciensanoAPIServer = httptest.NewServer(http.HandlerFunc(sciensanoServer.Handle))
+	defer sciensanoAPIServer.Close()
+
+	vaccinesAPIServer = httptest.NewServer(http.HandlerFunc(vaccinesServer.Handler))
+	defer vaccinesAPIServer.Close()
+
+	demoServer = mockDemographics.New("../data/demographics.zip")
+	defer demoServer.Close()
+	demoAPIServer = demographics.New()
+	demoAPIServer.URL = demoServer.URL()
+	go func() {
+		_ = demoAPIServer.Run(ctx, 24*time.Hour)
+	}()
+
+	client := sciensano.NewClient(time.Hour)
+	client.SetURL(sciensanoAPIServer.URL)
+
+	apiHandler = apihandler.Create(demoAPIServer)
+	apiHandler.Sciensano = client
+	apiHandler.Vaccines.URL = vaccinesAPIServer.URL
+
+	m.Run()
+}
 
 var realTargets = map[string]bool{
 	"tests":                    false,
@@ -32,7 +72,6 @@ var realTargets = map[string]bool{
 }
 
 func TestAPIHandler_Search(t *testing.T) {
-	apiHandler, _ := apihandler.Create(nil)
 	targets := apiHandler.Endpoints().Search()
 
 	for _, target := range targets {
@@ -49,17 +88,6 @@ func TestAPIHandler_Search(t *testing.T) {
 }
 
 func TestAPIHandler_Invalid(t *testing.T) {
-	server := mock.Server{}
-	apiServer := httptest.NewServer(http.HandlerFunc(server.Handler))
-	defer apiServer.Close()
-
-	handler, _ := apihandler.Create(nil)
-	handler.Vaccines.URL = apiServer.URL
-
-	apiHandler, _ := apihandler.Create(nil)
-	apiHandler.Sciensano = &mockapi.API{Tests: mockapi.DefaultTests, Vaccinations: mockapi.DefaultVaccinations}
-	apiHandler.Vaccines.URL = apiServer.URL
-
 	endDate := time.Date(2021, 01, 06, 0, 0, 0, 0, time.UTC)
 	request := &grafana_json.TableQueryArgs{
 		CommonQueryArgs: grafana_json.CommonQueryArgs{
@@ -76,68 +104,18 @@ func TestAPIHandler_Invalid(t *testing.T) {
 }
 
 func BenchmarkHandler_QueryTable(b *testing.B) {
-	handler, err := apihandler.Create(nil)
-
-	if assert.Nil(b, err) {
-		server := mock.Server{}
-		apiServer := httptest.NewServer(http.HandlerFunc(server.Handler))
-		defer apiServer.Close()
-
-		handler.Sciensano = &mockapi.API{Tests: buildTestTable(720), Vaccinations: buildVaccinationTable(720)}
-		handler.Vaccines.URL = apiServer.URL
-
-		endDate := time.Date(2021, 01, 06, 0, 0, 0, 0, time.UTC)
-		request := &grafana_json.TableQueryArgs{
-			CommonQueryArgs: grafana_json.CommonQueryArgs{
-				Range: grafana_json.QueryRequestRange{
-					To: endDate,
-				},
+	endDate := time.Date(2021, 01, 06, 0, 0, 0, 0, time.UTC)
+	request := &grafana_json.TableQueryArgs{
+		CommonQueryArgs: grafana_json.CommonQueryArgs{
+			Range: grafana_json.QueryRequestRange{
+				To: endDate,
 			},
-		}
-		b.ResetTimer()
-		for target := range realTargets {
-			for i := 0; i < 100; i++ {
-				_, _ = handler.Endpoints().TableQuery(context.Background(), target, request)
-			}
-		}
+		},
 	}
-}
 
-func buildTestTable(size int) (table []sciensano.TestResult) {
-	testDate := time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)
-	for i := 0; i < size; i++ {
-		table = append(table, sciensano.TestResult{
-			Timestamp: testDate,
-			Total:     i + 1,
-			Positive:  i,
-		})
-		testDate = testDate.Add(24 * time.Hour)
+	for target := range realTargets {
+		for i := 0; i < 100; i++ {
+			_, _ = apiHandler.Endpoints().TableQuery(context.Background(), target, request)
+		}
 	}
-	return
 }
-func buildVaccinationTable(size int) (table []sciensano.Vaccination) {
-	testDate := time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)
-	for i := 0; i < size; i++ {
-		table = append(table, sciensano.Vaccination{
-			Timestamp:  testDate,
-			FirstDose:  100 + i,
-			SecondDose: i,
-		})
-		testDate = testDate.Add(24 * time.Hour)
-	}
-	return
-}
-
-/*
-func buildVaccineTable(size int) (table []vaccines.Batch) {
-	testDate := time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)
-	for i := 0; i < size; i++ {
-		table = append(table, vaccines.Batch{
-			Date:  vaccines.Time(testDate),
-			Amount: 200+i,
-		})
-		testDate = testDate.Add(24 * time.Hour)
-	}
-	return
-}
-*/

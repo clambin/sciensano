@@ -3,7 +3,7 @@ package sciensano_test
 import (
 	"context"
 	"github.com/clambin/sciensano/sciensano"
-	"github.com/clambin/sciensano/sciensano/server"
+	"github.com/clambin/sciensano/sciensano/mock"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
@@ -12,7 +12,7 @@ import (
 )
 
 func TestGetTests(t *testing.T) {
-	testServer := server.Handler{}
+	testServer := mock.Handler{}
 	apiServer := httptest.NewServer(http.HandlerFunc(testServer.Handle))
 	defer apiServer.Close()
 

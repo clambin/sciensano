@@ -1,4 +1,4 @@
-package server
+package mock
 
 import (
 	"context"
@@ -80,12 +80,14 @@ func bigVaccinationResponse() string {
 	timestamp := time.Date(2020, 01, 01, 0, 0, 0, 0, time.UTC)
 
 	entries := make([]string, 0)
+	count := 0
 	for timestamp.Before(time.Now()) {
+		count++
 		for _, region := range []string{"Flanders", "Wallonia", "Brussels", "Ostbelgien"} {
 			for _, ageGroup := range []string{"0-17", "18-34", "35-44", "45-54", "55-64", "65-74", "75-84", "84+"} {
 				for _, dose := range []string{"A", "B"} {
-					entries = append(entries, fmt.Sprintf(`	{"DATE": "%s", "REGION": "%s", "AGEGROUP": "%s", "DOSE": "%s", "Count": 0 }`,
-						timestamp.Format("2006-01-02"), region, ageGroup, dose))
+					entries = append(entries, fmt.Sprintf(`	{"DATE": "%s", "REGION": "%s", "AGEGROUP": "%s", "DOSE": "%s", "Count": %d }`,
+						timestamp.Format("2006-01-02"), region, ageGroup, dose, count))
 				}
 			}
 		}

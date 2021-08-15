@@ -25,7 +25,7 @@ type Handler struct {
 }
 
 // Create a Handler
-func Create(server *demographics.Server) (*Handler, error) {
+func Create(server *demographics.Server) *Handler {
 	handler := Handler{
 		Sciensano:    sciensano.NewClient(15 * time.Minute),
 		Vaccines:     vaccines.New(),
@@ -49,10 +49,10 @@ func Create(server *demographics.Server) (*Handler, error) {
 		"vaccines-time":            {tableResponseBuild: handler.buildVaccineTimeTableResponse},
 	}
 
-	return &handler, nil
+	return &handler
 }
 
-// Endpoints tells the server which endpoints we have implemented
+// Endpoints tells the mock which endpoints we have implemented
 func (handler *Handler) Endpoints() grafana_json.Endpoints {
 	return grafana_json.Endpoints{
 		Search:      handler.Search,
@@ -95,7 +95,6 @@ func (handler *Handler) TableQuery(ctx context.Context, target string, args *gra
 	}
 
 	log.WithFields(log.Fields{"duration": time.Now().Sub(start), "target": target}).Info("TableQuery called")
-
 	return
 }
 

@@ -28,7 +28,7 @@ func NewClient(duration time.Duration) *Client {
 	}
 }
 
-// SetURL overrides the server's URL.
+// SetURL overrides the mock's URL.
 // Used for unit testing. Not thread-safe. Use with caution
 func (client *Client) SetURL(url string) {
 	client.testResultsCache.URL = url
