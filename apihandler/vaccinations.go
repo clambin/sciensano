@@ -98,9 +98,9 @@ func (handler *Handler) buildGroupedVaccinationRateTableResponse(ctx context.Con
 	response = handler.buildGroupedVaccinationTableResponse(ctx, beginTime, endTime, target)
 	if response != nil {
 		if strings.HasPrefix(target, "vacc-age-rate-") {
-			prorateFigures(response, handler.demographics.GetAgeGroupFigures())
+			prorateFigures(response, handler.Demographics.GetAgeGroupFigures())
 		} else if strings.HasPrefix(target, "vacc-region-rate-") {
-			prorateFigures(response, handler.demographics.GetRegionFigures())
+			prorateFigures(response, handler.Demographics.GetRegionFigures())
 		}
 	}
 	return

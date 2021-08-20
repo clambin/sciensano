@@ -2,180 +2,180 @@ package sciensano_test
 
 import (
 	"context"
+	"fmt"
 	"github.com/clambin/sciensano/sciensano"
-	"github.com/clambin/sciensano/sciensano/mock"
+	"github.com/clambin/sciensano/sciensano/apiclient"
+	"github.com/clambin/sciensano/sciensano/apiclient/mocks"
 	"github.com/stretchr/testify/assert"
-	"net/http"
-	"net/http/httptest"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 	"reflect"
 	"testing"
 	"time"
 )
 
+var (
+	lastDay = time.Date(2021, 3, 10, 0, 0, 0, 0, time.UTC)
+
+	vaccinationsResponse = []*apiclient.APIVaccinationsResponse{
+		{
+			TimeStamp: apiclient.TimeStamp{Time: lastDay},
+			Region:    "Flanders",
+			AgeGroup:  "25-34",
+			Dose:      "A",
+			Count:     1,
+		},
+		{
+			TimeStamp: apiclient.TimeStamp{Time: lastDay},
+			Region:    "Flanders",
+			AgeGroup:  "35-44",
+			Dose:      "A",
+			Count:     1,
+		},
+		{
+			TimeStamp: apiclient.TimeStamp{Time: lastDay},
+			Region:    "Brussels",
+			AgeGroup:  "35-44",
+			Dose:      "B",
+			Count:     1,
+		},
+		{
+			TimeStamp: apiclient.TimeStamp{Time: lastDay.Add(24 * time.Hour)},
+			Region:    "Brussels",
+			AgeGroup:  "35-44",
+			Dose:      "B",
+			Count:     1,
+		},
+	}
+)
+
 func TestAPIClient_GetVaccinations(t *testing.T) {
-	testServer := mock.Handler{}
-	apiServer := httptest.NewServer(http.HandlerFunc(testServer.Handle))
-	defer apiServer.Close()
+	apiClient := &mocks.APIClient{}
+	apiClient.On("GetVaccinations", mock.Anything).Return(vaccinationsResponse, nil)
 
 	client := sciensano.NewClient(time.Hour)
-	client.SetURL(apiServer.URL)
+	client.APIClient = apiClient
 
-	lastDay := time.Date(2021, 3, 10, 0, 0, 0, 0, time.UTC)
 	result, err := client.GetVaccinations(context.Background(), lastDay)
 
-	if assert.Nil(t, err) {
-		if assert.Len(t, result, 2) {
-			assert.Equal(t, lastDay, result[1].Timestamp)
-			assert.Equal(t, 250, result[1].FirstDose)
-			assert.Equal(t, 0, result[1].SecondDose)
-		}
-	}
+	require.NoError(t, err)
+	require.Len(t, result, 1)
+	assert.Equal(t, lastDay, result[0].Timestamp)
+	assert.Equal(t, 2, result[0].FirstDose)
+	assert.Equal(t, 1, result[0].SecondDose)
+
+	mock.AssertExpectationsForObjects(t, apiClient)
 }
 
 func TestAPIClient_GetVaccinationsByAge(t *testing.T) {
-	var (
-		err               error
-		totals            []sciensano.Vaccination
-		vaccinationsByAge map[string][]sciensano.Vaccination
-	)
-	testServer := mock.Handler{}
-	apiServer := httptest.NewServer(http.HandlerFunc(testServer.Handle))
-	defer apiServer.Close()
+	apiClient := &mocks.APIClient{}
+	apiClient.On("GetVaccinations", mock.Anything).Return(vaccinationsResponse, nil)
 
 	client := sciensano.NewClient(time.Hour)
-	client.SetURL(apiServer.URL)
+	client.APIClient = apiClient
 
-	testDate := time.Now()
-	totals, err = client.GetVaccinations(context.Background(), testDate)
-	assert.Nil(t, err)
+	result, err := client.GetVaccinationsByAge(context.Background(), lastDay)
+	require.NoError(t, err)
+	require.Len(t, result, 2)
+	require.Contains(t, result, "25-34")
+	require.Contains(t, result, "35-44")
+	require.Len(t, result["25-34"], 1)
+	assert.Equal(t, 1, result["25-34"][0].FirstDose)
+	assert.Equal(t, 0, result["25-34"][0].SecondDose)
+	require.Len(t, result["35-44"], 1)
+	assert.Equal(t, 1, result["35-44"][0].FirstDose)
+	assert.Equal(t, 1, result["35-44"][0].SecondDose)
 
-	if assert.Greater(t, len(totals), 0) {
-		vaccinationsByAge, err = client.GetVaccinationsByAge(context.Background(), testDate)
-		if assert.Nil(t, err) {
-
-			var firstDose, secondDose int
-			for group, vaccinations := range vaccinationsByAge {
-				// FIXME: shouldn't be needed?
-				if group == "" {
-					continue
-				}
-				if len(vaccinations) > 0 {
-					firstDose += vaccinations[len(vaccinations)-1].FirstDose
-					secondDose += vaccinations[len(vaccinations)-1].SecondDose
-				}
-			}
-
-			// the sum of final dose count for each age group should be the same as the final overall dose count
-			assert.Equal(t, totals[len(totals)-1].FirstDose, firstDose)
-			assert.Equal(t, totals[len(totals)-1].SecondDose, secondDose)
-		}
-	}
+	mock.AssertExpectationsForObjects(t, apiClient)
 }
 
 func TestAPIClient_GetVaccinationsByRegion(t *testing.T) {
-	var (
-		err                  error
-		totals               []sciensano.Vaccination
-		vaccinationsByRegion map[string][]sciensano.Vaccination
-	)
-	testServer := mock.Handler{}
-	apiServer := httptest.NewServer(http.HandlerFunc(testServer.Handle))
-	defer apiServer.Close()
+	apiClient := &mocks.APIClient{}
+	apiClient.On("GetVaccinations", mock.Anything).Return(vaccinationsResponse, nil)
 
 	client := sciensano.NewClient(time.Hour)
-	client.SetURL(apiServer.URL)
+	client.APIClient = apiClient
 
-	testDate := time.Now()
-	totals, err = client.GetVaccinations(context.Background(), testDate)
-	assert.Nil(t, err)
+	result, err := client.GetVaccinationsByRegion(context.Background(), lastDay)
+	require.NoError(t, err)
+	require.Len(t, result, 2)
 
-	if assert.Greater(t, len(totals), 0) {
-		vaccinationsByRegion, err = client.GetVaccinationsByRegion(context.Background(), testDate)
-		if assert.Nil(t, err) {
-			var firstDose, secondDose int
-			for _, vaccinations := range vaccinationsByRegion {
-				if len(vaccinations) > 0 {
-					firstDose += vaccinations[len(vaccinations)-1].FirstDose
-					secondDose += vaccinations[len(vaccinations)-1].SecondDose
+	require.Contains(t, result, "Flanders")
+	require.Len(t, result["Flanders"], 1)
+	assert.Equal(t, 2, result["Flanders"][0].FirstDose)
+	assert.Equal(t, 0, result["Flanders"][0].SecondDose)
+
+	require.Contains(t, result, "Brussels")
+	require.Len(t, result["Brussels"], 1)
+	assert.Equal(t, 0, result["Brussels"][0].FirstDose)
+	assert.Equal(t, 1, result["Brussels"][0].SecondDose)
+
+	mock.AssertExpectationsForObjects(t, apiClient)
+}
+
+var bigVaccinationResponse []*apiclient.APIVaccinationsResponse
+
+func buildBigVaccinationResponse() []*apiclient.APIVaccinationsResponse {
+	if bigVaccinationResponse == nil {
+		startDate := time.Now().Add(-365 * 24 * time.Hour)
+		for i := 0; i < 365; i++ {
+			for _, region := range []string{"Flanders", "Brussels", "Wallonia"} {
+				for _, ageGroup := range []string{"0-17", "18-34", "35-44", "45-54", "55-64", "65-74", "75-84", "85+"} {
+					bigVaccinationResponse = append(bigVaccinationResponse,
+						&apiclient.APIVaccinationsResponse{
+							TimeStamp: apiclient.TimeStamp{Time: startDate},
+							Region:    region,
+							AgeGroup:  ageGroup,
+							Dose:      "A",
+							Count:     i * 2,
+						},
+						&apiclient.APIVaccinationsResponse{
+							TimeStamp: apiclient.TimeStamp{Time: startDate},
+							Region:    region,
+							AgeGroup:  ageGroup,
+							Dose:      "B",
+							Count:     i,
+						})
 				}
 			}
-			// the sum of final dose count for each age group should be the same as the final overall dose count
-			assert.Equal(t, totals[len(totals)-1].FirstDose, firstDose)
-			assert.Equal(t, totals[len(totals)-1].SecondDose, secondDose)
+			startDate = startDate.Add(24 * time.Hour)
 		}
+		fmt.Printf("response had %d entries\n", len(bigVaccinationResponse))
 	}
+
+	return bigVaccinationResponse
+}
+
+func BenchmarkClient_GetVaccinationsByAge(b *testing.B) {
+	apiClient := &mocks.APIClient{}
+	apiClient.On("GetVaccinations", mock.Anything).Return(buildBigVaccinationResponse(), nil)
+
+	client := sciensano.NewClient(time.Hour)
+	client.APIClient = apiClient
+
+	ctx := context.Background()
+	for i := 0; i < 10; i++ {
+		_, err := client.GetVaccinationsByAge(ctx, lastDay)
+		require.NoError(b, err)
+	}
+
+	mock.AssertExpectationsForObjects(b, apiClient)
 }
 
 func BenchmarkClient_GetVaccinationsByRegion(b *testing.B) {
-	var (
-		err                  error
-		totals               []sciensano.Vaccination
-		vaccinationsByRegion map[string][]sciensano.Vaccination
-	)
+	apiClient := &mocks.APIClient{}
+	apiClient.On("GetVaccinations", mock.Anything).Return(buildBigVaccinationResponse(), nil)
 
-	testServer := mock.Handler{}
-	testServer.BigResponse()
-	apiServer := httptest.NewServer(http.HandlerFunc(testServer.Handle))
-	defer apiServer.Close()
+	client := sciensano.NewClient(time.Hour)
+	client.APIClient = apiClient
 
-	client := sciensano.NewClient(0)
-	client.SetURL(apiServer.URL)
-
-	testDate := time.Now()
-	totals, err = client.GetVaccinations(context.Background(), testDate)
-	assert.Nil(b, err)
-
-	b.ResetTimer()
-
-	totals, err = client.GetVaccinations(context.Background(), testDate)
-	assert.Nil(b, err)
-
-	if assert.Greater(b, len(totals), 0) {
-		vaccinationsByRegion, err = client.GetVaccinationsByRegion(context.Background(), testDate)
-		if assert.Nil(b, err) {
-			var firstDose, secondDose int
-			for _, vaccinations := range vaccinationsByRegion {
-				if len(vaccinations) > 0 {
-					firstDose += vaccinations[len(vaccinations)-1].FirstDose
-					secondDose += vaccinations[len(vaccinations)-1].SecondDose
-				}
-			}
-			// the sum of final dose count for each age group should be the same as the final overall dose count
-			assert.Equal(b, totals[len(totals)-1].FirstDose, firstDose)
-			assert.Equal(b, totals[len(totals)-1].SecondDose, secondDose)
-		}
+	ctx := context.Background()
+	for i := 0; i < 10; i++ {
+		_, err := client.GetVaccinationsByRegion(ctx, lastDay)
+		require.NoError(b, err)
 	}
-}
 
-func BenchmarkClient_GetVaccinationsByAgeGroup(b *testing.B) {
-	testServer := mock.Handler{}
-	testServer.BigResponse()
-	apiServer := httptest.NewServer(http.HandlerFunc(testServer.Handle))
-	defer apiServer.Close()
-
-	client := sciensano.NewClient(0)
-	client.SetURL(apiServer.URL)
-
-	testDate := time.Now()
-	totals, err := client.GetVaccinations(context.Background(), testDate)
-	assert.Nil(b, err)
-
-	if assert.Greater(b, len(totals), 0) {
-		var vaccinationsByAge map[string][]sciensano.Vaccination
-		vaccinationsByAge, err = client.GetVaccinationsByAge(context.Background(), testDate)
-		if assert.Nil(b, err) {
-			var firstDose, secondDose int
-			for _, vaccinations := range vaccinationsByAge {
-				if len(vaccinations) > 0 {
-					firstDose += vaccinations[len(vaccinations)-1].FirstDose
-					secondDose += vaccinations[len(vaccinations)-1].SecondDose
-				}
-			}
-			// the sum of final dose count for each age group should be the same as the final overall dose count
-			assert.Equal(b, totals[len(totals)-1].FirstDose, firstDose)
-			assert.Equal(b, totals[len(totals)-1].SecondDose, secondDose)
-		}
-	}
+	mock.AssertExpectationsForObjects(b, apiClient)
 }
 
 func TestAccumulateVaccinations(t *testing.T) {

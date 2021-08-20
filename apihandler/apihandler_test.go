@@ -4,54 +4,38 @@ import (
 	"context"
 	"github.com/clambin/grafana-json"
 	"github.com/clambin/sciensano/apihandler"
-	"github.com/clambin/sciensano/demographics"
-	mockDemographics "github.com/clambin/sciensano/demographics/mock"
+	mockDemographics "github.com/clambin/sciensano/demographics/mocks"
 	"github.com/clambin/sciensano/sciensano"
-	mockSciensano "github.com/clambin/sciensano/sciensano/mock"
-	mockVaccines "github.com/clambin/sciensano/vaccines/mock"
+	"github.com/clambin/sciensano/sciensano/apiclient"
+	mockSciensano "github.com/clambin/sciensano/sciensano/apiclient/mocks"
+	"github.com/clambin/sciensano/vaccines"
+	mockVaccines "github.com/clambin/sciensano/vaccines/mocks"
 	"github.com/stretchr/testify/assert"
-	"net/http"
-	"net/http/httptest"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 	"testing"
 	"time"
 )
 
-var (
-	sciensanoServer    mockSciensano.Handler
-	sciensanoAPIServer *httptest.Server
-	vaccinesServer     mockVaccines.Server
-	vaccinesAPIServer  *httptest.Server
-	demoServer         *mockDemographics.Server
-	demoAPIServer      *demographics.Server
-	apiHandler         *apihandler.Handler
-)
+type Stack struct {
+	sciensanoClient mockSciensano.APIClient
+	vaccinesClient  mockVaccines.APIClient
+	demoClient      mockDemographics.Demographics
+	apiHandler      *apihandler.Handler
+}
 
-func TestMain(m *testing.M) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+func createStack(_ context.Context) *Stack {
+	stack := &Stack{
+		apiHandler: apihandler.Create(),
+	}
+	stack.apiHandler.Sciensano = &sciensano.Client{APIClient: &stack.sciensanoClient}
+	stack.apiHandler.Vaccines = &stack.vaccinesClient
+	stack.apiHandler.Demographics = &stack.demoClient
 
-	sciensanoAPIServer = httptest.NewServer(http.HandlerFunc(sciensanoServer.Handle))
-	defer sciensanoAPIServer.Close()
+	return stack
+}
 
-	vaccinesAPIServer = httptest.NewServer(http.HandlerFunc(vaccinesServer.Handler))
-	defer vaccinesAPIServer.Close()
-
-	demoServer = mockDemographics.New("../data/demographics.zip")
-	defer demoServer.Close()
-	demoAPIServer = demographics.New()
-	demoAPIServer.URL = demoServer.URL()
-	go func() {
-		_ = demoAPIServer.Run(ctx, 24*time.Hour)
-	}()
-
-	client := sciensano.NewClient(time.Hour)
-	client.SetURL(sciensanoAPIServer.URL)
-
-	apiHandler = apihandler.Create(demoAPIServer)
-	apiHandler.Sciensano = client
-	apiHandler.Vaccines.URL = vaccinesAPIServer.URL
-
-	m.Run()
+func (stack *Stack) Destroy() {
 }
 
 var realTargets = map[string]bool{
@@ -72,7 +56,12 @@ var realTargets = map[string]bool{
 }
 
 func TestAPIHandler_Search(t *testing.T) {
-	targets := apiHandler.Endpoints().Search()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	stack := createStack(ctx)
+	defer stack.Destroy()
+
+	targets := stack.apiHandler.Endpoints().Search()
 
 	for _, target := range targets {
 		_, ok := realTargets[target]
@@ -95,12 +84,14 @@ func TestAPIHandler_Invalid(t *testing.T) {
 		},
 	}
 
-	var err error
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	stack := createStack(ctx)
+	defer stack.Destroy()
 
 	// Unknown target should return an error
-	_, err = apiHandler.TableQuery(context.Background(), "invalid", request)
-	assert.NotNil(t, err)
-
+	_, err := stack.apiHandler.TableQuery(context.Background(), "invalid", request)
+	require.Error(t, err)
 }
 
 func BenchmarkHandler_QueryTable(b *testing.B) {
@@ -112,10 +103,26 @@ func BenchmarkHandler_QueryTable(b *testing.B) {
 			},
 		},
 	}
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	stack := createStack(ctx)
+	defer stack.Destroy()
+
+	stack.sciensanoClient.
+		On("GetVaccinations", mock.Anything).
+		Return([]*apiclient.APIVaccinationsResponse{}, nil)
+	stack.sciensanoClient.
+		On("GetTestResults", mock.Anything).
+		Return([]*apiclient.APITestResultsResponse{}, nil)
+	stack.vaccinesClient.
+		On("GetBatches", mock.Anything).
+		Return([]*vaccines.Batch{}, nil)
 
 	for target := range realTargets {
 		for i := 0; i < 100; i++ {
-			_, _ = apiHandler.Endpoints().TableQuery(context.Background(), target, request)
+			_, _ = stack.apiHandler.Endpoints().TableQuery(context.Background(), target, request)
 		}
 	}
+
+	stack.sciensanoClient.AssertExpectations(b)
 }

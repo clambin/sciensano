@@ -2,18 +2,17 @@ package sciensano
 
 import (
 	"context"
+	"github.com/clambin/sciensano/sciensano/apiclient"
+	"net/http"
 	"time"
 )
 
 // Client queries different Sciensano APIs
 type Client struct {
-	testResultsCache  *TestResultsCache
-	vaccinationsCache *VaccinationsCache
+	apiclient.APIClient
 }
 
-const baseURL = "https://epistat.sciensano.be"
-
-type API interface {
+type APIClient interface {
 	GetTests(ctx context.Context, end time.Time) (results []TestResult, err error)
 	GetVaccinations(ctx context.Context, end time.Time) (results []Vaccination, err error)
 	GetVaccinationsByAge(ctx context.Context, end time.Time) (results map[string][]Vaccination, err error)
@@ -23,14 +22,9 @@ type API interface {
 // NewClient creates a new Client
 func NewClient(duration time.Duration) *Client {
 	return &Client{
-		testResultsCache:  NewTestResultsCache(duration),
-		vaccinationsCache: NewVaccinationsCache(duration),
+		APIClient: &apiclient.Cache{
+			APIClient: &apiclient.Client{HTTPClient: &http.Client{}},
+			Retention: duration,
+		},
 	}
-}
-
-// SetURL overrides the mock's URL.
-// Used for unit testing. Not thread-safe. Use with caution
-func (client *Client) SetURL(url string) {
-	client.testResultsCache.URL = url
-	client.vaccinationsCache.URL = url
 }

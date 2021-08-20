@@ -4,7 +4,7 @@ on:
   push:
     branches:
     - master
-    - rate
+    - mock
 jobs:
   test:
     runs-on: ubuntu-latest

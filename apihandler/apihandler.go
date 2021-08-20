@@ -6,8 +6,10 @@ import (
 	"github.com/clambin/grafana-json"
 	"github.com/clambin/sciensano/demographics"
 	"github.com/clambin/sciensano/sciensano"
+	"github.com/clambin/sciensano/sciensano/apiclient"
 	"github.com/clambin/sciensano/vaccines"
 	log "github.com/sirupsen/logrus"
+	"net/http"
 	"sort"
 	"strings"
 	"sync"
@@ -16,20 +18,31 @@ import (
 
 // Handler implements a Grafana SimpleJson API Handler that gets BE covid stats
 type Handler struct {
-	Sciensano    sciensano.API
-	Vaccines     *vaccines.Server
-	demographics *demographics.Server
+	Sciensano    sciensano.APIClient
+	Vaccines     vaccines.APIClient
+	Demographics demographics.Demographics
 	lastDate     map[string]time.Time
 	lastDateLock sync.Mutex
 	targetTable  TargetTable
 }
 
 // Create a Handler
-func Create(server *demographics.Server) *Handler {
+func Create() *Handler {
 	handler := Handler{
-		Sciensano:    sciensano.NewClient(15 * time.Minute),
-		Vaccines:     vaccines.New(),
-		demographics: server,
+		Sciensano: &sciensano.Client{
+			APIClient: &apiclient.Cache{
+				APIClient: &apiclient.Client{HTTPClient: &http.Client{}},
+				Retention: 15 * time.Minute,
+			},
+		},
+		Vaccines: &vaccines.Cache{
+			APIClient: &vaccines.Client{HTTPClient: &http.Client{}},
+			Retention: time.Hour,
+		},
+		Demographics: &demographics.Store{
+			Retention:   24 * time.Hour,
+			AgeBrackets: demographics.DefaultAgeBrackets,
+		},
 	}
 
 	handler.targetTable = TargetTable{
@@ -52,7 +65,7 @@ func Create(server *demographics.Server) *Handler {
 	return &handler
 }
 
-// Endpoints tells the mock which endpoints we have implemented
+// Endpoints tells the fake which endpoints we have implemented
 func (handler *Handler) Endpoints() grafana_json.Endpoints {
 	return grafana_json.Endpoints{
 		Search:      handler.Search,
@@ -94,7 +107,7 @@ func (handler *Handler) TableQuery(ctx context.Context, target string, args *gra
 		handler.logUpdates(target, response)
 	}
 
-	log.WithFields(log.Fields{"duration": time.Now().Sub(start), "target": target}).Info("TableQuery called")
+	log.WithFields(log.Fields{"duration": time.Now().Sub(start), "target": target}).Debug("TableQuery called")
 	return
 }
 

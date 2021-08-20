@@ -9,17 +9,20 @@ import (
 	"time"
 )
 
-func (handler *Handler) buildVaccineTableResponse(ctx context.Context, _, _ time.Time, _ string) (response *grafanaJson.TableQueryResponse) {
+func (handler *Handler) buildVaccineTableResponse(ctx context.Context, _, endTime time.Time, _ string) (response *grafanaJson.TableQueryResponse) {
 	if batches, err := handler.Vaccines.GetBatches(ctx); err == nil {
 		batches = vaccines.AccumulateBatches(batches)
 
 		rows := len(batches)
-		timestampColumn := make(grafanaJson.TableQueryResponseTimeColumn, rows)
-		batchColumn := make(grafanaJson.TableQueryResponseNumberColumn, rows)
+		timestampColumn := make(grafanaJson.TableQueryResponseTimeColumn, 0, rows)
+		batchColumn := make(grafanaJson.TableQueryResponseNumberColumn, 0, rows)
 
-		for index, entry := range batches {
-			timestampColumn[index] = time.Time(entry.Date)
-			batchColumn[index] = float64(entry.Amount)
+		for _, entry := range batches {
+			if entry.Date.Time.After(endTime) {
+				continue
+			}
+			timestampColumn = append(timestampColumn, entry.Date.Time)
+			batchColumn = append(batchColumn, float64(entry.Amount))
 		}
 
 		response = new(grafanaJson.TableQueryResponse)
@@ -32,7 +35,7 @@ func (handler *Handler) buildVaccineTableResponse(ctx context.Context, _, _ time
 }
 
 func (handler *Handler) buildVaccineStatsTableResponse(ctx context.Context, _, endTime time.Time, _ string) (response *grafanaJson.TableQueryResponse) {
-	var batches []vaccines.Batch
+	var batches []*vaccines.Batch
 	var vaccinations []sciensano.Vaccination
 	var err error
 	if batches, err = handler.Vaccines.GetBatches(ctx); err == nil {
@@ -77,7 +80,7 @@ func (handler *Handler) buildVaccineStatsTableResponse(ctx context.Context, _, e
 }
 
 func (handler *Handler) buildVaccineTimeTableResponse(ctx context.Context, _, endTime time.Time, _ string) (response *grafanaJson.TableQueryResponse) {
-	var batches []vaccines.Batch
+	var batches []*vaccines.Batch
 	var vaccinations []sciensano.Vaccination
 	var err error
 	if batches, err = handler.Vaccines.GetBatches(ctx); err == nil {
@@ -97,7 +100,7 @@ func (handler *Handler) buildVaccineTimeTableResponse(ctx context.Context, _, en
 	return
 }
 
-func CalculateVaccineDelay(vaccinations []sciensano.Vaccination, batches []vaccines.Batch) (timestamps grafanaJson.TableQueryResponseTimeColumn, delays grafanaJson.TableQueryResponseNumberColumn) {
+func CalculateVaccineDelay(vaccinations []sciensano.Vaccination, batches []*vaccines.Batch) (timestamps grafanaJson.TableQueryResponseTimeColumn, delays grafanaJson.TableQueryResponseNumberColumn) {
 	batchIndex := 0
 	batchCount := len(batches)
 
@@ -113,20 +116,20 @@ func CalculateVaccineDelay(vaccinations []sciensano.Vaccination, batches []vacci
 		// we depleted the *previous* batch. report the time difference between now and when we received that batch
 		if batchIndex > 0 {
 			timestamps = append(timestamps, entry.Timestamp)
-			delays = append(delays, entry.Timestamp.Sub(time.Time(batches[batchIndex-1].Date)).Hours()/24)
+			delays = append(delays, entry.Timestamp.Sub(batches[batchIndex-1].Date.Time).Hours()/24)
 		}
 	}
 	return
 }
 
-func calculateVaccineReserve(vaccinations []sciensano.Vaccination, batches []vaccines.Batch) (reserve []float64) {
+func calculateVaccineReserve(vaccinations []sciensano.Vaccination, batches []*vaccines.Batch) (reserve []float64) {
 	batchIndex := 0
 	lastBatch := 0
 
 	for _, entry := range vaccinations {
 		// find the last time we received vaccines
 		for batchIndex < len(batches) &&
-			!time.Time(batches[batchIndex].Date).After(entry.Timestamp) {
+			!batches[batchIndex].Date.Time.After(entry.Timestamp) {
 			// how many vaccines have we received so far?
 			lastBatch = batches[batchIndex].Amount
 			batchIndex++

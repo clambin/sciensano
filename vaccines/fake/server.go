@@ -1,4 +1,4 @@
-package mock
+package fake
 
 import (
 	log "github.com/sirupsen/logrus"
@@ -7,12 +7,17 @@ import (
 )
 
 type Server struct {
-	Called int
+	Fail bool
 }
 
 func (server *Server) Handler(w http.ResponseWriter, req *http.Request) {
 	log.Debug("apiHandler: " + html.EscapeString(req.URL.Path))
-	server.Called++
+
+	if server.Fail {
+		http.Error(w, "server set to fail", http.StatusInternalServerError)
+		return
+	}
+
 	if req.URL.Path == "/api/v1/delivered.json" {
 		_, _ = w.Write([]byte(vaccinesResponse))
 	} else {

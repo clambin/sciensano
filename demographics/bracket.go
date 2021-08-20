@@ -11,6 +11,7 @@ type Bracket struct {
 	High float64
 }
 
+// String returns a string representation of a Bracket
 func (bracket Bracket) String() string {
 	if bracket.High == math.Inf(+1) {
 		return fmt.Sprintf("%02.0f+", bracket.Low)

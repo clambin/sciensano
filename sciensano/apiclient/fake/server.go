@@ -1,4 +1,4 @@
-package mock
+package fake
 
 import (
 	"context"
@@ -11,6 +11,7 @@ import (
 )
 
 type Handler struct {
+	Fail      bool
 	Slow      bool
 	Responses map[string]string
 	Count     int
@@ -23,6 +24,11 @@ func (handler *Handler) Handle(w http.ResponseWriter, req *http.Request) {
 
 	if handler.Slow && wait(req.Context(), 1*time.Second) == false {
 		http.Error(w, "context exceeded", http.StatusRequestTimeout)
+		return
+	}
+
+	if handler.Fail {
+		http.Error(w, "server set to Fail", http.StatusInternalServerError)
 		return
 	}
 

@@ -9,36 +9,6 @@ import (
 	"strconv"
 )
 
-func (server *Server) parseByAge(filename string) (byAge map[Bracket]int, err error) {
-	var input map[string]int
-	input, err = groupPopulation(filename, "CD_AGE")
-
-	if err != nil {
-		log.WithError(err).Fatal("failed to read population file")
-	}
-
-	byAge = groupPopulationByAge(input, server.AgeBrackets)
-
-	if err != nil {
-		log.WithError(err).Fatal("failed to group population")
-	}
-
-	return
-}
-
-func (server *Server) parseByRegion(filename string) (byRegion map[string]int, err error) {
-	var input map[string]int
-	input, err = groupPopulation(filename, "TX_RGN_DESCR_NL")
-
-	if err != nil {
-		log.WithError(err).Fatal("failed to read population file")
-	}
-
-	byRegion = groupPopulationByRegion(input)
-
-	return
-}
-
 func groupPopulation(filename, mapField string) (output map[string]int, err error) {
 	var f *os.File
 	f, err = os.Open(filename)

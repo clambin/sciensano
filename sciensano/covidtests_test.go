@@ -3,34 +3,54 @@ package sciensano_test
 import (
 	"context"
 	"github.com/clambin/sciensano/sciensano"
-	"github.com/clambin/sciensano/sciensano/mock"
+	"github.com/clambin/sciensano/sciensano/apiclient"
+	"github.com/clambin/sciensano/sciensano/apiclient/mocks"
 	"github.com/stretchr/testify/assert"
-	"net/http"
-	"net/http/httptest"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 	"testing"
 	"time"
 )
 
-func TestGetTests(t *testing.T) {
-	testServer := mock.Handler{}
-	apiServer := httptest.NewServer(http.HandlerFunc(testServer.Handle))
-	defer apiServer.Close()
+var (
+	testResultsResponse = []*apiclient.APITestResultsResponse{
+		{
+			TimeStamp: apiclient.TimeStamp{Time: lastDay},
+			Region:    "Flanders",
+			Total:     100,
+			Positive:  10,
+		},
+		{
+			TimeStamp: apiclient.TimeStamp{Time: lastDay},
+			Region:    "Brussels",
+			Total:     100,
+			Positive:  10,
+		},
+		{
+			TimeStamp: apiclient.TimeStamp{Time: lastDay.Add(24 * time.Hour)},
+			Region:    "Flanders",
+			Total:     100,
+			Positive:  10,
+		},
+	}
+)
 
+func TestGetTests(t *testing.T) {
+	apiClient := &mocks.APIClient{}
 	client := sciensano.NewClient(time.Hour)
-	client.SetURL(apiServer.URL)
+	client.APIClient = apiClient
+	ctx := context.Background()
 
 	firstDay := time.Date(2021, 03, 10, 0, 0, 0, 0, time.UTC)
-	result, err := client.GetTests(context.Background(), firstDay)
+	apiClient.On("GetTestResults", mock.Anything).Return(testResultsResponse, nil)
 
-	if assert.Nil(t, err) && assert.Len(t, result, 2) {
-		assert.Equal(t, firstDay, result[1].Timestamp)
-		assert.Equal(t, 11, result[1].Total)
-		assert.Equal(t, 5, result[1].Positive)
-	}
+	result, err := client.GetTests(ctx, firstDay)
 
-	_, err = client.GetTests(context.Background(), firstDay)
-	assert.NoError(t, err)
+	require.NoError(t, err)
+	require.Len(t, result, 1)
+	assert.Equal(t, firstDay, result[0].Timestamp)
+	assert.Equal(t, 200, result[0].Total)
+	assert.Equal(t, 20, result[0].Positive)
 
-	assert.Equal(t, 1, testServer.Count)
-
+	mock.AssertExpectationsForObjects(t, apiClient)
 }

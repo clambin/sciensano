@@ -1,4 +1,4 @@
-package mock
+package fake
 
 import (
 	log "github.com/sirupsen/logrus"
@@ -8,13 +8,14 @@ import (
 	"os"
 )
 
-// Server runs a demographics test mock
+// Server runs a demographics test fake
 type Server struct {
+	Fail       bool
 	filename   string
 	httpServer *httptest.Server
 }
 
-// New creates a new test mock.  If filename is left blank, the standard test file is used
+// New creates a new test fake.  If filename is left blank, the standard test file is used
 func New(filename string) (server *Server) {
 	if filename == "" {
 		filename = "../data/demographics.zip"
@@ -28,12 +29,12 @@ func New(filename string) (server *Server) {
 	return
 }
 
-// Close closes the underlying httptest mock
+// Close closes the underlying httptest fake
 func (server *Server) Close() {
 	server.httpServer.Close()
 }
 
-// URL returns the URL of the underling httptest mock
+// URL returns the URL of the underling httptest fake
 func (server *Server) URL() string {
 	return server.httpServer.URL
 }

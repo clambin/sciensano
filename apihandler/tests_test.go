@@ -3,7 +3,10 @@ package apihandler_test
 import (
 	"context"
 	grafanaJson "github.com/clambin/grafana-json"
+	"github.com/clambin/sciensano/sciensano/apiclient"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 	"testing"
 	"time"
 )
@@ -16,28 +19,60 @@ func TestAPIHandler_Tests(t *testing.T) {
 		},
 	}
 
-	var response *grafanaJson.TableQueryResponse
-	var err error
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	stack := createStack(ctx)
+	defer stack.Destroy()
+
+	stack.sciensanoClient.
+		On("GetTestResults", mock.Anything).
+		Return([]*apiclient.APITestResultsResponse{
+			{
+				TimeStamp: apiclient.TimeStamp{Time: endDate.Add(-48 * time.Hour)},
+				Total:     100,
+				Positive:  10,
+			},
+			{
+				TimeStamp: apiclient.TimeStamp{Time: endDate.Add(-24 * time.Hour)},
+				Total:     100,
+				Positive:  10,
+			},
+			{
+				TimeStamp: apiclient.TimeStamp{Time: endDate},
+				Total:     100,
+				Positive:  10,
+			},
+			{
+				TimeStamp: apiclient.TimeStamp{Time: endDate.Add(24 * time.Hour)},
+				Total:     100,
+				Positive:  10,
+			},
+		}, nil,
+		)
 
 	// Tests
-	if response, err = apiHandler.Endpoints().TableQuery(context.Background(), "tests", request); assert.Nil(t, err) {
-		for _, column := range response.Columns {
-			switch data := column.Data.(type) {
-			case grafanaJson.TableQueryResponseTimeColumn:
-				assert.Equal(t, "timestamp", column.Text)
-				assert.Equal(t, endDate, data[len(data)-1])
-			case grafanaJson.TableQueryResponseNumberColumn:
-				switch column.Text {
-				case "total":
-					assert.Equal(t, 11.0, data[len(data)-1])
-				case "positive":
-					assert.Equal(t, 5.0, data[len(data)-1])
-				case "rate":
-					assert.Equal(t, 0.45454545454545453, data[len(data)-1])
-				default:
-					assert.Fail(t, "unexpected column", column.Text)
-				}
+	response, err := stack.apiHandler.Endpoints().TableQuery(ctx, "tests", request)
+	require.NoError(t, err)
+
+	for _, column := range response.Columns {
+		require.Len(t, column.Data, 3)
+		switch data := column.Data.(type) {
+		case grafanaJson.TableQueryResponseTimeColumn:
+			assert.Equal(t, "timestamp", column.Text)
+			assert.Equal(t, endDate, data[len(data)-1])
+		case grafanaJson.TableQueryResponseNumberColumn:
+			switch column.Text {
+			case "total":
+				assert.Equal(t, 100.0, data[len(data)-1])
+			case "positive":
+				assert.Equal(t, 10.0, data[len(data)-1])
+			case "rate":
+				assert.Equal(t, 0.1, data[len(data)-1])
+			default:
+				assert.Fail(t, "unexpected column", column.Text)
 			}
 		}
 	}
+
+	stack.sciensanoClient.AssertExpectations(t)
 }

@@ -2,125 +2,90 @@ package sciensano
 
 import (
 	"context"
-	"fmt"
-	log "github.com/sirupsen/logrus"
-	"sort"
+	"github.com/clambin/sciensano/sciensano/apiclient"
 	"time"
 )
 
+// Vaccination represents the number of first/second doses administered on a given day
 type Vaccination struct {
-	Timestamp  time.Time
-	FirstDose  int
+	// Timestamp is the day of the measurement
+	Timestamp time.Time
+	// FirstDose is how many first doses were administered by this day
+	FirstDose int
+	// SecondDose is how many second (final) doses were administered by that day
 	SecondDose int
 }
 
-func (client *Client) GetVaccinations(ctx context.Context, end time.Time) (results []Vaccination, err error) {
-	var apiResult []*apiVaccinationsResponse
+// GetVaccinations returns all vaccinations up to endTime
+func (client *Client) GetVaccinations(ctx context.Context, endTime time.Time) (results []Vaccination, err error) {
+	var apiResult []*apiclient.APIVaccinationsResponse
 
-	if apiResult, err = client.vaccinationsCache.GetVaccinations(ctx); err == nil {
-		results = groupVaccinations(apiResult, end)
+	if apiResult, err = client.APIClient.GetVaccinations(ctx); err == nil {
+		results = groupVaccinations(apiResult, endTime)
 	}
 
 	return
 }
 
+// GetVaccinationsByAge returns all vaccinations, grouped by age group, up to endTime.
 func (client *Client) GetVaccinationsByAge(ctx context.Context, end time.Time) (results map[string][]Vaccination, err error) {
-	var apiResult map[string][]*apiVaccinationsResponse
-
-	apiResult, err = client.vaccinationsCache.GetVaccinationsByAge(ctx)
-
+	var apiResult []*apiclient.APIVaccinationsResponse
+	apiResult, err = client.APIClient.GetVaccinations(ctx)
 	if err != nil {
 		return
 	}
 
-	results = make(map[string][]Vaccination)
-	ageGroups := getAgeGroups(apiResult)
-	responses := make(map[string]chan []Vaccination)
-
-	for _, ageGroup := range ageGroups {
-		responses[ageGroup] = make(chan []Vaccination)
-		go func(ageGroup string, response chan []Vaccination) {
-			response <- groupVaccinations(apiResult[ageGroup], end)
-		}(ageGroup, responses[ageGroup])
-	}
-	for _, ageGroup := range ageGroups {
-		results[ageGroup] = <-responses[ageGroup]
-	}
-
-	return
-}
-
-func (client *Client) GetVaccinationsByRegion(ctx context.Context, end time.Time) (results map[string][]Vaccination, err error) {
-	var apiResult map[string][]*apiVaccinationsResponse
-
-	apiResult, err = client.vaccinationsCache.GetVaccinationsByRegion(ctx)
-
-	if err != nil {
-		return
-	}
-
-	results = make(map[string][]Vaccination)
-	regions := getRegions(apiResult)
-	responses := make(map[string]chan []Vaccination)
-
-	for _, region := range regions {
-		responses[region] = make(chan []Vaccination)
-		go func(region string, response chan []Vaccination) {
-			response <- groupVaccinations(apiResult[region], end)
-		}(region, responses[region])
-	}
-	for _, region := range regions {
-		results[region] = <-responses[region]
-	}
-
-	return
-}
-
-type apiVaccinationsResponse struct {
-	TimeStamp string `json:"DATE"`
-	Region    string `json:"REGION"`
-	AgeGroup  string `json:"AGEGROUP"`
-	Gender    string `json:"SEX"`
-	Dose      string `json:"DOSE"`
-	Count     int    `json:"Count"`
-}
-
-func parseDate(date string) (output time.Time, err error) {
-	year := (((int(date[0])-'0')*10+int(date[1])-'0')*10+int(date[2])-'0')*10 + int(date[3]) - '0'
-	month := time.Month((int(date[5])-'0')*10 + int(date[6]) - '0')
-	day := (int(date[8])-'0')*10 + int(date[9]) - '0'
-
-	if year == 0 || month == 0 || day == 0 {
-		err = fmt.Errorf("invalid timestamp: %s", date)
-	} else {
-		output = time.Date(year, month, day, 0, 0, 0, 0, time.UTC)
-	}
-
-	return
-}
-
-func groupVaccinations(apiResult []*apiVaccinationsResponse, end time.Time) (totals []Vaccination) {
-	// Store the totals in a map
-	accumTotal := make(map[time.Time]Vaccination)
+	grouped := make(map[string][]*apiclient.APIVaccinationsResponse)
 	for _, entry := range apiResult {
-		// time.Parse needs to be called a *lot* and it's fairly slow. replace it with a more specific, faster version.
-		// ts, err2 := time.Parse("2006-01-02", entry.TimeStamp)
-		ts, err2 := parseDate(entry.TimeStamp)
+		grouped[entry.AgeGroup] = append(grouped[entry.AgeGroup], entry)
+	}
 
-		if err2 != nil {
-			log.WithFields(log.Fields{"err": err2, "timestamp": entry.TimeStamp}).Warning("could not parse timestamp from API. skipping entry")
-			continue
-		}
+	results = make(map[string][]Vaccination)
+	for ageGroup := range grouped {
+		results[ageGroup] = groupVaccinations(grouped[ageGroup], end)
+	}
 
+	return
+}
+
+// GetVaccinationsByRegion returns all vaccinations, grouped by region, up to endTime.
+func (client *Client) GetVaccinationsByRegion(ctx context.Context, end time.Time) (results map[string][]Vaccination, err error) {
+	var apiResult []*apiclient.APIVaccinationsResponse
+	apiResult, err = client.APIClient.GetVaccinations(ctx)
+	if err != nil {
+		return
+	}
+
+	grouped := make(map[string][]*apiclient.APIVaccinationsResponse)
+	for _, entry := range apiResult {
+		grouped[entry.Region] = append(grouped[entry.Region], entry)
+	}
+
+	results = make(map[string][]Vaccination)
+	for region := range grouped {
+		results[region] = groupVaccinations(grouped[region], end)
+	}
+
+	return
+}
+
+func groupVaccinations(apiResult []*apiclient.APIVaccinationsResponse, end time.Time) (totals []Vaccination) {
+	// Note: this algorithm assumes apiResult is sorted by date.  If that changes, add:
+	// sort.Slice(apiResult, func(i, j int) bool { return apiResult[i].TimeStamp.Time.Before(apiResult[j].TimeStamp.Time) })
+
+	var current Vaccination
+	for _, entry := range apiResult {
 		// Skip anything after the specified end date
-		if ts.After(end) {
+		if entry.TimeStamp.Time.After(end) {
 			continue
 		}
 
-		// create a running total for each timestamp using the accumTotal map
-		current, ok := accumTotal[ts]
-		if ok == false {
-			current.Timestamp = ts
+		if entry.TimeStamp.Time != current.Timestamp {
+			if !current.Timestamp.IsZero() {
+				totals = append(totals, current)
+			}
+
+			current = Vaccination{Timestamp: entry.TimeStamp.Time}
 		}
 
 		switch entry.Dose {
@@ -129,20 +94,16 @@ func groupVaccinations(apiResult []*apiVaccinationsResponse, end time.Time) (tot
 		case "B":
 			current.SecondDose += entry.Count
 		}
-		accumTotal[ts] = current
 	}
 
-	// For each entry in the map, create an entry in the results slice
-	totals = make([]Vaccination, 0, len(accumTotal))
-	for _, entry := range accumTotal {
-		totals = append(totals, entry)
+	if !current.Timestamp.IsZero() {
+		totals = append(totals, current)
 	}
-	// Maps are iterated in random order. Sort the final slice
-	sort.Slice(totals, func(i, j int) bool { return totals[i].Timestamp.Before(totals[j].Timestamp) })
 
 	return
 }
 
+// AccumulateVaccinations takes a list of vaccinations and accumulates the doses
 func AccumulateVaccinations(entries []Vaccination) (totals []Vaccination) {
 	first := 0
 	second := 0
@@ -154,32 +115,6 @@ func AccumulateVaccinations(entries []Vaccination) (totals []Vaccination) {
 		second += entry.SecondDose
 		entry.SecondDose = second
 		totals[index] = entry
-	}
-	return
-}
-
-func getAgeGroups(results map[string][]*apiVaccinationsResponse) (ageGroups []string) {
-	groups := make(map[string]struct{})
-
-	for result := range results {
-		groups[result] = struct{}{}
-	}
-
-	for group := range groups {
-		ageGroups = append(ageGroups, group)
-	}
-	return
-}
-
-func getRegions(results map[string][]*apiVaccinationsResponse) (regions []string) {
-	groups := make(map[string]struct{})
-
-	for result := range results {
-		groups[result] = struct{}{}
-	}
-
-	for group := range groups {
-		regions = append(regions, group)
 	}
 	return
 }
