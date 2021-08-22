@@ -299,30 +299,14 @@ func TestAPIHandler_VaccinationByRegion_Rate(t *testing.T) {
 		On("GetVaccinations", mock.Anything).
 		Return(
 			[]*apiclient.APIVaccinationsResponse{
-				{
-					TimeStamp: apiclient.TimeStamp{Time: endDate},
-					Region:    "Flanders",
-					Dose:      "A",
-					Count:     100,
-				},
-				{
-					TimeStamp: apiclient.TimeStamp{Time: endDate},
-					Region:    "Flanders",
-					Dose:      "B",
-					Count:     25,
-				},
-				{
-					TimeStamp: apiclient.TimeStamp{Time: endDate.Add(24 * time.Hour)},
-					Region:    "Flanders",
-					Dose:      "A",
-					Count:     74,
-				},
-				{
-					TimeStamp: apiclient.TimeStamp{Time: endDate.Add(24 * time.Hour)},
-					Region:    "Flanders",
-					Dose:      "B",
-					Count:     50,
-				},
+				{TimeStamp: apiclient.TimeStamp{Time: endDate}, Region: "Flanders", Dose: "A", Count: 100},
+				{TimeStamp: apiclient.TimeStamp{Time: endDate}, Region: "Flanders", Dose: "B", Count: 25},
+				{TimeStamp: apiclient.TimeStamp{Time: endDate}, Region: "Ostbelgien", Dose: "A", Count: 25},
+				{TimeStamp: apiclient.TimeStamp{Time: endDate}, Region: "Ostbelgien", Dose: "B", Count: 5},
+				{TimeStamp: apiclient.TimeStamp{Time: endDate.Add(24 * time.Hour)}, Region: "Flanders", Dose: "A", Count: 174},
+				{TimeStamp: apiclient.TimeStamp{Time: endDate.Add(24 * time.Hour)}, Region: "Flanders", Dose: "B", Count: 50},
+				{TimeStamp: apiclient.TimeStamp{Time: endDate.Add(24 * time.Hour)}, Region: "Ostbelgien", Dose: "A", Count: 25},
+				{TimeStamp: apiclient.TimeStamp{Time: endDate.Add(24 * time.Hour)}, Region: "Ostbelgien", Dose: "B", Count: 5},
 			}, nil)
 
 	// Vaccination rate grouped by Region
@@ -340,6 +324,9 @@ func TestAPIHandler_VaccinationByRegion_Rate(t *testing.T) {
 			case "Flanders":
 				require.NotZero(t, len(data))
 				assert.Equal(t, 4166, int(1000000*data[len(data)-1]))
+			case "Ostbelgien":
+				require.NotZero(t, len(data))
+				assert.Equal(t, 64, int(1000000*data[len(data)-1]))
 			}
 		}
 	}
