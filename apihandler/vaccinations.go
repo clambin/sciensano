@@ -108,7 +108,15 @@ func (handler *Handler) buildGroupedVaccinationRateTableResponse(ctx context.Con
 			}
 			prorateFigures(response, ageGroupFigures)
 		} else if strings.HasPrefix(target, "vacc-region-rate-") {
-			prorateFigures(response, handler.Demographics.GetRegionFigures())
+			regionFigures := handler.Demographics.GetRegionFigures()
+			_, ok := regionFigures["Ostbelgien"]
+			if !ok {
+				population, _ := regionFigures["Wallonia"]
+				population -= 78000
+				regionFigures["Wallonia"] = population
+				regionFigures["Ostbelgien"] = 78000
+			}
+			prorateFigures(response, regionFigures)
 		}
 	}
 	return
