@@ -11,7 +11,9 @@ import (
 
 func main() {
 	log.WithField("version", version.BuildVersion).Info("sciensano API starting")
-	server := grafana_json.Create(apihandler.Create())
+	server := grafana_json.Server{
+		Handler: apihandler.Create(),
+	}
 	r := server.GetRouter()
 	r.PathPrefix("/debug/pprof/").Handler(http.DefaultServeMux)
 	err := http.ListenAndServe(":8080", r)
