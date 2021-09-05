@@ -117,6 +117,12 @@ func BenchmarkHandler_QueryTable(b *testing.B) {
 	stack.vaccinesClient.
 		On("GetBatches", mock.Anything).
 		Return([]*vaccines.Batch{}, nil)
+	stack.demoClient.
+		On("GetAgeGroupFigures").
+		Return(map[string]int{})
+	stack.demoClient.
+		On("GetRegionFigures").
+		Return(map[string]int{})
 
 	for target := range realTargets {
 		for i := 0; i < 100; i++ {
