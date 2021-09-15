@@ -99,13 +99,6 @@ func (handler *Handler) buildGroupedVaccinationRateTableResponse(ctx context.Con
 	if response != nil {
 		if strings.HasPrefix(target, "vacc-age-rate-") {
 			ageGroupFigures := handler.Demographics.GetAgeGroupFigures()
-			_, ok := ageGroupFigures["Ostbelgien"]
-			if !ok {
-				population, _ := ageGroupFigures["Wallonia"]
-				population -= 78000
-				ageGroupFigures["Wallonia"] = population
-				ageGroupFigures["Ostbelgien"] = 78000
-			}
 			prorateFigures(response, ageGroupFigures)
 		} else if strings.HasPrefix(target, "vacc-region-rate-") {
 			regionFigures := handler.Demographics.GetRegionFigures()
@@ -140,6 +133,8 @@ func (handler *Handler) buildVaccinationLagTableResponse(ctx context.Context, _,
 func prorateFigures(result *grafanaJson.TableQueryResponse, groups map[string]int) {
 	newColumns := make([]grafanaJson.TableQueryResponseColumn, 0, len(result.Columns))
 	for _, column := range result.Columns {
+		// TODO: perform this in a go routine and use WaitGroup to wait till done
+		// set up a benchmark to check speed improvement
 		if column.Text != "(empty)" {
 			switch data := column.Data.(type) {
 			case grafanaJson.TableQueryResponseNumberColumn:
