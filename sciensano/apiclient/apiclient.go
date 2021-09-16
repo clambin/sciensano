@@ -12,7 +12,6 @@ import (
 type APIClient interface {
 	GetTestResults(ctx context.Context) (results []*APITestResultsResponse, err error)
 	GetVaccinations(ctx context.Context) (results []*APIVaccinationsResponse, err error)
-	SetURL(url string)
 }
 
 // Client calls the different sciensano APIs
@@ -23,10 +22,6 @@ type Client struct {
 
 const baseURL = "https://epistat.sciensano.be"
 
-func (client *Client) SetURL(url string) {
-	client.URL = url
-}
-
 func (client *Client) getURL() (url string) {
 	url = baseURL
 	if client.URL != "" {
@@ -35,10 +30,12 @@ func (client *Client) getURL() (url string) {
 	return
 }
 
+// TimeStamp represents a timestamp in the API response. Needed for parsing purposes
 type TimeStamp struct {
 	time.Time
 }
 
+// UnmarshalJSON unmarshalls a TimeStamp from the API response.
 func (ts *TimeStamp) UnmarshalJSON(b []byte) (err error) {
 	var v interface{}
 	err = json.Unmarshal(b, &v)

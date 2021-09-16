@@ -17,6 +17,7 @@ type APITestResultsResponse struct {
 	Positive  int       `json:"TESTS_ALL_POS"`
 }
 
+// GetTestResults retrieves all COVID-19 test results.
 func (client *Client) GetTestResults(ctx context.Context) (results []*APITestResultsResponse, err error) {
 	timer := prometheus.NewTimer(metricRequestLatency.WithLabelValues("tests"))
 	results, err = client.getTestResults(ctx)

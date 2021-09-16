@@ -18,6 +18,7 @@ type APIVaccinationsResponse struct {
 	Count     int       `json:"Count"`
 }
 
+// GetVaccinations retrieves all COVID-19 vaccinations.
 func (client *Client) GetVaccinations(ctx context.Context) (results []*APIVaccinationsResponse, err error) {
 	timer := prometheus.NewTimer(metricRequestLatency.WithLabelValues("vaccinations"))
 	results, err = client.getVaccinations(ctx)

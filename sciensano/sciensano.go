@@ -12,6 +12,7 @@ type Client struct {
 	apiclient.APIClient
 }
 
+// APIClient exposes the supported Sciensano APIs
 type APIClient interface {
 	GetTests(ctx context.Context, end time.Time) (results []TestResult, err error)
 	GetVaccinations(ctx context.Context, end time.Time) (results []Vaccination, err error)

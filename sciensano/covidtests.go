@@ -17,11 +17,12 @@ type TestResult struct {
 	Positive int
 }
 
-func (client *Client) GetTests(ctx context.Context, end time.Time) (results []TestResult, err error) {
+// GetTests returns all COVID-19 tests up to endTime
+func (client *Client) GetTests(ctx context.Context, endTime time.Time) (results []TestResult, err error) {
 	var apiResult []*apiclient.APITestResultsResponse
 
 	if apiResult, err = client.APIClient.GetTestResults(ctx); err == nil {
-		results = groupTests(apiResult, end)
+		results = groupTests(apiResult, endTime)
 	}
 
 	return
