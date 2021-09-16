@@ -4,7 +4,9 @@ on:
   push:
     branches-ignore:
       - master
-      - simplemetrics
+    paths-ignore:
+      - '**.md'
+      - 'assets/grafana/dashboards/**'
   pull_request_target:
 
 jobs:
