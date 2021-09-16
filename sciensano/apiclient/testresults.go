@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"github.com/prometheus/client_golang/prometheus"
 	"io"
 	"net/http"
 )
@@ -17,6 +18,17 @@ type APITestResultsResponse struct {
 }
 
 func (client *Client) GetTestResults(ctx context.Context) (results []*APITestResultsResponse, err error) {
+	timer := prometheus.NewTimer(metricRequestLatency.WithLabelValues("tests"))
+	results, err = client.getTestResults(ctx)
+	timer.ObserveDuration()
+	metricRequestsTotal.WithLabelValues("tests").Add(1.0)
+	if err != nil {
+		metricRequestErrorsTotal.WithLabelValues("tests").Add(1.0)
+	}
+	return
+}
+
+func (client *Client) getTestResults(ctx context.Context) (results []*APITestResultsResponse, err error) {
 	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, client.getURL()+"/Data/COVID19BE_tests.json", nil)
 
 	var resp *http.Response

@@ -4,7 +4,7 @@ on:
   push:
     branches:
     - master
-    - mock
+    - simplemetrics
 jobs:
   test:
     runs-on: ubuntu-latest

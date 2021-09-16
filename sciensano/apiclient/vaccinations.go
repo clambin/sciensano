@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"github.com/prometheus/client_golang/prometheus"
 	"io"
 	"net/http"
 )
@@ -18,6 +19,17 @@ type APIVaccinationsResponse struct {
 }
 
 func (client *Client) GetVaccinations(ctx context.Context) (results []*APIVaccinationsResponse, err error) {
+	timer := prometheus.NewTimer(metricRequestLatency.WithLabelValues("vaccinations"))
+	results, err = client.getVaccinations(ctx)
+	timer.ObserveDuration()
+	metricRequestsTotal.WithLabelValues("vaccinations").Add(1.0)
+	if err != nil {
+		metricRequestErrorsTotal.WithLabelValues("vaccinations").Add(1.0)
+	}
+	return
+}
+
+func (client *Client) getVaccinations(ctx context.Context) (results []*APIVaccinationsResponse, err error) {
 	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, client.getURL()+"/Data/COVID19BE_VACC.json", nil)
 
 	var resp *http.Response

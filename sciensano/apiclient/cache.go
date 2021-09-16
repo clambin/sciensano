@@ -21,8 +21,11 @@ type Cache struct {
 func (cache *Cache) GetTestResults(ctx context.Context) (results []*APITestResultsResponse, err error) {
 	cache.lock.Lock()
 	if cache.testOnce == nil || time.Now().After(cache.testExpiry) {
+		metricCacheMiss.WithLabelValues("tests").Add(1.0)
 		cache.testOnce = &sync.Once{}
 		cache.testExpiry = time.Now().Add(cache.Retention)
+	} else {
+		metricCacheHit.WithLabelValues("tests").Add(1.0)
 	}
 	cache.lock.Unlock()
 
@@ -38,8 +41,11 @@ func (cache *Cache) GetTestResults(ctx context.Context) (results []*APITestResul
 func (cache *Cache) GetVaccinations(ctx context.Context) (results []*APIVaccinationsResponse, err error) {
 	cache.lock.Lock()
 	if cache.vaccinationOnce == nil || time.Now().After(cache.vaccinationExpiry) {
+		metricCacheMiss.WithLabelValues("vaccinations").Add(1.0)
 		cache.vaccinationOnce = &sync.Once{}
 		cache.vaccinationExpiry = time.Now().Add(cache.Retention)
+	} else {
+		metricCacheHit.WithLabelValues("vaccinations").Add(1.0)
 	}
 	cache.lock.Unlock()
 
