@@ -349,7 +349,7 @@
           "exemplar": true,
           "expr": "sum by (endpoint) (sciensano_cache_hit_total / (sciensano_cache_miss_total+sciensano_cache_hit_total))",
           "interval": "",
-          "legendFormat": "",
+          "legendFormat": "{{endpoint}}",
           "queryType": "randomWalk",
           "refId": "A"
         }
@@ -366,12 +366,12 @@
     "list": []
   },
   "time": {
-    "from": "now-6h",
+    "from": "now-12h",
     "to": "now"
   },
   "timepicker": {},
   "timezone": "",
   "title": "Sciensano - internal",
   "uid": "PTQPklInk",
-  "version": 2
+  "version": 4
 }
