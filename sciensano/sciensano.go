@@ -16,6 +16,7 @@ type Client struct {
 type APIClient interface {
 	GetTests(ctx context.Context, end time.Time) (results []TestResult, err error)
 	GetVaccinations(ctx context.Context, end time.Time) (results []Vaccination, err error)
+	GetVaccinationsForLag(ctx context.Context, end time.Time) (results []Vaccination, err error)
 	GetVaccinationsByAge(ctx context.Context, end time.Time) (results map[string][]Vaccination, err error)
 	GetVaccinationsByRegion(ctx context.Context, end time.Time) (results map[string][]Vaccination, err error)
 }

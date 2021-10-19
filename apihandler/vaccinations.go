@@ -5,6 +5,7 @@ import (
 	"fmt"
 	grafanaJson "github.com/clambin/grafana-json"
 	"github.com/clambin/sciensano/sciensano"
+	log "github.com/sirupsen/logrus"
 	"strings"
 	"time"
 )
@@ -20,8 +21,8 @@ func (handler *Handler) buildVaccinationTableResponse(ctx context.Context, _, en
 
 		for index, entry := range vaccinations {
 			timestamps[index] = entry.Timestamp
-			partial[index] = float64(entry.FirstDose)
-			full[index] = float64(entry.SecondDose)
+			partial[index] = float64(entry.Partial)
+			full[index] = float64(entry.Full)
 		}
 
 		response = new(grafanaJson.TableQueryResponse)
@@ -46,50 +47,52 @@ func (handler *Handler) buildGroupedVaccinationTableResponse(ctx context.Context
 		err = fmt.Errorf("invalid target: " + target)
 	}
 
-	if err == nil {
-		// grouped vaccinations are shown incrementally
-		for ageGroup, data := range vaccinations {
-			vaccinations[ageGroup] = sciensano.AccumulateVaccinations(data)
+	if err != nil {
+		log.WithError(err).Warning("failed to create grouped vaccination table response")
+		return
+	}
+	// grouped vaccinations are shown incrementally
+	for ageGroup, data := range vaccinations {
+		vaccinations[ageGroup] = sciensano.AccumulateVaccinations(data)
+	}
+
+	// sort group names so they always show up in the same order
+	groups := getGroups(vaccinations)
+
+	// get all timestamps across all groups & populate the timestamp column
+	timestamps := getTimestamps(vaccinations)
+	timestampCount := len(timestamps)
+
+	// fill out each group, so all groups have all timestamps
+	results := fillVaccinations(timestamps, vaccinations, strings.HasSuffix(target, "-full"))
+
+	// build & populate the timestamp columns
+	timestampColumn := make(grafanaJson.TableQueryResponseTimeColumn, 0, timestampCount)
+	timestampColumn = append(timestampColumn, timestamps...)
+
+	// build & populate the data columns
+	dataColumns := make(map[string]grafanaJson.TableQueryResponseNumberColumn, len(groups))
+	for _, group := range groups {
+		dataColumns[group] = make(grafanaJson.TableQueryResponseNumberColumn, 0, timestampCount)
+		data := <-results[group]
+		dataColumns[group] = append(dataColumns[group], data...)
+	}
+
+	// build the response
+	response = new(grafanaJson.TableQueryResponse)
+	response.Columns = []grafanaJson.TableQueryResponseColumn{{
+		Text: "timestamp",
+		Data: timestampColumn,
+	}}
+	for _, group := range groups {
+		label := group
+		if label == "" {
+			label = "(empty)"
 		}
-
-		// sort group names so they always show up in the same order
-		groups := getGroups(vaccinations)
-
-		// get all timestamps across all groups & populate the timestamp column
-		timestamps := getTimestamps(vaccinations)
-		timestampCount := len(timestamps)
-
-		// fill out each group, so all groups have all timestamps
-		results := fillVaccinations(timestamps, vaccinations, strings.HasSuffix(target, "-full"))
-
-		// build & populate the timestamp columns
-		timestampColumn := make(grafanaJson.TableQueryResponseTimeColumn, 0, timestampCount)
-		timestampColumn = append(timestampColumn, timestamps...)
-
-		// build & populate the data columns
-		dataColumns := make(map[string]grafanaJson.TableQueryResponseNumberColumn, len(groups))
-		for _, group := range groups {
-			dataColumns[group] = make(grafanaJson.TableQueryResponseNumberColumn, 0, timestampCount)
-			data := <-results[group]
-			dataColumns[group] = append(dataColumns[group], data...)
-		}
-
-		// build the response
-		response = new(grafanaJson.TableQueryResponse)
-		response.Columns = []grafanaJson.TableQueryResponseColumn{{
-			Text: "timestamp",
-			Data: timestampColumn,
-		}}
-		for _, group := range groups {
-			label := group
-			if label == "" {
-				label = "(empty)"
-			}
-			response.Columns = append(response.Columns, grafanaJson.TableQueryResponseColumn{
-				Text: label,
-				Data: dataColumns[group],
-			})
-		}
+		response.Columns = append(response.Columns, grafanaJson.TableQueryResponseColumn{
+			Text: label,
+			Data: dataColumns[group],
+		})
 	}
 	return
 }
@@ -116,7 +119,7 @@ func (handler *Handler) buildGroupedVaccinationRateTableResponse(ctx context.Con
 }
 
 func (handler *Handler) buildVaccinationLagTableResponse(ctx context.Context, _, endTime time.Time, _ string) (response *grafanaJson.TableQueryResponse) {
-	if vaccinations, err := handler.Sciensano.GetVaccinations(ctx, endTime); err == nil {
+	if vaccinations, err := handler.Sciensano.GetVaccinationsForLag(ctx, endTime); err == nil {
 		vaccinations = sciensano.AccumulateVaccinations(vaccinations)
 
 		timestamps, lag := buildLag(vaccinations)

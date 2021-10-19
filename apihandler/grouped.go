@@ -65,9 +65,9 @@ func fillVaccinations(timestamps []time.Time, vaccinations map[string][]sciensan
 
 func getVaccination(vaccination sciensano.Vaccination, complete bool) (value int) {
 	if complete == false {
-		value = vaccination.FirstDose
+		value = vaccination.Partial
 	} else {
-		value = vaccination.SecondDose
+		value = vaccination.Full
 	}
 	return
 }

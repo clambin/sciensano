@@ -25,12 +25,12 @@ func buildLag(vaccinations []sciensano.Vaccination) (timestamps grafanaJson.Tabl
 	for index, entry := range vaccinations {
 		// we only measure lag when there is actually a second dose
 		// we don't report when the 2nd dose doesn't change
-		if entry.SecondDose == 0 || entry.SecondDose == lastSecondDose {
+		if entry.Full == 0 || entry.Full == lastSecondDose {
 			continue
 		}
 
 		// find the time when we reached the number of first Doses that equals (or higher) the current Second Dose number
-		for firstDoseIndex <= index && vaccinations[firstDoseIndex].FirstDose < entry.SecondDose {
+		for firstDoseIndex <= index && vaccinations[firstDoseIndex].Partial < entry.Full {
 			firstDoseIndex++
 		}
 
@@ -40,7 +40,7 @@ func buildLag(vaccinations []sciensano.Vaccination) (timestamps grafanaJson.Tabl
 			lag = append(lag, entry.Timestamp.Sub(vaccinations[firstDoseIndex].Timestamp).Hours()/24)
 		}
 
-		lastSecondDose = vaccinations[index].SecondDose
+		lastSecondDose = vaccinations[index].Full
 	}
 
 	return

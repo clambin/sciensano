@@ -253,29 +253,29 @@ func TestAPIHandler_Vaccines_Time(t *testing.T) {
 
 func TestVaccineDelay(t *testing.T) {
 	vaccinations := []sciensano.Vaccination{{
-		Timestamp:  time.Date(2021, 01, 01, 0, 0, 0, 0, time.UTC),
-		FirstDose:  10,
-		SecondDose: 0,
+		Timestamp: time.Date(2021, 01, 01, 0, 0, 0, 0, time.UTC),
+		Partial:   10,
+		Full:      0,
 	}, {
-		Timestamp:  time.Date(2021, 01, 15, 0, 0, 0, 0, time.UTC),
-		FirstDose:  15,
-		SecondDose: 1,
+		Timestamp: time.Date(2021, 01, 15, 0, 0, 0, 0, time.UTC),
+		Partial:   15,
+		Full:      1,
 	}, {
-		Timestamp:  time.Date(2021, 02, 1, 0, 0, 0, 0, time.UTC),
-		FirstDose:  15,
-		SecondDose: 4,
+		Timestamp: time.Date(2021, 02, 1, 0, 0, 0, 0, time.UTC),
+		Partial:   15,
+		Full:      4,
 	}, {
-		Timestamp:  time.Date(2021, 02, 15, 0, 0, 0, 0, time.UTC),
-		FirstDose:  25,
-		SecondDose: 5,
+		Timestamp: time.Date(2021, 02, 15, 0, 0, 0, 0, time.UTC),
+		Partial:   25,
+		Full:      5,
 	}, {
-		Timestamp:  time.Date(2021, 03, 1, 0, 0, 0, 0, time.UTC),
-		FirstDose:  35,
-		SecondDose: 10,
+		Timestamp: time.Date(2021, 03, 1, 0, 0, 0, 0, time.UTC),
+		Partial:   35,
+		Full:      10,
 	}, {
-		Timestamp:  time.Date(2021, 03, 15, 0, 0, 0, 0, time.UTC),
-		FirstDose:  35,
-		SecondDose: 15,
+		Timestamp: time.Date(2021, 03, 15, 0, 0, 0, 0, time.UTC),
+		Partial:   35,
+		Full:      15,
 	}}
 
 	batches := []*vaccines.Batch{{

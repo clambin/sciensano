@@ -9,13 +9,13 @@ import (
 
 func TestVaccinationLag(t *testing.T) {
 	vaccinations := []sciensano.Vaccination{
-		{Timestamp: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC), FirstDose: 0, SecondDose: 0},
-		{Timestamp: time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC), FirstDose: 1, SecondDose: 0},
-		{Timestamp: time.Date(2021, 1, 3, 0, 0, 0, 0, time.UTC), FirstDose: 2, SecondDose: 1},
-		{Timestamp: time.Date(2021, 1, 4, 0, 0, 0, 0, time.UTC), FirstDose: 3, SecondDose: 2},
-		{Timestamp: time.Date(2021, 1, 5, 0, 0, 0, 0, time.UTC), FirstDose: 4, SecondDose: 3},
-		{Timestamp: time.Date(2021, 1, 6, 0, 0, 0, 0, time.UTC), FirstDose: 5, SecondDose: 4},
-		{Timestamp: time.Date(2021, 1, 7, 0, 0, 0, 0, time.UTC), FirstDose: 6, SecondDose: 5},
+		{Timestamp: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC), Partial: 0, Full: 0},
+		{Timestamp: time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC), Partial: 1, Full: 0},
+		{Timestamp: time.Date(2021, 1, 3, 0, 0, 0, 0, time.UTC), Partial: 2, Full: 1},
+		{Timestamp: time.Date(2021, 1, 4, 0, 0, 0, 0, time.UTC), Partial: 3, Full: 2},
+		{Timestamp: time.Date(2021, 1, 5, 0, 0, 0, 0, time.UTC), Partial: 4, Full: 3},
+		{Timestamp: time.Date(2021, 1, 6, 0, 0, 0, 0, time.UTC), Partial: 5, Full: 4},
+		{Timestamp: time.Date(2021, 1, 7, 0, 0, 0, 0, time.UTC), Partial: 6, Full: 5},
 	}
 	_, lag := buildLag(vaccinations)
 
@@ -27,13 +27,13 @@ func TestVaccinationLag(t *testing.T) {
 	}
 
 	vaccinations = []sciensano.Vaccination{
-		{Timestamp: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC), FirstDose: 1, SecondDose: 1}, // 0
-		{Timestamp: time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC), FirstDose: 1, SecondDose: 1}, // -
-		{Timestamp: time.Date(2021, 1, 3, 0, 0, 0, 0, time.UTC), FirstDose: 2, SecondDose: 1}, // -
-		{Timestamp: time.Date(2021, 1, 4, 0, 0, 0, 0, time.UTC), FirstDose: 3, SecondDose: 2}, // 1
-		{Timestamp: time.Date(2021, 1, 5, 0, 0, 0, 0, time.UTC), FirstDose: 4, SecondDose: 3}, // 1
-		{Timestamp: time.Date(2021, 1, 6, 0, 0, 0, 0, time.UTC), FirstDose: 4, SecondDose: 4}, // 1
-		{Timestamp: time.Date(2021, 1, 7, 0, 0, 0, 0, time.UTC), FirstDose: 6, SecondDose: 5}, // 0
+		{Timestamp: time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC), Partial: 1, Full: 1}, // 0
+		{Timestamp: time.Date(2021, 1, 2, 0, 0, 0, 0, time.UTC), Partial: 1, Full: 1}, // -
+		{Timestamp: time.Date(2021, 1, 3, 0, 0, 0, 0, time.UTC), Partial: 2, Full: 1}, // -
+		{Timestamp: time.Date(2021, 1, 4, 0, 0, 0, 0, time.UTC), Partial: 3, Full: 2}, // 1
+		{Timestamp: time.Date(2021, 1, 5, 0, 0, 0, 0, time.UTC), Partial: 4, Full: 3}, // 1
+		{Timestamp: time.Date(2021, 1, 6, 0, 0, 0, 0, time.UTC), Partial: 4, Full: 4}, // 1
+		{Timestamp: time.Date(2021, 1, 7, 0, 0, 0, 0, time.UTC), Partial: 6, Full: 5}, // 0
 	}
 
 	_, lag = buildLag(vaccinations)

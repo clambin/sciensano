@@ -10,14 +10,14 @@ import (
 func TestFilledVaccinations(t *testing.T) {
 	vaccinations := []sciensano.Vaccination{
 		{
-			Timestamp:  time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC),
-			FirstDose:  10,
-			SecondDose: 5,
+			Timestamp: time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC),
+			Partial:   10,
+			Full:      5,
 		},
 		{
-			Timestamp:  time.Date(2020, 1, 5, 0, 0, 0, 0, time.UTC),
-			FirstDose:  20,
-			SecondDose: 10,
+			Timestamp: time.Date(2020, 1, 5, 0, 0, 0, 0, time.UTC),
+			Partial:   20,
+			Full:      10,
 		},
 	}
 	timestamps := []time.Time{

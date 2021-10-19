@@ -10,10 +10,10 @@ import (
 type Vaccination struct {
 	// Timestamp is the day of the measurement
 	Timestamp time.Time
-	// FirstDose is how many first doses were administered by this day
-	FirstDose int
-	// SecondDose is how many second (final) doses were administered by that day
-	SecondDose int
+	// Partial is how many people were partially vaccinated on this day
+	Partial int
+	// Full is how many people were fully vaccinated on this day
+	Full int
 }
 
 // GetVaccinations returns all vaccinations up to endTime
@@ -21,7 +21,19 @@ func (client *Client) GetVaccinations(ctx context.Context, endTime time.Time) (r
 	var apiResult []*apiclient.APIVaccinationsResponse
 
 	if apiResult, err = client.APIClient.GetVaccinations(ctx); err == nil {
-		results = groupVaccinations(apiResult, endTime)
+		results = groupVaccinations(apiResult, endTime, true)
+	}
+
+	return
+}
+
+// GetVaccinationsForLag returns all vaccinations up to endTime so the caller can determine the lag between partial and
+// full vaccination, i.e. exclude any vaccines that only need one dose
+func (client *Client) GetVaccinationsForLag(ctx context.Context, endTime time.Time) (results []Vaccination, err error) {
+	var apiResult []*apiclient.APIVaccinationsResponse
+
+	if apiResult, err = client.APIClient.GetVaccinations(ctx); err == nil {
+		results = groupVaccinations(apiResult, endTime, false)
 	}
 
 	return
@@ -42,7 +54,7 @@ func (client *Client) GetVaccinationsByAge(ctx context.Context, end time.Time) (
 
 	results = make(map[string][]Vaccination)
 	for ageGroup := range grouped {
-		results[ageGroup] = groupVaccinations(grouped[ageGroup], end)
+		results[ageGroup] = groupVaccinations(grouped[ageGroup], end, true)
 	}
 
 	return
@@ -63,13 +75,13 @@ func (client *Client) GetVaccinationsByRegion(ctx context.Context, end time.Time
 
 	results = make(map[string][]Vaccination)
 	for region := range grouped {
-		results[region] = groupVaccinations(grouped[region], end)
+		results[region] = groupVaccinations(grouped[region], end, true)
 	}
 
 	return
 }
 
-func groupVaccinations(apiResult []*apiclient.APIVaccinationsResponse, end time.Time) (totals []Vaccination) {
+func groupVaccinations(apiResult []*apiclient.APIVaccinationsResponse, end time.Time, includeSingleDoseVaccines bool) (totals []Vaccination) {
 	// Note: this algorithm assumes apiResult is sorted by date.  If that changes, add:
 	// sort.Slice(apiResult, func(i, j int) bool { return apiResult[i].TimeStamp.Time.Before(apiResult[j].TimeStamp.Time) })
 
@@ -90,9 +102,13 @@ func groupVaccinations(apiResult []*apiclient.APIVaccinationsResponse, end time.
 
 		switch entry.Dose {
 		case "A":
-			current.FirstDose += entry.Count
+			current.Partial += entry.Count
 		case "B":
-			current.SecondDose += entry.Count
+			current.Full += entry.Count
+		case "C":
+			if includeSingleDoseVaccines {
+				current.Full += entry.Count
+			}
 		}
 	}
 
@@ -110,10 +126,10 @@ func AccumulateVaccinations(entries []Vaccination) (totals []Vaccination) {
 
 	totals = make([]Vaccination, len(entries))
 	for index, entry := range entries {
-		first += entry.FirstDose
-		entry.FirstDose = first
-		second += entry.SecondDose
-		entry.SecondDose = second
+		first += entry.Partial
+		entry.Partial = first
+		second += entry.Full
+		entry.Full = second
 		totals[index] = entry
 	}
 	return

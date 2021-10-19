@@ -55,7 +55,7 @@ func (handler *Handler) buildVaccineStatsTableResponse(ctx context.Context, _, e
 		go func() {
 			for _, entry := range vaccinations {
 				timestampColumn = append(timestampColumn, entry.Timestamp)
-				vaccinationsColumn = append(vaccinationsColumn, float64(entry.FirstDose+entry.SecondDose))
+				vaccinationsColumn = append(vaccinationsColumn, float64(entry.Partial+entry.Full))
 			}
 			wg.Done()
 		}()
@@ -106,7 +106,7 @@ func CalculateVaccineDelay(vaccinations []sciensano.Vaccination, batches []*vacc
 
 	for _, entry := range vaccinations {
 		// how many vaccines did we need to perform this many vaccinations?
-		vaccinesNeeded := entry.FirstDose + entry.SecondDose
+		vaccinesNeeded := entry.Partial + entry.Full
 
 		// find when we reached that number of vaccines
 		for batchIndex < batchCount && batches[batchIndex].Amount < vaccinesNeeded {
@@ -136,7 +136,7 @@ func calculateVaccineReserve(vaccinations []sciensano.Vaccination, batches []*va
 		}
 
 		// add it to the list
-		reserve = append(reserve, float64(lastBatch-entry.SecondDose-entry.FirstDose))
+		reserve = append(reserve, float64(lastBatch-entry.Full-entry.Partial))
 	}
 
 	return

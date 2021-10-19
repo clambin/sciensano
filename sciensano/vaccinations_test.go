@@ -34,6 +34,13 @@ var (
 		},
 		{
 			TimeStamp: apiclient.TimeStamp{Time: lastDay},
+			Region:    "Flanders",
+			AgeGroup:  "35-44",
+			Dose:      "C",
+			Count:     1,
+		},
+		{
+			TimeStamp: apiclient.TimeStamp{Time: lastDay},
 			Region:    "Brussels",
 			AgeGroup:  "35-44",
 			Dose:      "B",
@@ -61,8 +68,26 @@ func TestAPIClient_GetVaccinations(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, result, 1)
 	assert.Equal(t, lastDay, result[0].Timestamp)
-	assert.Equal(t, 2, result[0].FirstDose)
-	assert.Equal(t, 1, result[0].SecondDose)
+	assert.Equal(t, 2, result[0].Partial)
+	assert.Equal(t, 2, result[0].Full)
+
+	mock.AssertExpectationsForObjects(t, apiClient)
+}
+
+func TestAPIClient_GetVaccinationsForLag(t *testing.T) {
+	apiClient := &mocks.APIClient{}
+	apiClient.On("GetVaccinations", mock.Anything).Return(vaccinationsResponse, nil)
+
+	client := sciensano.NewClient(time.Hour)
+	client.APIClient = apiClient
+
+	result, err := client.GetVaccinationsForLag(context.Background(), lastDay)
+
+	require.NoError(t, err)
+	require.Len(t, result, 1)
+	assert.Equal(t, lastDay, result[0].Timestamp)
+	assert.Equal(t, 2, result[0].Partial)
+	assert.Equal(t, 1, result[0].Full)
 
 	mock.AssertExpectationsForObjects(t, apiClient)
 }
@@ -80,11 +105,11 @@ func TestAPIClient_GetVaccinationsByAge(t *testing.T) {
 	require.Contains(t, result, "25-34")
 	require.Contains(t, result, "35-44")
 	require.Len(t, result["25-34"], 1)
-	assert.Equal(t, 1, result["25-34"][0].FirstDose)
-	assert.Equal(t, 0, result["25-34"][0].SecondDose)
+	assert.Equal(t, 1, result["25-34"][0].Partial)
+	assert.Equal(t, 0, result["25-34"][0].Full)
 	require.Len(t, result["35-44"], 1)
-	assert.Equal(t, 1, result["35-44"][0].FirstDose)
-	assert.Equal(t, 1, result["35-44"][0].SecondDose)
+	assert.Equal(t, 1, result["35-44"][0].Partial)
+	assert.Equal(t, 2, result["35-44"][0].Full)
 
 	mock.AssertExpectationsForObjects(t, apiClient)
 }
@@ -102,13 +127,13 @@ func TestAPIClient_GetVaccinationsByRegion(t *testing.T) {
 
 	require.Contains(t, result, "Flanders")
 	require.Len(t, result["Flanders"], 1)
-	assert.Equal(t, 2, result["Flanders"][0].FirstDose)
-	assert.Equal(t, 0, result["Flanders"][0].SecondDose)
+	assert.Equal(t, 2, result["Flanders"][0].Partial)
+	assert.Equal(t, 1, result["Flanders"][0].Full)
 
 	require.Contains(t, result, "Brussels")
 	require.Len(t, result["Brussels"], 1)
-	assert.Equal(t, 0, result["Brussels"][0].FirstDose)
-	assert.Equal(t, 1, result["Brussels"][0].SecondDose)
+	assert.Equal(t, 0, result["Brussels"][0].Partial)
+	assert.Equal(t, 1, result["Brussels"][0].Full)
 
 	mock.AssertExpectationsForObjects(t, apiClient)
 }
@@ -195,27 +220,27 @@ func TestAccumulateVaccinations(t *testing.T) {
 		{
 			name: "one",
 			args: args{entries: []sciensano.Vaccination{
-				{FirstDose: 4, SecondDose: 3},
+				{Partial: 4, Full: 3},
 			}},
 			wantTotals: []sciensano.Vaccination{
-				{FirstDose: 4, SecondDose: 3},
+				{Partial: 4, Full: 3},
 			},
 		},
 		{
 			name: "many",
 			args: args{entries: []sciensano.Vaccination{
-				{FirstDose: 0, SecondDose: 0},
-				{FirstDose: 1, SecondDose: 0},
-				{FirstDose: 2, SecondDose: 1},
-				{FirstDose: 3, SecondDose: 2},
-				{FirstDose: 4, SecondDose: 3},
+				{Partial: 0, Full: 0},
+				{Partial: 1, Full: 0},
+				{Partial: 2, Full: 1},
+				{Partial: 3, Full: 2},
+				{Partial: 4, Full: 3},
 			}},
 			wantTotals: []sciensano.Vaccination{
-				{FirstDose: 0, SecondDose: 0},
-				{FirstDose: 1, SecondDose: 0},
-				{FirstDose: 3, SecondDose: 1},
-				{FirstDose: 6, SecondDose: 3},
-				{FirstDose: 10, SecondDose: 6},
+				{Partial: 0, Full: 0},
+				{Partial: 1, Full: 0},
+				{Partial: 3, Full: 1},
+				{Partial: 6, Full: 3},
+				{Partial: 10, Full: 6},
 			},
 		},
 	}
