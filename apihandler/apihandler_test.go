@@ -2,12 +2,13 @@ package apihandler_test
 
 import (
 	"context"
+	"fmt"
 	"github.com/clambin/grafana-json"
+	"github.com/clambin/sciensano/apiclient"
+	mockAPI "github.com/clambin/sciensano/apiclient/mocks"
 	"github.com/clambin/sciensano/apihandler"
 	mockDemographics "github.com/clambin/sciensano/demographics/mocks"
 	"github.com/clambin/sciensano/sciensano"
-	"github.com/clambin/sciensano/sciensano/apiclient"
-	mockSciensano "github.com/clambin/sciensano/sciensano/apiclient/mocks"
 	"github.com/clambin/sciensano/vaccines"
 	mockVaccines "github.com/clambin/sciensano/vaccines/mocks"
 	"github.com/stretchr/testify/assert"
@@ -18,7 +19,7 @@ import (
 )
 
 type Stack struct {
-	sciensanoClient mockSciensano.APIClient
+	sciensanoClient mockAPI.APIClient
 	vaccinesClient  mockVaccines.APIClient
 	demoClient      mockDemographics.Demographics
 	apiHandler      *apihandler.Handler
@@ -43,19 +44,23 @@ var realTargets = map[string]bool{
 	"vaccinations":             false,
 	"vacc-age-partial":         false,
 	"vacc-age-full":            false,
+	"vacc-age-booster":         false,
 	"vacc-age-rate-partial":    false,
 	"vacc-age-rate-full":       false,
+	"vacc-age-rate-booster":    false,
 	"vacc-region-partial":      false,
 	"vacc-region-full":         false,
+	"vacc-region-booster":      false,
 	"vacc-region-rate-partial": false,
 	"vacc-region-rate-full":    false,
+	"vacc-region-rate-booster": false,
 	"vaccination-lag":          false,
 	"vaccines":                 false,
 	"vaccines-stats":           false,
 	"vaccines-time":            false,
 }
 
-func TestAPIHandler_Search(t *testing.T) {
+func TestHandler_Search(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	stack := createStack(ctx)
@@ -71,12 +76,12 @@ func TestAPIHandler_Search(t *testing.T) {
 	}
 
 	for target, found := range realTargets {
-		assert.True(t, found, "missing target:"+target)
+		assert.True(t, found, "missing target: "+target)
 	}
 
 }
 
-func TestAPIHandler_Invalid(t *testing.T) {
+func TestHandler_Invalid(t *testing.T) {
 	endDate := time.Date(2021, 01, 06, 0, 0, 0, 0, time.UTC)
 	request := &grafana_json.TableQueryArgs{
 		CommonQueryArgs: grafana_json.CommonQueryArgs{
@@ -92,6 +97,38 @@ func TestAPIHandler_Invalid(t *testing.T) {
 	// Unknown target should return an error
 	_, err := stack.apiHandler.TableQuery(context.Background(), "invalid", request)
 	require.Error(t, err)
+}
+
+func TestHandler_TableQuery_Error(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	stack := createStack(ctx)
+	defer stack.Destroy()
+
+	stack.sciensanoClient.
+		On("GetVaccinations", mock.Anything).
+		Return(nil, fmt.Errorf("computer says no"))
+	stack.sciensanoClient.
+		On("GetTestResults", mock.Anything).
+		Return(nil, fmt.Errorf("computer says no"))
+	stack.vaccinesClient.
+		On("GetBatches", mock.Anything).
+		Return(nil, fmt.Errorf("computer says no"))
+
+	request := &grafana_json.TableQueryArgs{
+		CommonQueryArgs: grafana_json.CommonQueryArgs{
+			Range: grafana_json.QueryRequestRange{
+				To: time.Now(),
+			},
+		},
+	}
+
+	for target := range realTargets {
+		_, err := stack.apiHandler.Endpoints().TableQuery(context.Background(), target, request)
+		assert.Error(t, err)
+	}
+
+	stack.sciensanoClient.AssertExpectations(t)
 }
 
 func BenchmarkHandler_QueryTable(b *testing.B) {

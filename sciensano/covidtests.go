@@ -2,10 +2,15 @@ package sciensano
 
 import (
 	"context"
-	"github.com/clambin/sciensano/sciensano/apiclient"
+	"github.com/clambin/sciensano/apiclient"
 	"sort"
 	"time"
 )
+
+// TestsGetter contains all required methods to retrieve COVID-19 test results
+type TestsGetter interface {
+	GetTests(ctx context.Context, end time.Time) (results []TestResult, err error)
+}
 
 // TestResult represents results of administered COVID-19 tests
 type TestResult struct {

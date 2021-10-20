@@ -2,9 +2,9 @@ package sciensano_test
 
 import (
 	"context"
+	"github.com/clambin/sciensano/apiclient"
+	"github.com/clambin/sciensano/apiclient/mocks"
 	"github.com/clambin/sciensano/sciensano"
-	"github.com/clambin/sciensano/sciensano/apiclient"
-	"github.com/clambin/sciensano/sciensano/apiclient/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -37,7 +37,7 @@ var (
 
 func TestGetTests(t *testing.T) {
 	apiClient := &mocks.APIClient{}
-	client := sciensano.NewClient(time.Hour)
+	client := sciensano.NewCachedClient(time.Hour)
 	client.APIClient = apiClient
 	ctx := context.Background()
 

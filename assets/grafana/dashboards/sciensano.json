@@ -585,7 +585,7 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 6,
+        "w": 4,
         "x": 0,
         "y": 20
       },
@@ -611,7 +611,7 @@
       ],
       "timeFrom": null,
       "timeShift": null,
-      "title": "Vaccination rate by age - Partial",
+      "title": "Partial",
       "transformations": [
         {
           "id": "organize",
@@ -675,8 +675,8 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 6,
-        "x": 6,
+        "w": 4,
+        "x": 4,
         "y": 20
       },
       "id": 29,
@@ -701,7 +701,97 @@
       ],
       "timeFrom": null,
       "timeShift": null,
-      "title": "Vaccination rate by age - Full",
+      "title": "Full",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {}
+        }
+      ],
+      "type": "timeseries"
+    },
+    {
+      "datasource": "sciensano",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 4,
+        "x": 8,
+        "y": 20
+      },
+      "id": 36,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      },
+      "pluginVersion": "8.0.6",
+      "targets": [
+        {
+          "hide": false,
+          "refId": "A",
+          "target": "vacc-age-rate-booster",
+          "type": "table"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Booster",
       "transformations": [
         {
           "id": "organize",
@@ -736,7 +826,7 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 6,
+        "w": 4,
         "x": 12,
         "y": 20
       },
@@ -765,7 +855,7 @@
       ],
       "timeFrom": null,
       "timeShift": null,
-      "title": "Vaccinations by age - Partial",
+      "title": "Partial",
       "transformations": [
         {
           "id": "organize",
@@ -804,8 +894,8 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 6,
-        "x": 18,
+        "w": 4,
+        "x": 16,
         "y": 20
       },
       "id": 17,
@@ -833,7 +923,75 @@
       ],
       "timeFrom": null,
       "timeShift": null,
-      "title": "Vaccinations by age - Full",
+      "title": "Full",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {}
+        }
+      ],
+      "type": "bargauge"
+    },
+    {
+      "datasource": "sciensano",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 1,
+          "mappings": [],
+          "max": 1,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 4,
+        "x": 20,
+        "y": 20
+      },
+      "id": 35,
+      "options": {
+        "displayMode": "gradient",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "text": {}
+      },
+      "pluginVersion": "8.2.0",
+      "targets": [
+        {
+          "hide": false,
+          "refId": "A",
+          "target": "vacc-age-rate-booster",
+          "type": "table"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Booster",
       "transformations": [
         {
           "id": "organize",
@@ -910,7 +1068,7 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 6,
+        "w": 4,
         "x": 0,
         "y": 29
       },
@@ -936,7 +1094,7 @@
       ],
       "timeFrom": null,
       "timeShift": null,
-      "title": "Vaccination rate by region - Partial",
+      "title": "Partial",
       "type": "timeseries"
     },
     {
@@ -995,8 +1153,8 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 6,
-        "x": 6,
+        "w": 4,
+        "x": 4,
         "y": 29
       },
       "id": 31,
@@ -1021,7 +1179,92 @@
       ],
       "timeFrom": null,
       "timeShift": null,
-      "title": "Vaccination rate by region - Full",
+      "title": "Full",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "sciensano",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 4,
+        "x": 8,
+        "y": 29
+      },
+      "id": 37,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      },
+      "pluginVersion": "8.0.6",
+      "targets": [
+        {
+          "hide": false,
+          "refId": "A",
+          "target": "vacc-region-rate-booster",
+          "type": "table"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Booster",
       "type": "timeseries"
     },
     {
@@ -1054,7 +1297,7 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 6,
+        "w": 4,
         "x": 12,
         "y": 29
       },
@@ -1083,7 +1326,7 @@
       ],
       "timeFrom": null,
       "timeShift": null,
-      "title": "Vaccinations by region - Partial",
+      "title": "Partial",
       "transformations": [
         {
           "id": "organize",
@@ -1122,8 +1365,8 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 6,
-        "x": 18,
+        "w": 4,
+        "x": 16,
         "y": 29
       },
       "id": 19,
@@ -1151,7 +1394,75 @@
       ],
       "timeFrom": null,
       "timeShift": null,
-      "title": "Vaccinations by region - Full",
+      "title": "Full",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {}
+        }
+      ],
+      "type": "bargauge"
+    },
+    {
+      "datasource": "sciensano",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 1,
+          "mappings": [],
+          "max": 1,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 4,
+        "x": 20,
+        "y": 29
+      },
+      "id": 38,
+      "options": {
+        "displayMode": "gradient",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "text": {}
+      },
+      "pluginVersion": "8.2.0",
+      "targets": [
+        {
+          "hide": false,
+          "refId": "A",
+          "target": "vacc-region-rate-booster",
+          "type": "table"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Booster",
       "transformations": [
         {
           "id": "organize",
@@ -1169,12 +1480,12 @@
     "list": []
   },
   "time": {
-    "from": "now-1y",
+    "from": "now-120d",
     "to": "now"
   },
   "timepicker": {},
   "timezone": "",
   "title": "Sciensano",
   "uid": "KU9aRfgRz",
-  "version": 133
+  "version": 136
 }

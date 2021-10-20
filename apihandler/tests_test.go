@@ -3,7 +3,7 @@ package apihandler_test
 import (
 	"context"
 	grafanaJson "github.com/clambin/grafana-json"
-	"github.com/clambin/sciensano/sciensano/apiclient"
+	"github.com/clambin/sciensano/apiclient"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"

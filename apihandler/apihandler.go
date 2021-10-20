@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 	"github.com/clambin/grafana-json"
+	"github.com/clambin/sciensano/apiclient"
 	"github.com/clambin/sciensano/demographics"
 	"github.com/clambin/sciensano/sciensano"
-	"github.com/clambin/sciensano/sciensano/apiclient"
 	"github.com/clambin/sciensano/vaccines"
 	log "github.com/sirupsen/logrus"
 	"net/http"
@@ -50,12 +50,16 @@ func Create() *Handler {
 		"vaccinations":             {tableResponseBuild: handler.buildVaccinationTableResponse},
 		"vacc-age-partial":         {tableResponseBuild: handler.buildGroupedVaccinationTableResponse},
 		"vacc-age-full":            {tableResponseBuild: handler.buildGroupedVaccinationTableResponse},
+		"vacc-age-booster":         {tableResponseBuild: handler.buildGroupedVaccinationTableResponse},
 		"vacc-age-rate-partial":    {tableResponseBuild: handler.buildGroupedVaccinationRateTableResponse},
 		"vacc-age-rate-full":       {tableResponseBuild: handler.buildGroupedVaccinationRateTableResponse},
+		"vacc-age-rate-booster":    {tableResponseBuild: handler.buildGroupedVaccinationRateTableResponse},
 		"vacc-region-partial":      {tableResponseBuild: handler.buildGroupedVaccinationTableResponse},
 		"vacc-region-full":         {tableResponseBuild: handler.buildGroupedVaccinationTableResponse},
+		"vacc-region-booster":      {tableResponseBuild: handler.buildGroupedVaccinationTableResponse},
 		"vacc-region-rate-partial": {tableResponseBuild: handler.buildGroupedVaccinationRateTableResponse},
 		"vacc-region-rate-full":    {tableResponseBuild: handler.buildGroupedVaccinationRateTableResponse},
+		"vacc-region-rate-booster": {tableResponseBuild: handler.buildGroupedVaccinationRateTableResponse},
 		"vaccination-lag":          {tableResponseBuild: handler.buildVaccinationLagTableResponse},
 		"vaccines":                 {tableResponseBuild: handler.buildVaccineTableResponse},
 		"vaccines-stats":           {tableResponseBuild: handler.buildVaccineStatsTableResponse},
@@ -74,8 +78,8 @@ func (handler *Handler) Endpoints() grafana_json.Endpoints {
 	}
 }
 
-type SeriesResponseBuildFunc func(ctx context.Context, begin, end time.Time, target string) (response *grafana_json.QueryResponse)
-type TableResponseBuildFunc func(ctx context.Context, begin, end time.Time, target string) (response *grafana_json.TableQueryResponse)
+type SeriesResponseBuildFunc func(ctx context.Context, begin, end time.Time, target string) (response *grafana_json.QueryResponse, err error)
+type TableResponseBuildFunc func(ctx context.Context, begin, end time.Time, target string) (response *grafana_json.TableQueryResponse, err error)
 
 type TargetTable map[string]struct {
 	seriesResponseBuild SeriesResponseBuildFunc
@@ -92,7 +96,6 @@ func (handler *Handler) Search() (targets []string) {
 }
 
 func (handler *Handler) TableQuery(ctx context.Context, target string, args *grafana_json.TableQueryArgs) (response *grafana_json.TableQueryResponse, err error) {
-
 	start := time.Now()
 	builder, ok := handler.targetTable[target]
 
@@ -100,12 +103,14 @@ func (handler *Handler) TableQuery(ctx context.Context, target string, args *gra
 		return nil, fmt.Errorf("unknown target '%s'", target)
 	}
 
-	response = builder.tableResponseBuild(ctx, args.Range.From, args.Range.To, target)
+	response, err = builder.tableResponseBuild(ctx, args.Range.From, args.Range.To, target)
+
+	if err != nil {
+		return nil, fmt.Errorf("unable to build table query response for target '%s': %s", target, err.Error())
+	}
 
 	// log if there's a new update
-	if response != nil {
-		handler.logUpdates(target, response)
-	}
+	handler.logUpdates(target, response)
 
 	log.WithFields(log.Fields{"duration": time.Now().Sub(start), "target": target}).Debug("TableQuery called")
 	return

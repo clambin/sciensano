@@ -3,7 +3,7 @@ package apihandler_test
 import (
 	"context"
 	grafanaJson "github.com/clambin/grafana-json"
-	"github.com/clambin/sciensano/sciensano/apiclient"
+	"github.com/clambin/sciensano/apiclient"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -39,6 +39,16 @@ func TestAPIHandler_Vaccinations(t *testing.T) {
 					Count:     25,
 				},
 				{
+					TimeStamp: apiclient.TimeStamp{Time: endDate},
+					Dose:      "C",
+					Count:     10,
+				},
+				{
+					TimeStamp: apiclient.TimeStamp{Time: endDate},
+					Dose:      "E",
+					Count:     5,
+				},
+				{
 					TimeStamp: apiclient.TimeStamp{Time: endDate.Add(24 * time.Hour)},
 					Dose:      "A",
 					Count:     74,
@@ -66,7 +76,10 @@ func TestAPIHandler_Vaccinations(t *testing.T) {
 				assert.Equal(t, 100.0, data[len(data)-1])
 			case "full":
 				require.Len(t, data, 1)
-				assert.Equal(t, 25.0, data[len(data)-1])
+				assert.Equal(t, 35.0, data[len(data)-1])
+			case "booster":
+				require.Len(t, data, 1)
+				assert.Equal(t, 5.0, data[len(data)-1])
 			default:
 				assert.Fail(t, "unexpected column", column.Text)
 			}
@@ -156,7 +169,7 @@ func TestAPIHandler_VaccinationByAge_Rate(t *testing.T) {
 		On("GetAgeGroupFigures").
 		Return(map[string]int{
 			"45-54": 1000,
-		})
+		}, nil)
 
 	stack.sciensanoClient.
 		On("GetVaccinations", mock.Anything).

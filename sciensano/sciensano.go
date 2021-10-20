@@ -1,8 +1,7 @@
 package sciensano
 
 import (
-	"context"
-	"github.com/clambin/sciensano/sciensano/apiclient"
+	"github.com/clambin/sciensano/apiclient"
 	"net/http"
 	"time"
 )
@@ -14,15 +13,14 @@ type Client struct {
 
 // APIClient exposes the supported Sciensano APIs
 type APIClient interface {
-	GetTests(ctx context.Context, end time.Time) (results []TestResult, err error)
-	GetVaccinations(ctx context.Context, end time.Time) (results []Vaccination, err error)
-	GetVaccinationsForLag(ctx context.Context, end time.Time) (results []Vaccination, err error)
-	GetVaccinationsByAge(ctx context.Context, end time.Time) (results map[string][]Vaccination, err error)
-	GetVaccinationsByRegion(ctx context.Context, end time.Time) (results map[string][]Vaccination, err error)
+	TestsGetter
+	VaccinationGetter
 }
 
-// NewClient creates a new Client
-func NewClient(duration time.Duration) *Client {
+var _ APIClient = &Client{}
+
+// NewCachedClient creates a new Client which caches results for duration interval
+func NewCachedClient(duration time.Duration) *Client {
 	return &Client{
 		APIClient: &apiclient.Cache{
 			APIClient: &apiclient.Client{HTTPClient: &http.Client{}},

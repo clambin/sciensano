@@ -5,7 +5,7 @@ package mocks
 import (
 	context "context"
 
-	apiclient "github.com/clambin/sciensano/sciensano/apiclient"
+	apiclient "github.com/clambin/sciensano/apiclient"
 
 	mock "github.com/stretchr/testify/mock"
 )
@@ -59,9 +59,4 @@ func (_m *APIClient) GetVaccinations(ctx context.Context) ([]*apiclient.APIVacci
 	}
 
 	return r0, r1
-}
-
-// SetURL provides a mock function with given fields: url
-func (_m *APIClient) SetURL(url string) {
-	_m.Called(url)
 }

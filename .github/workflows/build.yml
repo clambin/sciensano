@@ -4,10 +4,11 @@ on:
   push:
     branches:
     - master
-    - fix
+    - boosters
     paths-ignore:
       - '**.md'
       - 'assets/grafana/dashboards/**'
+      - 'assets/screenshots/**'
 jobs:
   test:
     runs-on: ubuntu-latest

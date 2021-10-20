@@ -2,8 +2,8 @@ package apiclient_test
 
 import (
 	"context"
-	"github.com/clambin/sciensano/sciensano/apiclient"
-	"github.com/clambin/sciensano/sciensano/apiclient/fake"
+	"github.com/clambin/sciensano/apiclient"
+	"github.com/clambin/sciensano/apiclient/fake"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"net/http"
@@ -11,10 +11,9 @@ import (
 	"testing"
 )
 
-func TestClient_GetVaccinations(t *testing.T) {
+func TestClient_GetTestResults(t *testing.T) {
 	testServer := fake.Handler{}
 	apiServer := httptest.NewServer(http.HandlerFunc(testServer.Handle))
-	defer apiServer.Close()
 
 	client := apiclient.Client{
 		URL:        apiServer.URL,
@@ -22,18 +21,20 @@ func TestClient_GetVaccinations(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	result, err := client.GetVaccinations(ctx)
+	result, err := client.GetTestResults(ctx)
 
 	require.NoError(t, err)
-	require.Len(t, result, 7)
-	assert.NotZero(t, result[6].TimeStamp)
+	require.Len(t, result, 3)
+
+	assert.NotZero(t, result[2].TimeStamp)
+	assert.Equal(t, 15, result[2].Total)
+	assert.Equal(t, 10, result[2].Positive)
 
 	testServer.Fail = true
-	_, err = client.GetVaccinations(ctx)
+	_, err = client.GetTestResults(ctx)
 	require.Error(t, err)
 
 	apiServer.Close()
-	_, err = client.GetVaccinations(ctx)
+	_, err = client.GetTestResults(ctx)
 	require.Error(t, err)
-
 }

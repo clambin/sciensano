@@ -2,8 +2,8 @@ package apiclient_test
 
 import (
 	"context"
-	"github.com/clambin/sciensano/sciensano/apiclient"
-	"github.com/clambin/sciensano/sciensano/apiclient/mocks"
+	"github.com/clambin/sciensano/apiclient"
+	"github.com/clambin/sciensano/apiclient/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"

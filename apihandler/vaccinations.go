@@ -5,39 +5,45 @@ import (
 	"fmt"
 	grafanaJson "github.com/clambin/grafana-json"
 	"github.com/clambin/sciensano/sciensano"
-	log "github.com/sirupsen/logrus"
 	"strings"
 	"time"
 )
 
-func (handler *Handler) buildVaccinationTableResponse(ctx context.Context, _, endTime time.Time, _ string) (response *grafanaJson.TableQueryResponse) {
-	if vaccinations, err := handler.Sciensano.GetVaccinations(ctx, endTime); err == nil {
-		vaccinations = sciensano.AccumulateVaccinations(vaccinations)
+func (handler *Handler) buildVaccinationTableResponse(ctx context.Context, _, endTime time.Time, _ string) (response *grafanaJson.TableQueryResponse, err error) {
+	var vaccinations []sciensano.Vaccination
+	vaccinations, err = handler.Sciensano.GetVaccinations(ctx, endTime)
 
-		rows := len(vaccinations)
-		timestamps := make(grafanaJson.TableQueryResponseTimeColumn, rows)
-		partial := make(grafanaJson.TableQueryResponseNumberColumn, rows)
-		full := make(grafanaJson.TableQueryResponseNumberColumn, rows)
+	if err != nil {
+		return nil, fmt.Errorf("unable to get vaccination data: %s", err.Error())
+	}
 
-		for index, entry := range vaccinations {
-			timestamps[index] = entry.Timestamp
-			partial[index] = float64(entry.Partial)
-			full[index] = float64(entry.Full)
-		}
+	vaccinations = sciensano.AccumulateVaccinations(vaccinations)
 
-		response = new(grafanaJson.TableQueryResponse)
-		response.Columns = []grafanaJson.TableQueryResponseColumn{
-			{Text: "timestamp", Data: timestamps},
-			{Text: "partial", Data: partial},
-			{Text: "full", Data: full},
-		}
+	rows := len(vaccinations)
+	timestamps := make(grafanaJson.TableQueryResponseTimeColumn, rows)
+	partial := make(grafanaJson.TableQueryResponseNumberColumn, rows)
+	full := make(grafanaJson.TableQueryResponseNumberColumn, rows)
+	booster := make(grafanaJson.TableQueryResponseNumberColumn, rows)
+
+	for index, entry := range vaccinations {
+		timestamps[index] = entry.Timestamp
+		partial[index] = float64(entry.Partial)
+		full[index] = float64(entry.Full + entry.SingleDose)
+		booster[index] = float64(entry.Booster)
+	}
+
+	response = new(grafanaJson.TableQueryResponse)
+	response.Columns = []grafanaJson.TableQueryResponseColumn{
+		{Text: "timestamp", Data: timestamps},
+		{Text: "partial", Data: partial},
+		{Text: "full", Data: full},
+		{Text: "booster", Data: booster},
 	}
 	return
 }
 
-func (handler *Handler) buildGroupedVaccinationTableResponse(ctx context.Context, _, endTime time.Time, target string) (response *grafanaJson.TableQueryResponse) {
+func (handler *Handler) buildGroupedVaccinationTableResponse(ctx context.Context, _, endTime time.Time, target string) (response *grafanaJson.TableQueryResponse, err error) {
 	var vaccinations map[string][]sciensano.Vaccination
-	var err error
 
 	if strings.HasPrefix(target, "vacc-age-") {
 		vaccinations, err = handler.Sciensano.GetVaccinationsByAge(ctx, endTime)
@@ -48,12 +54,12 @@ func (handler *Handler) buildGroupedVaccinationTableResponse(ctx context.Context
 	}
 
 	if err != nil {
-		log.WithError(err).Warning("failed to create grouped vaccination table response")
-		return
+		return nil, fmt.Errorf("failed to create grouped vaccination table response: %s", err.Error())
 	}
+
 	// grouped vaccinations are shown incrementally
-	for ageGroup, data := range vaccinations {
-		vaccinations[ageGroup] = sciensano.AccumulateVaccinations(data)
+	for group, data := range vaccinations {
+		vaccinations[group] = sciensano.AccumulateVaccinations(data)
 	}
 
 	// sort group names so they always show up in the same order
@@ -64,7 +70,7 @@ func (handler *Handler) buildGroupedVaccinationTableResponse(ctx context.Context
 	timestampCount := len(timestamps)
 
 	// fill out each group, so all groups have all timestamps
-	results := fillVaccinations(timestamps, vaccinations, strings.HasSuffix(target, "-full"))
+	results := fillVaccinations(timestamps, vaccinations, getGroupType(target))
 
 	// build & populate the timestamp columns
 	timestampColumn := make(grafanaJson.TableQueryResponseTimeColumn, 0, timestampCount)
@@ -97,39 +103,64 @@ func (handler *Handler) buildGroupedVaccinationTableResponse(ctx context.Context
 	return
 }
 
-func (handler *Handler) buildGroupedVaccinationRateTableResponse(ctx context.Context, beginTime, endTime time.Time, target string) (response *grafanaJson.TableQueryResponse) {
-	response = handler.buildGroupedVaccinationTableResponse(ctx, beginTime, endTime, target)
-	if response != nil {
-		if strings.HasPrefix(target, "vacc-age-rate-") {
-			ageGroupFigures := handler.Demographics.GetAgeGroupFigures()
-			prorateFigures(response, ageGroupFigures)
-		} else if strings.HasPrefix(target, "vacc-region-rate-") {
-			regionFigures := handler.Demographics.GetRegionFigures()
-			_, ok := regionFigures["Ostbelgien"]
-			if !ok {
-				population, _ := regionFigures["Wallonia"]
-				population -= 78000
-				regionFigures["Wallonia"] = population
-				regionFigures["Ostbelgien"] = 78000
-			}
-			prorateFigures(response, regionFigures)
-		}
+const (
+	groupPartial = iota
+	groupFull
+	groupBooster
+)
+
+func getGroupType(target string) (groupType int) {
+	if strings.HasSuffix(target, "-full") {
+		groupType = groupFull
+	} else if strings.HasSuffix(target, "-booster") {
+		groupType = groupBooster
+	} else {
+		groupType = groupPartial
 	}
 	return
 }
 
-func (handler *Handler) buildVaccinationLagTableResponse(ctx context.Context, _, endTime time.Time, _ string) (response *grafanaJson.TableQueryResponse) {
-	if vaccinations, err := handler.Sciensano.GetVaccinationsForLag(ctx, endTime); err == nil {
-		vaccinations = sciensano.AccumulateVaccinations(vaccinations)
+func (handler *Handler) buildGroupedVaccinationRateTableResponse(ctx context.Context, beginTime, endTime time.Time, target string) (response *grafanaJson.TableQueryResponse, err error) {
+	response, err = handler.buildGroupedVaccinationTableResponse(ctx, beginTime, endTime, target)
 
-		timestamps, lag := buildLag(vaccinations)
-
-		response = new(grafanaJson.TableQueryResponse)
-		response.Columns = []grafanaJson.TableQueryResponseColumn{
-			{Text: "timestamp", Data: timestamps},
-			{Text: "lag", Data: lag},
-		}
+	if err != nil {
+		return nil, fmt.Errorf("failed to get grouped vaccination rate figures: %s", err.Error())
 	}
+
+	if strings.HasPrefix(target, "vacc-age-rate-") {
+		ageGroupFigures := handler.Demographics.GetAgeGroupFigures()
+		prorateFigures(response, ageGroupFigures)
+	} else if strings.HasPrefix(target, "vacc-region-rate-") {
+		regionFigures := handler.Demographics.GetRegionFigures()
+		_, ok := regionFigures["Ostbelgien"]
+		if !ok {
+			population, _ := regionFigures["Wallonia"]
+			population -= 78000
+			regionFigures["Wallonia"] = population
+			regionFigures["Ostbelgien"] = 78000
+		}
+		prorateFigures(response, regionFigures)
+	}
+	return
+}
+
+func (handler *Handler) buildVaccinationLagTableResponse(ctx context.Context, _, endTime time.Time, _ string) (response *grafanaJson.TableQueryResponse, err error) {
+	var vaccinations []sciensano.Vaccination
+	vaccinations, err = handler.Sciensano.GetVaccinations(ctx, endTime)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to determine vaccination lag: %s", err.Error())
+	}
+
+	vaccinations = sciensano.AccumulateVaccinations(vaccinations)
+	timestamps, lag := buildLag(vaccinations)
+
+	response = new(grafanaJson.TableQueryResponse)
+	response.Columns = []grafanaJson.TableQueryResponseColumn{
+		{Text: "timestamp", Data: timestamps},
+		{Text: "lag", Data: lag},
+	}
+
 	return
 }
 
