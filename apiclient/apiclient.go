@@ -3,15 +3,18 @@ package apiclient
 import (
 	"context"
 	"encoding/json"
+	"errors"
+	"io"
 	"net/http"
 	"time"
 )
 
-// APIClient interface exposes the different supported Sciensano APIs
-//go:generate mockery --name APIClient
-type APIClient interface {
+// Getter interface exposes the different supported Sciensano APIs
+//go:generate mockery --name Getter
+type Getter interface {
 	GetTestResults(ctx context.Context) (results []*APITestResultsResponse, err error)
 	GetVaccinations(ctx context.Context) (results []*APIVaccinationsResponse, err error)
+	GetCases(ctx context.Context) (results []*APICasesResponse, err error)
 }
 
 // Client calls the different sciensano APIs
@@ -27,6 +30,35 @@ func (client *Client) getURL() (url string) {
 	if client.URL != "" {
 		url = client.URL
 	}
+	return
+}
+
+// call is a generic function to call the Sciensano API endpoints
+func (client *Client) call(ctx context.Context, endpoint string, results interface{}) (err error) {
+	target := client.getURL() + "/Data/" + endpoint
+
+	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, target, nil)
+
+	var resp *http.Response
+	resp, err = client.HTTPClient.Do(req)
+
+	if err != nil {
+		return
+	}
+
+	defer func(body io.ReadCloser) {
+		_ = body.Close()
+	}(resp.Body)
+
+	if resp.StatusCode != http.StatusOK {
+		err = errors.New(resp.Status)
+		return
+	}
+
+	var body []byte
+	body, _ = io.ReadAll(resp.Body)
+	err = json.Unmarshal(body, results)
+
 	return
 }
 

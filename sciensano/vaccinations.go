@@ -34,7 +34,7 @@ type VaccinationGetter interface {
 // GetVaccinations returns all vaccinations up to endTime
 func (client *Client) GetVaccinations(ctx context.Context, endTime time.Time) (results []Vaccination, err error) {
 	var apiResult []*apiclient.APIVaccinationsResponse
-	apiResult, err = client.APIClient.GetVaccinations(ctx)
+	apiResult, err = client.Getter.GetVaccinations(ctx)
 	if err != nil {
 		return
 	}
@@ -46,7 +46,7 @@ func (client *Client) GetVaccinations(ctx context.Context, endTime time.Time) (r
 // GetVaccinationsByAge returns all vaccinations, grouped by age group, up to endTime.
 func (client *Client) GetVaccinationsByAge(ctx context.Context, endTime time.Time) (results map[string][]Vaccination, err error) {
 	var apiResult []*apiclient.APIVaccinationsResponse
-	apiResult, err = client.APIClient.GetVaccinations(ctx)
+	apiResult, err = client.Getter.GetVaccinations(ctx)
 	if err != nil {
 		return
 	}
@@ -67,7 +67,7 @@ func (client *Client) GetVaccinationsByAge(ctx context.Context, endTime time.Tim
 // GetVaccinationsByRegion returns all vaccinations, grouped by region, up to endTime.
 func (client *Client) GetVaccinationsByRegion(ctx context.Context, endTime time.Time) (results map[string][]Vaccination, err error) {
 	var apiResult []*apiclient.APIVaccinationsResponse
-	apiResult, err = client.APIClient.GetVaccinations(ctx)
+	apiResult, err = client.Getter.GetVaccinations(ctx)
 	if err != nil {
 		return
 	}

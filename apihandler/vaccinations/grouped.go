@@ -1,10 +1,28 @@
-package apihandler
+package vaccinations
 
 import (
 	"github.com/clambin/sciensano/sciensano"
 	"sort"
+	"strings"
 	"time"
 )
+
+const (
+	groupPartial = iota
+	groupFull
+	groupBooster
+)
+
+func getGroupType(target string) (groupType int) {
+	if strings.HasSuffix(target, "-full") {
+		groupType = groupFull
+	} else if strings.HasSuffix(target, "-booster") {
+		groupType = groupBooster
+	} else {
+		groupType = groupPartial
+	}
+	return
+}
 
 func getTimestamps(vaccinations map[string][]sciensano.Vaccination) (timestamps []time.Time) {
 	// get unique timestamps

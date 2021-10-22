@@ -36,9 +36,9 @@ var (
 )
 
 func TestGetTests(t *testing.T) {
-	apiClient := &mocks.APIClient{}
+	apiClient := &mocks.Getter{}
 	client := sciensano.NewCachedClient(time.Hour)
-	client.APIClient = apiClient
+	client.Getter = apiClient
 	ctx := context.Background()
 
 	firstDay := time.Date(2021, 03, 10, 0, 0, 0, 0, time.UTC)

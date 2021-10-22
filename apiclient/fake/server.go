@@ -80,6 +80,11 @@ var defaultResponses = map[string]string{
 		{"DATE": "2021-03-11", "REGION": "Flanders", "AGEGROUP": "45-54", "DOSE": "A", "Count": 200 },
 		{"DATE": "2021-03-11", "REGION": "Flanders", "AGEGROUP": "45-54", "DOSE": "B", "Count": 50 }
 ]`,
+
+	"/Data/COVID19BE_CASES_AGESEX.json": `[
+		{"DATE":"2020-03-01","PROVINCE":"VlaamsBrabant","REGION":"Flanders","AGEGROUP":"40-49","SEX":"M","CASES":1},
+		{"DATE":"2020-03-01","PROVINCE":"Brussels","REGION":"Brussels","AGEGROUP":"40-49","SEX":"M","CASES":2}
+]`,
 }
 
 func bigVaccinationResponse() string {

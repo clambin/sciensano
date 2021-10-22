@@ -12,9 +12,9 @@ import (
 )
 
 func TestCache_GetVaccinations(t *testing.T) {
-	client := &mocks.APIClient{}
+	client := &mocks.Getter{}
 	cache := apiclient.Cache{
-		APIClient: client,
+		Getter:    client,
 		Retention: time.Hour,
 	}
 	ctx := context.Background()
@@ -46,9 +46,9 @@ func TestCache_GetVaccinations(t *testing.T) {
 }
 
 func TestCache_GetTestResults(t *testing.T) {
-	client := &mocks.APIClient{}
+	client := &mocks.Getter{}
 	cache := apiclient.Cache{
-		APIClient: client,
+		Getter:    client,
 		Retention: time.Hour,
 	}
 	ctx := context.Background()
@@ -77,4 +77,45 @@ func TestCache_GetTestResults(t *testing.T) {
 	assert.Equal(t, 10, results[0].Positive)
 
 	mock.AssertExpectationsForObjects(t, client)
+}
+
+func TestCache_GetCases(t *testing.T) {
+	client := &mocks.Getter{}
+	cache := apiclient.Cache{
+		Getter:    client,
+		Retention: time.Hour,
+	}
+	ctx := context.Background()
+
+	// Cache should only call the client once.
+	client.
+		On("GetCases", mock.Anything).
+		Return([]*apiclient.APICasesResponse{{
+			TimeStamp: apiclient.TimeStamp{Time: time.Now()},
+			Region:    "Flanders",
+			Province:  "VlaamsBrabant",
+			Cases:     10,
+		}}, nil).
+		Once()
+
+	results, err := cache.GetCases(ctx)
+
+	require.NoError(t, err)
+	require.Len(t, results, 1)
+
+	assert.NotZero(t, results[0].TimeStamp)
+	assert.Equal(t, "VlaamsBrabant", results[0].Province)
+	assert.Equal(t, 10, results[0].Cases)
+
+	results, err = cache.GetCases(ctx)
+
+	require.NoError(t, err)
+	require.Len(t, results, 1)
+
+	assert.NotZero(t, results[0].TimeStamp)
+	assert.Equal(t, "VlaamsBrabant", results[0].Province)
+	assert.Equal(t, 10, results[0].Cases)
+
+	mock.AssertExpectationsForObjects(t, client)
+
 }

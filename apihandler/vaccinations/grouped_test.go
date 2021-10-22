@@ -1,4 +1,4 @@
-package apihandler
+package vaccinations
 
 import (
 	"github.com/clambin/sciensano/sciensano"

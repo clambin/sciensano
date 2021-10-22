@@ -1,9 +1,13 @@
-package apihandler_test
+package vaccinations_test
 
 import (
 	"context"
 	grafanaJson "github.com/clambin/grafana-json"
 	"github.com/clambin/sciensano/apiclient"
+	mockAPI "github.com/clambin/sciensano/apiclient/mocks"
+	vaccinationsHandler "github.com/clambin/sciensano/apihandler/vaccinations"
+	mockDemographics "github.com/clambin/sciensano/demographics/mocks"
+	"github.com/clambin/sciensano/sciensano"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -11,11 +15,34 @@ import (
 	"time"
 )
 
-func TestAPIHandler_Vaccinations(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	stack := createStack(ctx)
-	defer stack.Destroy()
+func TestHandler_Search(t *testing.T) {
+	getter := &mockAPI.Getter{}
+	client := &sciensano.Client{Getter: getter}
+	h := vaccinationsHandler.New(client, nil)
+
+	targets := h.Search()
+	assert.Equal(t, []string{
+		"vacc-age-booster",
+		"vacc-age-full",
+		"vacc-age-partial",
+		"vacc-age-rate-booster",
+		"vacc-age-rate-full",
+		"vacc-age-rate-partial",
+		"vacc-region-booster",
+		"vacc-region-full",
+		"vacc-region-partial",
+		"vacc-region-rate-booster",
+		"vacc-region-rate-full",
+		"vacc-region-rate-partial",
+		"vaccination-lag",
+		"vaccinations",
+	}, targets)
+}
+
+func TestHandler_TableQuery_Vaccinations(t *testing.T) {
+	getter := &mockAPI.Getter{}
+	client := &sciensano.Client{Getter: getter}
+	h := vaccinationsHandler.New(client, nil)
 
 	endDate := time.Date(2021, 03, 10, 0, 0, 0, 0, time.UTC)
 	request := &grafanaJson.TableQueryArgs{
@@ -24,7 +51,7 @@ func TestAPIHandler_Vaccinations(t *testing.T) {
 		},
 	}
 
-	stack.sciensanoClient.
+	getter.
 		On("GetVaccinations", mock.Anything).
 		Return(
 			[]*apiclient.APIVaccinationsResponse{
@@ -61,7 +88,7 @@ func TestAPIHandler_Vaccinations(t *testing.T) {
 			}, nil)
 
 	// Vaccinations
-	response, err := stack.apiHandler.Endpoints().TableQuery(context.Background(), "vaccinations", request)
+	response, err := h.Endpoints().TableQuery(context.Background(), "vaccinations", request)
 	require.NoError(t, err)
 
 	for _, column := range response.Columns {
@@ -85,9 +112,15 @@ func TestAPIHandler_Vaccinations(t *testing.T) {
 			}
 		}
 	}
+
+	getter.AssertExpectations(t)
 }
 
-func TestAPIHandler_VaccinationsByAge(t *testing.T) {
+func TestHandler_TableQuery_GroupedVaccination_ByAge(t *testing.T) {
+	getter := &mockAPI.Getter{}
+	client := &sciensano.Client{Getter: getter}
+	h := vaccinationsHandler.New(client, nil)
+
 	endDate := time.Date(2021, 03, 10, 0, 0, 0, 0, time.UTC)
 	request := &grafanaJson.TableQueryArgs{
 		CommonQueryArgs: grafanaJson.CommonQueryArgs{
@@ -95,12 +128,7 @@ func TestAPIHandler_VaccinationsByAge(t *testing.T) {
 		},
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	stack := createStack(ctx)
-	defer stack.Destroy()
-
-	stack.sciensanoClient.
+	getter.
 		On("GetVaccinations", mock.Anything).
 		Return(
 			[]*apiclient.APIVaccinationsResponse{
@@ -131,7 +159,8 @@ func TestAPIHandler_VaccinationsByAge(t *testing.T) {
 			}, nil)
 
 	// Vaccinations grouped by Age
-	response, err := stack.apiHandler.Endpoints().TableQuery(context.Background(), "vacc-age-full", request)
+	// TODO: partial, booster calls
+	response, err := h.Endpoints().TableQuery(context.Background(), "vacc-age-full", request)
 	require.NoError(t, err)
 
 	for _, column := range response.Columns {
@@ -149,10 +178,15 @@ func TestAPIHandler_VaccinationsByAge(t *testing.T) {
 		}
 	}
 
-	mock.AssertExpectationsForObjects(t, &stack.demoClient)
+	getter.AssertExpectations(t)
 }
 
-func TestAPIHandler_VaccinationByAge_Rate(t *testing.T) {
+func TestHandler_TableQuery_GroupedRatedVaccination_ByAge(t *testing.T) {
+	getter := &mockAPI.Getter{}
+	demographics := &mockDemographics.Demographics{}
+	client := &sciensano.Client{Getter: getter}
+	h := vaccinationsHandler.New(client, demographics)
+
 	endDate := time.Date(2021, 03, 10, 0, 0, 0, 0, time.UTC)
 	request := &grafanaJson.TableQueryArgs{
 		CommonQueryArgs: grafanaJson.CommonQueryArgs{
@@ -160,18 +194,13 @@ func TestAPIHandler_VaccinationByAge_Rate(t *testing.T) {
 		},
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	stack := createStack(ctx)
-	defer stack.Destroy()
-
-	stack.demoClient.
+	demographics.
 		On("GetAgeGroupFigures").
 		Return(map[string]int{
 			"45-54": 1000,
 		}, nil)
 
-	stack.sciensanoClient.
+	getter.
 		On("GetVaccinations", mock.Anything).
 		Return(
 			[]*apiclient.APIVaccinationsResponse{
@@ -202,7 +231,7 @@ func TestAPIHandler_VaccinationByAge_Rate(t *testing.T) {
 			}, nil)
 
 	// Vaccination rate grouped by Age
-	response, err := stack.apiHandler.Endpoints().TableQuery(context.Background(), "vacc-age-rate-partial", request)
+	response, err := h.Endpoints().TableQuery(context.Background(), "vacc-age-rate-partial", request)
 	require.NoError(t, err)
 
 	for _, column := range response.Columns {
@@ -222,24 +251,22 @@ func TestAPIHandler_VaccinationByAge_Rate(t *testing.T) {
 		}
 	}
 
-	mock.AssertExpectationsForObjects(t, &stack.demoClient, &stack.sciensanoClient)
-
+	mock.AssertExpectationsForObjects(t, demographics, getter)
 }
 
-func TestAPIHandler_VaccinationByRegion(t *testing.T) {
-	endDate := time.Date(2021, 3, 11, 0, 0, 0, 0, time.UTC)
+func TestHandler_TableQuery_GroupedVaccination_ByRegion(t *testing.T) {
+	getter := &mockAPI.Getter{}
+	client := &sciensano.Client{Getter: getter}
+	h := vaccinationsHandler.New(client, nil)
+
+	endDate := time.Date(2021, 03, 10, 0, 0, 0, 0, time.UTC)
 	request := &grafanaJson.TableQueryArgs{
 		CommonQueryArgs: grafanaJson.CommonQueryArgs{
 			Range: grafanaJson.QueryRequestRange{To: endDate},
 		},
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	stack := createStack(ctx)
-	defer stack.Destroy()
-
-	stack.sciensanoClient.
+	getter.
 		On("GetVaccinations", mock.Anything).
 		Return(
 			[]*apiclient.APIVaccinationsResponse{
@@ -270,7 +297,7 @@ func TestAPIHandler_VaccinationByRegion(t *testing.T) {
 			}, nil)
 
 	// Vaccinations grouped by Region
-	response, err := stack.apiHandler.Endpoints().TableQuery(context.Background(), "vacc-region-full", request)
+	response, err := h.Endpoints().TableQuery(context.Background(), "vacc-region-full", request)
 	require.NoError(t, err)
 
 	for _, column := range response.Columns {
@@ -287,28 +314,30 @@ func TestAPIHandler_VaccinationByRegion(t *testing.T) {
 			}
 		}
 	}
+
+	getter.AssertExpectations(t)
 }
 
-func TestAPIHandler_VaccinationByRegion_Rate(t *testing.T) {
-	endDate := time.Date(2021, 03, 11, 0, 0, 0, 0, time.UTC)
+func TestHandler_TableQuery_GroupedRatedVaccination_ByRegion(t *testing.T) {
+	getter := &mockAPI.Getter{}
+	demographics := &mockDemographics.Demographics{}
+	client := &sciensano.Client{Getter: getter}
+	h := vaccinationsHandler.New(client, demographics)
+
+	endDate := time.Date(2021, 03, 10, 0, 0, 0, 0, time.UTC)
 	request := &grafanaJson.TableQueryArgs{
 		CommonQueryArgs: grafanaJson.CommonQueryArgs{
 			Range: grafanaJson.QueryRequestRange{To: endDate},
 		},
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	stack := createStack(ctx)
-	defer stack.Destroy()
-
-	stack.demoClient.
+	demographics.
 		On("GetRegionFigures").
 		Return(map[string]int{
 			"Flanders": 6000,
 		})
 
-	stack.sciensanoClient.
+	getter.
 		On("GetVaccinations", mock.Anything).
 		Return(
 			[]*apiclient.APIVaccinationsResponse{
@@ -323,7 +352,7 @@ func TestAPIHandler_VaccinationByRegion_Rate(t *testing.T) {
 			}, nil)
 
 	// Vaccination rate grouped by Region
-	response, err := stack.apiHandler.Endpoints().TableQuery(context.Background(), "vacc-region-rate-full", request)
+	response, err := h.Endpoints().TableQuery(context.Background(), "vacc-region-rate-full", request)
 	require.NoError(t, err)
 
 	for _, column := range response.Columns {
@@ -343,9 +372,15 @@ func TestAPIHandler_VaccinationByRegion_Rate(t *testing.T) {
 			}
 		}
 	}
+
+	mock.AssertExpectationsForObjects(t, getter, demographics)
 }
 
-func TestAPIHandler_Vaccination_Lag(t *testing.T) {
+func TestHandler_TableQuery_Vaccination_Lag(t *testing.T) {
+	getter := &mockAPI.Getter{}
+	client := &sciensano.Client{Getter: getter}
+	h := vaccinationsHandler.New(client, nil)
+
 	endDate := time.Date(2021, 03, 31, 0, 0, 0, 0, time.UTC)
 	request := &grafanaJson.TableQueryArgs{
 		CommonQueryArgs: grafanaJson.CommonQueryArgs{
@@ -353,46 +388,43 @@ func TestAPIHandler_Vaccination_Lag(t *testing.T) {
 		},
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	stack := createStack(ctx)
-	defer stack.Destroy()
-
-	stack.sciensanoClient.On("GetVaccinations", mock.Anything).Return([]*apiclient.APIVaccinationsResponse{
-		{
-			TimeStamp: apiclient.TimeStamp{Time: time.Date(2021, 3, 16, 0, 0, 0, 0, time.UTC)},
-			Dose:      "A",
-			Count:     200,
-		},
-		{
-			TimeStamp: apiclient.TimeStamp{Time: time.Date(2021, 3, 16, 0, 0, 0, 0, time.UTC)},
-			Dose:      "B",
-			Count:     50,
-		},
-		{
-			TimeStamp: apiclient.TimeStamp{Time: time.Date(2021, 3, 31, 0, 0, 0, 0, time.UTC)},
-			Dose:      "A",
-			Count:     300,
-		},
-		{
-			TimeStamp: apiclient.TimeStamp{Time: time.Date(2021, 3, 31, 0, 0, 0, 0, time.UTC)},
-			Dose:      "B",
-			Count:     150,
-		},
-		{
-			TimeStamp: apiclient.TimeStamp{Time: time.Date(2021, 4, 1, 0, 0, 0, 0, time.UTC)},
-			Dose:      "A",
-			Count:     320,
-		},
-		{
-			TimeStamp: apiclient.TimeStamp{Time: time.Date(2021, 4, 1, 0, 0, 0, 0, time.UTC)},
-			Dose:      "B",
-			Count:     155,
-		},
-	}, nil)
+	getter.
+		On("GetVaccinations", mock.Anything).
+		Return([]*apiclient.APIVaccinationsResponse{
+			{
+				TimeStamp: apiclient.TimeStamp{Time: time.Date(2021, 3, 16, 0, 0, 0, 0, time.UTC)},
+				Dose:      "A",
+				Count:     200,
+			},
+			{
+				TimeStamp: apiclient.TimeStamp{Time: time.Date(2021, 3, 16, 0, 0, 0, 0, time.UTC)},
+				Dose:      "B",
+				Count:     50,
+			},
+			{
+				TimeStamp: apiclient.TimeStamp{Time: time.Date(2021, 3, 31, 0, 0, 0, 0, time.UTC)},
+				Dose:      "A",
+				Count:     300,
+			},
+			{
+				TimeStamp: apiclient.TimeStamp{Time: time.Date(2021, 3, 31, 0, 0, 0, 0, time.UTC)},
+				Dose:      "B",
+				Count:     150,
+			},
+			{
+				TimeStamp: apiclient.TimeStamp{Time: time.Date(2021, 4, 1, 0, 0, 0, 0, time.UTC)},
+				Dose:      "A",
+				Count:     320,
+			},
+			{
+				TimeStamp: apiclient.TimeStamp{Time: time.Date(2021, 4, 1, 0, 0, 0, 0, time.UTC)},
+				Dose:      "B",
+				Count:     155,
+			},
+		}, nil)
 
 	// Lag
-	response, err := stack.apiHandler.Endpoints().TableQuery(context.Background(), "vaccination-lag", request)
+	response, err := h.Endpoints().TableQuery(context.Background(), "vaccination-lag", request)
 	require.NoError(t, err)
 
 	for _, column := range response.Columns {
@@ -409,4 +441,6 @@ func TestAPIHandler_Vaccination_Lag(t *testing.T) {
 			}
 		}
 	}
+
+	getter.AssertExpectations(t)
 }

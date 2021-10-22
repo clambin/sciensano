@@ -64,11 +64,11 @@ var (
 )
 
 func TestClient_GetVaccinations(t *testing.T) {
-	apiClient := &mocks.APIClient{}
+	apiClient := &mocks.Getter{}
 	apiClient.On("GetVaccinations", mock.Anything).Return(vaccinationsResponse, nil)
 
 	client := sciensano.NewCachedClient(time.Hour)
-	client.APIClient = apiClient
+	client.Getter = apiClient
 
 	result, err := client.GetVaccinations(context.Background(), lastDay)
 	require.NoError(t, err)
@@ -82,11 +82,11 @@ func TestClient_GetVaccinations(t *testing.T) {
 }
 
 func TestClient_GetVaccinationsByAge(t *testing.T) {
-	apiClient := &mocks.APIClient{}
+	apiClient := &mocks.Getter{}
 	apiClient.On("GetVaccinations", mock.Anything).Return(vaccinationsResponse, nil)
 
 	client := sciensano.NewCachedClient(time.Hour)
-	client.APIClient = apiClient
+	client.Getter = apiClient
 
 	result, err := client.GetVaccinationsByAge(context.Background(), lastDay)
 	require.NoError(t, err)
@@ -108,11 +108,11 @@ func TestClient_GetVaccinationsByAge(t *testing.T) {
 }
 
 func TestClient_GetVaccinationsByRegion(t *testing.T) {
-	apiClient := &mocks.APIClient{}
+	apiClient := &mocks.Getter{}
 	apiClient.On("GetVaccinations", mock.Anything).Return(vaccinationsResponse, nil)
 
 	client := sciensano.NewCachedClient(time.Hour)
-	client.APIClient = apiClient
+	client.Getter = apiClient
 
 	result, err := client.GetVaccinationsByRegion(context.Background(), lastDay)
 	require.NoError(t, err)
@@ -169,11 +169,11 @@ func buildBigVaccinationResponse() []*apiclient.APIVaccinationsResponse {
 }
 
 func BenchmarkClient_GetVaccinationsByAge(b *testing.B) {
-	apiClient := &mocks.APIClient{}
+	apiClient := &mocks.Getter{}
 	apiClient.On("GetVaccinations", mock.Anything).Return(buildBigVaccinationResponse(), nil)
 
 	client := sciensano.NewCachedClient(time.Hour)
-	client.APIClient = apiClient
+	client.Getter = apiClient
 
 	ctx := context.Background()
 	for i := 0; i < 10; i++ {
@@ -185,11 +185,11 @@ func BenchmarkClient_GetVaccinationsByAge(b *testing.B) {
 }
 
 func BenchmarkClient_GetVaccinationsByRegion(b *testing.B) {
-	apiClient := &mocks.APIClient{}
+	apiClient := &mocks.Getter{}
 	apiClient.On("GetVaccinations", mock.Anything).Return(buildBigVaccinationResponse(), nil)
 
 	client := sciensano.NewCachedClient(time.Hour)
-	client.APIClient = apiClient
+	client.Getter = apiClient
 
 	ctx := context.Background()
 	for i := 0; i < 10; i++ {

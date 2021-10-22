@@ -1,4 +1,4 @@
-package apihandler
+package vaccinations
 
 import (
 	grafanaJson "github.com/clambin/grafana-json"

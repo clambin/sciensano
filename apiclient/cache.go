@@ -6,23 +6,23 @@ import (
 	"time"
 )
 
-// Cache implements a cache for the Sciensano API.  It's meant to be API-compatible with APIClient, so clients can
-// replace their APIClient with a Cache instead:
+// Cache implements a cache for the Sciensano API.  It's meant to be API-compatible with Getter, so clients can
+// replace their Getter with a Cache instead:
 //
 // 		client := &Client{
-//			APIClient: &apiclient.Client{HTTPClient: &http.Client{}},
+//			Getter: &apiclient.Client{HTTPClient: &http.Client{}},
 //		}
 //
 // becomes:
 //
 //		client := &Client{
-//			APIClient: &apiclient.Cache{
-//				APIClient: &apiclient.Client{HTTPClient: &http.Client{}},
+//			Getter: &apiclient.Cache{
+//				Getter: &apiclient.Client{HTTPClient: &http.Client{}},
 //				Retention: 15 * time.Minute,
 //			},
 //		}
 type Cache struct {
-	APIClient
+	Getter
 	Retention time.Duration
 	lock      sync.Mutex
 	entries   map[string]*cacheEntry
@@ -61,7 +61,7 @@ func (cache *Cache) GetTestResults(ctx context.Context) (results []*APITestResul
 	cache.lock.Unlock()
 
 	entry.once.Do(func() {
-		if entry.entries, err = cache.APIClient.GetTestResults(ctx); err == nil {
+		if entry.entries, err = cache.Getter.GetTestResults(ctx); err == nil {
 			cache.entries["tests"] = entry
 		}
 	})
@@ -83,10 +83,32 @@ func (cache *Cache) GetVaccinations(ctx context.Context) (results []*APIVaccinat
 	cache.lock.Unlock()
 
 	entry.once.Do(func() {
-		if entry.entries, err = cache.APIClient.GetVaccinations(ctx); err == nil {
+		if entry.entries, err = cache.Getter.GetVaccinations(ctx); err == nil {
 			cache.entries["vaccinations"] = entry
 		}
 	})
 
 	return entry.entries.([]*APIVaccinationsResponse), err
+}
+
+// GetCases retrieves all COVID-19 cases.  If a valid cached result exists, that is returned instead.
+func (cache *Cache) GetCases(ctx context.Context) (results []*APICasesResponse, err error) {
+	cache.lock.Lock()
+	entry := cache.getCacheEntry("cases")
+	if entry.once == nil || time.Now().After(entry.expiry) {
+		entry.once = &sync.Once{}
+		entry.expiry = time.Now().Add(cache.Retention)
+		metricCacheMiss.WithLabelValues("cases").Add(1.0)
+	} else {
+		metricCacheHit.WithLabelValues("cases").Add(1.0)
+	}
+	cache.lock.Unlock()
+
+	entry.once.Do(func() {
+		if entry.entries, err = cache.Getter.GetCases(ctx); err == nil {
+			cache.entries["cases"] = entry
+		}
+	})
+
+	return entry.entries.([]*APICasesResponse), err
 }

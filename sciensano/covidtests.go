@@ -26,7 +26,7 @@ type TestResult struct {
 func (client *Client) GetTests(ctx context.Context, endTime time.Time) (results []TestResult, err error) {
 	var apiResult []*apiclient.APITestResultsResponse
 
-	if apiResult, err = client.APIClient.GetTestResults(ctx); err == nil {
+	if apiResult, err = client.Getter.GetTestResults(ctx); err == nil {
 		results = groupTests(apiResult, endTime)
 	}
 
