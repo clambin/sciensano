@@ -8,7 +8,8 @@
 Grafana SimpleJson API server for BE Sciensano Covid19 data
 
 
-![screenshot](assets/screenshots/screenshot.png?raw=true)
+![vaccinations](assets/screenshots/vaccinations.png?raw=true)
+![cases](assets/screenshots/cases.png?raw=true)
 
 
 ## Source code

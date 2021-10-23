@@ -63,6 +63,8 @@ github.com/clambin/grafana-json v0.6.0-rc3 h1:nPglNEyYHV1UaFk57p0BlHYZ4/owxLeilC
 github.com/clambin/grafana-json v0.6.0-rc3/go.mod h1:JwZKRj1rk8AetxnNhMDcmxjsHnwVS2sHG6xxtuyBdDQ=
 github.com/clambin/grafana-json v0.6.0-rc4 h1:KmIRttCfsmQ4tYaei/z18wwWR6Prm34bv6FvSX1DDUw=
 github.com/clambin/grafana-json v0.6.0-rc4/go.mod h1:JwZKRj1rk8AetxnNhMDcmxjsHnwVS2sHG6xxtuyBdDQ=
+github.com/clambin/grafana-json v0.6.0 h1:EbgRhgUtYy2DefYBZdUpo4Zy0bhhCH0RWn7+jpPLVzo=
+github.com/clambin/grafana-json v0.6.0/go.mod h1:JwZKRj1rk8AetxnNhMDcmxjsHnwVS2sHG6xxtuyBdDQ=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
 github.com/cncf/udpa/go v0.0.0-20191209042840-269d4d468f6f/go.mod h1:M8M6+tZqaGXZJjfX53e64911xZQV5JYwmTeXPW+k8Sc=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=

@@ -5,6 +5,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
+// APIVaccinationsResponse is the response of the Sciensano vaccinations API
 type APIVaccinationsResponse struct {
 	TimeStamp TimeStamp `json:"DATE"`
 	Region    string    `json:"REGION"`

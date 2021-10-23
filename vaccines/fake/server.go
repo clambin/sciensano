@@ -6,10 +6,12 @@ import (
 	"net/http"
 )
 
+// Server implements a fake server
 type Server struct {
 	Fail bool
 }
 
+// Handler processes incoming HTTP requests
 func (server *Server) Handler(w http.ResponseWriter, req *http.Request) {
 	log.Debug("apiHandler: " + html.EscapeString(req.URL.Path))
 

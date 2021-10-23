@@ -10,6 +10,7 @@ import (
 	"time"
 )
 
+// Handler implements a fake Sciensano server
 type Handler struct {
 	Fail      bool
 	Slow      bool
@@ -17,6 +18,7 @@ type Handler struct {
 	Count     int
 }
 
+// Handle processes an incoming HTTP request
 func (handler *Handler) Handle(w http.ResponseWriter, req *http.Request) {
 	log.WithField("path", req.URL.Path).Debug("Handler")
 
@@ -45,6 +47,7 @@ func (handler *Handler) Handle(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
+// BigResponse creates a big response
 func (handler *Handler) BigResponse() {
 	handler.Responses = defaultResponses
 	handler.Responses["/Data/COVID19BE_VACC.json"] = bigVaccinationResponse()

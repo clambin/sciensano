@@ -15,6 +15,7 @@ type Client struct {
 type APIClient interface {
 	TestsGetter
 	VaccinationGetter
+	CasesGetter
 }
 
 var _ APIClient = &Client{}

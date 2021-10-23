@@ -20,6 +20,7 @@ type Vaccination struct {
 	Booster int
 }
 
+// Total returns the sum of all vaccinations
 func (vaccination Vaccination) Total() int {
 	return vaccination.Partial + vaccination.Full + vaccination.SingleDose + vaccination.Booster
 }
@@ -34,12 +35,11 @@ type VaccinationGetter interface {
 // GetVaccinations returns all vaccinations up to endTime
 func (client *Client) GetVaccinations(ctx context.Context, endTime time.Time) (results []Vaccination, err error) {
 	var apiResult []*apiclient.APIVaccinationsResponse
-	apiResult, err = client.Getter.GetVaccinations(ctx)
-	if err != nil {
-		return
-	}
 
-	results = groupVaccinations(apiResult, endTime)
+	apiResult, err = client.Getter.GetVaccinations(ctx)
+	if err == nil {
+		results = groupVaccinations(apiResult, endTime)
+	}
 	return
 }
 

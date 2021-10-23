@@ -9,11 +9,13 @@ import (
 	"time"
 )
 
+// Handler implements a grafana-json handler for COVID-19 test results
 type Handler struct {
 	Sciensano   sciensano.APIClient
 	targetTable grafanajson.TargetTable
 }
 
+// New creates a new Handler
 func New(client sciensano.APIClient) (handler *Handler) {
 	handler = &Handler{
 		Sciensano: client,
@@ -26,6 +28,7 @@ func New(client sciensano.APIClient) (handler *Handler) {
 	return
 }
 
+// Endpoints implements the grafana-json Endpoint function. It returns all supported endpoints
 func (handler *Handler) Endpoints() grafanajson.Endpoints {
 	return grafanajson.Endpoints{
 		Search:     handler.Search,
@@ -33,10 +36,12 @@ func (handler *Handler) Endpoints() grafanajson.Endpoints {
 	}
 }
 
+// Search implements the grafana-json Search function. It returns all supported targets
 func (handler *Handler) Search() (targets []string) {
 	return handler.targetTable.Targets()
 }
 
+// TableQuery implements the grafana-json TableQuery function. It processes incoming TableQuery requests
 func (handler *Handler) TableQuery(ctx context.Context, target string, args *grafanajson.TableQueryArgs) (response *grafanajson.TableQueryResponse, err error) {
 	start := time.Now()
 	response, err = handler.targetTable.RunTableQuery(ctx, target, args)

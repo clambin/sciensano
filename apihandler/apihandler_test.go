@@ -9,5 +9,5 @@ import (
 func TestCreate(t *testing.T) {
 	h := apihandler.Create()
 
-	assert.Len(t, h.GetHandlers(), 3)
+	assert.Len(t, h.GetHandlers(), 4)
 }

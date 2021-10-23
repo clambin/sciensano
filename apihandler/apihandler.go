@@ -3,6 +3,7 @@ package apihandler
 import (
 	grafanajson "github.com/clambin/grafana-json"
 	"github.com/clambin/sciensano/apiclient"
+	casesHandler "github.com/clambin/sciensano/apihandler/cases"
 	covidTestsHandler "github.com/clambin/sciensano/apihandler/covidtests"
 	vaccinationsHandler "github.com/clambin/sciensano/apihandler/vaccinations"
 	vaccinesHandler "github.com/clambin/sciensano/apihandler/vaccines"
@@ -21,7 +22,7 @@ type Handlers struct {
 	handlers     []grafanajson.Handler
 }
 
-// Create a Handlers
+// Create a Handlers object
 func Create() *Handlers {
 	handler := Handlers{
 		Sciensano: &sciensano.Client{
@@ -40,15 +41,22 @@ func Create() *Handlers {
 		},
 	}
 
+	c := &apiclient.Cache{
+		Getter:    &apiclient.Client{HTTPClient: &http.Client{}},
+		Retention: 15 * time.Minute,
+	}
+
 	handler.handlers = []grafanajson.Handler{
 		covidTestsHandler.New(handler.Sciensano),
 		vaccinationsHandler.New(handler.Sciensano, handler.Demographics),
 		vaccinesHandler.New(handler.Sciensano, handler.Vaccines),
+		casesHandler.New(c, handler.Sciensano),
 	}
 
 	return &handler
 }
 
+// GetHandlers returns all configured handlers
 func (handler *Handlers) GetHandlers() []grafanajson.Handler {
 	return handler.handlers
 }

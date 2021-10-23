@@ -91,113 +91,12 @@
           },
           "unit": "short"
         },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "rate"
-            },
-            "properties": [
-              {
-                "id": "unit",
-                "value": "percentunit"
-              },
-              {
-                "id": "custom.axisLabel",
-                "value": "Rate"
-              }
-            ]
-          }
-        ]
-      },
-      "gridPos": {
-        "h": 9,
-        "w": 12,
-        "x": 0,
-        "y": 1
-      },
-      "id": 4,
-      "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom"
-        },
-        "tooltip": {
-          "mode": "single"
-        }
-      },
-      "pluginVersion": "8.0.6",
-      "targets": [
-        {
-          "queryType": "randomWalk",
-          "refId": "A",
-          "target": "tests",
-          "type": "table"
-        }
-      ],
-      "timeFrom": null,
-      "timeShift": null,
-      "title": "Tests",
-      "type": "timeseries"
-    },
-    {
-      "datasource": "sciensano",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": true,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "short"
-        },
         "overrides": []
       },
       "gridPos": {
         "h": 9,
-        "w": 12,
-        "x": 12,
+        "w": 24,
+        "x": 0,
         "y": 1
       },
       "id": 2,
@@ -434,7 +333,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "8.2.0",
+      "pluginVersion": "8.2.2",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -844,7 +743,7 @@
         "showUnfilled": true,
         "text": {}
       },
-      "pluginVersion": "8.2.0",
+      "pluginVersion": "8.2.2",
       "targets": [
         {
           "hide": false,
@@ -912,7 +811,7 @@
         "showUnfilled": true,
         "text": {}
       },
-      "pluginVersion": "8.2.0",
+      "pluginVersion": "8.2.2",
       "targets": [
         {
           "hide": false,
@@ -980,7 +879,7 @@
         "showUnfilled": true,
         "text": {}
       },
-      "pluginVersion": "8.2.0",
+      "pluginVersion": "8.2.2",
       "targets": [
         {
           "hide": false,
@@ -1315,7 +1214,7 @@
         "showUnfilled": true,
         "text": {}
       },
-      "pluginVersion": "8.2.0",
+      "pluginVersion": "8.2.2",
       "targets": [
         {
           "hide": false,
@@ -1383,7 +1282,7 @@
         "showUnfilled": true,
         "text": {}
       },
-      "pluginVersion": "8.2.0",
+      "pluginVersion": "8.2.2",
       "targets": [
         {
           "hide": false,
@@ -1451,7 +1350,7 @@
         "showUnfilled": true,
         "text": {}
       },
-      "pluginVersion": "8.2.0",
+      "pluginVersion": "8.2.2",
       "targets": [
         {
           "hide": false,
@@ -1485,7 +1384,7 @@
   },
   "timepicker": {},
   "timezone": "",
-  "title": "Sciensano",
+  "title": "Sciensano - Vaccinations",
   "uid": "KU9aRfgRz",
-  "version": 136
+  "version": 141
 }

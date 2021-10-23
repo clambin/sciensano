@@ -3,16 +3,7 @@ package vaccinations
 import (
 	grafanaJson "github.com/clambin/grafana-json"
 	"github.com/clambin/sciensano/sciensano"
-	"time"
 )
-
-type VaccinationLag struct {
-	Timestamp time.Time
-	FullDose  int
-	Lag       float64
-
-	index int
-}
 
 func buildLag(vaccinations []sciensano.Vaccination) (timestamps grafanaJson.TableQueryResponseTimeColumn, lag grafanaJson.TableQueryResponseNumberColumn) {
 	// record all full vaccinations

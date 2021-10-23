@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
-	github.com/clambin/grafana-json v0.6.0-rc4
+	github.com/clambin/grafana-json v0.6.0
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/prometheus/client_golang v1.11.0
 	github.com/prometheus/common v0.32.1 // indirect

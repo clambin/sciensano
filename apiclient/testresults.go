@@ -5,6 +5,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
+// APITestResultsResponse is the response of the Sciensano test results API
 type APITestResultsResponse struct {
 	TimeStamp TimeStamp `json:"DATE"`
 	Province  string    `json:"PROVINCE"`

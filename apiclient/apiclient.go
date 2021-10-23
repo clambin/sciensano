@@ -75,5 +75,6 @@ func (ts *TimeStamp) UnmarshalJSON(b []byte) (err error) {
 	if err == nil {
 		ts.Time, err = time.Parse("2006-01-02", v.(string))
 	}
+
 	return
 }
