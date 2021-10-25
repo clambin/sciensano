@@ -113,3 +113,36 @@ func TestClient_GetCasesByRegion(t *testing.T) {
 
 	apiClient.AssertExpectations(t)
 }
+
+func BenchmarkClient_GetCasesByRegion(b *testing.B) {
+	var bigResponse []*apiclient.APICasesResponse
+	ts := time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)
+
+	for i := 0; i < 2*365; i++ {
+		for _, region := range []string{"Flanders", "Wallonia", "Brussels"} {
+			bigResponse = append(bigResponse, &apiclient.APICasesResponse{
+				TimeStamp: apiclient.TimeStamp{Time: ts},
+				Region:    region,
+				Province:  region,
+				Cases:     i,
+			})
+		}
+		ts = ts.Add(24 * time.Hour)
+	}
+	apiClient := &mocks.Getter{}
+	client := sciensano.NewCachedClient(time.Hour)
+	client.Getter = apiClient
+	ctx := context.Background()
+
+	endTime := time.Date(2021, 10, 22, 0, 0, 0, 0, time.UTC)
+
+	apiClient.
+		On("GetCases", mock.AnythingOfType("*context.emptyCtx")).
+		Return(bigResponse, nil)
+
+	for i := 0; i < 1000; i++ {
+		cases, err := client.GetCasesByRegion(ctx, endTime)
+		require.NoError(b, err)
+		require.Len(b, cases, 3)
+	}
+}
