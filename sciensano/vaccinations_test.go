@@ -9,7 +9,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"reflect"
 	"testing"
 	"time"
 )
@@ -63,6 +62,16 @@ var (
 	}
 )
 
+func TestVaccinationsEntry_Total(t *testing.T) {
+	entry := sciensano.VaccinationsEntry{
+		Partial:    1,
+		Full:       2,
+		SingleDose: 3,
+		Booster:    4,
+	}
+	assert.Equal(t, 10, entry.Total())
+}
+
 func TestClient_GetVaccinations(t *testing.T) {
 	apiClient := &mocks.Getter{}
 	apiClient.On("GetVaccinations", mock.Anything).Return(vaccinationsResponse, nil)
@@ -72,39 +81,52 @@ func TestClient_GetVaccinations(t *testing.T) {
 
 	result, err := client.GetVaccinations(context.Background(), lastDay)
 	require.NoError(t, err)
-	assert.Len(t, result, 1)
-	assert.Equal(t, lastDay, result[0].Timestamp)
-	assert.Equal(t, 2, result[0].Partial)
-	assert.Equal(t, 1, result[0].Full)
-	assert.Equal(t, 4, result[0].SingleDose)
-	assert.Equal(t, 5, result[0].Booster)
 
+	assert.Equal(t, []time.Time{time.Date(2021, time.March, 10, 0, 0, 0, 0, time.UTC)}, result.Timestamps)
+
+	require.Len(t, result.Groups, 1)
+
+	assert.Empty(t, result.Groups[0].Name)
+	require.Len(t, result.Groups[0].Values, 1)
+	assert.Equal(t, sciensano.VaccinationsEntry{
+		Partial:    2,
+		Full:       1,
+		SingleDose: 4,
+		Booster:    5,
+	}, *result.Groups[0].Values[0])
 }
 
-func TestClient_GetVaccinationsByAge(t *testing.T) {
+func TestClient_GetVaccinationsByAgeGroup(t *testing.T) {
 	apiClient := &mocks.Getter{}
 	apiClient.On("GetVaccinations", mock.Anything).Return(vaccinationsResponse, nil)
 
 	client := sciensano.NewCachedClient(time.Hour)
 	client.Getter = apiClient
 
-	result, err := client.GetVaccinationsByAge(context.Background(), lastDay)
+	result, err := client.GetVaccinationsByAgeGroup(context.Background(), lastDay)
 	require.NoError(t, err)
-	require.Len(t, result, 2)
-	require.Contains(t, result, "25-34")
-	require.Contains(t, result, "35-44")
-	require.Len(t, result["25-34"], 1)
-	assert.Equal(t, 1, result["25-34"][0].Partial)
-	assert.Equal(t, 0, result["25-34"][0].Full)
-	assert.Equal(t, 0, result["25-34"][0].SingleDose)
-	assert.Equal(t, 0, result["25-34"][0].Booster)
-	require.Len(t, result["35-44"], 1)
-	assert.Equal(t, 1, result["35-44"][0].Partial)
-	assert.Equal(t, 1, result["35-44"][0].Full)
-	assert.Equal(t, 4, result["35-44"][0].SingleDose)
-	assert.Equal(t, 5, result["35-44"][0].Booster)
 
-	mock.AssertExpectationsForObjects(t, apiClient)
+	assert.Equal(t, []time.Time{time.Date(2021, time.March, 10, 0, 0, 0, 0, time.UTC)}, result.Timestamps)
+
+	require.Len(t, result.Groups, 2)
+
+	assert.Equal(t, "25-34", result.Groups[0].Name)
+	require.Len(t, result.Groups[0].Values, 1)
+	assert.Equal(t, sciensano.VaccinationsEntry{
+		Partial:    1,
+		Full:       0,
+		SingleDose: 0,
+		Booster:    0,
+	}, *result.Groups[0].Values[0])
+
+	assert.Equal(t, "35-44", result.Groups[1].Name)
+	require.Len(t, result.Groups[0].Values, 1)
+	assert.Equal(t, sciensano.VaccinationsEntry{
+		Partial:    1,
+		Full:       1,
+		SingleDose: 4,
+		Booster:    5,
+	}, *result.Groups[1].Values[0])
 }
 
 func TestClient_GetVaccinationsByRegion(t *testing.T) {
@@ -116,23 +138,28 @@ func TestClient_GetVaccinationsByRegion(t *testing.T) {
 
 	result, err := client.GetVaccinationsByRegion(context.Background(), lastDay)
 	require.NoError(t, err)
-	require.Len(t, result, 2)
 
-	require.Contains(t, result, "Flanders")
-	require.Len(t, result["Flanders"], 1)
-	assert.Equal(t, 2, result["Flanders"][0].Partial)
-	assert.Equal(t, 0, result["Flanders"][0].Full)
-	assert.Equal(t, 4, result["Flanders"][0].SingleDose)
-	assert.Equal(t, 0, result["Flanders"][0].Booster)
+	assert.Equal(t, []time.Time{time.Date(2021, time.March, 10, 0, 0, 0, 0, time.UTC)}, result.Timestamps)
 
-	require.Contains(t, result, "Brussels")
-	require.Len(t, result["Brussels"], 1)
-	assert.Equal(t, 0, result["Brussels"][0].Partial)
-	assert.Equal(t, 1, result["Brussels"][0].Full)
-	assert.Equal(t, 0, result["Brussels"][0].SingleDose)
-	assert.Equal(t, 5, result["Brussels"][0].Booster)
+	require.Len(t, result.Groups, 2)
 
-	mock.AssertExpectationsForObjects(t, apiClient)
+	assert.Equal(t, "Brussels", result.Groups[0].Name)
+	require.Len(t, result.Groups[0].Values, 1)
+	assert.Equal(t, sciensano.VaccinationsEntry{
+		Partial:    0,
+		Full:       1,
+		SingleDose: 0,
+		Booster:    5,
+	}, *result.Groups[0].Values[0])
+
+	assert.Equal(t, "Flanders", result.Groups[1].Name)
+	require.Len(t, result.Groups[0].Values, 1)
+	assert.Equal(t, sciensano.VaccinationsEntry{
+		Partial:    2,
+		Full:       0,
+		SingleDose: 4,
+		Booster:    0,
+	}, *result.Groups[1].Values[0])
 }
 
 var bigVaccinationResponse []*apiclient.APIVaccinationsResponse
@@ -168,7 +195,7 @@ func buildBigVaccinationResponse() []*apiclient.APIVaccinationsResponse {
 	return bigVaccinationResponse
 }
 
-func BenchmarkClient_GetVaccinationsByAge(b *testing.B) {
+func BenchmarkClient_GetVaccinationsByAgeGroup(b *testing.B) {
 	apiClient := &mocks.Getter{}
 	apiClient.On("GetVaccinations", mock.Anything).Return(buildBigVaccinationResponse(), nil)
 
@@ -177,7 +204,7 @@ func BenchmarkClient_GetVaccinationsByAge(b *testing.B) {
 
 	ctx := context.Background()
 	for i := 0; i < 10; i++ {
-		_, err := client.GetVaccinationsByAge(ctx, lastDay)
+		_, err := client.GetVaccinationsByAgeGroup(ctx, lastDay)
 		require.NoError(b, err)
 	}
 
@@ -202,61 +229,52 @@ func BenchmarkClient_GetVaccinationsByRegion(b *testing.B) {
 
 func TestAccumulateVaccinations(t *testing.T) {
 	type args struct {
-		entries []sciensano.Vaccination
+		entries *sciensano.Vaccinations
 	}
 	tests := []struct {
 		name       string
 		args       args
-		wantTotals []sciensano.Vaccination
+		wantTotals *sciensano.Vaccinations
 	}{
 		{
-			name:       "empty",
-			args:       args{},
-			wantTotals: []sciensano.Vaccination{},
-		},
-		{
 			name: "one",
-			args: args{entries: []sciensano.Vaccination{
-				{Partial: 4, Full: 3, SingleDose: 2, Booster: 1},
+			args: args{entries: &sciensano.Vaccinations{Groups: []sciensano.GroupedVaccinationsEntry{
+				{Values: []*sciensano.VaccinationsEntry{
+					{Partial: 4, Full: 3, SingleDose: 2, Booster: 1},
+				}},
+			}}},
+			wantTotals: &sciensano.Vaccinations{Groups: []sciensano.GroupedVaccinationsEntry{
+				{Values: []*sciensano.VaccinationsEntry{
+					{Partial: 4, Full: 3, SingleDose: 2, Booster: 1},
+				}},
 			}},
-			wantTotals: []sciensano.Vaccination{
-				{Partial: 4, Full: 3, SingleDose: 2, Booster: 1},
-			},
 		},
 		{
 			name: "many",
-			args: args{entries: []sciensano.Vaccination{
-				{Partial: 0, Full: 0, SingleDose: 0, Booster: 0},
-				{Partial: 1, Full: 0, SingleDose: 0, Booster: 1},
-				{Partial: 2, Full: 1, SingleDose: 1, Booster: 0},
-				{Partial: 3, Full: 2, SingleDose: 0, Booster: 1},
-				{Partial: 4, Full: 3, SingleDose: 1, Booster: 0},
+			args: args{entries: &sciensano.Vaccinations{Groups: []sciensano.GroupedVaccinationsEntry{
+				{Values: []*sciensano.VaccinationsEntry{
+					{Partial: 0, Full: 0, SingleDose: 0, Booster: 0},
+					{Partial: 1, Full: 0, SingleDose: 0, Booster: 1},
+					{Partial: 2, Full: 1, SingleDose: 1, Booster: 0},
+					{Partial: 3, Full: 2, SingleDose: 0, Booster: 1},
+					{Partial: 4, Full: 3, SingleDose: 1, Booster: 0},
+				}},
+			}}},
+			wantTotals: &sciensano.Vaccinations{Groups: []sciensano.GroupedVaccinationsEntry{
+				{Values: []*sciensano.VaccinationsEntry{
+					{Partial: 0, Full: 0, SingleDose: 0, Booster: 0},
+					{Partial: 1, Full: 0, SingleDose: 0, Booster: 1},
+					{Partial: 3, Full: 1, SingleDose: 1, Booster: 1},
+					{Partial: 6, Full: 3, SingleDose: 1, Booster: 2},
+					{Partial: 10, Full: 6, SingleDose: 2, Booster: 2},
+				}},
 			}},
-			wantTotals: []sciensano.Vaccination{
-				{Partial: 0, Full: 0, SingleDose: 0, Booster: 0},
-				{Partial: 1, Full: 0, SingleDose: 0, Booster: 1},
-				{Partial: 3, Full: 1, SingleDose: 1, Booster: 1},
-				{Partial: 6, Full: 3, SingleDose: 1, Booster: 2},
-				{Partial: 10, Full: 6, SingleDose: 2, Booster: 2},
-			},
 		},
 	}
+
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if gotTotals := sciensano.AccumulateVaccinations(tt.args.entries); !reflect.DeepEqual(gotTotals, tt.wantTotals) {
-				t.Errorf("AccumulateVaccinations() = %v, want %v", gotTotals, tt.wantTotals)
-			}
-		})
-	}
-}
+		sciensano.AccumulateVaccinations(tt.args.entries)
 
-func TestVaccination_Total(t *testing.T) {
-	vaccination := sciensano.Vaccination{
-		Partial:    1,
-		Full:       2,
-		SingleDose: 3,
-		Booster:    4,
+		assert.Equal(t, tt.args.entries, tt.wantTotals, tt.name)
 	}
-
-	assert.Equal(t, 10, vaccination.Total())
 }

@@ -15,6 +15,178 @@ import (
 	"time"
 )
 
+type TestCase struct {
+	Target   string
+	Response *grafanaJson.TableQueryResponse
+}
+
+var (
+	timestamp = time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)
+
+	vaccinationTestData = []*apiclient.APIVaccinationsResponse{
+		{TimeStamp: apiclient.TimeStamp{Time: timestamp}, Region: "Flanders", AgeGroup: "25-34", Dose: "C", Count: 1},
+		{TimeStamp: apiclient.TimeStamp{Time: timestamp}, Region: "Flanders", AgeGroup: "35-44", Dose: "E", Count: 1},
+		{TimeStamp: apiclient.TimeStamp{Time: timestamp}, Region: "Brussels", AgeGroup: "35-44", Dose: "B", Count: 2},
+		{TimeStamp: apiclient.TimeStamp{Time: timestamp}, Region: "Brussels", AgeGroup: "25-34", Dose: "A", Count: 2},
+		{TimeStamp: apiclient.TimeStamp{Time: timestamp}, Region: "", AgeGroup: "", Dose: "A", Count: 0},
+		{TimeStamp: apiclient.TimeStamp{Time: timestamp.Add(24 * time.Hour)}, Region: "Flanders", AgeGroup: "25-34", Dose: "B", Count: 3},
+		{TimeStamp: apiclient.TimeStamp{Time: timestamp.Add(24 * time.Hour)}, Region: "Brussels", AgeGroup: "35-44", Dose: "C", Count: 4},
+		{TimeStamp: apiclient.TimeStamp{Time: timestamp.Add(24 * time.Hour)}, Region: "Brussels", AgeGroup: "35-44", Dose: "A", Count: 5},
+		{TimeStamp: apiclient.TimeStamp{Time: timestamp.Add(24 * time.Hour)}, Region: "Brussels", AgeGroup: "25-34", Dose: "E", Count: 5},
+		{TimeStamp: apiclient.TimeStamp{Time: timestamp.Add(48 * time.Hour)}, Region: "Flanders", AgeGroup: "25-34", Dose: "A", Count: 9},
+		{TimeStamp: apiclient.TimeStamp{Time: timestamp.Add(48 * time.Hour)}, Region: "Brussels", AgeGroup: "35-44", Dose: "E", Count: 9},
+	}
+
+	testCases = []TestCase{
+		{
+			Target: "vaccinations",
+			Response: &grafanaJson.TableQueryResponse{
+				Columns: []grafanaJson.TableQueryResponseColumn{
+					{Text: "timestamp", Data: grafanaJson.TableQueryResponseTimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
+					{Text: "partial", Data: grafanaJson.TableQueryResponseNumberColumn{2, 7}},
+					{Text: "full", Data: grafanaJson.TableQueryResponseNumberColumn{3, 10}},
+					{Text: "booster", Data: grafanaJson.TableQueryResponseNumberColumn{1, 6}},
+				},
+			},
+		},
+		{
+			Target: "vacc-region-partial",
+			Response: &grafanaJson.TableQueryResponse{
+				Columns: []grafanaJson.TableQueryResponseColumn{
+					{Text: "timestamp", Data: grafanaJson.TableQueryResponseTimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
+					{Text: "(unknown)", Data: grafanaJson.TableQueryResponseNumberColumn{0, 0}},
+					{Text: "Brussels", Data: grafanaJson.TableQueryResponseNumberColumn{2, 7}},
+					{Text: "Flanders", Data: grafanaJson.TableQueryResponseNumberColumn{0, 0}},
+				},
+			},
+		},
+		{
+			Target: "vacc-region-rate-partial",
+			Response: &grafanaJson.TableQueryResponse{
+				Columns: []grafanaJson.TableQueryResponseColumn{
+					{Text: "timestamp", Data: grafanaJson.TableQueryResponseTimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
+					{Text: "Brussels", Data: grafanaJson.TableQueryResponseNumberColumn{0.2, 0.7}},
+					{Text: "Flanders", Data: grafanaJson.TableQueryResponseNumberColumn{0, 0}},
+				},
+			},
+		},
+		{
+			Target: "vacc-region-full",
+			Response: &grafanaJson.TableQueryResponse{
+				Columns: []grafanaJson.TableQueryResponseColumn{
+					{Text: "timestamp", Data: grafanaJson.TableQueryResponseTimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
+					{Text: "(unknown)", Data: grafanaJson.TableQueryResponseNumberColumn{0, 0}},
+					{Text: "Brussels", Data: grafanaJson.TableQueryResponseNumberColumn{2, 6}},
+					{Text: "Flanders", Data: grafanaJson.TableQueryResponseNumberColumn{1, 4}},
+				},
+			},
+		},
+		{
+			Target: "vacc-region-rate-full",
+			Response: &grafanaJson.TableQueryResponse{
+				Columns: []grafanaJson.TableQueryResponseColumn{
+					{Text: "timestamp", Data: grafanaJson.TableQueryResponseTimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
+					{Text: "Brussels", Data: grafanaJson.TableQueryResponseNumberColumn{0.2, 0.6}},
+					{Text: "Flanders", Data: grafanaJson.TableQueryResponseNumberColumn{0.01, 0.04}},
+				},
+			},
+		},
+		{
+			Target: "vacc-region-booster",
+			Response: &grafanaJson.TableQueryResponse{
+				Columns: []grafanaJson.TableQueryResponseColumn{
+					{Text: "timestamp", Data: grafanaJson.TableQueryResponseTimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
+					{Text: "(unknown)", Data: grafanaJson.TableQueryResponseNumberColumn{0, 0}},
+					{Text: "Brussels", Data: grafanaJson.TableQueryResponseNumberColumn{0, 5}},
+					{Text: "Flanders", Data: grafanaJson.TableQueryResponseNumberColumn{1, 1}},
+				},
+			},
+		},
+		{
+			Target: "vacc-region-rate-booster",
+			Response: &grafanaJson.TableQueryResponse{
+				Columns: []grafanaJson.TableQueryResponseColumn{
+					{Text: "timestamp", Data: grafanaJson.TableQueryResponseTimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
+					{Text: "Brussels", Data: grafanaJson.TableQueryResponseNumberColumn{0, 0.5}},
+					{Text: "Flanders", Data: grafanaJson.TableQueryResponseNumberColumn{0.01, 0.01}},
+				},
+			},
+		},
+		{
+			Target: "vacc-age-partial",
+			Response: &grafanaJson.TableQueryResponse{
+				Columns: []grafanaJson.TableQueryResponseColumn{
+					{Text: "timestamp", Data: grafanaJson.TableQueryResponseTimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
+					{Text: "(unknown)", Data: grafanaJson.TableQueryResponseNumberColumn{0, 0}},
+					{Text: "25-34", Data: grafanaJson.TableQueryResponseNumberColumn{2, 2}},
+					{Text: "35-44", Data: grafanaJson.TableQueryResponseNumberColumn{0, 5}},
+				},
+			},
+		},
+		{
+			Target: "vacc-age-rate-partial",
+			Response: &grafanaJson.TableQueryResponse{
+				Columns: []grafanaJson.TableQueryResponseColumn{
+					{Text: "timestamp", Data: grafanaJson.TableQueryResponseTimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
+					{Text: "25-34", Data: grafanaJson.TableQueryResponseNumberColumn{0.02, 0.02}},
+					{Text: "35-44", Data: grafanaJson.TableQueryResponseNumberColumn{0, 0.5}},
+				},
+			},
+		},
+		{
+			Target: "vacc-age-full",
+			Response: &grafanaJson.TableQueryResponse{
+				Columns: []grafanaJson.TableQueryResponseColumn{
+					{Text: "timestamp", Data: grafanaJson.TableQueryResponseTimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
+					{Text: "(unknown)", Data: grafanaJson.TableQueryResponseNumberColumn{0, 0}},
+					{Text: "25-34", Data: grafanaJson.TableQueryResponseNumberColumn{1, 4}},
+					{Text: "35-44", Data: grafanaJson.TableQueryResponseNumberColumn{2, 6}},
+				},
+			},
+		},
+		{
+			Target: "vacc-age-rate-full",
+			Response: &grafanaJson.TableQueryResponse{
+				Columns: []grafanaJson.TableQueryResponseColumn{
+					{Text: "timestamp", Data: grafanaJson.TableQueryResponseTimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
+					{Text: "25-34", Data: grafanaJson.TableQueryResponseNumberColumn{0.01, 0.04}},
+					{Text: "35-44", Data: grafanaJson.TableQueryResponseNumberColumn{0.2, 0.6}},
+				},
+			},
+		},
+		{
+			Target: "vacc-age-booster",
+			Response: &grafanaJson.TableQueryResponse{
+				Columns: []grafanaJson.TableQueryResponseColumn{
+					{Text: "timestamp", Data: grafanaJson.TableQueryResponseTimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
+					{Text: "(unknown)", Data: grafanaJson.TableQueryResponseNumberColumn{0, 0}},
+					{Text: "25-34", Data: grafanaJson.TableQueryResponseNumberColumn{0, 5}},
+					{Text: "35-44", Data: grafanaJson.TableQueryResponseNumberColumn{1, 1}},
+				},
+			},
+		},
+		{
+			Target: "vacc-age-rate-booster",
+			Response: &grafanaJson.TableQueryResponse{
+				Columns: []grafanaJson.TableQueryResponseColumn{
+					{Text: "timestamp", Data: grafanaJson.TableQueryResponseTimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
+					{Text: "25-34", Data: grafanaJson.TableQueryResponseNumberColumn{0, 0.05}},
+					{Text: "35-44", Data: grafanaJson.TableQueryResponseNumberColumn{0.1, 0.1}},
+				},
+			},
+		},
+		{
+			Target: "vaccination-lag",
+			Response: &grafanaJson.TableQueryResponse{
+				Columns: []grafanaJson.TableQueryResponseColumn{
+					{Text: "timestamp", Data: grafanaJson.TableQueryResponseTimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
+					{Text: "lag", Data: grafanaJson.TableQueryResponseNumberColumn{0, 0}},
+				},
+			},
+		},
+	}
+)
+
 func TestHandler_Search(t *testing.T) {
 	getter := &mockAPI.Getter{}
 	client := &sciensano.Client{Getter: getter}
@@ -39,13 +211,14 @@ func TestHandler_Search(t *testing.T) {
 	}, targets)
 }
 
-func TestHandler_TableQuery_Vaccinations(t *testing.T) {
+func TestHandler_TableQuery(t *testing.T) {
 	getter := &mockAPI.Getter{}
 	client := &sciensano.Client{Getter: getter}
-	h := vaccinationsHandler.New(client, nil)
+	demo := &mockDemographics.Demographics{}
+	h := vaccinationsHandler.New(client, demo)
 
-	endDate := time.Date(2021, 03, 10, 0, 0, 0, 0, time.UTC)
-	request := &grafanaJson.TableQueryArgs{
+	endDate := timestamp.Add(24 * time.Hour)
+	args := &grafanaJson.TableQueryArgs{
 		CommonQueryArgs: grafanaJson.CommonQueryArgs{
 			Range: grafanaJson.QueryRequestRange{To: endDate},
 		},
@@ -53,394 +226,72 @@ func TestHandler_TableQuery_Vaccinations(t *testing.T) {
 
 	getter.
 		On("GetVaccinations", mock.Anything).
-		Return(
-			[]*apiclient.APIVaccinationsResponse{
-				{
-					TimeStamp: apiclient.TimeStamp{Time: endDate},
-					Dose:      "A",
-					Count:     100,
-				},
-				{
-					TimeStamp: apiclient.TimeStamp{Time: endDate},
-					Dose:      "B",
-					Count:     25,
-				},
-				{
-					TimeStamp: apiclient.TimeStamp{Time: endDate},
-					Dose:      "C",
-					Count:     10,
-				},
-				{
-					TimeStamp: apiclient.TimeStamp{Time: endDate},
-					Dose:      "E",
-					Count:     5,
-				},
-				{
-					TimeStamp: apiclient.TimeStamp{Time: endDate.Add(24 * time.Hour)},
-					Dose:      "A",
-					Count:     74,
-				},
-				{
-					TimeStamp: apiclient.TimeStamp{Time: endDate.Add(24 * time.Hour)},
-					Dose:      "B",
-					Count:     50,
-				},
-			}, nil)
+		Return(vaccinationTestData, nil)
 
-	// Vaccinations
-	response, err := h.Endpoints().TableQuery(context.Background(), "vaccinations", request)
-	require.NoError(t, err)
-
-	for _, column := range response.Columns {
-		switch data := column.Data.(type) {
-		case grafanaJson.TableQueryResponseTimeColumn:
-			assert.Equal(t, "timestamp", column.Text)
-			assert.Equal(t, endDate, data[len(data)-1])
-		case grafanaJson.TableQueryResponseNumberColumn:
-			switch column.Text {
-			case "partial":
-				require.Len(t, data, 1)
-				assert.Equal(t, 100.0, data[len(data)-1])
-			case "full":
-				require.Len(t, data, 1)
-				assert.Equal(t, 35.0, data[len(data)-1])
-			case "booster":
-				require.Len(t, data, 1)
-				assert.Equal(t, 5.0, data[len(data)-1])
-			default:
-				assert.Fail(t, "unexpected column", column.Text)
-			}
-		}
-	}
-
-	getter.AssertExpectations(t)
-}
-
-func TestHandler_TableQuery_GroupedVaccination_ByAge(t *testing.T) {
-	getter := &mockAPI.Getter{}
-	client := &sciensano.Client{Getter: getter}
-	h := vaccinationsHandler.New(client, nil)
-
-	endDate := time.Date(2021, 03, 10, 0, 0, 0, 0, time.UTC)
-	request := &grafanaJson.TableQueryArgs{
-		CommonQueryArgs: grafanaJson.CommonQueryArgs{
-			Range: grafanaJson.QueryRequestRange{To: endDate},
-		},
-	}
-
-	getter.
-		On("GetVaccinations", mock.Anything).
-		Return(
-			[]*apiclient.APIVaccinationsResponse{
-				{
-					TimeStamp: apiclient.TimeStamp{Time: endDate},
-					AgeGroup:  "45-54",
-					Dose:      "A",
-					Count:     100,
-				},
-				{
-					TimeStamp: apiclient.TimeStamp{Time: endDate},
-					AgeGroup:  "45-54",
-					Dose:      "B",
-					Count:     25,
-				},
-				{
-					TimeStamp: apiclient.TimeStamp{Time: endDate.Add(24 * time.Hour)},
-					AgeGroup:  "45-54",
-					Dose:      "A",
-					Count:     74,
-				},
-				{
-					TimeStamp: apiclient.TimeStamp{Time: endDate.Add(24 * time.Hour)},
-					AgeGroup:  "45-54",
-					Dose:      "B",
-					Count:     50,
-				},
-			}, nil)
-
-	// Vaccinations grouped by Age
-	// TODO: partial, booster calls
-	response, err := h.Endpoints().TableQuery(context.Background(), "vacc-age-full", request)
-	require.NoError(t, err)
-
-	for _, column := range response.Columns {
-		switch data := column.Data.(type) {
-		case grafanaJson.TableQueryResponseTimeColumn:
-			require.Equal(t, "timestamp", column.Text)
-			require.NotZero(t, len(data))
-			assert.Equal(t, endDate, data[len(data)-1])
-		case grafanaJson.TableQueryResponseNumberColumn:
-			switch column.Text {
-			case "45-54":
-				require.NotZero(t, len(data))
-				assert.Equal(t, 25.0, data[len(data)-1])
-			}
-		}
-	}
-
-	getter.AssertExpectations(t)
-}
-
-func TestHandler_TableQuery_GroupedRatedVaccination_ByAge(t *testing.T) {
-	getter := &mockAPI.Getter{}
-	demographics := &mockDemographics.Demographics{}
-	client := &sciensano.Client{Getter: getter}
-	h := vaccinationsHandler.New(client, demographics)
-
-	endDate := time.Date(2021, 03, 10, 0, 0, 0, 0, time.UTC)
-	request := &grafanaJson.TableQueryArgs{
-		CommonQueryArgs: grafanaJson.CommonQueryArgs{
-			Range: grafanaJson.QueryRequestRange{To: endDate},
-		},
-	}
-
-	demographics.
-		On("GetAgeGroupFigures").
-		Return(map[string]int{
-			"45-54": 1000,
-		}, nil)
-
-	getter.
-		On("GetVaccinations", mock.Anything).
-		Return(
-			[]*apiclient.APIVaccinationsResponse{
-				{
-					TimeStamp: apiclient.TimeStamp{Time: endDate},
-					AgeGroup:  "45-54",
-					Dose:      "A",
-					Count:     100,
-				},
-				{
-					TimeStamp: apiclient.TimeStamp{Time: endDate},
-					AgeGroup:  "45-54",
-					Dose:      "B",
-					Count:     25,
-				},
-				{
-					TimeStamp: apiclient.TimeStamp{Time: endDate.Add(24 * time.Hour)},
-					AgeGroup:  "45-54",
-					Dose:      "A",
-					Count:     74,
-				},
-				{
-					TimeStamp: apiclient.TimeStamp{Time: endDate.Add(24 * time.Hour)},
-					AgeGroup:  "45-54",
-					Dose:      "B",
-					Count:     50,
-				},
-			}, nil)
-
-	// Vaccination rate grouped by Age
-	response, err := h.Endpoints().TableQuery(context.Background(), "vacc-age-rate-partial", request)
-	require.NoError(t, err)
-
-	for _, column := range response.Columns {
-		switch data := column.Data.(type) {
-		case grafanaJson.TableQueryResponseTimeColumn:
-			assert.Equal(t, "timestamp", column.Text)
-			if assert.NotZero(t, len(data)) {
-				assert.Equal(t, endDate, data[len(data)-1])
-			}
-		case grafanaJson.TableQueryResponseNumberColumn:
-			switch column.Text {
-			case "45-54":
-				if assert.NotZero(t, len(data)) {
-					assert.Equal(t, 10, int(100*data[len(data)-1]))
-				}
-			}
-		}
-	}
-
-	mock.AssertExpectationsForObjects(t, demographics, getter)
-}
-
-func TestHandler_TableQuery_GroupedVaccination_ByRegion(t *testing.T) {
-	getter := &mockAPI.Getter{}
-	client := &sciensano.Client{Getter: getter}
-	h := vaccinationsHandler.New(client, nil)
-
-	endDate := time.Date(2021, 03, 10, 0, 0, 0, 0, time.UTC)
-	request := &grafanaJson.TableQueryArgs{
-		CommonQueryArgs: grafanaJson.CommonQueryArgs{
-			Range: grafanaJson.QueryRequestRange{To: endDate},
-		},
-	}
-
-	getter.
-		On("GetVaccinations", mock.Anything).
-		Return(
-			[]*apiclient.APIVaccinationsResponse{
-				{
-					TimeStamp: apiclient.TimeStamp{Time: endDate},
-					Region:    "Flanders",
-					Dose:      "A",
-					Count:     100,
-				},
-				{
-					TimeStamp: apiclient.TimeStamp{Time: endDate},
-					Region:    "Flanders",
-					Dose:      "B",
-					Count:     25,
-				},
-				{
-					TimeStamp: apiclient.TimeStamp{Time: endDate.Add(24 * time.Hour)},
-					Region:    "Flanders",
-					Dose:      "A",
-					Count:     74,
-				},
-				{
-					TimeStamp: apiclient.TimeStamp{Time: endDate.Add(24 * time.Hour)},
-					Region:    "Flanders",
-					Dose:      "B",
-					Count:     50,
-				},
-			}, nil)
-
-	// Vaccinations grouped by Region
-	response, err := h.Endpoints().TableQuery(context.Background(), "vacc-region-full", request)
-	require.NoError(t, err)
-
-	for _, column := range response.Columns {
-		switch data := column.Data.(type) {
-		case grafanaJson.TableQueryResponseTimeColumn:
-			require.Equal(t, "timestamp", column.Text)
-			require.NotZero(t, len(data))
-			assert.Equal(t, endDate, data[len(data)-1])
-		case grafanaJson.TableQueryResponseNumberColumn:
-			switch column.Text {
-			case "Flanders":
-				require.NotZero(t, len(data))
-				assert.Equal(t, 25.0, data[len(data)-1])
-			}
-		}
-	}
-
-	getter.AssertExpectations(t)
-}
-
-func TestHandler_TableQuery_GroupedRatedVaccination_ByRegion(t *testing.T) {
-	getter := &mockAPI.Getter{}
-	demographics := &mockDemographics.Demographics{}
-	client := &sciensano.Client{Getter: getter}
-	h := vaccinationsHandler.New(client, demographics)
-
-	endDate := time.Date(2021, 03, 10, 0, 0, 0, 0, time.UTC)
-	request := &grafanaJson.TableQueryArgs{
-		CommonQueryArgs: grafanaJson.CommonQueryArgs{
-			Range: grafanaJson.QueryRequestRange{To: endDate},
-		},
-	}
-
-	demographics.
+	demo.
 		On("GetRegionFigures").
 		Return(map[string]int{
-			"Flanders": 6000,
+			"Flanders": 100,
+			"Brussels": 10,
 		})
 
-	getter.
-		On("GetVaccinations", mock.Anything).
-		Return(
-			[]*apiclient.APIVaccinationsResponse{
-				{TimeStamp: apiclient.TimeStamp{Time: endDate}, Region: "Flanders", Dose: "A", Count: 100},
-				{TimeStamp: apiclient.TimeStamp{Time: endDate}, Region: "Flanders", Dose: "B", Count: 25},
-				{TimeStamp: apiclient.TimeStamp{Time: endDate}, Region: "Ostbelgien", Dose: "A", Count: 25},
-				{TimeStamp: apiclient.TimeStamp{Time: endDate}, Region: "Ostbelgien", Dose: "B", Count: 5},
-				{TimeStamp: apiclient.TimeStamp{Time: endDate.Add(24 * time.Hour)}, Region: "Flanders", Dose: "A", Count: 174},
-				{TimeStamp: apiclient.TimeStamp{Time: endDate.Add(24 * time.Hour)}, Region: "Flanders", Dose: "B", Count: 50},
-				{TimeStamp: apiclient.TimeStamp{Time: endDate.Add(24 * time.Hour)}, Region: "Ostbelgien", Dose: "A", Count: 25},
-				{TimeStamp: apiclient.TimeStamp{Time: endDate.Add(24 * time.Hour)}, Region: "Ostbelgien", Dose: "B", Count: 5},
-			}, nil)
+	demo.
+		On("GetAgeGroupFigures").
+		Return(map[string]int{
+			"25-34": 100,
+			"35-44": 10,
+		})
 
-	// Vaccination rate grouped by Region
-	response, err := h.Endpoints().TableQuery(context.Background(), "vacc-region-rate-full", request)
-	require.NoError(t, err)
-
-	for _, column := range response.Columns {
-		switch data := column.Data.(type) {
-		case grafanaJson.TableQueryResponseTimeColumn:
-			require.Equal(t, "timestamp", column.Text)
-			require.NotZero(t, len(data))
-			assert.Equal(t, endDate, data[len(data)-1])
-		case grafanaJson.TableQueryResponseNumberColumn:
-			switch column.Text {
-			case "Flanders":
-				require.NotZero(t, len(data))
-				assert.Equal(t, 4166, int(1000000*data[len(data)-1]))
-			case "Ostbelgien":
-				require.NotZero(t, len(data))
-				assert.Equal(t, 64, int(1000000*data[len(data)-1]))
-			}
-		}
+	for _, testCase := range testCases {
+		response, err := h.Endpoints().TableQuery(context.Background(), testCase.Target, args)
+		require.NoError(t, err, testCase.Target)
+		assert.Equal(t, testCase.Response, response, testCase.Target)
 	}
 
-	mock.AssertExpectationsForObjects(t, getter, demographics)
+	mock.AssertExpectationsForObjects(t, getter, demo)
 }
 
-func TestHandler_TableQuery_Vaccination_Lag(t *testing.T) {
+func BenchmarkHandler_TableQuery(b *testing.B) {
+	var bigResponse []*apiclient.APIVaccinationsResponse
+	ts := time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)
+
+	for i := 0; i < 2*365; i++ {
+		for _, region := range []string{"Brussels", "Flanders", "Wallonia"} {
+			bigResponse = append(bigResponse, &apiclient.APIVaccinationsResponse{
+				TimeStamp: apiclient.TimeStamp{Time: ts},
+				Region:    region,
+				Dose:      "A",
+				Count:     i + 100,
+			})
+			bigResponse = append(bigResponse, &apiclient.APIVaccinationsResponse{
+				TimeStamp: apiclient.TimeStamp{Time: ts},
+				Region:    region,
+				Dose:      "B",
+				Count:     i,
+			})
+		}
+
+		ts = ts.Add(24 * time.Hour)
+	}
+
 	getter := &mockAPI.Getter{}
 	client := &sciensano.Client{Getter: getter}
 	h := vaccinationsHandler.New(client, nil)
 
-	endDate := time.Date(2021, 03, 31, 0, 0, 0, 0, time.UTC)
-	request := &grafanaJson.TableQueryArgs{
-		CommonQueryArgs: grafanaJson.CommonQueryArgs{
-			Range: grafanaJson.QueryRequestRange{To: endDate},
-		},
-	}
+	args := &grafanaJson.TableQueryArgs{CommonQueryArgs: grafanaJson.CommonQueryArgs{Range: grafanaJson.QueryRequestRange{
+		To: time.Date(2021, 10, 22, 0, 0, 0, 0, time.UTC),
+	}}}
 
 	getter.
-		On("GetVaccinations", mock.Anything).
-		Return([]*apiclient.APIVaccinationsResponse{
-			{
-				TimeStamp: apiclient.TimeStamp{Time: time.Date(2021, 3, 16, 0, 0, 0, 0, time.UTC)},
-				Dose:      "A",
-				Count:     200,
-			},
-			{
-				TimeStamp: apiclient.TimeStamp{Time: time.Date(2021, 3, 16, 0, 0, 0, 0, time.UTC)},
-				Dose:      "B",
-				Count:     50,
-			},
-			{
-				TimeStamp: apiclient.TimeStamp{Time: time.Date(2021, 3, 31, 0, 0, 0, 0, time.UTC)},
-				Dose:      "A",
-				Count:     300,
-			},
-			{
-				TimeStamp: apiclient.TimeStamp{Time: time.Date(2021, 3, 31, 0, 0, 0, 0, time.UTC)},
-				Dose:      "B",
-				Count:     150,
-			},
-			{
-				TimeStamp: apiclient.TimeStamp{Time: time.Date(2021, 4, 1, 0, 0, 0, 0, time.UTC)},
-				Dose:      "A",
-				Count:     320,
-			},
-			{
-				TimeStamp: apiclient.TimeStamp{Time: time.Date(2021, 4, 1, 0, 0, 0, 0, time.UTC)},
-				Dose:      "B",
-				Count:     155,
-			},
-		}, nil)
+		On("GetVaccinations", mock.AnythingOfType("*context.emptyCtx")).
+		Return(bigResponse, nil)
 
-	// Lag
-	response, err := h.Endpoints().TableQuery(context.Background(), "vaccination-lag", request)
-	require.NoError(t, err)
+	b.ResetTimer()
 
-	for _, column := range response.Columns {
-		switch data := column.Data.(type) {
-		// case grafanaJson.TableQueryResponseTimeColumn:
-		//	require.Equal(t, "timestamp", column.Text)
-		//	require.NotZero(t, len(data))
-		//	assert.Equal(t, endDate, data[len(data)-1])
-		case grafanaJson.TableQueryResponseNumberColumn:
-			switch column.Text {
-			case "lag":
-				require.NotZero(t, len(data))
-				assert.Equal(t, 15.0, data[len(data)-1])
-			}
-		}
+	for i := 0; i < 100; i++ {
+		_, err := h.Endpoints().TableQuery(context.Background(), "vacc-region-full", args)
+		require.NoError(b, err)
 	}
 
-	getter.AssertExpectations(t)
+	getter.AssertExpectations(b)
 }

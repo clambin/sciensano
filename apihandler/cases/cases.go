@@ -59,7 +59,7 @@ func (handler *Handler) TableQuery(ctx context.Context, target string, args *gra
 }
 
 func (handler *Handler) buildCasesResponse(ctx context.Context, target string, args *grafanajson.TableQueryArgs) (response *grafanajson.TableQueryResponse, err error) {
-	var cases *sciensano.GroupedCases
+	var cases *sciensano.Cases
 	switch target {
 	case "cases":
 		cases, err = handler.Sciensano.GetCases(ctx, args.Range.To)
