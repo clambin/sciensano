@@ -4,7 +4,7 @@ on:
   push:
     branches:
     - master
-    - cases
+    - performance
     paths-ignore:
       - '**.md'
       - 'assets/grafana/dashboards/**'
