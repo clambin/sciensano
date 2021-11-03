@@ -3,40 +3,17 @@ package sciensano
 import (
 	"context"
 	"github.com/clambin/sciensano/apiclient"
+	"github.com/clambin/sciensano/sciensano/datasets"
+	log "github.com/sirupsen/logrus"
 	"sort"
 	"time"
 )
 
-// Vaccinations is the response of the GetVaccinations
-type Vaccinations struct {
-	Timestamps []time.Time
-	Groups     []GroupedVaccinationsEntry
-}
-
-// GroupedVaccinationsEntry contains the values for the (grouped) vaccinations
-type GroupedVaccinationsEntry struct {
-	Name   string
-	Values []*VaccinationsEntry
-}
-
-// VaccinationsEntry contains the vaccination values for a single timestamp
-type VaccinationsEntry struct {
-	Partial    int
-	Full       int
-	SingleDose int
-	Booster    int
-}
-
-// Total calculates the total number of vaccinations for one entry
-func (entry VaccinationsEntry) Total() int {
-	return entry.Partial + entry.Full + entry.SingleDose + entry.Booster
-}
-
 // VaccinationGetter contains all required methods to retrieve vaccination data
 type VaccinationGetter interface {
-	GetVaccinations(ctx context.Context, end time.Time) (results *Vaccinations, err error)
-	GetVaccinationsByAgeGroup(ctx context.Context, end time.Time) (results *Vaccinations, err error)
-	GetVaccinationsByRegion(ctx context.Context, endTime time.Time) (results *Vaccinations, err error)
+	GetVaccinations(ctx context.Context) (results *datasets.Dataset, err error)
+	GetVaccinationsByAgeGroup(ctx context.Context) (results *datasets.Dataset, err error)
+	GetVaccinationsByRegion(ctx context.Context) (results *datasets.Dataset, err error)
 }
 
 const (
@@ -45,45 +22,57 @@ const (
 	groupVaccinationsByRegion
 )
 
-// GetVaccinations returns all vaccinations up to endTime
-func (client *Client) GetVaccinations(ctx context.Context, endTime time.Time) (results *Vaccinations, err error) {
-	var apiResult []*apiclient.APIVaccinationsResponse
-	if apiResult, err = client.Getter.GetVaccinations(ctx); err != nil {
-		return
-	}
-	return groupVaccinations(apiResult, endTime, groupVaccinationsByNone), nil
+// GetVaccinations returns all vaccinations
+func (client *Client) GetVaccinations(ctx context.Context) (results *datasets.Dataset, err error) {
+	return client.getVaccinations(ctx, "GetVaccinations", "Vaccinations", groupVaccinationsByNone)
 }
 
-// GetVaccinationsByAgeGroup returns all vaccinations, grouped by age group, up to endTime.
-func (client *Client) GetVaccinationsByAgeGroup(ctx context.Context, endTime time.Time) (results *Vaccinations, err error) {
-	var apiResult []*apiclient.APIVaccinationsResponse
-	if apiResult, err = client.Getter.GetVaccinations(ctx); err != nil {
-		return
-	}
-	return groupVaccinations(apiResult, endTime, groupVaccinationsByAgeGroup), nil
+// GetVaccinationsByAgeGroup returns all vaccinations, grouped by age group
+func (client *Client) GetVaccinationsByAgeGroup(ctx context.Context) (results *datasets.Dataset, err error) {
+	return client.getVaccinations(ctx, "GetVaccinationsByAgeGroup", "VaccinationsByAgeGroup", groupVaccinationsByAgeGroup)
 }
 
-// GetVaccinationsByRegion returns all vaccinations, grouped by region, up to endTime.
-func (client *Client) GetVaccinationsByRegion(ctx context.Context, endTime time.Time) (results *Vaccinations, err error) {
-	var apiResult []*apiclient.APIVaccinationsResponse
-	if apiResult, err = client.Getter.GetVaccinations(ctx); err != nil {
-		return
-	}
-	return groupVaccinations(apiResult, endTime, groupVaccinationsByRegion), nil
+// GetVaccinationsByRegion returns all vaccinations, grouped by region
+func (client *Client) GetVaccinationsByRegion(ctx context.Context) (results *datasets.Dataset, err error) {
+	return client.getVaccinations(ctx, "GetVaccinationByRegion", "VaccinationsByRegion", groupVaccinationsByRegion)
 }
 
-func groupVaccinations(vaccinations []*apiclient.APIVaccinationsResponse, endTime time.Time, groupField int) (results *Vaccinations) {
-	mappedVaccinations, mappedGroups := mapVaccinations(vaccinations, endTime, groupField)
+func (client *Client) getVaccinations(ctx context.Context, name, cacheEntryName string, mode int) (results *datasets.Dataset, err error) {
+	before := time.Now()
+	defer func() { log.WithField("time", time.Now().Sub(before)).Debug(name + " done") }()
+
+	log.Debug("running " + name)
+	entry := client.cache.Load(cacheEntryName)
+	entry.Once.Do(func() {
+		var apiResult apiclient.APIVaccinationsResponse
+		if apiResult, err = client.Getter.GetVaccinations(ctx); err == nil {
+			entry.Data = groupVaccinations(apiResult, mode)
+			client.cache.Save(cacheEntryName, entry)
+		} else {
+			client.cache.Clear(cacheEntryName)
+		}
+	})
+	if err == nil && entry.Data != nil {
+		results = entry.Data.Copy()
+	}
+	return
+}
+
+func groupVaccinations(vaccinations apiclient.APIVaccinationsResponse, groupField int) (results *datasets.Dataset) {
+	before := time.Now()
+	defer log.WithField("time", time.Now().Sub(before)).Debug("groupVaccinations")
+
+	mappedVaccinations, mappedGroups := mapVaccinations(vaccinations, groupField)
 	timestamps := getUniqueSortedTimestampsFromVaccinations(mappedVaccinations)
 	groups := getUniqueSortedGroupNames(mappedGroups)
 
-	results = &Vaccinations{
+	results = &datasets.Dataset{
 		Timestamps: timestamps,
-		Groups:     make([]GroupedVaccinationsEntry, len(groups)),
+		Groups:     make([]datasets.GroupedDatasetEntry, len(groups)),
 	}
 
 	for index, group := range groups {
-		results.Groups[index] = GroupedVaccinationsEntry{
+		results.Groups[index] = datasets.GroupedDatasetEntry{
 			Name: group,
 		}
 	}
@@ -97,54 +86,6 @@ func groupVaccinations(vaccinations []*apiclient.APIVaccinationsResponse, endTim
 			results.Groups[index].Values = append(results.Groups[index].Values, entry)
 		}
 	}
-
-	return
-}
-
-func mapVaccinations(vaccinations []*apiclient.APIVaccinationsResponse, endTime time.Time, groupField int) (mappedVaccinations map[time.Time]map[string]*VaccinationsEntry, mappedGroups map[string]struct{}) {
-	mappedVaccinations = make(map[time.Time]map[string]*VaccinationsEntry)
-	mappedGroups = make(map[string]struct{})
-
-	for _, entry := range vaccinations {
-		if entry.TimeStamp.After(endTime) {
-			continue
-		}
-
-		mappedVaccinationEntries, ok := mappedVaccinations[entry.TimeStamp.Time]
-		if ok == false {
-			mappedVaccinationEntries = make(map[string]*VaccinationsEntry)
-		}
-
-		var groupName string
-		switch groupField {
-		case groupVaccinationsByNone:
-			groupName = ""
-		case groupVaccinationsByAgeGroup:
-			groupName = entry.AgeGroup
-		case groupVaccinationsByRegion:
-			groupName = entry.Region
-		}
-
-		value, ok := mappedVaccinationEntries[groupName]
-		if ok == false {
-			value = &VaccinationsEntry{}
-		}
-		switch entry.Dose {
-		case "A":
-			value.Partial += entry.Count
-		case "B":
-			value.Full += entry.Count
-		case "C":
-			value.SingleDose += entry.Count
-		case "E":
-			value.Booster += entry.Count
-		}
-		mappedVaccinationEntries[groupName] = value
-		mappedVaccinations[entry.TimeStamp.Time] = mappedVaccinationEntries
-
-		mappedGroups[groupName] = struct{}{}
-	}
-
 	return
 }
 
@@ -157,7 +98,7 @@ func getUniqueSortedTimestampsFromVaccinations(input map[time.Time]map[string]*V
 }
 
 // AccumulateVaccinations takes a list of vaccinations and accumulates the doses
-func AccumulateVaccinations(vaccinationData *Vaccinations) {
+func AccumulateVaccinations(vaccinationData *datasets.Dataset) {
 	for _, group := range vaccinationData.Groups {
 		partial := 0
 		full := 0
@@ -165,17 +106,78 @@ func AccumulateVaccinations(vaccinationData *Vaccinations) {
 		booster := 0
 
 		for _, value := range group.Values {
-			partial += value.Partial
-			value.Partial = partial
+			partial += value.(*VaccinationsEntry).Partial
+			value.(*VaccinationsEntry).Partial = partial
 
-			full += value.Full
-			value.Full = full
+			full += value.(*VaccinationsEntry).Full
+			value.(*VaccinationsEntry).Full = full
 
-			singleDose += value.SingleDose
-			value.SingleDose = singleDose
+			singleDose += value.(*VaccinationsEntry).SingleDose
+			value.(*VaccinationsEntry).SingleDose = singleDose
 
-			booster += value.Booster
-			value.Booster = booster
+			booster += value.(*VaccinationsEntry).Booster
+			value.(*VaccinationsEntry).Booster = booster
 		}
 	}
+}
+
+func mapVaccinations(vaccinations apiclient.APIVaccinationsResponse, groupField int) (mappedVaccinations map[time.Time]map[string]*VaccinationsEntry, mappedGroups map[string]struct{}) {
+	before := time.Now()
+	defer log.WithField("time", time.Now().Sub(before)).Debug("mapVaccinations")
+
+	if vaccinations == nil || len(vaccinations) == 0 {
+		return
+	}
+	// sort.Slice(vaccinations, func(i, j int) bool { return vaccinations[i].TimeStamp.Time.Before(vaccinations[j].TimeStamp.Time)} )
+
+	mappedVaccinations = make(map[time.Time]map[string]*VaccinationsEntry)
+	mappedGroups = make(map[string]struct{})
+
+	currentTimestamp := time.Time{}
+	currentEntries := make(map[string]*VaccinationsEntry)
+
+	for _, vaccination := range vaccinations {
+		if !currentTimestamp.IsZero() && !currentTimestamp.Equal(vaccination.TimeStamp.Time) {
+			mappedVaccinations[currentTimestamp] = currentEntries
+			currentEntries = make(map[string]*VaccinationsEntry)
+		}
+		currentTimestamp = vaccination.TimeStamp.Time
+
+		var groupName string
+		switch groupField {
+		case groupVaccinationsByNone:
+			groupName = ""
+		case groupVaccinationsByAgeGroup:
+			groupName = vaccination.AgeGroup
+		case groupVaccinationsByRegion:
+			groupName = vaccination.Region
+		}
+
+		mappedGroups[groupName] = struct{}{}
+
+		entry, ok := currentEntries[groupName]
+
+		if ok == false {
+			entry = &VaccinationsEntry{}
+		}
+
+		switch vaccination.Dose {
+		case "A":
+			entry.Partial += vaccination.Count
+		case "B":
+			entry.Full += vaccination.Count
+		case "C":
+			entry.SingleDose += vaccination.Count
+		case "E":
+			entry.Booster += vaccination.Count
+		}
+
+		currentEntries[groupName] = entry
+	}
+
+	if !currentTimestamp.IsZero() {
+		mappedVaccinations[currentTimestamp] = currentEntries
+	}
+
+	return
 }

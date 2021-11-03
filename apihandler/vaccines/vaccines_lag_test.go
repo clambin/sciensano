@@ -3,6 +3,7 @@ package vaccines
 import (
 	"fmt"
 	"github.com/clambin/sciensano/sciensano"
+	"github.com/clambin/sciensano/sciensano/datasets"
 	"github.com/clambin/sciensano/vaccines"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -11,7 +12,7 @@ import (
 )
 
 func TestVaccineDelay(t *testing.T) {
-	vaccinations := &sciensano.Vaccinations{
+	vaccinations := &datasets.Dataset{
 		Timestamps: []time.Time{
 			time.Date(2021, 01, 01, 0, 0, 0, 0, time.UTC),
 			time.Date(2021, 01, 15, 0, 0, 0, 0, time.UTC),
@@ -20,14 +21,14 @@ func TestVaccineDelay(t *testing.T) {
 			time.Date(2021, 03, 1, 0, 0, 0, 0, time.UTC),
 			time.Date(2021, 03, 15, 0, 0, 0, 0, time.UTC),
 		},
-		Groups: []sciensano.GroupedVaccinationsEntry{{
-			Values: []*sciensano.VaccinationsEntry{
-				{Partial: 10, Full: 0},
-				{Partial: 15, Full: 1},
-				{Partial: 15, Full: 4},
-				{Partial: 25, Full: 5},
-				{Partial: 35, Full: 10},
-				{Partial: 35, Full: 15},
+		Groups: []datasets.GroupedDatasetEntry{{
+			Values: []datasets.Copyable{
+				&sciensano.VaccinationsEntry{Partial: 10, Full: 0},
+				&sciensano.VaccinationsEntry{Partial: 15, Full: 1},
+				&sciensano.VaccinationsEntry{Partial: 15, Full: 4},
+				&sciensano.VaccinationsEntry{Partial: 25, Full: 5},
+				&sciensano.VaccinationsEntry{Partial: 35, Full: 10},
+				&sciensano.VaccinationsEntry{Partial: 35, Full: 15},
 			},
 		}},
 	}

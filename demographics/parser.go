@@ -1,60 +1,54 @@
 package demographics
 
 import (
-	"encoding/csv"
+	csv "github.com/rovaughn/fastcsv"
 	log "github.com/sirupsen/logrus"
-	"io"
 	"math"
-	"os"
 	"strconv"
 )
 
-func groupPopulation(filename, mapField string) (output map[string]int, err error) {
-	var f *os.File
-	f, err = os.Open(filename)
+type populationRecord struct {
+	Region []byte `csv:"TX_RGN_DESCR_NL"`
+	Age    []byte `csv:"CD_AGE"`
+	Count  []byte `csv:"MS_POPULATION\r"`
+}
+
+func groupPopulation(filename string) (byRegion map[string]int, byAge map[string]int, err error) {
+	var record populationRecord
+	var reader *csv.FileReader
+	reader, err = csv.NewFileReader(filename, '|', &record)
 
 	if err != nil {
 		return
 	}
 
-	reader := csv.NewReader(f)
-	reader.Comma = '|'
+	defer func() {
+		_ = reader.Close()
+	}()
 
-	var fields map[string]int
-	output = make(map[string]int)
-	first := true
-	for err == nil {
-		var record []string
-		record, err = reader.Read()
+	byRegion = make(map[string]int)
+	byAge = make(map[string]int)
 
-		if err == nil {
-			if first {
-				fields = parseFields(record)
-				first = false
-			} else if len(record) != len(fields) {
-				log.Warning("record mismatch. skipping entry")
-			} else if len(record) > 0 {
-				var count int
-				count, err = strconv.Atoi(record[fields["MS_POPULATION"]])
-				if err == nil {
-					output[record[fields[mapField]]] += count
-				}
-			}
+	var count int
+	for reader.Scan() {
+		if len(record.Count) > 0 && record.Count[len(record.Count)-1] == '\r' {
+			record.Count = record.Count[:len(record.Count)-1]
 		}
+		count, err = strconv.Atoi(string(record.Count))
+		region := string(record.Region)
+		age := string(record.Age)
+
+		if err != nil {
+			return
+		}
+
+		byRegionCount, _ := byRegion[region]
+		byRegion[region] = byRegionCount + count
+
+		byAgeCount, _ := byAge[age]
+		byAge[age] = byAgeCount + count
 	}
 
-	if err == io.EOF {
-		err = nil
-	}
-
-	return
-}
-
-func parseFields(record []string) (columns map[string]int) {
-	columns = make(map[string]int)
-	for index, field := range record {
-		columns[field] = index
-	}
 	return
 }
 

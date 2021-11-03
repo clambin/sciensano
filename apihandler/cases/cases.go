@@ -4,23 +4,21 @@ import (
 	"context"
 	"fmt"
 	grafanajson "github.com/clambin/grafana-json"
-	"github.com/clambin/sciensano/apiclient"
 	"github.com/clambin/sciensano/sciensano"
+	"github.com/clambin/sciensano/sciensano/datasets"
 	log "github.com/sirupsen/logrus"
 	"time"
 )
 
 // Handler implements a grafana-json handler for COVID-19 cases
 type Handler struct {
-	apiclient.Getter
 	Sciensano   sciensano.APIClient
 	targetTable grafanajson.TargetTable
 }
 
 // New creates a new Handler
-func New(getter apiclient.Getter, client sciensano.APIClient) (handler *Handler) {
+func New(client sciensano.APIClient) (handler *Handler) {
 	handler = &Handler{
-		Getter:    getter,
 		Sciensano: client,
 	}
 
@@ -59,21 +57,23 @@ func (handler *Handler) TableQuery(ctx context.Context, target string, args *gra
 }
 
 func (handler *Handler) buildCasesResponse(ctx context.Context, target string, args *grafanajson.TableQueryArgs) (response *grafanajson.TableQueryResponse, err error) {
-	var cases *sciensano.Cases
+	var cases *datasets.Dataset
 	switch target {
 	case "cases":
-		cases, err = handler.Sciensano.GetCases(ctx, args.Range.To)
+		cases, err = handler.Sciensano.GetCases(ctx)
 	case "cases-province":
-		cases, err = handler.Sciensano.GetCasesByProvince(ctx, args.Range.To)
+		cases, err = handler.Sciensano.GetCasesByProvince(ctx)
 	case "cases-region":
-		cases, err = handler.Sciensano.GetCasesByRegion(ctx, args.Range.To)
+		cases, err = handler.Sciensano.GetCasesByRegion(ctx)
 	case "cases-age":
-		cases, err = handler.Sciensano.GetCasesByAgeGroup(ctx, args.Range.To)
+		cases, err = handler.Sciensano.GetCasesByAgeGroup(ctx)
 	}
 
 	if err != nil {
 		return
 	}
+
+	cases.ApplyRange(args.Range.From, args.Range.To)
 
 	timestampColumn := make(grafanajson.TableQueryResponseTimeColumn, 0, len(cases.Timestamps))
 	for _, timestamp := range cases.Timestamps {
@@ -90,7 +90,7 @@ func (handler *Handler) buildCasesResponse(ctx context.Context, target string, a
 	for _, group := range cases.Groups {
 		dataColumn := make(grafanajson.TableQueryResponseNumberColumn, 0, len(group.Values))
 		for _, value := range group.Values {
-			dataColumn = append(dataColumn, float64(value))
+			dataColumn = append(dataColumn, float64(value.(*sciensano.CasesEntry).Count))
 		}
 
 		name := group.Name

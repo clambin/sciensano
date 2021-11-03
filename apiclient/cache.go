@@ -35,6 +35,9 @@ type cacheEntry struct {
 }
 
 func (cache *Cache) getCacheEntry(name string) (entry *cacheEntry) {
+	cache.lock.Lock()
+	defer cache.lock.Unlock()
+
 	if cache.entries == nil {
 		cache.entries = make(map[string]*cacheEntry)
 	}
@@ -42,73 +45,78 @@ func (cache *Cache) getCacheEntry(name string) (entry *cacheEntry) {
 	var ok bool
 	if entry, ok = cache.entries[name]; ok == false {
 		entry = &cacheEntry{}
-		cache.entries[name] = entry
 	}
+
+	if entry.once == nil || time.Now().After(entry.expiry) {
+		entry.once = &sync.Once{}
+		entry.expiry = time.Now().Add(cache.Retention)
+		cache.entries[name] = entry
+		metricCacheMiss.WithLabelValues(name).Add(1.0)
+	} else {
+		metricCacheHit.WithLabelValues(name).Add(1.0)
+	}
+
 	return
 }
 
-// GetTestResults retrieves all COVID-19 test results.  If a valid cached result exists, that is returned instead.
-func (cache *Cache) GetTestResults(ctx context.Context) (results []*APITestResultsResponse, err error) {
+func (cache *Cache) setCacheEntry(name string, entry *cacheEntry) {
 	cache.lock.Lock()
-	entry := cache.getCacheEntry("tests")
-	if entry.once == nil || time.Now().After(entry.expiry) {
-		entry.once = &sync.Once{}
-		entry.expiry = time.Now().Add(cache.Retention)
-		metricCacheMiss.WithLabelValues("tests").Add(1.0)
-	} else {
-		metricCacheHit.WithLabelValues("tests").Add(1.0)
-	}
-	cache.lock.Unlock()
+	defer cache.lock.Unlock()
+	cache.entries[name] = entry
+}
 
+// GetTestResults retrieves all COVID-19 test results.  If a valid cached result exists, that is returned instead.
+func (cache *Cache) GetTestResults(ctx context.Context) (results APITestResultsResponse, err error) {
+	entry := cache.getCacheEntry("tests")
 	entry.once.Do(func() {
-		if entry.entries, err = cache.Getter.GetTestResults(ctx); err == nil {
-			cache.entries["tests"] = entry
+		entry.entries, err = cache.Getter.GetTestResults(ctx)
+		if err != nil {
+			entry.once = nil
 		}
+		cache.setCacheEntry("tests", entry)
 	})
 
-	return entry.entries.([]*APITestResultsResponse), err
+	return entry.entries.(APITestResultsResponse), err
 }
 
 // GetVaccinations retrieves all COVID-19 vaccinations.  If a valid cached result exists, that is returned instead.
-func (cache *Cache) GetVaccinations(ctx context.Context) (results []*APIVaccinationsResponse, err error) {
-	cache.lock.Lock()
+func (cache *Cache) GetVaccinations(ctx context.Context) (results APIVaccinationsResponse, err error) {
 	entry := cache.getCacheEntry("vaccinations")
-	if entry.once == nil || time.Now().After(entry.expiry) {
-		entry.once = &sync.Once{}
-		entry.expiry = time.Now().Add(cache.Retention)
-		metricCacheMiss.WithLabelValues("vaccinations").Add(1.0)
-	} else {
-		metricCacheHit.WithLabelValues("vaccinations").Add(1.0)
-	}
-	cache.lock.Unlock()
-
 	entry.once.Do(func() {
-		if entry.entries, err = cache.Getter.GetVaccinations(ctx); err == nil {
-			cache.entries["vaccinations"] = entry
+		entry.entries, err = cache.Getter.GetVaccinations(ctx)
+		if err != nil {
+			entry.once = nil
 		}
+		cache.setCacheEntry("vaccinations", entry)
 	})
 
-	return entry.entries.([]*APIVaccinationsResponse), err
+	return entry.entries.(APIVaccinationsResponse), err
 }
 
 // GetCases retrieves all COVID-19 cases.  If a valid cached result exists, that is returned instead.
-func (cache *Cache) GetCases(ctx context.Context) (results []*APICasesResponse, err error) {
-	cache.lock.Lock()
+func (cache *Cache) GetCases(ctx context.Context) (results APICasesResponse, err error) {
 	entry := cache.getCacheEntry("cases")
-	if entry.once == nil || time.Now().After(entry.expiry) {
-		entry.once = &sync.Once{}
-		entry.expiry = time.Now().Add(cache.Retention)
-		metricCacheMiss.WithLabelValues("cases").Add(1.0)
-	} else {
-		metricCacheHit.WithLabelValues("cases").Add(1.0)
-	}
-	cache.lock.Unlock()
-
 	entry.once.Do(func() {
-		if entry.entries, err = cache.Getter.GetCases(ctx); err == nil {
-			cache.entries["cases"] = entry
+		entry.entries, err = cache.Getter.GetCases(ctx)
+		if err != nil {
+			entry.once = nil
 		}
+		cache.setCacheEntry("cases", entry)
 	})
 
-	return entry.entries.([]*APICasesResponse), err
+	return entry.entries.(APICasesResponse), err
+}
+
+// GetMortality retrieves all COVID-19 deaths.  If a valid cached result exists, that is returned instead.
+func (cache *Cache) GetMortality(ctx context.Context) (results APIMortalityResponse, err error) {
+	entry := cache.getCacheEntry("mortality")
+	entry.once.Do(func() {
+		entry.entries, err = cache.Getter.GetMortality(ctx)
+		if err != nil {
+			entry.once = nil
+		}
+		cache.setCacheEntry("mortality", entry)
+	})
+
+	return entry.entries.(APIMortalityResponse), err
 }

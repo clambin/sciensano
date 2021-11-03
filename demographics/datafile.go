@@ -94,24 +94,6 @@ func (datafile *DataFile) get(filename string) (err error) {
 	return
 }
 
-func (datafile *DataFile) ParseByAge(brackets []float64) (byAge map[Bracket]int, err error) {
-	var input map[string]int
-	input, err = groupPopulation(datafile.filename, "CD_AGE")
-	if err == nil {
-		byAge = groupPopulationByAge(input, brackets)
-	}
-	return
-}
-
-func (datafile *DataFile) ParseByRegion() (byRegion map[string]int, err error) {
-	var input map[string]int
-	input, err = groupPopulation(datafile.filename, "TX_RGN_DESCR_NL")
-	if err == nil {
-		byRegion = groupPopulationByRegion(input)
-	}
-	return
-}
-
 func (datafile *DataFile) Remove() {
 	_ = os.RemoveAll(datafile.tempdir)
 }

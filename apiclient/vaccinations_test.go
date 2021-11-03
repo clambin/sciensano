@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 )
 
@@ -36,4 +37,30 @@ func TestClient_GetVaccinations(t *testing.T) {
 	_, err = client.GetVaccinations(ctx)
 	require.Error(t, err)
 
+}
+
+func BenchmarkClient_GetVaccinations(b *testing.B) {
+	testServer := httptest.NewServer(http.HandlerFunc(handleVaccinationResponse))
+	defer testServer.Close()
+
+	client := apiclient.Client{
+		HTTPClient: &http.Client{},
+		URL:        testServer.URL,
+	}
+	_, err := client.GetVaccinations(context.Background())
+	require.NoError(b, err)
+}
+
+var bigFile []byte
+
+func handleVaccinationResponse(w http.ResponseWriter, _ *http.Request) {
+	var err error
+	if bigFile == nil {
+		bigFile, err = os.ReadFile("../data/vaccinations.json")
+	}
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	_, _ = w.Write(bigFile)
 }

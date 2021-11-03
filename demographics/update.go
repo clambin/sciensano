@@ -36,32 +36,16 @@ func (store *Store) refresh() (byAge map[Bracket]int, byRegion map[string]int, e
 		return
 	}
 
-	var err1, err2 error
-	wg := sync.WaitGroup{}
-	wg.Add(2)
-	go func() {
-		byAge, err1 = datafile.ParseByAge(store.AgeBrackets)
+	var byRegionRaw, byAgeRaw map[string]int
+	byRegionRaw, byAgeRaw, err = groupPopulation(datafile.filename)
 
-		if err1 != nil {
-			log.WithError(err1).Error("unable to parse demographics file")
-		}
-		wg.Done()
-	}()
-	go func() {
-		byRegion, err2 = datafile.ParseByRegion()
-		if err2 != nil {
-			log.WithError(err2).Error("unable to parse demographics file")
-		}
-		wg.Done()
-	}()
+	if err != nil {
+		return
+	}
 
-	wg.Wait()
-	if err2 != nil {
-		err = err2
-	}
-	if err1 != nil {
-		err = err1
-	}
+	byAge = groupPopulationByAge(byAgeRaw, store.AgeBrackets)
+	byRegion = groupPopulationByRegion(byRegionRaw)
+
 	log.Infof("loaded demographics in %s", time.Now().Sub(start))
 	return
 }

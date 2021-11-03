@@ -3,28 +3,18 @@ package sciensano
 import (
 	"context"
 	"github.com/clambin/sciensano/apiclient"
+	"github.com/clambin/sciensano/sciensano/datasets"
+	log "github.com/sirupsen/logrus"
 	"sort"
 	"time"
 )
 
 // CasesGetter contains all methods providing COVID-19 cases
 type CasesGetter interface {
-	GetCases(ctx context.Context, endTime time.Time) (results *Cases, err error)
-	GetCasesByRegion(ctx context.Context, endTime time.Time) (results *Cases, err error)
-	GetCasesByProvince(ctx context.Context, endTime time.Time) (results *Cases, err error)
-	GetCasesByAgeGroup(ctx context.Context, endTime time.Time) (results *Cases, err error)
-}
-
-// Cases is the response of the GetCases functions
-type Cases struct {
-	Timestamps []time.Time
-	Groups     []GroupedCasesEntry
-}
-
-// GroupedCasesEntry contains all the values for the (grouped) cases
-type GroupedCasesEntry struct {
-	Name   string
-	Values []int
+	GetCases(ctx context.Context) (results *datasets.Dataset, err error)
+	GetCasesByRegion(ctx context.Context) (results *datasets.Dataset, err error)
+	GetCasesByProvince(ctx context.Context) (results *datasets.Dataset, err error)
+	GetCasesByAgeGroup(ctx context.Context) (results *datasets.Dataset, err error)
 }
 
 const (
@@ -34,65 +24,70 @@ const (
 	groupCasesByAgeGroup
 )
 
-// GetCases returns all cases up to endTime
-func (client *Client) GetCases(ctx context.Context, endTime time.Time) (results *Cases, err error) {
-	var apiResult []*apiclient.APICasesResponse
-	if apiResult, err = client.Getter.GetCases(ctx); err != nil {
-		return
-	}
-
-	return groupCases(apiResult, endTime, groupCasesByNone), nil
+// GetCases returns all cases
+func (client *Client) GetCases(ctx context.Context) (results *datasets.Dataset, err error) {
+	return client.getCases(ctx, "GetCases", "Cases", groupCasesByNone)
 }
 
-// GetCasesByRegion returns all cases up to endTime, grouped by region
-func (client *Client) GetCasesByRegion(ctx context.Context, endTime time.Time) (results *Cases, err error) {
-	var apiResult []*apiclient.APICasesResponse
-	if apiResult, err = client.Getter.GetCases(ctx); err != nil {
-		return
-	}
-
-	return groupCases(apiResult, endTime, groupCasesByRegion), nil
+// GetCasesByRegion returns all cases, grouped by region
+func (client *Client) GetCasesByRegion(ctx context.Context) (results *datasets.Dataset, err error) {
+	return client.getCases(ctx, "GetCasesByRegion", "CasesByRegion", groupCasesByRegion)
 }
 
-// GetCasesByProvince returns all cases up to endTime, grouped by province
-func (client *Client) GetCasesByProvince(ctx context.Context, endTime time.Time) (results *Cases, err error) {
-	var apiResult []*apiclient.APICasesResponse
-	if apiResult, err = client.Getter.GetCases(ctx); err != nil {
-		return
-	}
-
-	return groupCases(apiResult, endTime, groupCasesByProvince), nil
+// GetCasesByProvince returns all cases, grouped by province
+func (client *Client) GetCasesByProvince(ctx context.Context) (results *datasets.Dataset, err error) {
+	return client.getCases(ctx, "GetCasesByProvince", "CasesByProvince", groupCasesByProvince)
 }
 
-// GetCasesByAgeGroup returns all cases up to endTime, grouped by province
-func (client *Client) GetCasesByAgeGroup(ctx context.Context, endTime time.Time) (results *Cases, err error) {
-	var apiResult []*apiclient.APICasesResponse
-	if apiResult, err = client.Getter.GetCases(ctx); err != nil {
-		return
-	}
-
-	return groupCases(apiResult, endTime, groupCasesByAgeGroup), nil
+// GetCasesByAgeGroup returns all cases, grouped by province
+func (client *Client) GetCasesByAgeGroup(ctx context.Context) (results *datasets.Dataset, err error) {
+	return client.getCases(ctx, "GetCasesByAgeGroup", "CasesByAgeGroup", groupCasesByAgeGroup)
 }
 
-func groupCases(cases []*apiclient.APICasesResponse, endTime time.Time, groupField int) (results *Cases) {
-	mappedCases, mappedGroups := mapCases(cases, endTime, groupField)
+// getCases
+func (client *Client) getCases(ctx context.Context, name, cacheEntryName string, mode int) (results *datasets.Dataset, err error) {
+	before := time.Now()
+	defer func() { log.WithField("time", time.Now().Sub(before)).Debug(name + " done") }()
+
+	log.Debug("running " + name)
+	entry := client.cache.Load(cacheEntryName)
+	entry.Once.Do(func() {
+		var apiResult apiclient.APICasesResponse
+		if apiResult, err = client.Getter.GetCases(ctx); err == nil {
+			entry.Data = groupCases(apiResult, mode)
+			client.cache.Save(cacheEntryName, entry)
+		} else {
+			client.cache.Clear(cacheEntryName)
+		}
+	})
+	if err == nil && entry.Data != nil {
+		results = entry.Data.Copy()
+	}
+	return
+}
+
+func groupCases(cases apiclient.APICasesResponse, groupField int) (results *datasets.Dataset) {
+	mappedCases, mappedGroups := mapCases(cases, groupField)
 	timestamps := getUniqueSortedTimestampsFromCases(mappedCases)
 	groups := getUniqueSortedGroupNames(mappedGroups)
 
-	results = &Cases{
+	results = &datasets.Dataset{
 		Timestamps: timestamps,
-		Groups:     make([]GroupedCasesEntry, len(groups)),
+		Groups:     make([]datasets.GroupedDatasetEntry, len(groups)),
 	}
 
 	for index, group := range groups {
-		results.Groups[index] = GroupedCasesEntry{
+		results.Groups[index] = datasets.GroupedDatasetEntry{
 			Name: group,
 		}
 	}
 
 	for _, timestamp := range timestamps {
 		for index, group := range groups {
-			value, _ := mappedCases[timestamp][group]
+			value, ok := mappedCases[timestamp][group]
+			if ok == false {
+				value = &CasesEntry{}
+			}
 			results.Groups[index].Values = append(results.Groups[index].Values, value)
 		}
 	}
@@ -100,18 +95,14 @@ func groupCases(cases []*apiclient.APICasesResponse, endTime time.Time, groupFie
 
 }
 
-func mapCases(cases []*apiclient.APICasesResponse, endTime time.Time, groupField int) (mappedCases map[time.Time]map[string]int, mappedGroups map[string]struct{}) {
-	mappedCases = make(map[time.Time]map[string]int)
+func mapCases(cases apiclient.APICasesResponse, groupField int) (mappedCases map[time.Time]map[string]*CasesEntry, mappedGroups map[string]struct{}) {
+	mappedCases = make(map[time.Time]map[string]*CasesEntry)
 	mappedGroups = make(map[string]struct{})
 
 	for _, entry := range cases {
-		if entry.TimeStamp.After(endTime) {
-			continue
-		}
-
 		mappedCase, ok := mappedCases[entry.TimeStamp.Time]
 		if ok == false {
-			mappedCase = make(map[string]int)
+			mappedCase = make(map[string]*CasesEntry)
 		}
 
 		var groupName string
@@ -126,8 +117,12 @@ func mapCases(cases []*apiclient.APICasesResponse, endTime time.Time, groupField
 			groupName = entry.AgeGroup
 		}
 
-		value, _ := mappedCase[groupName]
-		value += entry.Cases
+		value, ok := mappedCase[groupName]
+		if ok == false {
+			value = &CasesEntry{}
+		}
+
+		value.Count += entry.Cases
 		mappedCase[groupName] = value
 		mappedCases[entry.TimeStamp.Time] = mappedCase
 
@@ -137,7 +132,7 @@ func mapCases(cases []*apiclient.APICasesResponse, endTime time.Time, groupField
 	return
 }
 
-func getUniqueSortedTimestampsFromCases(input map[time.Time]map[string]int) (output []time.Time) {
+func getUniqueSortedTimestampsFromCases(input map[time.Time]map[string]*CasesEntry) (output []time.Time) {
 	for timestamp := range input {
 		output = append(output, timestamp)
 	}

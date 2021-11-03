@@ -43,7 +43,7 @@ func (handler *Handler) Handle(w http.ResponseWriter, req *http.Request) {
 	if ok {
 		_, _ = w.Write([]byte(response))
 	} else {
-		http.Error(w, "endpoint not implemented: "+html.EscapeString(req.URL.Path), http.StatusForbidden)
+		http.Error(w, "endpoint not implemented: "+html.EscapeString(req.URL.Path), http.StatusNotImplemented)
 	}
 }
 
@@ -87,6 +87,11 @@ var defaultResponses = map[string]string{
 	"/Data/COVID19BE_CASES_AGESEX.json": `[
 		{"DATE":"2020-03-01","PROVINCE":"VlaamsBrabant","REGION":"Flanders","AGEGROUP":"40-49","SEX":"M","CASES":1},
 		{"DATE":"2020-03-01","PROVINCE":"Brussels","REGION":"Brussels","AGEGROUP":"40-49","SEX":"M","CASES":2}
+]`,
+
+	"/Data/COVID19BE_MORT.json": `[
+		{"DATE":"2020-03-10","REGION":"Brussels","AGEGROUP":"85+","SEX":"F","DEATHS":1},
+		{"DATE":"2020-03-10","REGION":"Brussels","AGEGROUP":"85+","FEMALE":"F","DEATHS":2}
 ]`,
 }
 

@@ -2,19 +2,21 @@ package apiclient
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 	"time"
 )
 
 // Getter interface exposes the different supported Sciensano APIs
 //go:generate mockery --name Getter
 type Getter interface {
-	GetTestResults(ctx context.Context) (results []*APITestResultsResponse, err error)
-	GetVaccinations(ctx context.Context) (results []*APIVaccinationsResponse, err error)
-	GetCases(ctx context.Context) (results []*APICasesResponse, err error)
+	GetTestResults(ctx context.Context) (results APITestResultsResponse, err error)
+	GetVaccinations(ctx context.Context) (results APIVaccinationsResponse, err error)
+	GetCases(ctx context.Context) (results APICasesResponse, err error)
+	GetMortality(ctx context.Context) (results APIMortalityResponse, err error)
 }
 
 // Client calls the different sciensano APIs
@@ -34,7 +36,7 @@ func (client *Client) getURL() (url string) {
 }
 
 // call is a generic function to call the Sciensano API endpoints
-func (client *Client) call(ctx context.Context, endpoint string, results interface{}) (err error) {
+func (client *Client) call(ctx context.Context, endpoint string) (response io.ReadCloser, err error) {
 	target := client.getURL() + "/Data/" + endpoint
 
 	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, target, nil)
@@ -46,19 +48,12 @@ func (client *Client) call(ctx context.Context, endpoint string, results interfa
 		return
 	}
 
-	defer func(body io.ReadCloser) {
-		_ = body.Close()
-	}(resp.Body)
-
-	if resp.StatusCode != http.StatusOK {
+	if resp.StatusCode == http.StatusOK {
+		response = resp.Body
+	} else {
 		err = errors.New(resp.Status)
 		return
 	}
-
-	var body []byte
-	body, _ = io.ReadAll(resp.Body)
-	err = json.Unmarshal(body, results)
-
 	return
 }
 
@@ -67,14 +62,29 @@ type TimeStamp struct {
 	time.Time
 }
 
+var ManualParse = true
+
 // UnmarshalJSON unmarshalls a TimeStamp from the API response.
 func (ts *TimeStamp) UnmarshalJSON(b []byte) (err error) {
-	var v interface{}
-	err = json.Unmarshal(b, &v)
+	if ManualParse {
+		s := string(b)
+		if len(s) != 12 || s[0] != '"' && s[11] != '"' {
+			return fmt.Errorf("invalid timestamp: %s", s)
+		}
+		var year, month, day int
+		year, errYear := strconv.Atoi(s[1:5])
+		month, errMonth := strconv.Atoi(s[6:8])
+		day, errDay := strconv.Atoi(s[9:11])
 
-	if err == nil {
-		ts.Time, err = time.Parse("2006-01-02", v.(string))
+		if errYear != nil || errMonth != nil || errDay != nil {
+			return fmt.Errorf("invalid timestamp: %s", s)
+		}
+		ts.Time = time.Date(year, time.Month(month), day, 0, 0, 0, 0, time.UTC)
+	} else {
+		ts.Time, err = time.Parse("\"2006-01-02\"", string(b))
+		if err != nil {
+			return err
+		}
 	}
-
 	return
 }

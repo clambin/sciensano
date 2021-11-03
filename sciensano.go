@@ -1,24 +1,42 @@
 package main
 
 import (
-	"github.com/clambin/grafana-json"
 	"github.com/clambin/sciensano/apihandler"
 	"github.com/clambin/sciensano/version"
 	log "github.com/sirupsen/logrus"
+	"gopkg.in/alecthomas/kingpin.v2"
 	"net/http"
 	_ "net/http/pprof"
+	"os"
+	"path/filepath"
 )
 
 func main() {
+	var (
+		debug bool
+		port  int
+	)
+
 	log.WithField("version", version.BuildVersion).Info("sciensano API starting")
-	handler := apihandler.Create()
-	server := grafana_json.Server{
-		Handlers: handler.GetHandlers(),
+	a := kingpin.New(filepath.Base(os.Args[0]), "sciensano")
+	a.Version(version.BuildVersion)
+	a.HelpFlag.Short('h')
+	a.VersionFlag.Short('v')
+	a.Flag("debug", "Log debug messages").Short('d').BoolVar(&debug)
+	a.Flag("port", "Server port").Short('p').Default("8080").IntVar(&port)
+
+	if _, err := a.Parse(os.Args[1:]); err != nil {
+		a.Usage(os.Args[1:])
+		os.Exit(1)
 	}
-	r := server.GetRouter()
-	r.PathPrefix("/debug/pprof/").Handler(http.DefaultServeMux)
-	err := http.ListenAndServe(":8080", r)
-	if err != nil {
-		panic(r)
+
+	if debug {
+		log.SetLevel(log.DebugLevel)
+	}
+
+	handler := apihandler.Create()
+
+	if err := handler.Run(port); err != http.ErrServerClosed {
+		log.WithError(err).Fatal("failed to start HTTP server")
 	}
 }

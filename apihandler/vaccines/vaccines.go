@@ -5,6 +5,7 @@ import (
 	"fmt"
 	grafanajson "github.com/clambin/grafana-json"
 	"github.com/clambin/sciensano/sciensano"
+	"github.com/clambin/sciensano/sciensano/datasets"
 	"github.com/clambin/sciensano/vaccines"
 	log "github.com/sirupsen/logrus"
 	"sync"
@@ -96,8 +97,8 @@ func (handler *Handler) buildVaccineStatsTableResponse(ctx context.Context, _ st
 		return nil, fmt.Errorf("failed to get vaccine data: %s", err.Error())
 	}
 
-	var vaccinations *sciensano.Vaccinations
-	vaccinations, err = handler.Sciensano.GetVaccinations(ctx, args.Range.To)
+	var vaccinations *datasets.Dataset
+	vaccinations, err = handler.Sciensano.GetVaccinations(ctx)
 
 	if err != nil {
 		return
@@ -105,6 +106,7 @@ func (handler *Handler) buildVaccineStatsTableResponse(ctx context.Context, _ st
 
 	batches = vaccines.AccumulateBatches(batches)
 	sciensano.AccumulateVaccinations(vaccinations)
+	vaccinations.ApplyRange(args.Range.From, args.Range.To)
 
 	rows := len(vaccinations.Timestamps)
 	timestampColumn := make(grafanajson.TableQueryResponseTimeColumn, 0, rows)
@@ -117,7 +119,7 @@ func (handler *Handler) buildVaccineStatsTableResponse(ctx context.Context, _ st
 	go func() {
 		for index, timestamp := range vaccinations.Timestamps {
 			timestampColumn = append(timestampColumn, timestamp)
-			vaccinationsColumn = append(vaccinationsColumn, float64(vaccinations.Groups[0].Values[index].Total()))
+			vaccinationsColumn = append(vaccinationsColumn, float64(vaccinations.Groups[0].Values[index].(*sciensano.VaccinationsEntry).Total()))
 		}
 		wg.Done()
 	}()
@@ -140,7 +142,7 @@ func (handler *Handler) buildVaccineStatsTableResponse(ctx context.Context, _ st
 	return
 }
 
-func calculateVaccineReserve(vaccinationsData *sciensano.Vaccinations, batches []*vaccines.Batch) (reserve []float64) {
+func calculateVaccineReserve(vaccinationsData *datasets.Dataset, batches []*vaccines.Batch) (reserve []float64) {
 	batchIndex := 0
 	lastBatch := 0
 
@@ -154,7 +156,7 @@ func calculateVaccineReserve(vaccinationsData *sciensano.Vaccinations, batches [
 		}
 
 		// add it to the list
-		reserve = append(reserve, float64(lastBatch-vaccinationsData.Groups[0].Values[index].Total()))
+		reserve = append(reserve, float64(lastBatch-vaccinationsData.Groups[0].Values[index].(*sciensano.VaccinationsEntry).Total()))
 	}
 
 	return
@@ -170,14 +172,15 @@ func (handler *Handler) buildVaccineTimeTableResponse(ctx context.Context, _ str
 
 	batches = vaccines.AccumulateBatches(batches)
 
-	var vaccinations *sciensano.Vaccinations
-	vaccinations, err = handler.Sciensano.GetVaccinations(ctx, args.Range.To)
+	var vaccinations *datasets.Dataset
+	vaccinations, err = handler.Sciensano.GetVaccinations(ctx)
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to get vaccination data: %s", err.Error())
 	}
 
 	sciensano.AccumulateVaccinations(vaccinations)
+	vaccinations.ApplyRange(args.Range.From, args.Range.To)
 	timestampColumn, timeColumn := calculateVaccineDelay(vaccinations, batches)
 
 	response = new(grafanajson.TableQueryResponse)
@@ -188,13 +191,13 @@ func (handler *Handler) buildVaccineTimeTableResponse(ctx context.Context, _ str
 	return
 }
 
-func calculateVaccineDelay(vaccinationsData *sciensano.Vaccinations, batches []*vaccines.Batch) (timestamps grafanajson.TableQueryResponseTimeColumn, delays grafanajson.TableQueryResponseNumberColumn) {
+func calculateVaccineDelay(vaccinationsData *datasets.Dataset, batches []*vaccines.Batch) (timestamps grafanajson.TableQueryResponseTimeColumn, delays grafanajson.TableQueryResponseNumberColumn) {
 	batchIndex := 0
 	batchCount := len(batches)
 
 	for index, timestamp := range vaccinationsData.Timestamps {
 		// how many vaccines did we need to perform this many vaccinations?
-		entry := vaccinationsData.Groups[0].Values[index]
+		entry := vaccinationsData.Groups[0].Values[index].(*sciensano.VaccinationsEntry)
 		vaccinesNeeded := entry.Partial + entry.Full
 
 		// find when we reached that number of vaccines

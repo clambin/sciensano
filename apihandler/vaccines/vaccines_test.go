@@ -53,7 +53,8 @@ func TestHandler_TableQuery_Vaccines(t *testing.T) {
 
 func TestHandler_TableQuery_VaccinesStats(t *testing.T) {
 	getter := &sciensanoMock.Getter{}
-	sciensanoClient := &sciensano.Client{Getter: getter}
+	sciensanoClient := sciensano.NewCachedClient(time.Hour)
+	sciensanoClient.Getter = getter
 	client := &mocks.APIClient{}
 	h := vaccinesHandler.New(sciensanoClient, client)
 
@@ -68,7 +69,7 @@ func TestHandler_TableQuery_VaccinesStats(t *testing.T) {
 
 	getter.
 		On("GetVaccinations", mock.AnythingOfType("*context.emptyCtx")).
-		Return([]*apiclient.APIVaccinationsResponse{
+		Return(apiclient.APIVaccinationsResponse{
 			{
 				TimeStamp: apiclient.TimeStamp{Time: time.Now().Add(-24 * time.Hour)},
 				Dose:      "A",
@@ -93,7 +94,8 @@ func TestHandler_TableQuery_VaccinesStats(t *testing.T) {
 
 func TestHandler_TableQuery_VaccinesTime(t *testing.T) {
 	getter := &sciensanoMock.Getter{}
-	sciensanoClient := &sciensano.Client{Getter: getter}
+	sciensanoClient := sciensano.NewCachedClient(time.Hour)
+	sciensanoClient.Getter = getter
 	client := &mocks.APIClient{}
 	h := vaccinesHandler.New(sciensanoClient, client)
 
@@ -112,7 +114,7 @@ func TestHandler_TableQuery_VaccinesTime(t *testing.T) {
 
 	getter.
 		On("GetVaccinations", mock.AnythingOfType("*context.emptyCtx")).
-		Return([]*apiclient.APIVaccinationsResponse{
+		Return(apiclient.APIVaccinationsResponse{
 			{
 				TimeStamp: apiclient.TimeStamp{Time: time.Now().Add(-6 * 24 * time.Hour)},
 				Dose:      "A",

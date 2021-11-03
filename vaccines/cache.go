@@ -19,6 +19,7 @@ type Cache struct {
 // GetBatches returns all vaccine batches
 func (cache *Cache) GetBatches(ctx context.Context) (batches []*Batch, err error) {
 	cache.lock.Lock()
+	batches = cache.batches
 	if cache.batchesOnce == nil || time.Now().After(cache.testExpiry) {
 		cache.batchesOnce = &sync.Once{}
 		cache.testExpiry = time.Now().Add(cache.Retention)
@@ -31,5 +32,5 @@ func (cache *Cache) GetBatches(ctx context.Context) (batches []*Batch, err error
 		}
 	})
 
-	return cache.batches, err
+	return
 }

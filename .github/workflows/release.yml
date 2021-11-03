@@ -15,7 +15,8 @@ jobs:
           go-version: 1.17
       - name: test
         run: |
-          go test ./... -race -coverprofile=coverage.txt -covermode=atomic
+          go test ./... -race -coverprofile=coverage.txt.tmp -covermode=atomic
+          grep -v "_easyjson.go" coverage.txt.tmp > coverage.txt
       - uses: codecov/codecov-action@v2.1.0
         with:
           file: coverage.txt
