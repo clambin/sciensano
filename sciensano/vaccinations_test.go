@@ -399,3 +399,26 @@ func TestVaccinationsEntry_GetValue(t *testing.T) {
 	assert.Equal(t, 5, input.GetValue(sciensano.VaccinationTypeFull))
 	assert.Equal(t, 4, input.GetValue(sciensano.VaccinationTypeBooster))
 }
+
+func TestVaccinationsEntry_Add(t *testing.T) {
+	testCases := []struct {
+		dose        string
+		vaccination sciensano.VaccinationsEntry
+	}{
+		{dose: "A", vaccination: sciensano.VaccinationsEntry{Partial: 1}},
+		{dose: "B", vaccination: sciensano.VaccinationsEntry{Full: 1}},
+		{dose: "C", vaccination: sciensano.VaccinationsEntry{SingleDose: 1}},
+		{dose: "E", vaccination: sciensano.VaccinationsEntry{Booster: 1}},
+	}
+
+	for _, testCase := range testCases {
+		vaccination := apiclient.APIVaccinationsResponseEntry{
+			Dose:  testCase.dose,
+			Count: 1,
+		}
+
+		entry := sciensano.VaccinationsEntry{}
+		entry.Add(vaccination)
+		assert.Equal(t, testCase.vaccination, entry)
+	}
+}

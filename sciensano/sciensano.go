@@ -19,6 +19,7 @@ type APIClient interface {
 	VaccinationGetter
 	CasesGetter
 	MortalityGetter
+	HospitalisationsGetter
 }
 
 var _ APIClient = &Client{}

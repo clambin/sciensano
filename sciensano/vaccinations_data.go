@@ -1,6 +1,7 @@
 package sciensano
 
 import (
+	"github.com/clambin/sciensano/apiclient"
 	"github.com/clambin/sciensano/sciensano/datasets"
 )
 
@@ -45,4 +46,18 @@ func (entry VaccinationsEntry) GetValue(vaccinationType int) (value int) {
 	}
 
 	return
+}
+
+// Add adds the passed APIVaccinationsResponseEntry values to its own values
+func (entry *VaccinationsEntry) Add(input apiclient.APIVaccinationsResponseEntry) {
+	switch input.Dose {
+	case "A":
+		entry.Partial += input.Count
+	case "B":
+		entry.Full += input.Count
+	case "C":
+		entry.SingleDose += input.Count
+	case "E":
+		entry.Booster += input.Count
+	}
 }

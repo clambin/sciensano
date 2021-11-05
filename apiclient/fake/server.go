@@ -93,6 +93,11 @@ var defaultResponses = map[string]string{
 		{"DATE":"2020-03-10","REGION":"Brussels","AGEGROUP":"85+","SEX":"F","DEATHS":1},
 		{"DATE":"2020-03-10","REGION":"Brussels","AGEGROUP":"85+","FEMALE":"F","DEATHS":2}
 ]`,
+
+	"/Data/COVID19BE_HOSP.json": `[
+		{"DATE":"2020-03-15","PROVINCE":"Brussels","REGION":"Brussels","NR_REPORTING":15,"TOTAL_IN":58,"TOTAL_IN_ICU":11,"TOTAL_IN_RESP":8,"TOTAL_IN_ECMO":0,"NEW_IN":7,"NEW_OUT":2},
+		{"DATE":"2020-03-15","PROVINCE":"VlaamsBrabant","REGION":"Flanders","NR_REPORTING":6,"TOTAL_IN":13,"TOTAL_IN_ICU":2,"TOTAL_IN_RESP":0,"TOTAL_IN_ECMO":1,"NEW_IN":2,"NEW_OUT":0}
+]`,
 }
 
 func bigVaccinationResponse() string {

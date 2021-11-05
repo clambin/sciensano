@@ -4,6 +4,7 @@ import (
 	"fmt"
 	grafanajson "github.com/clambin/grafana-json"
 	casesHandler "github.com/clambin/sciensano/apihandler/cases"
+	hospitalisationsHandler "github.com/clambin/sciensano/apihandler/hospitalisations"
 	mortalityHandler "github.com/clambin/sciensano/apihandler/mortality"
 	covidTestsHandler "github.com/clambin/sciensano/apihandler/testresults"
 	vaccinationsHandler "github.com/clambin/sciensano/apihandler/vaccinations"
@@ -46,6 +47,7 @@ func Create() *Handlers {
 		vaccinesHandler.New(handler.Sciensano, handler.Vaccines),
 		casesHandler.New(handler.Sciensano),
 		mortalityHandler.New(handler.Sciensano),
+		hospitalisationsHandler.New(handler.Sciensano),
 	}
 
 	return &handler

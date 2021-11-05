@@ -4,8 +4,7 @@ on:
   push:
     branches:
     - master
-    - mortality
-    - speedup
+    - hospitalisations
     paths-ignore:
       - '**.md'
       - 'assets/grafana/dashboards/**'

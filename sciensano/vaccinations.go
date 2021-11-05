@@ -161,17 +161,7 @@ func mapVaccinations(vaccinations apiclient.APIVaccinationsResponse, groupField 
 			entry = &VaccinationsEntry{}
 		}
 
-		switch vaccination.Dose {
-		case "A":
-			entry.Partial += vaccination.Count
-		case "B":
-			entry.Full += vaccination.Count
-		case "C":
-			entry.SingleDose += vaccination.Count
-		case "E":
-			entry.Booster += vaccination.Count
-		}
-
+		entry.Add(vaccination)
 		currentEntries[groupName] = entry
 	}
 

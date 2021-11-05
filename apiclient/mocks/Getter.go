@@ -38,6 +38,29 @@ func (_m *Getter) GetCases(ctx context.Context) (apiclient.APICasesResponse, err
 	return r0, r1
 }
 
+// GetHospitalisations provides a mock function with given fields: ctx
+func (_m *Getter) GetHospitalisations(ctx context.Context) (apiclient.APIHospitalisationsResponse, error) {
+	ret := _m.Called(ctx)
+
+	var r0 apiclient.APIHospitalisationsResponse
+	if rf, ok := ret.Get(0).(func(context.Context) apiclient.APIHospitalisationsResponse); ok {
+		r0 = rf(ctx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(apiclient.APIHospitalisationsResponse)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetMortality provides a mock function with given fields: ctx
 func (_m *Getter) GetMortality(ctx context.Context) (apiclient.APIMortalityResponse, error) {
 	ret := _m.Called(ctx)

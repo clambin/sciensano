@@ -9,7 +9,7 @@ import (
 func TestCreate(t *testing.T) {
 	h := apihandler.Create()
 
-	assert.Len(t, h.GetHandlers(), 5)
+	assert.Len(t, h.GetHandlers(), 6)
 }
 
 /*

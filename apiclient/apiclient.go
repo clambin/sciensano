@@ -17,6 +17,7 @@ type Getter interface {
 	GetVaccinations(ctx context.Context) (results APIVaccinationsResponse, err error)
 	GetCases(ctx context.Context) (results APICasesResponse, err error)
 	GetMortality(ctx context.Context) (results APIMortalityResponse, err error)
+	GetHospitalisations(ctx context.Context) (results APIHospitalisationsResponse, err error)
 }
 
 // Client calls the different sciensano APIs
