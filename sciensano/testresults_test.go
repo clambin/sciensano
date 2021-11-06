@@ -13,20 +13,20 @@ import (
 )
 
 var (
-	testResultsResponse = apiclient.APITestResultsResponse{
-		{
+	testResultsResponse = []apiclient.Measurement{
+		&apiclient.APITestResultsResponseEntry{
 			TimeStamp: apiclient.TimeStamp{Time: timestamp},
 			Region:    "Flanders",
 			Total:     100,
 			Positive:  10,
 		},
-		{
+		&apiclient.APITestResultsResponseEntry{
 			TimeStamp: apiclient.TimeStamp{Time: timestamp},
 			Region:    "Brussels",
 			Total:     100,
 			Positive:  10,
 		},
-		{
+		&apiclient.APITestResultsResponseEntry{
 			TimeStamp: apiclient.TimeStamp{Time: timestamp.Add(24 * time.Hour)},
 			Region:    "Flanders",
 			Total:     100,

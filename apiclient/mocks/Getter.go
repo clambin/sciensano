@@ -16,15 +16,15 @@ type Getter struct {
 }
 
 // GetCases provides a mock function with given fields: ctx
-func (_m *Getter) GetCases(ctx context.Context) (apiclient.APICasesResponse, error) {
+func (_m *Getter) GetCases(ctx context.Context) ([]apiclient.Measurement, error) {
 	ret := _m.Called(ctx)
 
-	var r0 apiclient.APICasesResponse
-	if rf, ok := ret.Get(0).(func(context.Context) apiclient.APICasesResponse); ok {
+	var r0 []apiclient.Measurement
+	if rf, ok := ret.Get(0).(func(context.Context) []apiclient.Measurement); ok {
 		r0 = rf(ctx)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(apiclient.APICasesResponse)
+			r0 = ret.Get(0).([]apiclient.Measurement)
 		}
 	}
 
@@ -39,15 +39,15 @@ func (_m *Getter) GetCases(ctx context.Context) (apiclient.APICasesResponse, err
 }
 
 // GetHospitalisations provides a mock function with given fields: ctx
-func (_m *Getter) GetHospitalisations(ctx context.Context) (apiclient.APIHospitalisationsResponse, error) {
+func (_m *Getter) GetHospitalisations(ctx context.Context) ([]apiclient.Measurement, error) {
 	ret := _m.Called(ctx)
 
-	var r0 apiclient.APIHospitalisationsResponse
-	if rf, ok := ret.Get(0).(func(context.Context) apiclient.APIHospitalisationsResponse); ok {
+	var r0 []apiclient.Measurement
+	if rf, ok := ret.Get(0).(func(context.Context) []apiclient.Measurement); ok {
 		r0 = rf(ctx)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(apiclient.APIHospitalisationsResponse)
+			r0 = ret.Get(0).([]apiclient.Measurement)
 		}
 	}
 
@@ -62,15 +62,15 @@ func (_m *Getter) GetHospitalisations(ctx context.Context) (apiclient.APIHospita
 }
 
 // GetMortality provides a mock function with given fields: ctx
-func (_m *Getter) GetMortality(ctx context.Context) (apiclient.APIMortalityResponse, error) {
+func (_m *Getter) GetMortality(ctx context.Context) ([]apiclient.Measurement, error) {
 	ret := _m.Called(ctx)
 
-	var r0 apiclient.APIMortalityResponse
-	if rf, ok := ret.Get(0).(func(context.Context) apiclient.APIMortalityResponse); ok {
+	var r0 []apiclient.Measurement
+	if rf, ok := ret.Get(0).(func(context.Context) []apiclient.Measurement); ok {
 		r0 = rf(ctx)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(apiclient.APIMortalityResponse)
+			r0 = ret.Get(0).([]apiclient.Measurement)
 		}
 	}
 
@@ -85,15 +85,15 @@ func (_m *Getter) GetMortality(ctx context.Context) (apiclient.APIMortalityRespo
 }
 
 // GetTestResults provides a mock function with given fields: ctx
-func (_m *Getter) GetTestResults(ctx context.Context) (apiclient.APITestResultsResponse, error) {
+func (_m *Getter) GetTestResults(ctx context.Context) ([]apiclient.Measurement, error) {
 	ret := _m.Called(ctx)
 
-	var r0 apiclient.APITestResultsResponse
-	if rf, ok := ret.Get(0).(func(context.Context) apiclient.APITestResultsResponse); ok {
+	var r0 []apiclient.Measurement
+	if rf, ok := ret.Get(0).(func(context.Context) []apiclient.Measurement); ok {
 		r0 = rf(ctx)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(apiclient.APITestResultsResponse)
+			r0 = ret.Get(0).([]apiclient.Measurement)
 		}
 	}
 
@@ -108,15 +108,15 @@ func (_m *Getter) GetTestResults(ctx context.Context) (apiclient.APITestResultsR
 }
 
 // GetVaccinations provides a mock function with given fields: ctx
-func (_m *Getter) GetVaccinations(ctx context.Context) (apiclient.APIVaccinationsResponse, error) {
+func (_m *Getter) GetVaccinations(ctx context.Context) ([]apiclient.Measurement, error) {
 	ret := _m.Called(ctx)
 
-	var r0 apiclient.APIVaccinationsResponse
-	if rf, ok := ret.Get(0).(func(context.Context) apiclient.APIVaccinationsResponse); ok {
+	var r0 []apiclient.Measurement
+	if rf, ok := ret.Get(0).(func(context.Context) []apiclient.Measurement); ok {
 		r0 = rf(ctx)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(apiclient.APIVaccinationsResponse)
+			r0 = ret.Get(0).([]apiclient.Measurement)
 		}
 	}
 

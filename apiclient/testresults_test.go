@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 )
 
 func TestClient_GetTestResults(t *testing.T) {
@@ -25,10 +26,13 @@ func TestClient_GetTestResults(t *testing.T) {
 
 	require.NoError(t, err)
 	require.Len(t, result, 3)
-
-	assert.NotZero(t, result[2].TimeStamp)
-	assert.Equal(t, 15, result[2].Total)
-	assert.Equal(t, 10, result[2].Positive)
+	assert.Equal(t, &apiclient.APITestResultsResponseEntry{
+		TimeStamp: apiclient.TimeStamp{Time: time.Date(2021, 3, 11, 0, 0, 0, 0, time.UTC)},
+		Region:    "Flanders",
+		Province:  "",
+		Total:     15,
+		Positive:  10,
+	}, result[2])
 
 	testServer.Fail = true
 	_, err = client.GetTestResults(ctx)
@@ -37,4 +41,23 @@ func TestClient_GetTestResults(t *testing.T) {
 	apiServer.Close()
 	_, err = client.GetTestResults(ctx)
 	require.Error(t, err)
+}
+
+func TestAPITestResultsResponseEntry_GetTimestamp(t *testing.T) {
+	timestamp := time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)
+	entry := apiclient.APITestResultsResponseEntry{
+		TimeStamp: apiclient.TimeStamp{Time: timestamp},
+	}
+
+	assert.Equal(t, timestamp, entry.GetTimestamp())
+}
+
+func TestAPITestResultsResponseEntry_GetGroupFieldValue(t *testing.T) {
+	entry := apiclient.APITestResultsResponseEntry{
+		Region:   "Flanders",
+		Province: "VlaamsBrabant",
+	}
+
+	assert.Equal(t, "Flanders", entry.GetGroupFieldValue(apiclient.GroupByRegion))
+	assert.Equal(t, "VlaamsBrabant", entry.GetGroupFieldValue(apiclient.GroupByProvince))
 }

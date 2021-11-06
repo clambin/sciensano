@@ -19,13 +19,14 @@ func TestCache_GetVaccinations(t *testing.T) {
 		Retention: time.Hour,
 	}
 	ctx := context.Background()
+	timestamp := time.Now()
 
 	// Cache should only call the client once.
 	client.
 		On("GetVaccinations", mock.Anything).
-		Return(apiclient.APIVaccinationsResponse{
-			apiclient.APIVaccinationsResponseEntry{
-				TimeStamp: apiclient.TimeStamp{Time: time.Now()},
+		Return([]apiclient.Measurement{
+			&apiclient.APIVaccinationsResponseEntry{
+				TimeStamp: apiclient.TimeStamp{Time: timestamp},
 				Region:    "Flanders",
 				AgeGroup:  "25-34",
 				Gender:    "M",
@@ -37,12 +38,26 @@ func TestCache_GetVaccinations(t *testing.T) {
 	results, err := cache.GetVaccinations(ctx)
 	require.NoError(t, err)
 	require.Len(t, results, 1)
-	assert.Equal(t, 100, results[0].Count)
+	assert.Equal(t, &apiclient.APIVaccinationsResponseEntry{
+		TimeStamp: apiclient.TimeStamp{Time: timestamp},
+		Region:    "Flanders",
+		AgeGroup:  "25-34",
+		Gender:    "M",
+		Dose:      "A",
+		Count:     100,
+	}, results[0])
 
 	results, err = cache.GetVaccinations(ctx)
 	require.NoError(t, err)
 	require.Len(t, results, 1)
-	assert.Equal(t, 100, results[0].Count)
+	assert.Equal(t, &apiclient.APIVaccinationsResponseEntry{
+		TimeStamp: apiclient.TimeStamp{Time: timestamp},
+		Region:    "Flanders",
+		AgeGroup:  "25-34",
+		Gender:    "M",
+		Dose:      "A",
+		Count:     100,
+	}, results[0])
 
 	mock.AssertExpectationsForObjects(t, client)
 }
@@ -54,6 +69,7 @@ func TestCache_GetVaccinations_Failure(t *testing.T) {
 		Retention: time.Hour,
 	}
 	ctx := context.Background()
+	timestamp := time.Now()
 
 	// Set up a failing call
 	client.
@@ -67,20 +83,29 @@ func TestCache_GetVaccinations_Failure(t *testing.T) {
 	// Cache should only call the client once.
 	client.
 		On("GetVaccinations", mock.Anything).
-		Return(apiclient.APIVaccinationsResponse{apiclient.APIVaccinationsResponseEntry{
-			TimeStamp: apiclient.TimeStamp{Time: time.Now()},
-			Region:    "Flanders",
-			AgeGroup:  "25-34",
-			Gender:    "M",
-			Dose:      "A",
-			Count:     100,
-		}}, nil).
+		Return([]apiclient.Measurement{
+			&apiclient.APIVaccinationsResponseEntry{
+				TimeStamp: apiclient.TimeStamp{Time: timestamp},
+				Region:    "Flanders",
+				AgeGroup:  "25-34",
+				Gender:    "M",
+				Dose:      "A",
+				Count:     100,
+			},
+		}, nil).
 		Once()
 
 	results, err = cache.GetVaccinations(ctx)
 	require.NoError(t, err)
 	require.Len(t, results, 1)
-	assert.Equal(t, 100, results[0].Count)
+	assert.Equal(t, &apiclient.APIVaccinationsResponseEntry{
+		TimeStamp: apiclient.TimeStamp{Time: timestamp},
+		Region:    "Flanders",
+		AgeGroup:  "25-34",
+		Gender:    "M",
+		Dose:      "A",
+		Count:     100,
+	}, results[0])
 
 	mock.AssertExpectationsForObjects(t, client)
 }
@@ -92,29 +117,43 @@ func TestCache_GetTestResults(t *testing.T) {
 		Retention: time.Hour,
 	}
 	ctx := context.Background()
+	timestamp := time.Now()
 
 	// Cache should only call the client once.
 	client.
 		On("GetTestResults", mock.Anything).
-		Return(apiclient.APITestResultsResponse{{
-			TimeStamp: apiclient.TimeStamp{Time: time.Now()},
-			Region:    "Flanders",
-			Total:     100,
-			Positive:  10,
-		}}, nil).
+		Return([]apiclient.Measurement{
+			&apiclient.APITestResultsResponseEntry{
+				TimeStamp: apiclient.TimeStamp{Time: timestamp},
+				Region:    "Flanders",
+				Province:  "VlaamsBrabant",
+				Total:     100,
+				Positive:  10,
+			},
+		}, nil).
 		Once()
 
 	results, err := cache.GetTestResults(ctx)
 	require.NoError(t, err)
 	require.Len(t, results, 1)
-	assert.Equal(t, 100, results[0].Total)
-	assert.Equal(t, 10, results[0].Positive)
+	assert.Equal(t, &apiclient.APITestResultsResponseEntry{
+		TimeStamp: apiclient.TimeStamp{Time: timestamp},
+		Region:    "Flanders",
+		Province:  "VlaamsBrabant",
+		Total:     100,
+		Positive:  10,
+	}, results[0])
 
 	results, err = cache.GetTestResults(ctx)
 	require.NoError(t, err)
 	require.Len(t, results, 1)
-	assert.Equal(t, 100, results[0].Total)
-	assert.Equal(t, 10, results[0].Positive)
+	assert.Equal(t, &apiclient.APITestResultsResponseEntry{
+		TimeStamp: apiclient.TimeStamp{Time: timestamp},
+		Region:    "Flanders",
+		Province:  "VlaamsBrabant",
+		Total:     100,
+		Positive:  10,
+	}, results[0])
 
 	mock.AssertExpectationsForObjects(t, client)
 }
@@ -126,35 +165,45 @@ func TestCache_GetCases(t *testing.T) {
 		Retention: time.Hour,
 	}
 	ctx := context.Background()
+	timestamp := time.Now()
 
 	// Cache should only call the client once.
 	client.
 		On("GetCases", mock.Anything).
-		Return(apiclient.APICasesResponse{{
-			TimeStamp: apiclient.TimeStamp{Time: time.Now()},
-			Region:    "Flanders",
-			Province:  "VlaamsBrabant",
-			Cases:     10,
-		}}, nil).
+		Return([]apiclient.Measurement{
+			&apiclient.APICasesResponseEntry{
+				TimeStamp: apiclient.TimeStamp{Time: timestamp},
+				Region:    "Flanders",
+				Province:  "VlaamsBrabant",
+				AgeGroup:  "85+",
+				Cases:     10,
+			},
+		}, nil).
 		Once()
 
 	results, err := cache.GetCases(ctx)
 
 	require.NoError(t, err)
 	require.Len(t, results, 1)
-
-	assert.NotZero(t, results[0].TimeStamp)
-	assert.Equal(t, "VlaamsBrabant", results[0].Province)
-	assert.Equal(t, 10, results[0].Cases)
+	assert.Equal(t, &apiclient.APICasesResponseEntry{
+		TimeStamp: apiclient.TimeStamp{Time: timestamp},
+		Province:  "VlaamsBrabant",
+		Region:    "Flanders",
+		AgeGroup:  "85+",
+		Cases:     10,
+	}, results[0])
 
 	results, err = cache.GetCases(ctx)
 
 	require.NoError(t, err)
 	require.Len(t, results, 1)
-
-	assert.NotZero(t, results[0].TimeStamp)
-	assert.Equal(t, "VlaamsBrabant", results[0].Province)
-	assert.Equal(t, 10, results[0].Cases)
+	assert.Equal(t, &apiclient.APICasesResponseEntry{
+		TimeStamp: apiclient.TimeStamp{Time: timestamp},
+		Province:  "VlaamsBrabant",
+		Region:    "Flanders",
+		AgeGroup:  "85+",
+		Cases:     10,
+	}, results[0])
 
 	mock.AssertExpectationsForObjects(t, client)
 
@@ -167,34 +216,42 @@ func TestCache_GetMortality(t *testing.T) {
 		Retention: time.Hour,
 	}
 	ctx := context.Background()
+	timestamp := time.Now()
 
 	// Cache should only call the client once.
 	client.
 		On("GetMortality", mock.Anything).
-		Return(apiclient.APIMortalityResponse{{
-			TimeStamp: apiclient.TimeStamp{Time: time.Now()},
-			Region:    "Flanders",
-			Deaths:    10,
-		}}, nil).
+		Return([]apiclient.Measurement{
+			&apiclient.APIMortalityResponseEntry{
+				TimeStamp: apiclient.TimeStamp{Time: timestamp},
+				Region:    "Flanders",
+				AgeGroup:  "85+",
+				Deaths:    10,
+			},
+		}, nil).
 		Once()
 
 	results, err := cache.GetMortality(ctx)
 
 	require.NoError(t, err)
 	require.Len(t, results, 1)
-
-	assert.NotZero(t, results[0].TimeStamp)
-	assert.Equal(t, "Flanders", results[0].Region)
-	assert.Equal(t, 10, results[0].Deaths)
+	assert.Equal(t, &apiclient.APIMortalityResponseEntry{
+		TimeStamp: apiclient.TimeStamp{Time: timestamp},
+		Region:    "Flanders",
+		AgeGroup:  "85+",
+		Deaths:    10,
+	}, results[0])
 
 	results, err = cache.GetMortality(ctx)
 
 	require.NoError(t, err)
 	require.Len(t, results, 1)
-
-	assert.NotZero(t, results[0].TimeStamp)
-	assert.Equal(t, "Flanders", results[0].Region)
-	assert.Equal(t, 10, results[0].Deaths)
+	assert.Equal(t, &apiclient.APIMortalityResponseEntry{
+		TimeStamp: apiclient.TimeStamp{Time: timestamp},
+		Region:    "Flanders",
+		AgeGroup:  "85+",
+		Deaths:    10,
+	}, results[0])
 
 	mock.AssertExpectationsForObjects(t, client)
 }
@@ -209,42 +266,50 @@ func TestCache_All(t *testing.T) {
 
 	client.
 		On("GetTestResults", mock.Anything).
-		Return(apiclient.APITestResultsResponse{{
-			TimeStamp: apiclient.TimeStamp{Time: time.Now()},
-			Region:    "Flanders",
-			Total:     100,
-			Positive:  10,
-		}}, nil).
+		Return([]apiclient.Measurement{
+			&apiclient.APITestResultsResponseEntry{
+				TimeStamp: apiclient.TimeStamp{Time: time.Now()},
+				Region:    "Flanders",
+				Total:     100,
+				Positive:  10,
+			},
+		}, nil).
 		Once()
 	client.
 		On("GetVaccinations", mock.Anything).
-		Return(apiclient.APIVaccinationsResponse{apiclient.APIVaccinationsResponseEntry{
-			TimeStamp: apiclient.TimeStamp{Time: time.Now()},
-			Region:    "Flanders",
-			AgeGroup:  "25-34",
-			Gender:    "M",
-			Dose:      "A",
-			Count:     100,
-		}}, nil).
+		Return([]apiclient.Measurement{
+			&apiclient.APIVaccinationsResponseEntry{
+				TimeStamp: apiclient.TimeStamp{Time: time.Now()},
+				Region:    "Flanders",
+				AgeGroup:  "25-34",
+				Gender:    "M",
+				Dose:      "A",
+				Count:     100,
+			},
+		}, nil).
 		Once()
 
 	client.
 		On("GetCases", mock.Anything).
-		Return(apiclient.APICasesResponse{{
-			TimeStamp: apiclient.TimeStamp{Time: time.Now()},
-			Region:    "Flanders",
-			Province:  "VlaamsBrabant",
-			Cases:     10,
-		}}, nil).
+		Return([]apiclient.Measurement{
+			&apiclient.APICasesResponseEntry{
+				TimeStamp: apiclient.TimeStamp{Time: time.Now()},
+				Region:    "Flanders",
+				Province:  "VlaamsBrabant",
+				Cases:     10,
+			},
+		}, nil).
 		Once()
 
 	client.
 		On("GetMortality", mock.Anything).
-		Return(apiclient.APIMortalityResponse{{
-			TimeStamp: apiclient.TimeStamp{Time: time.Now()},
-			Region:    "Flanders",
-			Deaths:    10,
-		}}, nil).
+		Return([]apiclient.Measurement{
+			&apiclient.APIMortalityResponseEntry{
+				TimeStamp: apiclient.TimeStamp{Time: time.Now()},
+				Region:    "Flanders",
+				Deaths:    10,
+			},
+		}, nil).
 		Once()
 
 	for i := 0; i < 500; i++ {

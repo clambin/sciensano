@@ -5,11 +5,12 @@ import (
 	"github.com/mailru/easyjson"
 	"github.com/prometheus/client_golang/prometheus"
 	"io"
+	"time"
 )
 
 // APIMortalityResponse is the response of the Sciensano cases API
 //easyjson:json
-type APIMortalityResponse []APIMortalityResponseEntry
+type APIMortalityResponse []*APIMortalityResponseEntry
 
 // APIMortalityResponseEntry is a single entry in APIMortalityResponse
 //easyjson:json
@@ -20,12 +21,34 @@ type APIMortalityResponseEntry struct {
 	Deaths    int       `json:"DEATHS"`
 }
 
+// GetTimestamp returns the entry's timestamp
+func (v *APIMortalityResponseEntry) GetTimestamp() time.Time {
+	return v.TimeStamp.Time
+}
+
+// GetGroupFieldValue returns the value of the specified entry's field
+func (v *APIMortalityResponseEntry) GetGroupFieldValue(groupField int) (value string) {
+	switch groupField {
+	case GroupByRegion:
+		value = v.Region
+	case GroupByAgeGroup:
+		value = v.AgeGroup
+	}
+	return
+}
+
 // GetMortality retrieves all recorded COVID-19 mortality figures
-func (client *Client) GetMortality(ctx context.Context) (results APIMortalityResponse, err error) {
+func (client *Client) GetMortality(ctx context.Context) (results []Measurement, err error) {
 	timer := prometheus.NewTimer(metricRequestLatency.WithLabelValues("mortality"))
 	var body io.ReadCloser
 	if body, err = client.call(ctx, "COVID19BE_MORT.json"); err == nil {
-		err = easyjson.UnmarshalFromReader(body, &results)
+		var cvt APIMortalityResponse
+		if err = easyjson.UnmarshalFromReader(body, &cvt); err == nil {
+			for _, entry := range cvt {
+				results = append(results, entry)
+			}
+		}
+		_ = body.Close()
 	}
 	timer.ObserveDuration()
 	metricRequestsTotal.WithLabelValues("mortality").Add(1.0)

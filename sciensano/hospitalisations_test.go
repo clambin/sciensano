@@ -15,8 +15,8 @@ import (
 )
 
 var (
-	testHospitalisationsResponse = apiclient.APIHospitalisationsResponse{
-		{
+	testHospitalisationsResponse = []apiclient.Measurement{
+		&apiclient.APIHospitalisationsResponseEntry{
 			TimeStamp:   apiclient.TimeStamp{Time: time.Date(2021, 10, 21, 0, 0, 0, 0, time.UTC)},
 			Region:      "Flanders",
 			Province:    "VlaamsBrabant",
@@ -25,7 +25,7 @@ var (
 			TotalInResp: 25,
 			TotalInECMO: 10,
 		},
-		{
+		&apiclient.APIHospitalisationsResponseEntry{
 			TimeStamp:   apiclient.TimeStamp{Time: time.Date(2021, 10, 21, 0, 0, 0, 0, time.UTC)},
 			Region:      "Brussels",
 			Province:    "Brussels",
@@ -34,7 +34,7 @@ var (
 			TotalInResp: 3,
 			TotalInECMO: 1,
 		},
-		{
+		&apiclient.APIHospitalisationsResponseEntry{
 			TimeStamp:   apiclient.TimeStamp{Time: time.Date(2021, 10, 22, 0, 0, 0, 0, time.UTC)},
 			Region:      "Flanders",
 			Province:    "VlaamsBrabant",
@@ -227,7 +227,7 @@ func BenchmarkClient_GetHospitalisationsByRegion(b *testing.B) {
 
 	for i := 0; i < 2*365; i++ {
 		for _, region := range []string{"Flanders", "Wallonia", "Brussels"} {
-			bigResponse = append(bigResponse, apiclient.APIHospitalisationsResponseEntry{
+			bigResponse = append(bigResponse, &apiclient.APIHospitalisationsResponseEntry{
 				TimeStamp: apiclient.TimeStamp{Time: ts},
 				Region:    region,
 				Province:  region,

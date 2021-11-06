@@ -10,6 +10,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"testing"
+	"time"
 )
 
 func TestClient_GetVaccinations(t *testing.T) {
@@ -27,7 +28,13 @@ func TestClient_GetVaccinations(t *testing.T) {
 
 	require.NoError(t, err)
 	require.Len(t, result, 7)
-	assert.NotZero(t, result[6].TimeStamp)
+	assert.Equal(t, &apiclient.APIVaccinationsResponseEntry{
+		TimeStamp: apiclient.TimeStamp{Time: time.Date(2021, time.March, 11, 0, 0, 0, 0, time.UTC)},
+		Region:    "Flanders",
+		AgeGroup:  "45-54",
+		Dose:      "B",
+		Count:     50,
+	}, result[6])
 
 	testServer.Fail = true
 	_, err = client.GetVaccinations(ctx)
@@ -37,6 +44,25 @@ func TestClient_GetVaccinations(t *testing.T) {
 	_, err = client.GetVaccinations(ctx)
 	require.Error(t, err)
 
+}
+
+func TestAPIVaccinationsResponseEntry_GetTimestamp(t *testing.T) {
+	timestamp := time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)
+	entry := apiclient.APIVaccinationsResponseEntry{
+		TimeStamp: apiclient.TimeStamp{Time: timestamp},
+	}
+
+	assert.Equal(t, timestamp, entry.GetTimestamp())
+}
+
+func TestAPIVaccinationsResponseEntry_GetGroupFieldValue(t *testing.T) {
+	entry := apiclient.APIVaccinationsResponseEntry{
+		Region:   "Flanders",
+		AgeGroup: "85+",
+	}
+
+	assert.Equal(t, "Flanders", entry.GetGroupFieldValue(apiclient.GroupByRegion))
+	assert.Equal(t, "85+", entry.GetGroupFieldValue(apiclient.GroupByAgeGroup))
 }
 
 func BenchmarkClient_GetVaccinations(b *testing.B) {

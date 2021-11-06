@@ -69,8 +69,8 @@ func TestHandler_TableQuery_VaccinesStats(t *testing.T) {
 
 	getter.
 		On("GetVaccinations", mock.AnythingOfType("*context.emptyCtx")).
-		Return(apiclient.APIVaccinationsResponse{
-			{
+		Return([]apiclient.Measurement{
+			&apiclient.APIVaccinationsResponseEntry{
 				TimeStamp: apiclient.TimeStamp{Time: time.Now().Add(-24 * time.Hour)},
 				Dose:      "A",
 				Count:     20,
@@ -114,33 +114,33 @@ func TestHandler_TableQuery_VaccinesTime(t *testing.T) {
 
 	getter.
 		On("GetVaccinations", mock.AnythingOfType("*context.emptyCtx")).
-		Return(apiclient.APIVaccinationsResponse{
-			{
+		Return([]apiclient.Measurement{
+			&apiclient.APIVaccinationsResponseEntry{
 				TimeStamp: apiclient.TimeStamp{Time: time.Now().Add(-6 * 24 * time.Hour)},
 				Dose:      "A",
 				Count:     50,
 			},
-			{
+			&apiclient.APIVaccinationsResponseEntry{
 				TimeStamp: apiclient.TimeStamp{Time: time.Now().Add(-5 * 24 * time.Hour)},
 				Dose:      "A",
 				Count:     25,
 			},
-			{
+			&apiclient.APIVaccinationsResponseEntry{
 				TimeStamp: apiclient.TimeStamp{Time: time.Now().Add(-4 * 24 * time.Hour)},
 				Dose:      "A",
 				Count:     15,
 			},
-			{
+			&apiclient.APIVaccinationsResponseEntry{
 				TimeStamp: apiclient.TimeStamp{Time: time.Now().Add(-3 * 24 * time.Hour)},
 				Dose:      "A",
 				Count:     15,
 			},
-			{
+			&apiclient.APIVaccinationsResponseEntry{
 				TimeStamp: apiclient.TimeStamp{Time: time.Now().Add(-2 * 24 * time.Hour)},
 				Dose:      "A",
 				Count:     40,
 			},
-			{
+			&apiclient.APIVaccinationsResponseEntry{
 				TimeStamp: apiclient.TimeStamp{Time: time.Now().Add(-1 * 24 * time.Hour)},
 				Dose:      "A",
 				Count:     15,

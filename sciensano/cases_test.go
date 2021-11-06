@@ -15,22 +15,22 @@ import (
 )
 
 var (
-	testCasesResponse = apiclient.APICasesResponse{
-		{
+	testCasesResponse = []apiclient.Measurement{
+		&apiclient.APICasesResponseEntry{
 			TimeStamp: apiclient.TimeStamp{Time: time.Date(2021, 10, 21, 0, 0, 0, 0, time.UTC)},
 			Region:    "Flanders",
 			Province:  "VlaamsBrabant",
 			AgeGroup:  "85+",
 			Cases:     100,
 		},
-		{
+		&apiclient.APICasesResponseEntry{
 			TimeStamp: apiclient.TimeStamp{Time: time.Date(2021, 10, 21, 0, 0, 0, 0, time.UTC)},
 			Region:    "Brussels",
 			Province:  "Brussels",
 			AgeGroup:  "25-34",
 			Cases:     150,
 		},
-		{
+		&apiclient.APICasesResponseEntry{
 			TimeStamp: apiclient.TimeStamp{Time: time.Date(2021, 10, 22, 0, 0, 0, 0, time.UTC)},
 			Region:    "Flanders",
 			Province:  "VlaamsBrabant",
@@ -211,7 +211,7 @@ func BenchmarkClient_GetCasesByRegion(b *testing.B) {
 
 	for i := 0; i < 2*365; i++ {
 		for _, region := range []string{"Flanders", "Wallonia", "Brussels"} {
-			bigResponse = append(bigResponse, apiclient.APICasesResponseEntry{
+			bigResponse = append(bigResponse, &apiclient.APICasesResponseEntry{
 				TimeStamp: apiclient.TimeStamp{Time: ts},
 				Region:    region,
 				Province:  region,

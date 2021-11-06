@@ -32,8 +32,8 @@ func TestHandler_TableQuery(t *testing.T) {
 
 	getter.
 		On("GetTestResults", mock.AnythingOfType("*context.emptyCtx")).
-		Return(apiclient.APITestResultsResponse{
-			{
+		Return([]apiclient.Measurement{
+			&apiclient.APITestResultsResponseEntry{
 				TimeStamp: apiclient.TimeStamp{Time: time.Now().Add(-24 * time.Hour)},
 				Positive:  10,
 				Total:     20,

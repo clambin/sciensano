@@ -17,43 +17,43 @@ import (
 var (
 	timestamp = time.Date(2021, 3, 10, 0, 0, 0, 0, time.UTC)
 
-	testVaccinationsResponse = apiclient.APIVaccinationsResponse{
-		{
+	testVaccinationsResponse = []apiclient.Measurement{
+		&apiclient.APIVaccinationsResponseEntry{
 			TimeStamp: apiclient.TimeStamp{Time: timestamp},
 			Region:    "Flanders",
 			AgeGroup:  "25-34",
 			Dose:      "A",
 			Count:     1,
 		},
-		{
+		&apiclient.APIVaccinationsResponseEntry{
 			TimeStamp: apiclient.TimeStamp{Time: timestamp},
 			Region:    "Flanders",
 			AgeGroup:  "35-44",
 			Dose:      "A",
 			Count:     1,
 		},
-		{
+		&apiclient.APIVaccinationsResponseEntry{
 			TimeStamp: apiclient.TimeStamp{Time: timestamp},
 			Region:    "Flanders",
 			AgeGroup:  "35-44",
 			Dose:      "C",
 			Count:     4,
 		},
-		{
+		&apiclient.APIVaccinationsResponseEntry{
 			TimeStamp: apiclient.TimeStamp{Time: timestamp},
 			Region:    "Brussels",
 			AgeGroup:  "35-44",
 			Dose:      "B",
 			Count:     1,
 		},
-		{
+		&apiclient.APIVaccinationsResponseEntry{
 			TimeStamp: apiclient.TimeStamp{Time: timestamp},
 			Region:    "Brussels",
 			AgeGroup:  "35-44",
 			Dose:      "E",
 			Count:     5,
 		},
-		{
+		&apiclient.APIVaccinationsResponseEntry{
 			TimeStamp: apiclient.TimeStamp{Time: timestamp.Add(24 * time.Hour)},
 			Region:    "Brussels",
 			AgeGroup:  "35-44",
@@ -253,24 +253,24 @@ func TestClient_Vaccinations_ApplyRegions(t *testing.T) {
 	require.Len(t, cases.Groups[1].Values, 2)
 }
 
-var bigVaccinationResponse apiclient.APIVaccinationsResponse
+var bigVaccinationResponse []apiclient.Measurement
 
 func buildBigVaccinationResponse() {
-	bigVaccinationResponse = apiclient.APIVaccinationsResponse{}
+	bigVaccinationResponse = []apiclient.Measurement{}
 
 	startDate := time.Now().Add(-365 * 24 * time.Hour)
 	for i := 0; i < 365; i++ {
 		for _, region := range []string{"Flanders", "Brussels", "Wallonia"} {
 			for _, ageGroup := range []string{"0-17", "18-34", "35-44", "45-54", "55-64", "65-74", "75-84", "85+"} {
 				bigVaccinationResponse = append(bigVaccinationResponse,
-					apiclient.APIVaccinationsResponseEntry{
+					&apiclient.APIVaccinationsResponseEntry{
 						TimeStamp: apiclient.TimeStamp{Time: startDate},
 						Region:    region,
 						AgeGroup:  ageGroup,
 						Dose:      "A",
 						Count:     i * 2,
 					},
-					apiclient.APIVaccinationsResponseEntry{
+					&apiclient.APIVaccinationsResponseEntry{
 						TimeStamp: apiclient.TimeStamp{Time: startDate},
 						Region:    region,
 						AgeGroup:  ageGroup,
@@ -412,7 +412,7 @@ func TestVaccinationsEntry_Add(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		vaccination := apiclient.APIVaccinationsResponseEntry{
+		vaccination := &apiclient.APIVaccinationsResponseEntry{
 			Dose:  testCase.dose,
 			Count: 1,
 		}

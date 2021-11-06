@@ -14,26 +14,26 @@ import (
 )
 
 var (
-	testMortalityResponse = apiclient.APIMortalityResponse{
-		{
+	testMortalityResponse = []apiclient.Measurement{
+		&apiclient.APIMortalityResponseEntry{
 			TimeStamp: apiclient.TimeStamp{Time: time.Date(2021, 10, 21, 0, 0, 0, 0, time.UTC)},
 			Region:    "Flanders",
 			AgeGroup:  "85+",
 			Deaths:    100,
 		},
-		{
+		&apiclient.APIMortalityResponseEntry{
 			TimeStamp: apiclient.TimeStamp{Time: time.Date(2021, 10, 21, 0, 0, 0, 0, time.UTC)},
 			Region:    "Brussels",
 			AgeGroup:  "25-34",
 			Deaths:    150,
 		},
-		{
+		&apiclient.APIMortalityResponseEntry{
 			TimeStamp: apiclient.TimeStamp{Time: time.Date(2021, 10, 22, 0, 0, 0, 0, time.UTC)},
 			Region:    "Flanders",
 			AgeGroup:  "25-34",
 			Deaths:    120,
 		},
-		{
+		&apiclient.APIMortalityResponseEntry{
 			TimeStamp: apiclient.TimeStamp{Time: time.Date(2021, 10, 23, 0, 0, 0, 0, time.UTC)},
 			Region:    "Flanders",
 			AgeGroup:  "55-64",
@@ -141,7 +141,7 @@ func BenchmarkClient_GetMortalityByRegion(b *testing.B) {
 
 	for i := 0; i < 2*365; i++ {
 		for _, region := range []string{"Flanders", "Wallonia", "Brussels"} {
-			bigResponse = append(bigResponse, apiclient.APIMortalityResponseEntry{
+			bigResponse = append(bigResponse, &apiclient.APIMortalityResponseEntry{
 				TimeStamp: apiclient.TimeStamp{Time: ts},
 				Region:    region,
 				Deaths:    i,

@@ -13,6 +13,10 @@ type VaccinationsEntry struct {
 	Booster    int
 }
 
+func NewVaccinationsEntry() GroupedEntry {
+	return &VaccinationsEntry{}
+}
+
 // Copy makes a copy of a VaccinationsEntry
 func (entry *VaccinationsEntry) Copy() datasets.Copyable {
 	return &VaccinationsEntry{
@@ -49,15 +53,15 @@ func (entry VaccinationsEntry) GetValue(vaccinationType int) (value int) {
 }
 
 // Add adds the passed APIVaccinationsResponseEntry values to its own values
-func (entry *VaccinationsEntry) Add(input apiclient.APIVaccinationsResponseEntry) {
-	switch input.Dose {
+func (entry *VaccinationsEntry) Add(input apiclient.Measurement) {
+	switch input.(*apiclient.APIVaccinationsResponseEntry).Dose {
 	case "A":
-		entry.Partial += input.Count
+		entry.Partial += input.(*apiclient.APIVaccinationsResponseEntry).Count
 	case "B":
-		entry.Full += input.Count
+		entry.Full += input.(*apiclient.APIVaccinationsResponseEntry).Count
 	case "C":
-		entry.SingleDose += input.Count
+		entry.SingleDose += input.(*apiclient.APIVaccinationsResponseEntry).Count
 	case "E":
-		entry.Booster += input.Count
+		entry.Booster += input.(*apiclient.APIVaccinationsResponseEntry).Count
 	}
 }

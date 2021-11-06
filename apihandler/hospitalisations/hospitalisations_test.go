@@ -20,8 +20,8 @@ type TestCase struct {
 }
 
 var (
-	testResponse = apiclient.APIHospitalisationsResponse{
-		{
+	testResponse = []apiclient.Measurement{
+		&apiclient.APIHospitalisationsResponseEntry{
 			TimeStamp:   apiclient.TimeStamp{Time: time.Date(2021, 10, 21, 0, 0, 0, 0, time.UTC)},
 			Region:      "Flanders",
 			Province:    "VlaamsBrabant",
@@ -30,7 +30,7 @@ var (
 			TotalInResp: 5,
 			TotalInECMO: 1,
 		},
-		{
+		&apiclient.APIHospitalisationsResponseEntry{
 			TimeStamp:   apiclient.TimeStamp{Time: time.Date(2021, 10, 21, 0, 0, 0, 0, time.UTC)},
 			Region:      "Brussels",
 			Province:    "Brussels",
@@ -39,7 +39,7 @@ var (
 			TotalInResp: 0,
 			TotalInECMO: 0,
 		},
-		{
+		&apiclient.APIHospitalisationsResponseEntry{
 			TimeStamp:   apiclient.TimeStamp{Time: time.Date(2021, 10, 22, 0, 0, 0, 0, time.UTC)},
 			Region:      "Flanders",
 			Province:    "VlaamsBrabant",
@@ -48,7 +48,7 @@ var (
 			TotalInResp: 5,
 			TotalInECMO: 1,
 		},
-		{
+		&apiclient.APIHospitalisationsResponseEntry{
 			TimeStamp:   apiclient.TimeStamp{Time: time.Date(2021, 10, 22, 0, 0, 0, 0, time.UTC)},
 			Region:      "",
 			Province:    "",
@@ -57,7 +57,7 @@ var (
 			TotalInResp: 0,
 			TotalInECMO: 0,
 		},
-		{
+		&apiclient.APIHospitalisationsResponseEntry{
 			TimeStamp:   apiclient.TimeStamp{Time: time.Date(2021, 10, 23, 0, 0, 0, 0, time.UTC)},
 			Region:      "Flanders",
 			Province:    "VlaamsBrabant",
@@ -155,12 +155,12 @@ func TestHandler_TableQuery(t *testing.T) {
 }
 
 func BenchmarkHandler_TableQuery(b *testing.B) {
-	var bigResponse apiclient.APIHospitalisationsResponse
+	var bigResponse []apiclient.Measurement
 	timestamp := time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)
 
 	for i := 0; i < 2*365; i++ {
 		for _, region := range []string{"Brussels", "Flanders", "Wallonia"} {
-			bigResponse = append(bigResponse, apiclient.APIHospitalisationsResponseEntry{
+			bigResponse = append(bigResponse, &apiclient.APIHospitalisationsResponseEntry{
 				TimeStamp: apiclient.TimeStamp{Time: timestamp},
 				Province:  region,
 				Region:    region,

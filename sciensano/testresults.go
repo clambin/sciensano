@@ -25,9 +25,9 @@ func (client *Client) getTestResults(ctx context.Context, name, cacheEntryName s
 	log.Debug("running " + name)
 	entry := client.cache.Load(cacheEntryName)
 	entry.Once.Do(func() {
-		var apiResult apiclient.APITestResultsResponse
+		var apiResult []apiclient.Measurement
 		if apiResult, err = client.Getter.GetTestResults(ctx); err == nil {
-			entry.Data = groupTestResults(apiResult)
+			entry.Data = groupMeasurements(apiResult, apiclient.GroupByNone, NewTestResult)
 			client.cache.Save(cacheEntryName, entry)
 		} else {
 			client.cache.Clear(cacheEntryName)
@@ -39,49 +39,16 @@ func (client *Client) getTestResults(ctx context.Context, name, cacheEntryName s
 	return
 }
 
-func groupTestResults(apiResult apiclient.APITestResultsResponse) (results *datasets.Dataset) {
-	before := time.Now()
-	defer log.WithField("time", time.Now().Sub(before)).Debug("groupTestResults")
-
-	results = &datasets.Dataset{
-		Timestamps: make([]time.Time, 0),
-		Groups: []datasets.GroupedDatasetEntry{
-			{
-				Name:   "test_results",
-				Values: make([]datasets.Copyable, 0),
-			},
-		},
-	}
-
-	currentTimestamp := time.Time{}
-	currentEntry := &TestResult{}
-
-	for _, entry := range apiResult {
-		if !currentTimestamp.IsZero() && !currentTimestamp.Equal(entry.TimeStamp.Time) {
-			results.Timestamps = append(results.Timestamps, currentTimestamp)
-			results.Groups[0].Values = append(results.Groups[0].Values, currentEntry)
-			currentEntry = &TestResult{}
-		}
-
-		currentTimestamp = entry.TimeStamp.Time
-		currentEntry.Total += entry.Total
-		currentEntry.Positive += entry.Positive
-	}
-
-	if !currentTimestamp.IsZero() {
-		results.Timestamps = append(results.Timestamps, currentTimestamp)
-		results.Groups[0].Values = append(results.Groups[0].Values, currentEntry)
-
-	}
-	return
-}
-
 // TestResult represents results of administered COVID-19 tests
 type TestResult struct {
 	// The Total number of tests administered
 	Total int
 	// The Positive number of tests
 	Positive int
+}
+
+func NewTestResult() GroupedEntry {
+	return &TestResult{}
 }
 
 // Copy makes a copy of a TestResult
@@ -95,4 +62,10 @@ func (entry *TestResult) Copy() datasets.Copyable {
 // Ratio returns the positive rate for the test result
 func (entry TestResult) Ratio() float64 {
 	return float64(entry.Positive) / float64(entry.Total)
+}
+
+// Add adds the passed test result values to its own values
+func (entry *TestResult) Add(input apiclient.Measurement) {
+	entry.Total += input.(*apiclient.APITestResultsResponseEntry).Total
+	entry.Positive += input.(*apiclient.APITestResultsResponseEntry).Positive
 }

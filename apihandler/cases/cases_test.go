@@ -20,36 +20,36 @@ type TestCase struct {
 }
 
 var (
-	testResponse = apiclient.APICasesResponse{
-		{
+	testResponse = []apiclient.Measurement{
+		&apiclient.APICasesResponseEntry{
 			TimeStamp: apiclient.TimeStamp{Time: time.Date(2021, 10, 21, 0, 0, 0, 0, time.UTC)},
 			Region:    "Flanders",
 			Province:  "VlaamsBrabant",
 			AgeGroup:  "85+",
 			Cases:     100,
 		},
-		{
+		&apiclient.APICasesResponseEntry{
 			TimeStamp: apiclient.TimeStamp{Time: time.Date(2021, 10, 21, 0, 0, 0, 0, time.UTC)},
 			Region:    "Brussels",
 			Province:  "Brussels",
 			AgeGroup:  "25-34",
 			Cases:     150,
 		},
-		{
+		&apiclient.APICasesResponseEntry{
 			TimeStamp: apiclient.TimeStamp{Time: time.Date(2021, 10, 22, 0, 0, 0, 0, time.UTC)},
 			Region:    "Flanders",
 			Province:  "VlaamsBrabant",
 			AgeGroup:  "25-34",
 			Cases:     120,
 		},
-		{
+		&apiclient.APICasesResponseEntry{
 			TimeStamp: apiclient.TimeStamp{Time: time.Date(2021, 10, 22, 0, 0, 0, 0, time.UTC)},
 			Region:    "",
 			Province:  "",
 			AgeGroup:  "",
 			Cases:     5,
 		},
-		{
+		&apiclient.APICasesResponseEntry{
 			TimeStamp: apiclient.TimeStamp{Time: time.Date(2021, 10, 23, 0, 0, 0, 0, time.UTC)},
 			Region:    "Flanders",
 			Province:  "VlaamsBrabant",
@@ -145,12 +145,12 @@ func TestHandler_TableQuery(t *testing.T) {
 }
 
 func BenchmarkHandler_TableQuery(b *testing.B) {
-	var bigResponse apiclient.APICasesResponse
+	var bigResponse []apiclient.Measurement
 	timestamp := time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)
 
 	for i := 0; i < 2*365; i++ {
 		for _, region := range []string{"Brussels", "Flanders", "Wallonia"} {
-			bigResponse = append(bigResponse, apiclient.APICasesResponseEntry{
+			bigResponse = append(bigResponse, &apiclient.APICasesResponseEntry{
 				TimeStamp: apiclient.TimeStamp{Time: timestamp},
 				Province:  region,
 				Region:    region,

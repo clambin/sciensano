@@ -27,7 +27,7 @@ func TestClient_GetHospitalisations(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, result, 2)
 
-	assert.Equal(t, apiclient.APIHospitalisationsResponseEntry{
+	assert.Equal(t, &apiclient.APIHospitalisationsResponseEntry{
 		TimeStamp:   apiclient.TimeStamp{Time: time.Date(2020, time.March, 15, 0, 0, 0, 0, time.UTC)},
 		Province:    "Brussels",
 		Region:      "Brussels",
@@ -36,7 +36,7 @@ func TestClient_GetHospitalisations(t *testing.T) {
 		TotalInResp: 8,
 		TotalInECMO: 0,
 	}, result[0])
-	assert.Equal(t, apiclient.APIHospitalisationsResponseEntry{
+	assert.Equal(t, &apiclient.APIHospitalisationsResponseEntry{
 		TimeStamp:   apiclient.TimeStamp{Time: time.Date(2020, time.March, 15, 0, 0, 0, 0, time.UTC)},
 		Province:    "VlaamsBrabant",
 		Region:      "Flanders",
@@ -53,4 +53,23 @@ func TestClient_GetHospitalisations(t *testing.T) {
 	apiServer.Close()
 	_, err = client.GetHospitalisations(ctx)
 	require.Error(t, err)
+}
+
+func TestAPIHospitalisationsResponseEntry_GetTimestamp(t *testing.T) {
+	timestamp := time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)
+	entry := apiclient.APIHospitalisationsResponseEntry{
+		TimeStamp: apiclient.TimeStamp{Time: timestamp},
+	}
+
+	assert.Equal(t, timestamp, entry.GetTimestamp())
+}
+
+func TestAPIHospitalisationsResponseEntry_GetGroupFieldValue(t *testing.T) {
+	entry := apiclient.APIHospitalisationsResponseEntry{
+		Province: "VlaamsBrabant",
+		Region:   "Flanders",
+	}
+
+	assert.Equal(t, "Flanders", entry.GetGroupFieldValue(apiclient.GroupByRegion))
+	assert.Equal(t, "VlaamsBrabant", entry.GetGroupFieldValue(apiclient.GroupByProvince))
 }

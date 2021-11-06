@@ -23,20 +23,20 @@ type TestCase struct {
 var (
 	timestamp = time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)
 
-	vaccinationTestData = apiclient.APIVaccinationsResponse{
-		{TimeStamp: apiclient.TimeStamp{Time: timestamp}, Region: "Flanders", AgeGroup: "25-34", Dose: "C", Count: 1},
-		{TimeStamp: apiclient.TimeStamp{Time: timestamp}, Region: "Flanders", AgeGroup: "35-44", Dose: "E", Count: 1},
-		{TimeStamp: apiclient.TimeStamp{Time: timestamp}, Region: "Brussels", AgeGroup: "35-44", Dose: "B", Count: 2},
-		{TimeStamp: apiclient.TimeStamp{Time: timestamp}, Region: "Brussels", AgeGroup: "25-34", Dose: "A", Count: 2},
-		{TimeStamp: apiclient.TimeStamp{Time: timestamp}, Region: "", AgeGroup: "", Dose: "A", Count: 0},
+	vaccinationTestData = []apiclient.Measurement{
+		&apiclient.APIVaccinationsResponseEntry{TimeStamp: apiclient.TimeStamp{Time: timestamp}, Region: "Flanders", AgeGroup: "25-34", Dose: "C", Count: 1},
+		&apiclient.APIVaccinationsResponseEntry{TimeStamp: apiclient.TimeStamp{Time: timestamp}, Region: "Flanders", AgeGroup: "35-44", Dose: "E", Count: 1},
+		&apiclient.APIVaccinationsResponseEntry{TimeStamp: apiclient.TimeStamp{Time: timestamp}, Region: "Brussels", AgeGroup: "35-44", Dose: "B", Count: 2},
+		&apiclient.APIVaccinationsResponseEntry{TimeStamp: apiclient.TimeStamp{Time: timestamp}, Region: "Brussels", AgeGroup: "25-34", Dose: "A", Count: 2},
+		&apiclient.APIVaccinationsResponseEntry{TimeStamp: apiclient.TimeStamp{Time: timestamp}, Region: "", AgeGroup: "", Dose: "A", Count: 0},
 
-		{TimeStamp: apiclient.TimeStamp{Time: timestamp.Add(24 * time.Hour)}, Region: "Flanders", AgeGroup: "25-34", Dose: "B", Count: 3},
-		{TimeStamp: apiclient.TimeStamp{Time: timestamp.Add(24 * time.Hour)}, Region: "Brussels", AgeGroup: "35-44", Dose: "C", Count: 4},
-		{TimeStamp: apiclient.TimeStamp{Time: timestamp.Add(24 * time.Hour)}, Region: "Brussels", AgeGroup: "35-44", Dose: "A", Count: 5},
-		{TimeStamp: apiclient.TimeStamp{Time: timestamp.Add(24 * time.Hour)}, Region: "Brussels", AgeGroup: "25-34", Dose: "E", Count: 5},
+		&apiclient.APIVaccinationsResponseEntry{TimeStamp: apiclient.TimeStamp{Time: timestamp.Add(24 * time.Hour)}, Region: "Flanders", AgeGroup: "25-34", Dose: "B", Count: 3},
+		&apiclient.APIVaccinationsResponseEntry{TimeStamp: apiclient.TimeStamp{Time: timestamp.Add(24 * time.Hour)}, Region: "Brussels", AgeGroup: "35-44", Dose: "C", Count: 4},
+		&apiclient.APIVaccinationsResponseEntry{TimeStamp: apiclient.TimeStamp{Time: timestamp.Add(24 * time.Hour)}, Region: "Brussels", AgeGroup: "35-44", Dose: "A", Count: 5},
+		&apiclient.APIVaccinationsResponseEntry{TimeStamp: apiclient.TimeStamp{Time: timestamp.Add(24 * time.Hour)}, Region: "Brussels", AgeGroup: "25-34", Dose: "E", Count: 5},
 
-		{TimeStamp: apiclient.TimeStamp{Time: timestamp.Add(48 * time.Hour)}, Region: "Flanders", AgeGroup: "25-34", Dose: "A", Count: 9},
-		{TimeStamp: apiclient.TimeStamp{Time: timestamp.Add(48 * time.Hour)}, Region: "Brussels", AgeGroup: "35-44", Dose: "E", Count: 9},
+		&apiclient.APIVaccinationsResponseEntry{TimeStamp: apiclient.TimeStamp{Time: timestamp.Add(48 * time.Hour)}, Region: "Flanders", AgeGroup: "25-34", Dose: "A", Count: 9},
+		&apiclient.APIVaccinationsResponseEntry{TimeStamp: apiclient.TimeStamp{Time: timestamp.Add(48 * time.Hour)}, Region: "Brussels", AgeGroup: "35-44", Dose: "E", Count: 9},
 	}
 
 	testCases = []TestCase{
@@ -255,18 +255,18 @@ func TestHandler_TableQuery(t *testing.T) {
 }
 
 func BenchmarkHandler_TableQuery(b *testing.B) {
-	var bigResponse apiclient.APIVaccinationsResponse
+	var bigResponse []apiclient.Measurement
 	ts := time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)
 
 	for i := 0; i < 2*365; i++ {
 		for _, region := range []string{"Brussels", "Flanders", "Wallonia"} {
-			bigResponse = append(bigResponse, apiclient.APIVaccinationsResponseEntry{
+			bigResponse = append(bigResponse, &apiclient.APIVaccinationsResponseEntry{
 				TimeStamp: apiclient.TimeStamp{Time: ts},
 				Region:    region,
 				Dose:      "A",
 				Count:     i + 100,
 			})
-			bigResponse = append(bigResponse, apiclient.APIVaccinationsResponseEntry{
+			bigResponse = append(bigResponse, &apiclient.APIVaccinationsResponseEntry{
 				TimeStamp: apiclient.TimeStamp{Time: ts},
 				Region:    region,
 				Dose:      "B",

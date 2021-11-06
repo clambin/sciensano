@@ -122,7 +122,7 @@ func easyjson99efb7acDecodeGithubComClambinSciensanoApiclient1(in *jlexer.Lexer,
 		in.Delim('[')
 		if *out == nil {
 			if !in.IsDelim(']') {
-				*out = make(APITestResultsResponse, 0, 0)
+				*out = make(APITestResultsResponse, 0, 8)
 			} else {
 				*out = APITestResultsResponse{}
 			}
@@ -130,8 +130,16 @@ func easyjson99efb7acDecodeGithubComClambinSciensanoApiclient1(in *jlexer.Lexer,
 			*out = (*out)[:0]
 		}
 		for !in.IsDelim(']') {
-			var v1 APITestResultsResponseEntry
-			(v1).UnmarshalEasyJSON(in)
+			var v1 *APITestResultsResponseEntry
+			if in.IsNull() {
+				in.Skip()
+				v1 = nil
+			} else {
+				if v1 == nil {
+					v1 = new(APITestResultsResponseEntry)
+				}
+				(*v1).UnmarshalEasyJSON(in)
+			}
 			*out = append(*out, v1)
 			in.WantComma()
 		}
@@ -150,7 +158,11 @@ func easyjson99efb7acEncodeGithubComClambinSciensanoApiclient1(out *jwriter.Writ
 			if v2 > 0 {
 				out.RawByte(',')
 			}
-			(v3).MarshalEasyJSON(out)
+			if v3 == nil {
+				out.RawString("null")
+			} else {
+				(*v3).MarshalEasyJSON(out)
+			}
 		}
 		out.RawByte(']')
 	}
