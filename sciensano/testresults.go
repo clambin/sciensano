@@ -23,14 +23,14 @@ func (client *Client) getTestResults(ctx context.Context, name, cacheEntryName s
 	defer func() { log.WithField("time", time.Now().Sub(before)).Debug(name + " done") }()
 
 	log.Debug("running " + name)
-	entry := client.cache.Load(cacheEntryName)
+	entry := client.Cache.Load(cacheEntryName)
 	entry.Once.Do(func() {
 		var apiResult []apiclient.Measurement
 		if apiResult, err = client.Getter.GetTestResults(ctx); err == nil {
 			entry.Data = groupMeasurements(apiResult, apiclient.GroupByNone, NewTestResult)
-			client.cache.Save(cacheEntryName, entry)
+			client.Cache.Save(cacheEntryName, entry)
 		} else {
-			client.cache.Clear(cacheEntryName)
+			client.Cache.Clear(cacheEntryName)
 		}
 	})
 	if err == nil && entry.Data != nil {
@@ -47,6 +47,7 @@ type TestResult struct {
 	Positive int
 }
 
+// NewTestResult returns a new TestResult, as a GroupedEntry. Used by groupMeasurements
 func NewTestResult() GroupedEntry {
 	return &TestResult{}
 }

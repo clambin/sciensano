@@ -10,6 +10,7 @@ type CasesEntry struct {
 	Count int
 }
 
+// NewCasesEntry returns a new CasesEntry, as a GroupedEntry. Used by groupMeasurements
 func NewCasesEntry() GroupedEntry {
 	return &CasesEntry{}
 }

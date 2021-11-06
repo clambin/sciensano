@@ -41,14 +41,14 @@ func (client *Client) getMortality(ctx context.Context, name, cacheEntryName str
 	defer func() { log.WithField("time", time.Now().Sub(before)).Debug(name + " done") }()
 
 	log.Debug("running " + name)
-	entry := client.cache.Load(cacheEntryName)
+	entry := client.Cache.Load(cacheEntryName)
 	entry.Once.Do(func() {
 		var apiResult []apiclient.Measurement
 		if apiResult, err = client.Getter.GetMortality(ctx); err == nil {
 			entry.Data = groupMeasurements(apiResult, mode, NewMortalityEntry)
-			client.cache.Save(cacheEntryName, entry)
+			client.Cache.Save(cacheEntryName, entry)
 		} else {
-			client.cache.Clear(cacheEntryName)
+			client.Cache.Clear(cacheEntryName)
 		}
 	})
 	if err == nil && entry.Data != nil {
@@ -57,10 +57,12 @@ func (client *Client) getMortality(ctx context.Context, name, cacheEntryName str
 	return
 }
 
+// MortalityEntry contains the mortality for a single timestamp
 type MortalityEntry struct {
 	Count int
 }
 
+// NewMortalityEntry returns a new MortalityEntry, as a GroupedEntry. Used by groupMeasurements
 func NewMortalityEntry() GroupedEntry {
 	return &MortalityEntry{}
 }

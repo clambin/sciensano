@@ -13,6 +13,7 @@ type VaccinationsEntry struct {
 	Booster    int
 }
 
+// NewVaccinationsEntry returns a new VaccinationsEntry, as a GroupedEntry. Used by groupMeasurements
 func NewVaccinationsEntry() GroupedEntry {
 	return &VaccinationsEntry{}
 }
@@ -33,8 +34,11 @@ func (entry VaccinationsEntry) Total() int {
 }
 
 const (
+	// VaccinationTypePartial tells GetValue to return the partial vaccination count
 	VaccinationTypePartial int = iota
+	// VaccinationTypeFull tells GetValue to return the full vaccination count. This counts double vaccinations and single dose vaccinations
 	VaccinationTypeFull
+	// VaccinationTypeBooster tells GetValue to return the booster vaccination count
 	VaccinationTypeBooster
 )
 

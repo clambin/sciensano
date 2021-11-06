@@ -46,6 +46,7 @@ func (store *Store) GetAgeGroupFigures() (figures map[string]int) {
 	return
 }
 
+// GetByAge returns the total population in the specified age brackets
 func (store *Store) GetByAge(bracket Bracket) (count int, ok bool) {
 	store.lock.Lock()
 	defer store.lock.Unlock()
@@ -57,6 +58,7 @@ func (store *Store) GetByAge(bracket Bracket) (count int, ok bool) {
 	return
 }
 
+// GetAgeBrackets returns all age brackets found in the demographics data
 func (store *Store) GetAgeBrackets() (brackets []Bracket) {
 	store.lock.Lock()
 	defer store.lock.Unlock()
@@ -82,6 +84,7 @@ func (store *Store) GetRegionFigures() (figures map[string]int) {
 	return
 }
 
+// GetByRegion returns the total population for the specified region
 func (store *Store) GetByRegion(region string) (count int, ok bool) {
 	store.lock.Lock()
 	defer store.lock.Unlock()
@@ -93,6 +96,7 @@ func (store *Store) GetByRegion(region string) (count int, ok bool) {
 	return
 }
 
+// GetRegions returns all regions found in the demographics data
 func (store *Store) GetRegions() (regions []string) {
 	store.lock.Lock()
 	defer store.lock.Unlock()

@@ -35,14 +35,14 @@ func (client *Client) getHospitalisations(ctx context.Context, name, cacheEntryN
 	defer func() { log.WithField("time", time.Now().Sub(before)).Debug(name + " done") }()
 
 	log.Debug("running " + name)
-	entry := client.cache.Load(cacheEntryName)
+	entry := client.Cache.Load(cacheEntryName)
 	entry.Once.Do(func() {
 		var apiResult []apiclient.Measurement
 		if apiResult, err = client.Getter.GetHospitalisations(ctx); err == nil {
 			entry.Data = groupMeasurements(apiResult, mode, NewHospitalisationsEntry)
-			client.cache.Save(cacheEntryName, entry)
+			client.Cache.Save(cacheEntryName, entry)
 		} else {
-			client.cache.Clear(cacheEntryName)
+			client.Cache.Clear(cacheEntryName)
 		}
 	})
 	if err == nil && entry.Data != nil {

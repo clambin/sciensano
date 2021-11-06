@@ -8,6 +8,7 @@ import (
 	"time"
 )
 
+// GroupedEntry interface represents a groupable measurement
 type GroupedEntry interface {
 	datasets.Copyable
 	Add(entry apiclient.Measurement)
@@ -17,8 +18,8 @@ func groupMeasurements(entries []apiclient.Measurement, groupField int, newEntry
 	before := time.Now()
 	defer log.WithField("time", time.Now().Sub(before)).Debug("groupMortality")
 
-	mappedMortalities, mappedGroups := mapEntries(entries, groupField, newEntry)
-	timestamps := getUniqueSortedTimestamps(mappedMortalities)
+	mappedEntries, mappedGroups := mapEntries(entries, groupField, newEntry)
+	timestamps := getUniqueSortedTimestamps(mappedEntries)
 	groups := getUniqueSortedGroupNames(mappedGroups)
 
 	results = &datasets.Dataset{
@@ -35,7 +36,7 @@ func groupMeasurements(entries []apiclient.Measurement, groupField int, newEntry
 
 	for _, timestamp := range timestamps {
 		for index, group := range groups {
-			entry, ok := mappedMortalities[timestamp][group]
+			entry, ok := mappedEntries[timestamp][group]
 			if ok == false {
 				entry = newEntry()
 			}
@@ -56,8 +57,7 @@ func mapEntries(entries []apiclient.Measurement, groupField int, newEntryFunc fu
 	currentEntries := make(map[string]GroupedEntry)
 
 	for _, newEntry := range entries {
-		entryTimestamp := newEntry.(apiclient.Measurement).GetTimestamp()
-		groupName := newEntry.(apiclient.Measurement).GetGroupFieldValue(groupField)
+		entryTimestamp := newEntry.GetTimestamp()
 
 		if !currentTimestamp.IsZero() && !currentTimestamp.Equal(entryTimestamp) {
 			mappedEntries[currentTimestamp] = currentEntries
@@ -65,15 +65,15 @@ func mapEntries(entries []apiclient.Measurement, groupField int, newEntryFunc fu
 		}
 		currentTimestamp = entryTimestamp
 
+		groupName := newEntry.GetGroupFieldValue(groupField)
 		mappedGroups[groupName] = struct{}{}
 
 		entry, ok := currentEntries[groupName]
-
 		if ok == false {
 			entry = newEntryFunc()
 		}
 
-		entry.Add(newEntry.(apiclient.Measurement))
+		entry.Add(newEntry)
 		currentEntries[groupName] = entry
 	}
 

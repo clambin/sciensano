@@ -1,8 +1,10 @@
 package apihandler
 
 import (
+	"context"
 	"fmt"
 	grafanajson "github.com/clambin/grafana-json"
+	"github.com/clambin/sciensano/apiclient"
 	casesHandler "github.com/clambin/sciensano/apihandler/cases"
 	hospitalisationsHandler "github.com/clambin/sciensano/apihandler/hospitalisations"
 	mortalityHandler "github.com/clambin/sciensano/apihandler/mortality"
@@ -18,7 +20,7 @@ import (
 
 // Handlers groups Grafana SimpleJson API handlers that retrieve Belgium COVID-19-related statistics
 type Handlers struct {
-	Sciensano    sciensano.APIClient
+	Sciensano    *sciensano.Client
 	Vaccines     vaccines.APIClient
 	Demographics demographics.Demographics
 	handlers     []grafanajson.Handler
@@ -27,7 +29,7 @@ type Handlers struct {
 // Create a Handlers object
 func Create() *Handlers {
 	handler := Handlers{
-		Sciensano: sciensano.NewCachedClient(15 * time.Minute),
+		Sciensano: sciensano.NewCachedClient(time.Hour),
 		Vaccines: &vaccines.Cache{
 			APIClient: &vaccines.Client{HTTPClient: &http.Client{}},
 			Retention: 24 * time.Hour,
@@ -40,6 +42,7 @@ func Create() *Handlers {
 
 	// force load of demographics data on startup
 	go handler.Demographics.GetRegionFigures()
+	go handler.Sciensano.Getter.(*apiclient.Cache).AutoRefresh(context.Background())
 
 	handler.handlers = []grafanajson.Handler{
 		covidTestsHandler.New(handler.Sciensano),

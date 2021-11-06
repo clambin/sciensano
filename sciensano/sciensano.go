@@ -9,8 +9,7 @@ import (
 // Client queries different Sciensano APIs
 type Client struct {
 	apiclient.Getter
-
-	cache *Cache
+	Cache *Cache
 }
 
 // APIClient exposes the supported Sciensano APIs
@@ -32,6 +31,6 @@ func NewCachedClient(duration time.Duration) *Client {
 			Retention: duration,
 		},
 
-		cache: NewCache(duration),
+		Cache: NewCache(duration),
 	}
 }

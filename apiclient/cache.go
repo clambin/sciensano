@@ -2,6 +2,7 @@ package apiclient
 
 import (
 	"context"
+	log "github.com/sirupsen/logrus"
 	"sync"
 	"time"
 )
@@ -32,6 +33,55 @@ type cacheEntry struct {
 	entries []Measurement
 	expiry  time.Time
 	once    *sync.Once
+}
+
+// AutoRefresh refreshes the cache on a period basis
+func (cache *Cache) AutoRefresh(ctx context.Context) {
+	cache.refresh(ctx)
+	ticker := time.NewTicker(cache.Retention)
+	for running := true; running; {
+		select {
+		case <-ctx.Done():
+			running = false
+		case <-ticker.C:
+			cache.refresh(ctx)
+		}
+	}
+}
+
+func (cache *Cache) refresh(ctx context.Context) {
+	before := time.Now()
+	log.Debug("refreshing API cache")
+
+	_, err := cache.GetVaccinations(ctx)
+	if err != nil {
+		log.WithError(err).Warning("failed to update vaccinations cache")
+	}
+	_, err = cache.GetCases(ctx)
+	if err != nil {
+		log.WithError(err).Warning("failed to update cases cache")
+	}
+	_, err = cache.GetHospitalisations(ctx)
+	if err != nil {
+		log.WithError(err).Warning("failed to update hospitalisations cache")
+	}
+	_, err = cache.GetMortality(ctx)
+	if err != nil {
+		log.WithError(err).Warning("failed to update mortality cache")
+	}
+	_, err = cache.GetTestResults(ctx)
+	if err != nil {
+		log.WithError(err).Warning("failed to update test results cache")
+	}
+
+	log.WithFields(log.Fields{"duration": time.Now().Sub(before), "cache": cache.CacheSize()}).Debugf("refreshed API cache")
+}
+
+// CacheSize returns the number of entries currently in the cache
+func (cache *Cache) CacheSize() int {
+	cache.lock.Lock()
+	defer cache.lock.Unlock()
+	return len(cache.entries)
 }
 
 func (cache *Cache) getCacheEntry(name string) (entry *cacheEntry) {
@@ -116,6 +166,20 @@ func (cache *Cache) GetMortality(ctx context.Context) (results []Measurement, er
 			entry.once = nil
 		}
 		cache.setCacheEntry("mortality", entry)
+	})
+
+	return entry.entries, err
+}
+
+// GetHospitalisations retrieves all hospitalisations.  If a valid cached result exists, that is returned instead.
+func (cache *Cache) GetHospitalisations(ctx context.Context) (results []Measurement, err error) {
+	entry := cache.getCacheEntry("hospitalisations")
+	entry.once.Do(func() {
+		entry.entries, err = cache.Getter.GetHospitalisations(ctx)
+		if err != nil {
+			entry.once = nil
+		}
+		cache.setCacheEntry("hospitalisations", entry)
 	})
 
 	return entry.entries, err

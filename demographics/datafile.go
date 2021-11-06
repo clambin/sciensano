@@ -10,6 +10,7 @@ import (
 
 const demographicsURL = "https://statbel.fgov.be/sites/default/files/files/opendata/bevolking%20naar%20woonplaats%2C%20nationaliteit%20burgelijke%20staat%20%2C%20leeftijd%20en%20geslacht/TF_SOC_POP_STRUCT_2021.zip"
 
+// DataFile represents a demographics data file
 type DataFile struct {
 	// TempDirectory specifies the directory to use for temporary files. Uses system-specified tempdir is left blank
 	TempDirectory string
@@ -20,6 +21,7 @@ type DataFile struct {
 	filename string
 }
 
+// Download downloads a demographics data file to disk
 func (datafile *DataFile) Download() (err error) {
 	datafile.tempdir, err = datafile.makeTempDir()
 
@@ -94,6 +96,7 @@ func (datafile *DataFile) get(filename string) (err error) {
 	return
 }
 
+// Remove deletes the downloaded demographics data file from disk
 func (datafile *DataFile) Remove() {
 	_ = os.RemoveAll(datafile.tempdir)
 }

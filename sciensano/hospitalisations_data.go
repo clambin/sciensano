@@ -13,6 +13,7 @@ type HospitalisationsEntry struct {
 	InECMO int
 }
 
+// NewHospitalisationsEntry returns a new HospitalisationsEntry, as a GroupedEntry. Used by groupMeasurements
 func NewHospitalisationsEntry() GroupedEntry {
 	return &HospitalisationsEntry{}
 }
