@@ -44,6 +44,7 @@ func (client *Client) GetMortality(ctx context.Context) (results []Measurement, 
 	if body, err = client.call(ctx, "COVID19BE_MORT.json"); err == nil {
 		var cvt APIMortalityResponse
 		if err = easyjson.UnmarshalFromReader(body, &cvt); err == nil {
+			results = make([]Measurement, 0, len(cvt))
 			for _, entry := range cvt {
 				results = append(results, entry)
 			}

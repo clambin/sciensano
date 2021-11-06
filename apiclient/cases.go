@@ -47,6 +47,7 @@ func (client *Client) GetCases(ctx context.Context) (results []Measurement, err 
 	if body, err = client.call(ctx, "COVID19BE_CASES_AGESEX.json"); err == nil {
 		var cvt APICasesResponse
 		if err = easyjson.UnmarshalFromReader(body, &cvt); err == nil {
+			results = make([]Measurement, 0, len(cvt))
 			for _, entry := range cvt {
 				results = append(results, entry)
 			}

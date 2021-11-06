@@ -46,6 +46,7 @@ func (client *Client) GetVaccinations(ctx context.Context) (results []Measuremen
 	if body, err = client.call(ctx, "COVID19BE_VACC.json"); err == nil {
 		var cvt APIVaccinationsResponse
 		if err = easyjson.UnmarshalFromReader(body, &cvt); err == nil {
+			results = make([]Measurement, 0, len(cvt))
 			for _, entry := range cvt {
 				results = append(results, entry)
 			}

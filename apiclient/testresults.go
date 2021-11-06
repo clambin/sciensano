@@ -45,6 +45,7 @@ func (client *Client) GetTestResults(ctx context.Context) (results []Measurement
 	if body, err = client.call(ctx, "COVID19BE_tests.json"); err == nil {
 		var cvt APITestResultsResponse
 		if err = easyjson.UnmarshalFromReader(body, &cvt); err == nil {
+			results = make([]Measurement, 0, len(cvt))
 			for _, entry := range cvt {
 				results = append(results, entry)
 			}

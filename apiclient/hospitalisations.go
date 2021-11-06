@@ -47,6 +47,7 @@ func (client *Client) GetHospitalisations(ctx context.Context) (results []Measur
 	if body, err = client.call(ctx, "COVID19BE_HOSP.json"); err == nil {
 		var cvt APIHospitalisationsResponse
 		if err = easyjson.UnmarshalFromReader(body, &cvt); err == nil {
+			results = make([]Measurement, 0, len(cvt))
 			for _, entry := range cvt {
 				results = append(results, entry)
 			}
