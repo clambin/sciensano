@@ -394,6 +394,87 @@ func TestCache_GetMortality_Failure(t *testing.T) {
 	mock.AssertExpectationsForObjects(t, client)
 }
 
+func TestCache_GetHospitalisations(t *testing.T) {
+	client := &mocks.Getter{}
+	cache := apiclient.Cache{
+		Getter:    client,
+		Retention: time.Hour,
+	}
+	ctx := context.Background()
+	timestamp := time.Now()
+
+	// Cache should only call the client once.
+	client.
+		On("GetHospitalisations", mock.Anything).
+		Return([]apiclient.Measurement{
+			&apiclient.APIHospitalisationsResponseEntry{
+				TimeStamp: apiclient.TimeStamp{Time: timestamp},
+				Region:    "Flanders",
+				TotalIn:   100,
+			}}, nil).
+		Once()
+
+	results, err := cache.GetHospitalisations(ctx)
+	require.NoError(t, err)
+	require.Len(t, results, 1)
+	assert.Equal(t, &apiclient.APIHospitalisationsResponseEntry{
+		TimeStamp: apiclient.TimeStamp{Time: timestamp},
+		Region:    "Flanders",
+		TotalIn:   100,
+	}, results[0])
+
+	results, err = cache.GetHospitalisations(ctx)
+	require.NoError(t, err)
+	require.Len(t, results, 1)
+	assert.Equal(t, &apiclient.APIHospitalisationsResponseEntry{
+		TimeStamp: apiclient.TimeStamp{Time: timestamp},
+		Region:    "Flanders",
+		TotalIn:   100,
+	}, results[0])
+
+	mock.AssertExpectationsForObjects(t, client)
+}
+
+func TestCache_GetHospitalisations_Failure(t *testing.T) {
+	client := &mocks.Getter{}
+	cache := apiclient.Cache{
+		Getter:    client,
+		Retention: time.Hour,
+	}
+	ctx := context.Background()
+	timestamp := time.Now()
+
+	// Set up a failing call
+	client.
+		On("GetHospitalisations", mock.Anything).
+		Return(nil, fmt.Errorf("not available")).
+		Once()
+
+	results, err := cache.GetHospitalisations(ctx)
+	require.Error(t, err)
+
+	// Cache should only call the client once.
+	client.
+		On("GetHospitalisations", mock.Anything).
+		Return([]apiclient.Measurement{
+			&apiclient.APIHospitalisationsResponseEntry{
+				TimeStamp: apiclient.TimeStamp{Time: timestamp},
+				Region:    "Flanders",
+				TotalIn:   100,
+			}}, nil).
+		Once()
+
+	results, err = cache.GetHospitalisations(ctx)
+	require.NoError(t, err)
+	require.Len(t, results, 1)
+	assert.Equal(t, &apiclient.APIHospitalisationsResponseEntry{
+		TimeStamp: apiclient.TimeStamp{Time: timestamp},
+		Region:    "Flanders",
+		TotalIn:   100,
+	}, results[0])
+
+	mock.AssertExpectationsForObjects(t, client)
+}
 func TestCache_All(t *testing.T) {
 	client := &mocks.Getter{}
 	cache := apiclient.Cache{
