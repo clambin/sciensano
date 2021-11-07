@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/mailru/easyjson"
 	"github.com/prometheus/client_golang/prometheus"
+	log "github.com/sirupsen/logrus"
 	"io"
 	"time"
 )
@@ -52,7 +53,8 @@ func (client *Client) GetTestResults(ctx context.Context) (results []Measurement
 		}
 		_ = body.Close()
 	}
-	timer.ObserveDuration()
+	duration := timer.ObserveDuration()
+	log.WithField("duration", duration).Debug("called GetTestResults API")
 	metricRequestsTotal.WithLabelValues("tests").Add(1.0)
 	if err != nil {
 		metricRequestErrorsTotal.WithLabelValues("tests").Add(1.0)

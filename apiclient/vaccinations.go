@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/mailru/easyjson"
 	"github.com/prometheus/client_golang/prometheus"
+	log "github.com/sirupsen/logrus"
 	"io"
 	"time"
 )
@@ -53,7 +54,8 @@ func (client *Client) GetVaccinations(ctx context.Context) (results []Measuremen
 		}
 		_ = body.Close()
 	}
-	timer.ObserveDuration()
+	duration := timer.ObserveDuration()
+	log.WithField("duration", duration).Debug("called GetVaccinations API")
 	metricRequestsTotal.WithLabelValues("vaccinations").Add(1.0)
 	if err != nil {
 		metricRequestErrorsTotal.WithLabelValues("vaccinations").Add(1.0)

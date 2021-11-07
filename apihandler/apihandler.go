@@ -26,10 +26,12 @@ type Handlers struct {
 	handlers     []grafanajson.Handler
 }
 
+const refreshInterval = 1 * time.Hour
+
 // Create a Handlers object
 func Create() *Handlers {
 	handler := Handlers{
-		Sciensano: sciensano.NewCachedClient(time.Hour),
+		Sciensano: sciensano.NewCachedClient(refreshInterval),
 		Vaccines: &vaccines.Cache{
 			APIClient: &vaccines.Client{HTTPClient: &http.Client{}},
 			Retention: 24 * time.Hour,

@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/mailru/easyjson"
 	"github.com/prometheus/client_golang/prometheus"
+	log "github.com/sirupsen/logrus"
 	"io"
 	"time"
 )
@@ -51,7 +52,8 @@ func (client *Client) GetMortality(ctx context.Context) (results []Measurement, 
 		}
 		_ = body.Close()
 	}
-	timer.ObserveDuration()
+	duration := timer.ObserveDuration()
+	log.WithField("duration", duration).Debug("called GetMortality API")
 	metricRequestsTotal.WithLabelValues("mortality").Add(1.0)
 	if err != nil {
 		metricRequestErrorsTotal.WithLabelValues("mortality").Add(1.0)

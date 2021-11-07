@@ -3,6 +3,7 @@ package apiclient
 import (
 	"context"
 	log "github.com/sirupsen/logrus"
+	"golang.org/x/sync/semaphore"
 	"sync"
 	"time"
 )
@@ -38,7 +39,7 @@ type cacheEntry struct {
 // AutoRefresh refreshes the cache on a period basis
 func (cache *Cache) AutoRefresh(ctx context.Context) {
 	cache.refresh(ctx)
-	ticker := time.NewTicker(cache.Retention)
+	ticker := time.NewTicker(cache.Retention + 5*time.Second)
 	for running := true; running; {
 		select {
 		case <-ctx.Done():
@@ -53,28 +54,31 @@ func (cache *Cache) refresh(ctx context.Context) {
 	before := time.Now()
 	log.Debug("refreshing API cache")
 
-	_, err := cache.GetVaccinations(ctx)
-	if err != nil {
-		log.WithError(err).Warning("failed to update vaccinations cache")
-	}
-	_, err = cache.GetCases(ctx)
-	if err != nil {
-		log.WithError(err).Warning("failed to update cases cache")
-	}
-	_, err = cache.GetHospitalisations(ctx)
-	if err != nil {
-		log.WithError(err).Warning("failed to update hospitalisations cache")
-	}
-	_, err = cache.GetMortality(ctx)
-	if err != nil {
-		log.WithError(err).Warning("failed to update mortality cache")
-	}
-	_, err = cache.GetTestResults(ctx)
-	if err != nil {
-		log.WithError(err).Warning("failed to update test results cache")
+	const maxParallel = 3
+	s := semaphore.NewWeighted(maxParallel)
+
+	for _, getter := range []func(context.Context) ([]Measurement, error){
+		cache.GetVaccinations,
+		cache.GetTestResults,
+		cache.GetHospitalisations,
+		cache.GetMortality,
+		cache.GetCases,
+	} {
+		_ = s.Acquire(ctx, 1)
+		go func(g func(context.Context) ([]Measurement, error)) {
+			if _, err := g(ctx); err != nil {
+				log.WithError(err).Warning("failed to call sciensano endpoint")
+			}
+			s.Release(1)
+		}(getter)
 	}
 
-	log.WithFields(log.Fields{"duration": time.Now().Sub(before), "cache": cache.CacheSize()}).Debugf("refreshed API cache")
+	_ = s.Acquire(ctx, maxParallel)
+	log.WithFields(log.Fields{
+		"duration":  time.Now().Sub(before),
+		"size":      cache.CacheSize(),
+		"retention": cache.Retention,
+	}).Debugf("refreshed API cache")
 }
 
 // CacheSize returns the number of entries currently in the cache

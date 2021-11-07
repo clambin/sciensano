@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/mailru/easyjson"
 	"github.com/prometheus/client_golang/prometheus"
+	log "github.com/sirupsen/logrus"
 	"io"
 	"time"
 )
@@ -54,8 +55,8 @@ func (client *Client) GetHospitalisations(ctx context.Context) (results []Measur
 		}
 		_ = body.Close()
 	}
-
-	timer.ObserveDuration()
+	duration := timer.ObserveDuration()
+	log.WithField("duration", duration).Debug("called GetHospitalisations API")
 	metricRequestsTotal.WithLabelValues("hospitalisations").Add(1.0)
 	if err != nil {
 		metricRequestErrorsTotal.WithLabelValues("hospitalisations").Add(1.0)
