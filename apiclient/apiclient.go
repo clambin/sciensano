@@ -43,17 +43,12 @@ func (client *Client) call(ctx context.Context, endpoint string) (response io.Re
 	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, target, nil)
 
 	var resp *http.Response
-	resp, err = client.HTTPClient.Do(req)
-
-	if err != nil {
-		return
-	}
-
-	if resp.StatusCode == http.StatusOK {
-		response = resp.Body
-	} else {
-		err = errors.New(resp.Status)
-		return
+	if resp, err = client.HTTPClient.Do(req); err == nil {
+		if resp.StatusCode == http.StatusOK {
+			response = resp.Body
+		} else {
+			err = errors.New(resp.Status)
+		}
 	}
 	return
 }
