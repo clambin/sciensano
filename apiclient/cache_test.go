@@ -158,6 +158,52 @@ func TestCache_GetTestResults(t *testing.T) {
 	mock.AssertExpectationsForObjects(t, client)
 }
 
+func TestCache_GetTestResults_Failure(t *testing.T) {
+	client := &mocks.Getter{}
+	cache := apiclient.Cache{
+		Getter:    client,
+		Retention: time.Hour,
+	}
+	ctx := context.Background()
+	timestamp := time.Now()
+
+	// Set up a failing call
+	client.
+		On("GetTestResults", mock.Anything).
+		Return(nil, fmt.Errorf("not available")).
+		Once()
+
+	results, err := cache.GetTestResults(ctx)
+	require.Error(t, err)
+
+	// Cache should only call the client once.
+	client.
+		On("GetTestResults", mock.Anything).
+		Return([]apiclient.Measurement{
+			&apiclient.APITestResultsResponseEntry{
+				TimeStamp: apiclient.TimeStamp{Time: timestamp},
+				Region:    "Flanders",
+				Province:  "VlaamsBrabant",
+				Total:     100,
+				Positive:  10,
+			},
+		}, nil).
+		Once()
+
+	results, err = cache.GetTestResults(ctx)
+	require.NoError(t, err)
+	require.Len(t, results, 1)
+	assert.Equal(t, &apiclient.APITestResultsResponseEntry{
+		TimeStamp: apiclient.TimeStamp{Time: timestamp},
+		Region:    "Flanders",
+		Province:  "VlaamsBrabant",
+		Total:     100,
+		Positive:  10,
+	}, results[0])
+
+	mock.AssertExpectationsForObjects(t, client)
+}
+
 func TestCache_GetCases(t *testing.T) {
 	client := &mocks.Getter{}
 	cache := apiclient.Cache{
@@ -209,6 +255,53 @@ func TestCache_GetCases(t *testing.T) {
 
 }
 
+func TestCache_GetCases_Failure(t *testing.T) {
+	client := &mocks.Getter{}
+	cache := apiclient.Cache{
+		Getter:    client,
+		Retention: time.Hour,
+	}
+	ctx := context.Background()
+	timestamp := time.Now()
+
+	// Set up a failing call
+	client.
+		On("GetCases", mock.Anything).
+		Return(nil, fmt.Errorf("not available")).
+		Once()
+
+	results, err := cache.GetCases(ctx)
+	require.Error(t, err)
+
+	// Cache should only call the client once.
+	client.
+		On("GetCases", mock.Anything).
+		Return([]apiclient.Measurement{
+			&apiclient.APICasesResponseEntry{
+				TimeStamp: apiclient.TimeStamp{Time: timestamp},
+				Region:    "Flanders",
+				Province:  "VlaamsBrabant",
+				AgeGroup:  "85+",
+				Cases:     10,
+			},
+		}, nil).
+		Once()
+
+	results, err = cache.GetCases(ctx)
+
+	require.NoError(t, err)
+	require.Len(t, results, 1)
+	assert.Equal(t, &apiclient.APICasesResponseEntry{
+		TimeStamp: apiclient.TimeStamp{Time: timestamp},
+		Province:  "VlaamsBrabant",
+		Region:    "Flanders",
+		AgeGroup:  "85+",
+		Cases:     10,
+	}, results[0])
+
+	mock.AssertExpectationsForObjects(t, client)
+}
+
 func TestCache_GetMortality(t *testing.T) {
 	client := &mocks.Getter{}
 	cache := apiclient.Cache{
@@ -241,6 +334,51 @@ func TestCache_GetMortality(t *testing.T) {
 		AgeGroup:  "85+",
 		Deaths:    10,
 	}, results[0])
+
+	results, err = cache.GetMortality(ctx)
+
+	require.NoError(t, err)
+	require.Len(t, results, 1)
+	assert.Equal(t, &apiclient.APIMortalityResponseEntry{
+		TimeStamp: apiclient.TimeStamp{Time: timestamp},
+		Region:    "Flanders",
+		AgeGroup:  "85+",
+		Deaths:    10,
+	}, results[0])
+
+	mock.AssertExpectationsForObjects(t, client)
+}
+
+func TestCache_GetMortality_Failure(t *testing.T) {
+	client := &mocks.Getter{}
+	cache := apiclient.Cache{
+		Getter:    client,
+		Retention: time.Hour,
+	}
+	ctx := context.Background()
+	timestamp := time.Now()
+
+	// Set up a failing call
+	client.
+		On("GetMortality", mock.Anything).
+		Return(nil, fmt.Errorf("not available")).
+		Once()
+
+	results, err := cache.GetMortality(ctx)
+	require.Error(t, err)
+
+	// Cache should only call the client once.
+	client.
+		On("GetMortality", mock.Anything).
+		Return([]apiclient.Measurement{
+			&apiclient.APIMortalityResponseEntry{
+				TimeStamp: apiclient.TimeStamp{Time: timestamp},
+				Region:    "Flanders",
+				AgeGroup:  "85+",
+				Deaths:    10,
+			},
+		}, nil).
+		Once()
 
 	results, err = cache.GetMortality(ctx)
 
