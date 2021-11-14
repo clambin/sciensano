@@ -1,30 +1,35 @@
 package apihandler_test
 
 import (
+	"context"
+	"errors"
+	grafanajson "github.com/clambin/grafana-json"
 	"github.com/clambin/sciensano/apihandler"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"net/http"
 	"testing"
+	"time"
 )
 
 func TestCreate(t *testing.T) {
-	h := apihandler.Create()
+	h := apihandler.NewServer()
 
 	assert.Len(t, h.GetHandlers(), 6)
 }
 
-/*
 func TestRun(t *testing.T) {
-	h := apihandler.Create()
+	h := apihandler.NewServer()
 
 	go func() {
 		err := h.Run(8080)
-		require.Equal(t, http.ErrServerClosed, err)
+		require.True(t, errors.Is(err, http.ErrServerClosed))
 	}()
 
 	assert.Eventually(t, func() bool {
 		response, err := http.Post("http://localhost:8080/search", "", nil)
 		return err == nil && response.StatusCode == http.StatusOK
-	}, 500*time.Millisecond, 10*time.Millisecond)
+	}, 30*time.Second, 10*time.Millisecond)
 
 	ctx := context.Background()
 	args := &grafanajson.TableQueryArgs{
@@ -42,7 +47,7 @@ func TestRun(t *testing.T) {
 }
 
 func BenchmarkHandlers_Run(b *testing.B) {
-	h := apihandler.Create()
+	h := apihandler.NewServer()
 
 	ctx := context.Background()
 	args := &grafanajson.TableQueryArgs{
@@ -64,5 +69,3 @@ func BenchmarkHandlers_Run(b *testing.B) {
 	}
 
 }
-
-*/

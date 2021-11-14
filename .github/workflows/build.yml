@@ -4,7 +4,7 @@ on:
   push:
     branches:
     - master
-    - fix
+    - refactor
     paths-ignore:
       - '**.md'
       - 'assets/grafana/dashboards/**'

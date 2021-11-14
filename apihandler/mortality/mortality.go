@@ -4,20 +4,21 @@ import (
 	"context"
 	"fmt"
 	grafanajson "github.com/clambin/grafana-json"
-	"github.com/clambin/sciensano/sciensano"
-	"github.com/clambin/sciensano/sciensano/datasets"
+	"github.com/clambin/sciensano/apihandler/response"
+	"github.com/clambin/sciensano/reporter"
+	"github.com/clambin/sciensano/reporter/datasets"
 	log "github.com/sirupsen/logrus"
 	"time"
 )
 
 // Handler implements a grafana-json handler for COVID-19 cases
 type Handler struct {
-	Sciensano   sciensano.APIClient
+	Sciensano   reporter.Reporter
 	targetTable grafanajson.TargetTable
 }
 
 // New creates a new Handler
-func New(client sciensano.APIClient) (handler *Handler) {
+func New(client reporter.Reporter) (handler *Handler) {
 	handler = &Handler{
 		Sciensano: client,
 	}
@@ -51,11 +52,11 @@ func (handler *Handler) TableQuery(ctx context.Context, target string, args *gra
 	if err != nil {
 		return nil, fmt.Errorf("unable to build table query response for target '%s': %s", target, err.Error())
 	}
-	log.WithFields(log.Fields{"duration": time.Now().Sub(start), "target": target}).Debug("TableQuery called")
+	log.WithFields(log.Fields{"duration": time.Now().Sub(start), "target": target}).Info("TableQuery called")
 	return
 }
 
-func (handler *Handler) buildCasesResponse(ctx context.Context, target string, args *grafanajson.TableQueryArgs) (response *grafanajson.TableQueryResponse, err error) {
+func (handler *Handler) buildCasesResponse(ctx context.Context, target string, args *grafanajson.TableQueryArgs) (output *grafanajson.TableQueryResponse, err error) {
 	var cases *datasets.Dataset
 	switch target {
 	case "mortality":
@@ -66,43 +67,8 @@ func (handler *Handler) buildCasesResponse(ctx context.Context, target string, a
 		cases, err = handler.Sciensano.GetMortalityByAgeGroup(ctx)
 	}
 
-	if err != nil {
-		return
-	}
-
-	cases.ApplyRange(args.Range.From, args.Range.To)
-
-	timestampColumn := make(grafanajson.TableQueryResponseTimeColumn, 0, len(cases.Timestamps))
-	for _, timestamp := range cases.Timestamps {
-		timestampColumn = append(timestampColumn, timestamp)
-	}
-
-	response = &grafanajson.TableQueryResponse{
-		Columns: []grafanajson.TableQueryResponseColumn{{
-			Text: "Timestamp",
-			Data: timestampColumn,
-		}},
-	}
-
-	for _, group := range cases.Groups {
-		dataColumn := make(grafanajson.TableQueryResponseNumberColumn, 0, len(group.Values))
-		for _, value := range group.Values {
-			dataColumn = append(dataColumn, float64(value.(*sciensano.MortalityEntry).Count))
-		}
-
-		name := group.Name
-		if name == "" {
-			if target == "mortality" {
-				name = "mortality"
-			} else {
-				name = "(unknown)"
-			}
-		}
-
-		response.Columns = append(response.Columns, grafanajson.TableQueryResponseColumn{
-			Text: name,
-			Data: dataColumn,
-		})
+	if err == nil {
+		output = response.GenerateTableQueryResponse(cases, args)
 	}
 
 	return

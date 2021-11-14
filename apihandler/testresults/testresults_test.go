@@ -3,10 +3,11 @@ package testresults_test
 import (
 	"context"
 	grafanajson "github.com/clambin/grafana-json"
-	"github.com/clambin/sciensano/apiclient"
-	"github.com/clambin/sciensano/apiclient/mocks"
+	"github.com/clambin/sciensano/apiclient/sciensano"
+	"github.com/clambin/sciensano/apiclient/sciensano/mocks"
 	"github.com/clambin/sciensano/apihandler/testresults"
-	"github.com/clambin/sciensano/sciensano"
+	"github.com/clambin/sciensano/measurement"
+	"github.com/clambin/sciensano/reporter"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -16,8 +17,8 @@ import (
 
 func TestHandler_Search(t *testing.T) {
 	getter := &mocks.Getter{}
-	client := sciensano.NewCachedClient(time.Hour)
-	client.Getter = getter
+	client := reporter.NewCachedClient(time.Hour)
+	client.Sciensano = getter
 	h := testresults.New(client)
 
 	targets := h.Search()
@@ -26,15 +27,15 @@ func TestHandler_Search(t *testing.T) {
 
 func TestHandler_TableQuery(t *testing.T) {
 	getter := &mocks.Getter{}
-	client := sciensano.NewCachedClient(time.Hour)
-	client.Getter = getter
+	client := reporter.NewCachedClient(time.Hour)
+	client.Sciensano = getter
 	h := testresults.New(client)
 
 	getter.
 		On("GetTestResults", mock.AnythingOfType("*context.emptyCtx")).
-		Return([]apiclient.Measurement{
-			&apiclient.APITestResultsResponseEntry{
-				TimeStamp: apiclient.TimeStamp{Time: time.Now().Add(-24 * time.Hour)},
+		Return([]measurement.Measurement{
+			&sciensano.APITestResultsResponseEntry{
+				TimeStamp: sciensano.TimeStamp{Time: time.Now().Add(-24 * time.Hour)},
 				Positive:  10,
 				Total:     20,
 			},

@@ -4,20 +4,21 @@ import (
 	"context"
 	"fmt"
 	grafanajson "github.com/clambin/grafana-json"
-	"github.com/clambin/sciensano/sciensano"
-	"github.com/clambin/sciensano/sciensano/datasets"
+	"github.com/clambin/sciensano/apihandler/response"
+	"github.com/clambin/sciensano/reporter"
+	"github.com/clambin/sciensano/reporter/datasets"
 	log "github.com/sirupsen/logrus"
 	"time"
 )
 
 // Handler implements a grafana-json handler for COVID-19 cases
 type Handler struct {
-	Sciensano   sciensano.APIClient
+	Sciensano   reporter.Reporter
 	targetTable grafanajson.TargetTable
 }
 
 // New creates a new Handler
-func New(client sciensano.APIClient) (handler *Handler) {
+func New(client reporter.Reporter) (handler *Handler) {
 	handler = &Handler{
 		Sciensano: client,
 	}
@@ -26,7 +27,6 @@ func New(client sciensano.APIClient) (handler *Handler) {
 		"hospitalisations":          {TableQueryFunc: handler.buildHospitalisationsResponse},
 		"hospitalisations-region":   {TableQueryFunc: handler.buildHospitalisationsResponse},
 		"hospitalisations-province": {TableQueryFunc: handler.buildHospitalisationsResponse},
-		"hospitalisations-details":  {TableQueryFunc: handler.buildHospitalisationsDetailsResponse},
 	}
 
 	return
@@ -52,11 +52,11 @@ func (handler *Handler) TableQuery(ctx context.Context, target string, args *gra
 	if err != nil {
 		return nil, fmt.Errorf("unable to build table query response for target '%s': %s", target, err.Error())
 	}
-	log.WithFields(log.Fields{"duration": time.Now().Sub(start), "target": target}).Debug("TableQuery called")
+	log.WithFields(log.Fields{"duration": time.Now().Sub(start), "target": target}).Info("TableQuery called")
 	return
 }
 
-func (handler *Handler) buildHospitalisationsResponse(ctx context.Context, target string, args *grafanajson.TableQueryArgs) (response *grafanajson.TableQueryResponse, err error) {
+func (handler *Handler) buildHospitalisationsResponse(ctx context.Context, target string, args *grafanajson.TableQueryArgs) (output *grafanajson.TableQueryResponse, err error) {
 	var entries *datasets.Dataset
 	switch target {
 	case "hospitalisations":
@@ -67,100 +67,10 @@ func (handler *Handler) buildHospitalisationsResponse(ctx context.Context, targe
 		entries, err = handler.Sciensano.GetHospitalisationsByProvince(ctx)
 	}
 
-	if err != nil {
+	if err == nil {
+		output = response.GenerateTableQueryResponse(entries, args)
 		return
 	}
 
-	entries.ApplyRange(args.Range.From, args.Range.To)
-
-	timestampColumn := make(grafanajson.TableQueryResponseTimeColumn, 0, len(entries.Timestamps))
-	for _, timestamp := range entries.Timestamps {
-		timestampColumn = append(timestampColumn, timestamp)
-	}
-
-	response = &grafanajson.TableQueryResponse{
-		Columns: []grafanajson.TableQueryResponseColumn{{
-			Text: "Timestamp",
-			Data: timestampColumn,
-		}},
-	}
-
-	for _, group := range entries.Groups {
-		dataColumn := make(grafanajson.TableQueryResponseNumberColumn, 0, len(group.Values))
-		for _, value := range group.Values {
-			dataColumn = append(dataColumn, float64(value.(*sciensano.HospitalisationsEntry).In))
-		}
-
-		name := group.Name
-		if name == "" {
-			if target == "hospitalisation" {
-				name = "hospitalisation"
-			} else {
-				name = "(unknown)"
-			}
-		}
-
-		response.Columns = append(response.Columns, grafanajson.TableQueryResponseColumn{
-			Text: name,
-			Data: dataColumn,
-		})
-	}
-
-	return
-}
-
-func (handler *Handler) buildHospitalisationsDetailsResponse(ctx context.Context, _ string, args *grafanajson.TableQueryArgs) (response *grafanajson.TableQueryResponse, err error) {
-	var entries *datasets.Dataset
-	entries, err = handler.Sciensano.GetHospitalisations(ctx)
-
-	if err != nil {
-		return
-	}
-
-	entries.ApplyRange(args.Range.From, args.Range.To)
-
-	timestampColumn := make(grafanajson.TableQueryResponseTimeColumn, 0, len(entries.Timestamps))
-	for _, timestamp := range entries.Timestamps {
-		timestampColumn = append(timestampColumn, timestamp)
-	}
-
-	dataColumns := []grafanajson.TableQueryResponseNumberColumn{
-		make(grafanajson.TableQueryResponseNumberColumn, len(timestampColumn)),
-		make(grafanajson.TableQueryResponseNumberColumn, len(timestampColumn)),
-		make(grafanajson.TableQueryResponseNumberColumn, len(timestampColumn)),
-		make(grafanajson.TableQueryResponseNumberColumn, len(timestampColumn)),
-	}
-
-	for index, value := range entries.Groups[0].Values {
-		dataColumns[0][index] = float64(value.(*sciensano.HospitalisationsEntry).In)
-		dataColumns[1][index] = float64(value.(*sciensano.HospitalisationsEntry).InICU)
-		dataColumns[2][index] = float64(value.(*sciensano.HospitalisationsEntry).InResp)
-		dataColumns[3][index] = float64(value.(*sciensano.HospitalisationsEntry).InECMO)
-	}
-
-	response = &grafanajson.TableQueryResponse{
-		Columns: []grafanajson.TableQueryResponseColumn{
-			{
-				Text: "Timestamp",
-				Data: timestampColumn,
-			},
-			{
-				Text: "in",
-				Data: dataColumns[0],
-			},
-			{
-				Text: "inICU",
-				Data: dataColumns[1],
-			},
-			{
-				Text: "inRESP",
-				Data: dataColumns[2],
-			},
-			{
-				Text: "inECMO",
-				Data: dataColumns[3],
-			},
-		},
-	}
 	return
 }

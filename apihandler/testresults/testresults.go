@@ -4,20 +4,21 @@ import (
 	"context"
 	"fmt"
 	grafanajson "github.com/clambin/grafana-json"
-	"github.com/clambin/sciensano/sciensano"
-	"github.com/clambin/sciensano/sciensano/datasets"
+	"github.com/clambin/sciensano/apihandler/response"
+	"github.com/clambin/sciensano/reporter"
+	"github.com/clambin/sciensano/reporter/datasets"
 	log "github.com/sirupsen/logrus"
 	"time"
 )
 
 // Handler implements a grafana-json handler for COVID-19 test results
 type Handler struct {
-	Sciensano   sciensano.APIClient
+	Sciensano   reporter.Reporter
 	targetTable grafanajson.TargetTable
 }
 
 // New creates a new Handler
-func New(client sciensano.APIClient) (handler *Handler) {
+func New(client reporter.Reporter) (handler *Handler) {
 	handler = &Handler{
 		Sciensano: client,
 	}
@@ -49,39 +50,27 @@ func (handler *Handler) TableQuery(ctx context.Context, target string, args *gra
 	if err != nil {
 		return nil, fmt.Errorf("unable to build table query response for target '%s': %s", target, err.Error())
 	}
-	log.WithFields(log.Fields{"duration": time.Now().Sub(start), "target": target}).Debug("TableQuery called")
+	log.WithFields(log.Fields{"duration": time.Now().Sub(start), "target": target}).Info("TableQuery called")
 	return
 }
 
-func (handler *Handler) buildTestTableResponse(ctx context.Context, _ string, args *grafanajson.TableQueryArgs) (response *grafanajson.TableQueryResponse, err error) {
+func (handler *Handler) buildTestTableResponse(ctx context.Context, _ string, args *grafanajson.TableQueryArgs) (output *grafanajson.TableQueryResponse, err error) {
 	var tests *datasets.Dataset
 	tests, err = handler.Sciensano.GetTestResults(ctx)
 
-	if err != nil {
-		return nil, fmt.Errorf("unable to retrieve test results: %s", err.Error())
-	}
+	if err == nil {
+		output = response.GenerateTableQueryResponse(tests, args)
 
-	tests.ApplyRange(args.Range.From, args.Range.To)
-	rows := len(tests.Timestamps)
-	timestamps := make(grafanajson.TableQueryResponseTimeColumn, rows)
-	allTests := make(grafanajson.TableQueryResponseNumberColumn, rows)
-	positiveTests := make(grafanajson.TableQueryResponseNumberColumn, rows)
-	positiveRate := make(grafanajson.TableQueryResponseNumberColumn, rows)
+		positiveRate := make(grafanajson.TableQueryResponseNumberColumn, len(tests.Timestamps))
 
-	for index, timestamp := range tests.Timestamps {
-		timestamps[index] = timestamp
-		entry := tests.Groups[0].Values[index].(*sciensano.TestResult)
-		allTests[index] = float64(entry.Total)
-		positiveTests[index] = float64(entry.Positive)
-		positiveRate[index] = entry.Ratio()
-	}
+		for index := range tests.Timestamps {
+			positiveRate[index] = output.Columns[2].Data.(grafanajson.TableQueryResponseNumberColumn)[index] / output.Columns[1].Data.(grafanajson.TableQueryResponseNumberColumn)[index]
+		}
 
-	response = new(grafanajson.TableQueryResponse)
-	response.Columns = []grafanajson.TableQueryResponseColumn{
-		{Text: "timestamp", Data: timestamps},
-		{Text: "total", Data: allTests},
-		{Text: "positive", Data: positiveTests},
-		{Text: "rate", Data: positiveRate},
+		output.Columns = append(output.Columns, grafanajson.TableQueryResponseColumn{
+			Text: "rate",
+			Data: positiveRate,
+		})
 	}
 
 	return

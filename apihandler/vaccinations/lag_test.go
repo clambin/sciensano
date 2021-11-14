@@ -2,8 +2,7 @@ package vaccinations
 
 import (
 	grafanajson "github.com/clambin/grafana-json"
-	"github.com/clambin/sciensano/sciensano"
-	"github.com/clambin/sciensano/sciensano/datasets"
+	"github.com/clambin/sciensano/reporter/datasets"
 	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
@@ -20,36 +19,18 @@ func TestVaccinationLag(t *testing.T) {
 			time.Date(2021, 1, 6, 0, 0, 0, 0, time.UTC),
 			time.Date(2021, 1, 7, 0, 0, 0, 0, time.UTC),
 		},
-		Groups: []datasets.GroupedDatasetEntry{
-			{
-				Name: "",
-				Values: []datasets.Copyable{
-					&sciensano.VaccinationsEntry{Partial: 0, Full: 0},
-					&sciensano.VaccinationsEntry{Partial: 1, Full: 0},
-					&sciensano.VaccinationsEntry{Partial: 2, Full: 1},
-					&sciensano.VaccinationsEntry{Partial: 3, Full: 2},
-					&sciensano.VaccinationsEntry{Partial: 4, Full: 3},
-					&sciensano.VaccinationsEntry{Partial: 5, Full: 4},
-					&sciensano.VaccinationsEntry{Partial: 6, Full: 5},
-				}},
+		Groups: []datasets.DatasetGroup{
+			{Name: "partial", Values: []float64{0, 1, 2, 3, 4, 5, 6}},
+			{Name: "full", Values: []float64{0, 0, 1, 2, 3, 4, 5}},
 		},
 	}
-
 	_, lag := buildLag(vaccinations)
-
 	assert.Equal(t, grafanajson.TableQueryResponseNumberColumn{1.0, 1.0, 1.0, 1.0, 1.0}, lag)
 
-	vaccinations.Groups[0].Values = []datasets.Copyable{
-		&sciensano.VaccinationsEntry{Partial: 1, Full: 1}, // 0
-		&sciensano.VaccinationsEntry{Partial: 1, Full: 1}, // -
-		&sciensano.VaccinationsEntry{Partial: 2, Full: 1}, // -
-		&sciensano.VaccinationsEntry{Partial: 3, Full: 2}, // 1
-		&sciensano.VaccinationsEntry{Partial: 4, Full: 3}, // -
-		&sciensano.VaccinationsEntry{Partial: 4, Full: 4}, // -
-		&sciensano.VaccinationsEntry{Partial: 6, Full: 5}, // 0
+	vaccinations.Groups = []datasets.DatasetGroup{
+		{Name: "partial", Values: []float64{1, 1, 2, 3, 4, 4, 6}},
+		{Name: "full", Values: []float64{1, 1, 1, 2, 3, 4, 5}},
 	}
-
 	_, lag = buildLag(vaccinations)
-
 	assert.Equal(t, grafanajson.TableQueryResponseNumberColumn{0.0, 1.0, 1.0, 1.0, 0.0}, lag)
 }

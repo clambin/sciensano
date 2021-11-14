@@ -2,8 +2,7 @@ package vaccinations
 
 import (
 	grafanaJson "github.com/clambin/grafana-json"
-	"github.com/clambin/sciensano/sciensano"
-	"github.com/clambin/sciensano/sciensano/datasets"
+	"github.com/clambin/sciensano/reporter/datasets"
 )
 
 func buildLag(vaccinationsData *datasets.Dataset) (timestamps grafanaJson.TableQueryResponseTimeColumn, lag grafanaJson.TableQueryResponseNumberColumn) {
@@ -17,15 +16,16 @@ func buildLag(vaccinationsData *datasets.Dataset) (timestamps grafanaJson.TableQ
 	*/
 
 	// run through all vaccinations
-	for index, entry := range vaccinationsData.Groups[0].Values {
+	for index := range vaccinationsData.Timestamps {
 		// we only measure lag when there is actually a second dose
 		// we don't report when the 2nd dose doesn't change
-		if entry.(*sciensano.VaccinationsEntry).Full == 0 || entry.(*sciensano.VaccinationsEntry).Full == lastSecondDose {
+		full := int(vaccinationsData.Groups[1].Values[index])
+		if full == 0 || full == lastSecondDose {
 			continue
 		}
 
 		// find the time when we reached the number of first Doses that equals (or higher) the current Second Dose number
-		for firstDoseIndex <= index && vaccinationsData.Groups[0].Values[firstDoseIndex].(*sciensano.VaccinationsEntry).Partial < entry.(*sciensano.VaccinationsEntry).Full {
+		for firstDoseIndex <= index && int(vaccinationsData.Groups[0].Values[firstDoseIndex]) < full {
 			firstDoseIndex++
 		}
 
@@ -35,7 +35,7 @@ func buildLag(vaccinationsData *datasets.Dataset) (timestamps grafanaJson.TableQ
 			lag = append(lag, vaccinationsData.Timestamps[index].Sub(vaccinationsData.Timestamps[firstDoseIndex]).Hours()/24)
 		}
 
-		lastSecondDose = entry.(*sciensano.VaccinationsEntry).Full
+		lastSecondDose = full
 	}
 
 	return

@@ -17,8 +17,8 @@ func main() {
 		port  int
 	)
 
-	log.WithField("version", version.BuildVersion).Info("sciensano API starting")
-	a := kingpin.New(filepath.Base(os.Args[0]), "sciensano")
+	log.WithField("version", version.BuildVersion).Info("reporter API starting")
+	a := kingpin.New(filepath.Base(os.Args[0]), "reporter")
 	a.Version(version.BuildVersion)
 	a.HelpFlag.Short('h')
 	a.VersionFlag.Short('v')
@@ -34,7 +34,7 @@ func main() {
 		log.SetLevel(log.DebugLevel)
 	}
 
-	handler := apihandler.Create()
+	handler := apihandler.NewServer()
 
 	if err := handler.Run(port); err != http.ErrServerClosed {
 		log.WithError(err).Fatal("failed to start HTTP server")

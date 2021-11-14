@@ -3,10 +3,11 @@ package hospitalisations_test
 import (
 	"context"
 	grafanajson "github.com/clambin/grafana-json"
-	"github.com/clambin/sciensano/apiclient"
-	mockAPI "github.com/clambin/sciensano/apiclient/mocks"
+	"github.com/clambin/sciensano/apiclient/sciensano"
+	mockAPI "github.com/clambin/sciensano/apiclient/sciensano/mocks"
 	hospitalisationsHandler "github.com/clambin/sciensano/apihandler/hospitalisations"
-	"github.com/clambin/sciensano/sciensano"
+	"github.com/clambin/sciensano/measurement"
+	"github.com/clambin/sciensano/reporter"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -14,15 +15,10 @@ import (
 	"time"
 )
 
-type TestCase struct {
-	Target   string
-	Response *grafanajson.TableQueryResponse
-}
-
 var (
-	testResponse = []apiclient.Measurement{
-		&apiclient.APIHospitalisationsResponseEntry{
-			TimeStamp:   apiclient.TimeStamp{Time: time.Date(2021, 10, 21, 0, 0, 0, 0, time.UTC)},
+	testResponse = []measurement.Measurement{
+		&sciensano.APIHospitalisationsResponseEntry{
+			TimeStamp:   sciensano.TimeStamp{Time: time.Date(2021, 10, 21, 0, 0, 0, 0, time.UTC)},
 			Region:      "Flanders",
 			Province:    "VlaamsBrabant",
 			TotalIn:     100,
@@ -30,8 +26,8 @@ var (
 			TotalInResp: 5,
 			TotalInECMO: 1,
 		},
-		&apiclient.APIHospitalisationsResponseEntry{
-			TimeStamp:   apiclient.TimeStamp{Time: time.Date(2021, 10, 21, 0, 0, 0, 0, time.UTC)},
+		&sciensano.APIHospitalisationsResponseEntry{
+			TimeStamp:   sciensano.TimeStamp{Time: time.Date(2021, 10, 21, 0, 0, 0, 0, time.UTC)},
 			Region:      "Brussels",
 			Province:    "Brussels",
 			TotalIn:     50,
@@ -39,8 +35,8 @@ var (
 			TotalInResp: 0,
 			TotalInECMO: 0,
 		},
-		&apiclient.APIHospitalisationsResponseEntry{
-			TimeStamp:   apiclient.TimeStamp{Time: time.Date(2021, 10, 22, 0, 0, 0, 0, time.UTC)},
+		&sciensano.APIHospitalisationsResponseEntry{
+			TimeStamp:   sciensano.TimeStamp{Time: time.Date(2021, 10, 22, 0, 0, 0, 0, time.UTC)},
 			Region:      "Flanders",
 			Province:    "VlaamsBrabant",
 			TotalIn:     90,
@@ -48,8 +44,8 @@ var (
 			TotalInResp: 5,
 			TotalInECMO: 1,
 		},
-		&apiclient.APIHospitalisationsResponseEntry{
-			TimeStamp:   apiclient.TimeStamp{Time: time.Date(2021, 10, 22, 0, 0, 0, 0, time.UTC)},
+		&sciensano.APIHospitalisationsResponseEntry{
+			TimeStamp:   sciensano.TimeStamp{Time: time.Date(2021, 10, 22, 0, 0, 0, 0, time.UTC)},
 			Region:      "",
 			Province:    "",
 			TotalIn:     1,
@@ -57,8 +53,8 @@ var (
 			TotalInResp: 0,
 			TotalInECMO: 0,
 		},
-		&apiclient.APIHospitalisationsResponseEntry{
-			TimeStamp:   apiclient.TimeStamp{Time: time.Date(2021, 10, 23, 0, 0, 0, 0, time.UTC)},
+		&sciensano.APIHospitalisationsResponseEntry{
+			TimeStamp:   sciensano.TimeStamp{Time: time.Date(2021, 10, 23, 0, 0, 0, 0, time.UTC)},
 			Region:      "Flanders",
 			Province:    "VlaamsBrabant",
 			TotalIn:     90,
@@ -68,13 +64,19 @@ var (
 		},
 	}
 
-	testCases = []TestCase{
+	testCases = []struct {
+		Target   string
+		Response *grafanajson.TableQueryResponse
+	}{
 		{
 			Target: "hospitalisations",
 			Response: &grafanajson.TableQueryResponse{
 				Columns: []grafanajson.TableQueryResponseColumn{
-					{Text: "Timestamp", Data: grafanajson.TableQueryResponseTimeColumn{time.Date(2021, time.October, 21, 0, 0, 0, 0, time.UTC), time.Date(2021, time.October, 22, 0, 0, 0, 0, time.UTC)}},
-					{Text: "(unknown)", Data: grafanajson.TableQueryResponseNumberColumn{150.0, 91.0}},
+					{Text: "timestamp", Data: grafanajson.TableQueryResponseTimeColumn{time.Date(2021, time.October, 21, 0, 0, 0, 0, time.UTC), time.Date(2021, time.October, 22, 0, 0, 0, 0, time.UTC)}},
+					{Text: "in", Data: grafanajson.TableQueryResponseNumberColumn{150.0, 91.0}},
+					{Text: "inICU", Data: grafanajson.TableQueryResponseNumberColumn{11.0, 11.0}},
+					{Text: "inResp", Data: grafanajson.TableQueryResponseNumberColumn{5.0, 5.0}},
+					{Text: "inECMO", Data: grafanajson.TableQueryResponseNumberColumn{1.0, 1.0}},
 				},
 			},
 		},
@@ -82,7 +84,7 @@ var (
 			Target: "hospitalisations-province",
 			Response: &grafanajson.TableQueryResponse{
 				Columns: []grafanajson.TableQueryResponseColumn{
-					{Text: "Timestamp", Data: grafanajson.TableQueryResponseTimeColumn{time.Date(2021, time.October, 21, 0, 0, 0, 0, time.UTC), time.Date(2021, time.October, 22, 0, 0, 0, 0, time.UTC)}},
+					{Text: "timestamp", Data: grafanajson.TableQueryResponseTimeColumn{time.Date(2021, time.October, 21, 0, 0, 0, 0, time.UTC), time.Date(2021, time.October, 22, 0, 0, 0, 0, time.UTC)}},
 					{Text: "(unknown)", Data: grafanajson.TableQueryResponseNumberColumn{0.0, 1.0}},
 					{Text: "Brussels", Data: grafanajson.TableQueryResponseNumberColumn{50.0, 0.0}},
 					{Text: "VlaamsBrabant", Data: grafanajson.TableQueryResponseNumberColumn{100.0, 90.0}},
@@ -93,22 +95,10 @@ var (
 			Target: "hospitalisations-region",
 			Response: &grafanajson.TableQueryResponse{
 				Columns: []grafanajson.TableQueryResponseColumn{
-					{Text: "Timestamp", Data: grafanajson.TableQueryResponseTimeColumn{time.Date(2021, time.October, 21, 0, 0, 0, 0, time.UTC), time.Date(2021, time.October, 22, 0, 0, 0, 0, time.UTC)}},
+					{Text: "timestamp", Data: grafanajson.TableQueryResponseTimeColumn{time.Date(2021, time.October, 21, 0, 0, 0, 0, time.UTC), time.Date(2021, time.October, 22, 0, 0, 0, 0, time.UTC)}},
 					{Text: "(unknown)", Data: grafanajson.TableQueryResponseNumberColumn{0.0, 1.0}},
 					{Text: "Brussels", Data: grafanajson.TableQueryResponseNumberColumn{50.0, 0.0}},
 					{Text: "Flanders", Data: grafanajson.TableQueryResponseNumberColumn{100.0, 90.0}},
-				},
-			},
-		},
-		{
-			Target: "hospitalisations-details",
-			Response: &grafanajson.TableQueryResponse{
-				Columns: []grafanajson.TableQueryResponseColumn{
-					{Text: "Timestamp", Data: grafanajson.TableQueryResponseTimeColumn{time.Date(2021, time.October, 21, 0, 0, 0, 0, time.UTC), time.Date(2021, time.October, 22, 0, 0, 0, 0, time.UTC)}},
-					{Text: "in", Data: grafanajson.TableQueryResponseNumberColumn{150.0, 91.0}},
-					{Text: "inICU", Data: grafanajson.TableQueryResponseNumberColumn{11.0, 11.0}},
-					{Text: "inRESP", Data: grafanajson.TableQueryResponseNumberColumn{5.0, 5.0}},
-					{Text: "inECMO", Data: grafanajson.TableQueryResponseNumberColumn{1.0, 1.0}},
 				},
 			},
 		},
@@ -117,14 +107,13 @@ var (
 
 func TestHandler_Search(t *testing.T) {
 	getter := &mockAPI.Getter{}
-	client := sciensano.NewCachedClient(time.Hour)
-	client.Getter = getter
+	client := reporter.NewCachedClient(time.Hour)
+	client.Sciensano = getter
 	h := hospitalisationsHandler.New(client)
 
 	targets := h.Search()
 	assert.Equal(t, []string{
 		"hospitalisations",
-		"hospitalisations-details",
 		"hospitalisations-province",
 		"hospitalisations-region",
 	}, targets)
@@ -132,8 +121,8 @@ func TestHandler_Search(t *testing.T) {
 
 func TestHandler_TableQuery(t *testing.T) {
 	getter := &mockAPI.Getter{}
-	client := sciensano.NewCachedClient(time.Hour)
-	client.Getter = getter
+	client := reporter.NewCachedClient(time.Hour)
+	client.Sciensano = getter
 	h := hospitalisationsHandler.New(client)
 
 	args := &grafanajson.TableQueryArgs{CommonQueryArgs: grafanajson.CommonQueryArgs{Range: grafanajson.QueryRequestRange{
@@ -155,13 +144,13 @@ func TestHandler_TableQuery(t *testing.T) {
 }
 
 func BenchmarkHandler_TableQuery(b *testing.B) {
-	var bigResponse []apiclient.Measurement
+	var bigResponse []measurement.Measurement
 	timestamp := time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)
 
 	for i := 0; i < 2*365; i++ {
 		for _, region := range []string{"Brussels", "Flanders", "Wallonia"} {
-			bigResponse = append(bigResponse, &apiclient.APIHospitalisationsResponseEntry{
-				TimeStamp: apiclient.TimeStamp{Time: timestamp},
+			bigResponse = append(bigResponse, &sciensano.APIHospitalisationsResponseEntry{
+				TimeStamp: sciensano.TimeStamp{Time: timestamp},
 				Province:  region,
 				Region:    region,
 				TotalIn:   i,
@@ -172,8 +161,8 @@ func BenchmarkHandler_TableQuery(b *testing.B) {
 	}
 
 	getter := &mockAPI.Getter{}
-	client := sciensano.NewCachedClient(time.Hour)
-	client.Getter = getter
+	client := reporter.NewCachedClient(time.Hour)
+	client.Sciensano = getter
 	h := hospitalisationsHandler.New(client)
 
 	args := &grafanajson.TableQueryArgs{CommonQueryArgs: grafanajson.CommonQueryArgs{Range: grafanajson.QueryRequestRange{

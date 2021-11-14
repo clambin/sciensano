@@ -2,9 +2,7 @@ package vaccines
 
 import (
 	"fmt"
-	"github.com/clambin/sciensano/sciensano"
-	"github.com/clambin/sciensano/sciensano/datasets"
-	"github.com/clambin/sciensano/vaccines"
+	"github.com/clambin/sciensano/reporter/datasets"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"testing"
@@ -21,28 +19,22 @@ func TestVaccineDelay(t *testing.T) {
 			time.Date(2021, 03, 1, 0, 0, 0, 0, time.UTC),
 			time.Date(2021, 03, 15, 0, 0, 0, 0, time.UTC),
 		},
-		Groups: []datasets.GroupedDatasetEntry{{
-			Values: []datasets.Copyable{
-				&sciensano.VaccinationsEntry{Partial: 10, Full: 0},
-				&sciensano.VaccinationsEntry{Partial: 15, Full: 1},
-				&sciensano.VaccinationsEntry{Partial: 15, Full: 4},
-				&sciensano.VaccinationsEntry{Partial: 25, Full: 5},
-				&sciensano.VaccinationsEntry{Partial: 35, Full: 10},
-				&sciensano.VaccinationsEntry{Partial: 35, Full: 15},
-			},
-		}},
+		Groups: []datasets.DatasetGroup{
+			{Name: "partial", Values: []float64{10, 15, 15, 25, 35, 35}},
+			{Name: "full", Values: []float64{0, 1, 4, 5, 10, 15}}},
 	}
 
-	batches := []*vaccines.Batch{{
-		Date:   vaccines.Time{Time: time.Date(2021, 01, 01, 0, 0, 0, 0, time.UTC)},
-		Amount: 20,
-	}, {
-		Date:   vaccines.Time{Time: time.Date(2021, 02, 01, 0, 0, 0, 0, time.UTC)},
-		Amount: 40,
-	}, {
-		Date:   vaccines.Time{Time: time.Date(2021, 03, 01, 0, 0, 0, 0, time.UTC)},
-		Amount: 50,
-	}}
+	batches := &datasets.Dataset{
+		Timestamps: []time.Time{
+			time.Date(2021, 01, 01, 0, 0, 0, 0, time.UTC),
+			time.Date(2021, 02, 01, 0, 0, 0, 0, time.UTC),
+			time.Date(2021, 03, 01, 0, 0, 0, 0, time.UTC),
+		},
+		Groups: []datasets.DatasetGroup{{
+			Name:   "",
+			Values: []float64{20, 40, 50},
+		}},
+	}
 
 	expected := []struct {
 		Timestamp time.Time

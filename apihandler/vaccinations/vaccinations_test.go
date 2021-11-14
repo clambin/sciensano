@@ -3,11 +3,12 @@ package vaccinations_test
 import (
 	"context"
 	grafanaJson "github.com/clambin/grafana-json"
-	"github.com/clambin/sciensano/apiclient"
-	mockAPI "github.com/clambin/sciensano/apiclient/mocks"
+	"github.com/clambin/sciensano/apiclient/sciensano"
+	mockAPI "github.com/clambin/sciensano/apiclient/sciensano/mocks"
 	vaccinationsHandler "github.com/clambin/sciensano/apihandler/vaccinations"
 	mockDemographics "github.com/clambin/sciensano/demographics/mocks"
-	"github.com/clambin/sciensano/sciensano"
+	"github.com/clambin/sciensano/measurement"
+	"github.com/clambin/sciensano/reporter"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -15,39 +16,46 @@ import (
 	"time"
 )
 
-type TestCase struct {
-	Target   string
-	Response *grafanaJson.TableQueryResponse
-}
-
 var (
 	timestamp = time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)
 
-	vaccinationTestData = []apiclient.Measurement{
-		&apiclient.APIVaccinationsResponseEntry{TimeStamp: apiclient.TimeStamp{Time: timestamp}, Region: "Flanders", AgeGroup: "25-34", Dose: "C", Count: 1},
-		&apiclient.APIVaccinationsResponseEntry{TimeStamp: apiclient.TimeStamp{Time: timestamp}, Region: "Flanders", AgeGroup: "35-44", Dose: "E", Count: 1},
-		&apiclient.APIVaccinationsResponseEntry{TimeStamp: apiclient.TimeStamp{Time: timestamp}, Region: "Brussels", AgeGroup: "35-44", Dose: "B", Count: 2},
-		&apiclient.APIVaccinationsResponseEntry{TimeStamp: apiclient.TimeStamp{Time: timestamp}, Region: "Brussels", AgeGroup: "25-34", Dose: "A", Count: 2},
-		&apiclient.APIVaccinationsResponseEntry{TimeStamp: apiclient.TimeStamp{Time: timestamp}, Region: "", AgeGroup: "", Dose: "A", Count: 0},
+	vaccinationTestData = []measurement.Measurement{
+		&sciensano.APIVaccinationsResponseEntry{TimeStamp: sciensano.TimeStamp{Time: timestamp}, Region: "Flanders", AgeGroup: "25-34", Dose: "C", Count: 1},
+		&sciensano.APIVaccinationsResponseEntry{TimeStamp: sciensano.TimeStamp{Time: timestamp}, Region: "Flanders", AgeGroup: "35-44", Dose: "E", Count: 1},
+		&sciensano.APIVaccinationsResponseEntry{TimeStamp: sciensano.TimeStamp{Time: timestamp}, Region: "Brussels", AgeGroup: "35-44", Dose: "B", Count: 2},
+		&sciensano.APIVaccinationsResponseEntry{TimeStamp: sciensano.TimeStamp{Time: timestamp}, Region: "Brussels", AgeGroup: "25-34", Dose: "A", Count: 2},
+		&sciensano.APIVaccinationsResponseEntry{TimeStamp: sciensano.TimeStamp{Time: timestamp}, Region: "", AgeGroup: "", Dose: "A", Count: 1},
 
-		&apiclient.APIVaccinationsResponseEntry{TimeStamp: apiclient.TimeStamp{Time: timestamp.Add(24 * time.Hour)}, Region: "Flanders", AgeGroup: "25-34", Dose: "B", Count: 3},
-		&apiclient.APIVaccinationsResponseEntry{TimeStamp: apiclient.TimeStamp{Time: timestamp.Add(24 * time.Hour)}, Region: "Brussels", AgeGroup: "35-44", Dose: "C", Count: 4},
-		&apiclient.APIVaccinationsResponseEntry{TimeStamp: apiclient.TimeStamp{Time: timestamp.Add(24 * time.Hour)}, Region: "Brussels", AgeGroup: "35-44", Dose: "A", Count: 5},
-		&apiclient.APIVaccinationsResponseEntry{TimeStamp: apiclient.TimeStamp{Time: timestamp.Add(24 * time.Hour)}, Region: "Brussels", AgeGroup: "25-34", Dose: "E", Count: 5},
+		&sciensano.APIVaccinationsResponseEntry{TimeStamp: sciensano.TimeStamp{Time: timestamp.Add(24 * time.Hour)}, Region: "Flanders", AgeGroup: "25-34", Dose: "B", Count: 3},
+		&sciensano.APIVaccinationsResponseEntry{TimeStamp: sciensano.TimeStamp{Time: timestamp.Add(24 * time.Hour)}, Region: "Brussels", AgeGroup: "35-44", Dose: "C", Count: 4},
+		&sciensano.APIVaccinationsResponseEntry{TimeStamp: sciensano.TimeStamp{Time: timestamp.Add(24 * time.Hour)}, Region: "Brussels", AgeGroup: "35-44", Dose: "A", Count: 5},
+		&sciensano.APIVaccinationsResponseEntry{TimeStamp: sciensano.TimeStamp{Time: timestamp.Add(24 * time.Hour)}, Region: "Brussels", AgeGroup: "25-34", Dose: "E", Count: 5},
 
-		&apiclient.APIVaccinationsResponseEntry{TimeStamp: apiclient.TimeStamp{Time: timestamp.Add(48 * time.Hour)}, Region: "Flanders", AgeGroup: "25-34", Dose: "A", Count: 9},
-		&apiclient.APIVaccinationsResponseEntry{TimeStamp: apiclient.TimeStamp{Time: timestamp.Add(48 * time.Hour)}, Region: "Brussels", AgeGroup: "35-44", Dose: "E", Count: 9},
+		&sciensano.APIVaccinationsResponseEntry{TimeStamp: sciensano.TimeStamp{Time: timestamp.Add(48 * time.Hour)}, Region: "Flanders", AgeGroup: "25-34", Dose: "A", Count: 9},
+		&sciensano.APIVaccinationsResponseEntry{TimeStamp: sciensano.TimeStamp{Time: timestamp.Add(48 * time.Hour)}, Region: "Brussels", AgeGroup: "35-44", Dose: "E", Count: 9},
 	}
 
-	testCases = []TestCase{
+	testCases = []struct {
+		Target   string
+		Response *grafanaJson.TableQueryResponse
+	}{
 		{
 			Target: "vaccinations",
 			Response: &grafanaJson.TableQueryResponse{
 				Columns: []grafanaJson.TableQueryResponseColumn{
 					{Text: "timestamp", Data: grafanaJson.TableQueryResponseTimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
-					{Text: "partial", Data: grafanaJson.TableQueryResponseNumberColumn{2, 7}},
+					{Text: "partial", Data: grafanaJson.TableQueryResponseNumberColumn{3, 8}},
 					{Text: "full", Data: grafanaJson.TableQueryResponseNumberColumn{3, 10}},
 					{Text: "booster", Data: grafanaJson.TableQueryResponseNumberColumn{1, 6}},
+				},
+			},
+		},
+		{
+			Target: "vaccination-lag",
+			Response: &grafanaJson.TableQueryResponse{
+				Columns: []grafanaJson.TableQueryResponseColumn{
+					{Text: "timestamp", Data: grafanaJson.TableQueryResponseTimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
+					{Text: "lag", Data: grafanaJson.TableQueryResponseNumberColumn{0, 0}},
 				},
 			},
 		},
@@ -56,7 +64,7 @@ var (
 			Response: &grafanaJson.TableQueryResponse{
 				Columns: []grafanaJson.TableQueryResponseColumn{
 					{Text: "timestamp", Data: grafanaJson.TableQueryResponseTimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
-					{Text: "(unknown)", Data: grafanaJson.TableQueryResponseNumberColumn{0, 0}},
+					{Text: "(unknown)", Data: grafanaJson.TableQueryResponseNumberColumn{1, 1}},
 					{Text: "Brussels", Data: grafanaJson.TableQueryResponseNumberColumn{2, 7}},
 					{Text: "Flanders", Data: grafanaJson.TableQueryResponseNumberColumn{0, 0}},
 				},
@@ -77,7 +85,6 @@ var (
 			Response: &grafanaJson.TableQueryResponse{
 				Columns: []grafanaJson.TableQueryResponseColumn{
 					{Text: "timestamp", Data: grafanaJson.TableQueryResponseTimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
-					{Text: "(unknown)", Data: grafanaJson.TableQueryResponseNumberColumn{0, 0}},
 					{Text: "Brussels", Data: grafanaJson.TableQueryResponseNumberColumn{2, 6}},
 					{Text: "Flanders", Data: grafanaJson.TableQueryResponseNumberColumn{1, 4}},
 				},
@@ -98,7 +105,6 @@ var (
 			Response: &grafanaJson.TableQueryResponse{
 				Columns: []grafanaJson.TableQueryResponseColumn{
 					{Text: "timestamp", Data: grafanaJson.TableQueryResponseTimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
-					{Text: "(unknown)", Data: grafanaJson.TableQueryResponseNumberColumn{0, 0}},
 					{Text: "Brussels", Data: grafanaJson.TableQueryResponseNumberColumn{0, 5}},
 					{Text: "Flanders", Data: grafanaJson.TableQueryResponseNumberColumn{1, 1}},
 				},
@@ -119,7 +125,7 @@ var (
 			Response: &grafanaJson.TableQueryResponse{
 				Columns: []grafanaJson.TableQueryResponseColumn{
 					{Text: "timestamp", Data: grafanaJson.TableQueryResponseTimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
-					{Text: "(unknown)", Data: grafanaJson.TableQueryResponseNumberColumn{0, 0}},
+					{Text: "(unknown)", Data: grafanaJson.TableQueryResponseNumberColumn{1, 1}},
 					{Text: "25-34", Data: grafanaJson.TableQueryResponseNumberColumn{2, 2}},
 					{Text: "35-44", Data: grafanaJson.TableQueryResponseNumberColumn{0, 5}},
 				},
@@ -140,7 +146,6 @@ var (
 			Response: &grafanaJson.TableQueryResponse{
 				Columns: []grafanaJson.TableQueryResponseColumn{
 					{Text: "timestamp", Data: grafanaJson.TableQueryResponseTimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
-					{Text: "(unknown)", Data: grafanaJson.TableQueryResponseNumberColumn{0, 0}},
 					{Text: "25-34", Data: grafanaJson.TableQueryResponseNumberColumn{1, 4}},
 					{Text: "35-44", Data: grafanaJson.TableQueryResponseNumberColumn{2, 6}},
 				},
@@ -161,7 +166,6 @@ var (
 			Response: &grafanaJson.TableQueryResponse{
 				Columns: []grafanaJson.TableQueryResponseColumn{
 					{Text: "timestamp", Data: grafanaJson.TableQueryResponseTimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
-					{Text: "(unknown)", Data: grafanaJson.TableQueryResponseNumberColumn{0, 0}},
 					{Text: "25-34", Data: grafanaJson.TableQueryResponseNumberColumn{0, 5}},
 					{Text: "35-44", Data: grafanaJson.TableQueryResponseNumberColumn{1, 1}},
 				},
@@ -177,22 +181,15 @@ var (
 				},
 			},
 		},
-		{
-			Target: "vaccination-lag",
-			Response: &grafanaJson.TableQueryResponse{
-				Columns: []grafanaJson.TableQueryResponseColumn{
-					{Text: "timestamp", Data: grafanaJson.TableQueryResponseTimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
-					{Text: "lag", Data: grafanaJson.TableQueryResponseNumberColumn{0, 0}},
-				},
-			},
-		},
 	}
 )
 
 func TestHandler_Search(t *testing.T) {
 	getter := &mockAPI.Getter{}
-	client := &sciensano.Client{Getter: getter}
-	h := vaccinationsHandler.New(client, nil)
+	client := reporter.NewCachedClient(time.Hour)
+	client.Sciensano = getter
+	demo := &mockDemographics.Demographics{}
+	h := vaccinationsHandler.New(client, demo)
 
 	targets := h.Search()
 	assert.Equal(t, []string{
@@ -215,8 +212,8 @@ func TestHandler_Search(t *testing.T) {
 
 func TestHandler_TableQuery(t *testing.T) {
 	getter := &mockAPI.Getter{}
-	client := sciensano.NewCachedClient(time.Hour)
-	client.Getter = getter
+	client := reporter.NewCachedClient(time.Hour)
+	client.Sciensano = getter
 	demo := &mockDemographics.Demographics{}
 	h := vaccinationsHandler.New(client, demo)
 
@@ -245,8 +242,9 @@ func TestHandler_TableQuery(t *testing.T) {
 			"35-44": 10,
 		})
 
+	ctx := context.Background()
 	for _, testCase := range testCases {
-		response, err := h.Endpoints().TableQuery(context.Background(), testCase.Target, args)
+		response, err := h.Endpoints().TableQuery(ctx, testCase.Target, args)
 		require.NoError(t, err, testCase.Target)
 		assert.Equal(t, testCase.Response, response, testCase.Target)
 	}
@@ -255,19 +253,19 @@ func TestHandler_TableQuery(t *testing.T) {
 }
 
 func BenchmarkHandler_TableQuery(b *testing.B) {
-	var bigResponse []apiclient.Measurement
+	var bigResponse []measurement.Measurement
 	ts := time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)
 
 	for i := 0; i < 2*365; i++ {
 		for _, region := range []string{"Brussels", "Flanders", "Wallonia"} {
-			bigResponse = append(bigResponse, &apiclient.APIVaccinationsResponseEntry{
-				TimeStamp: apiclient.TimeStamp{Time: ts},
+			bigResponse = append(bigResponse, &sciensano.APIVaccinationsResponseEntry{
+				TimeStamp: sciensano.TimeStamp{Time: ts},
 				Region:    region,
 				Dose:      "A",
 				Count:     i + 100,
 			})
-			bigResponse = append(bigResponse, &apiclient.APIVaccinationsResponseEntry{
-				TimeStamp: apiclient.TimeStamp{Time: ts},
+			bigResponse = append(bigResponse, &sciensano.APIVaccinationsResponseEntry{
+				TimeStamp: sciensano.TimeStamp{Time: ts},
 				Region:    region,
 				Dose:      "B",
 				Count:     i,
@@ -278,8 +276,8 @@ func BenchmarkHandler_TableQuery(b *testing.B) {
 	}
 
 	getter := &mockAPI.Getter{}
-	client := sciensano.NewCachedClient(time.Hour)
-	client.Getter = getter
+	client := reporter.NewCachedClient(time.Hour)
+	client.Sciensano = getter
 	h := vaccinationsHandler.New(client, nil)
 
 	args := &grafanaJson.TableQueryArgs{CommonQueryArgs: grafanaJson.CommonQueryArgs{Range: grafanaJson.QueryRequestRange{
@@ -290,11 +288,13 @@ func BenchmarkHandler_TableQuery(b *testing.B) {
 		On("GetVaccinations", mock.AnythingOfType("*context.emptyCtx")).
 		Return(bigResponse, nil)
 
+	_, err := h.Endpoints().TableQuery(context.Background(), "vacc-region-full", args)
+	require.NoError(b, err)
+
 	b.ResetTimer()
 
 	for i := 0; i < 1000; i++ {
-		_, err := h.Endpoints().TableQuery(context.Background(), "vacc-region-full", args)
-		require.NoError(b, err)
+		_, _ = h.Endpoints().TableQuery(context.Background(), "vacc-region-full", args)
 	}
 
 	getter.AssertExpectations(b)
