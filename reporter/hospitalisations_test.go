@@ -48,7 +48,7 @@ var (
 func TestClient_GetHospitalisations(t *testing.T) {
 	cache := &mocks.Holder{}
 	client := reporter.New(time.Hour)
-	client.Sciensano = cache
+	client.APICache = cache
 
 	cache.
 		On("Get", "Hospitalisations").
@@ -75,7 +75,7 @@ func TestClient_GetHospitalisations(t *testing.T) {
 func TestClient_GetHospitalisationsByProvince(t *testing.T) {
 	cache := &mocks.Holder{}
 	client := reporter.New(time.Hour)
-	client.Sciensano = cache
+	client.APICache = cache
 
 	cache.
 		On("Get", "Hospitalisations").
@@ -99,7 +99,7 @@ func TestClient_GetHospitalisationsByProvince(t *testing.T) {
 func TestClient_GetHospitalisationsByRegion(t *testing.T) {
 	cache := &mocks.Holder{}
 	client := reporter.New(time.Hour)
-	client.Sciensano = cache
+	client.APICache = cache
 
 	cache.
 		On("Get", "Hospitalisations").
@@ -123,7 +123,7 @@ func TestClient_GetHospitalisationsByRegion(t *testing.T) {
 func TestClient_GetHospitalisations_Failure(t *testing.T) {
 	cache := &mocks.Holder{}
 	client := reporter.New(time.Hour)
-	client.Sciensano = cache
+	client.APICache = cache
 
 	cache.On("Get", "Hospitalisations").Return(nil, false)
 
@@ -142,7 +142,7 @@ func TestClient_GetHospitalisations_Failure(t *testing.T) {
 func TestClient_GetHospitalisations_ApplyRegions(t *testing.T) {
 	cache := &mocks.Holder{}
 	client := reporter.New(time.Hour)
-	client.Sciensano = cache
+	client.APICache = cache
 
 	cache.
 		On("Get", "Hospitalisations").
@@ -188,7 +188,7 @@ func BenchmarkClient_GetHospitalisationsByRegion(b *testing.B) {
 	}
 	cache := &mocks.Holder{}
 	client := reporter.New(time.Hour)
-	client.Sciensano = cache
+	client.APICache = cache
 
 	cache.
 		On("Get", "Hospitalisations").

@@ -21,8 +21,8 @@ type GroupedMortalityEntry struct {
 
 // GetMortality returns all mortality figures
 func (client *Client) GetMortality() (results *datasets.Dataset, err error) {
-	return client.Cache.MaybeGenerate("Mortality", func() (output *datasets.Dataset, err2 error) {
-		if apiResult, found := client.Sciensano.Get("Mortality"); found {
+	return client.ReportCache.MaybeGenerate("Mortality", func() (output *datasets.Dataset, err2 error) {
+		if apiResult, found := client.APICache.Get("Mortality"); found {
 			output = datasets.GroupMeasurements(apiResult)
 		} else {
 			err2 = fmt.Errorf("cache does not contain Mortality entries")
@@ -33,8 +33,8 @@ func (client *Client) GetMortality() (results *datasets.Dataset, err error) {
 
 // GetMortalityByRegion returns all mortality figures, grouped by region
 func (client *Client) GetMortalityByRegion() (results *datasets.Dataset, err error) {
-	return client.Cache.MaybeGenerate("MortalityByRegion", func() (output *datasets.Dataset, err2 error) {
-		if apiResult, found := client.Sciensano.Get("Mortality"); found {
+	return client.ReportCache.MaybeGenerate("MortalityByRegion", func() (output *datasets.Dataset, err2 error) {
+		if apiResult, found := client.APICache.Get("Mortality"); found {
 			output = datasets.GroupMeasurementsByType(apiResult, measurement.GroupByRegion)
 		} else {
 			err2 = fmt.Errorf("cache does not contain Mortality entries")
@@ -45,8 +45,8 @@ func (client *Client) GetMortalityByRegion() (results *datasets.Dataset, err err
 
 // GetMortalityByAgeGroup returns all Mortality, grouped by age group
 func (client *Client) GetMortalityByAgeGroup() (results *datasets.Dataset, err error) {
-	return client.Cache.MaybeGenerate("MortalityByAgeGroup", func() (output *datasets.Dataset, err2 error) {
-		if apiResult, found := client.Sciensano.Get("Mortality"); found {
+	return client.ReportCache.MaybeGenerate("MortalityByAgeGroup", func() (output *datasets.Dataset, err2 error) {
+		if apiResult, found := client.APICache.Get("Mortality"); found {
 			output = datasets.GroupMeasurementsByType(apiResult, measurement.GroupByAgeGroup)
 		} else {
 			err2 = fmt.Errorf("cache does not contain Mortality entries")

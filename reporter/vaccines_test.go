@@ -38,7 +38,7 @@ func TestClient_GetVaccines(t *testing.T) {
 	cache.On("Get", "Vaccines").Return(testVaccinesResponse, true)
 
 	client := reporter.New(time.Hour)
-	client.Vaccines = cache
+	client.APICache = cache
 
 	result, err := client.GetVaccines()
 	require.NoError(t, err)
@@ -59,7 +59,7 @@ func TestClient_GetVaccinesByManufacturer(t *testing.T) {
 	cache.On("Get", "Vaccines").Return(testVaccinesResponse, true)
 
 	client := reporter.New(time.Hour)
-	client.Vaccines = cache
+	client.APICache = cache
 
 	result, err := client.GetVaccinesByManufacturer()
 	require.NoError(t, err)
@@ -81,7 +81,7 @@ func TestClient_GetVaccines_Failure(t *testing.T) {
 	cache.On("Get", "Vaccines").Return(nil, false)
 
 	client := reporter.New(time.Hour)
-	client.Vaccines = cache
+	client.APICache = cache
 
 	_, err := client.GetVaccines()
 	require.Error(t, err)

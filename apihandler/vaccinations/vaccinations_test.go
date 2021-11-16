@@ -187,7 +187,7 @@ var (
 func TestHandler_Search(t *testing.T) {
 	cache := &mockCache.Holder{}
 	client := reporter.New(time.Hour)
-	client.Sciensano = cache
+	client.APICache = cache
 	demo := &mockDemographics.Demographics{}
 	h := vaccinationsHandler.New(client, demo)
 
@@ -213,7 +213,7 @@ func TestHandler_Search(t *testing.T) {
 func TestHandler_TableQuery(t *testing.T) {
 	cache := &mockCache.Holder{}
 	client := reporter.New(time.Hour)
-	client.Sciensano = cache
+	client.APICache = cache
 	demo := &mockDemographics.Demographics{}
 	h := vaccinationsHandler.New(client, demo)
 
@@ -252,8 +252,7 @@ func TestHandler_TableQuery(t *testing.T) {
 	mock.AssertExpectationsForObjects(t, cache, demo)
 }
 
-func BenchmarkHandler_TableQuery(b *testing.B) {
-	var bigResponse []measurement.Measurement
+func buildBigResponse() (bigResponse []measurement.Measurement) {
 	ts := time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)
 
 	for i := 0; i < 2*365; i++ {
@@ -275,27 +274,49 @@ func BenchmarkHandler_TableQuery(b *testing.B) {
 		ts = ts.Add(24 * time.Hour)
 	}
 
+	return
+}
+
+func BenchmarkHandler_TableQuery(b *testing.B) {
 	cache := &mockCache.Holder{}
-	client := reporter.New(time.Hour)
-	client.Sciensano = cache
+	client := reporter.New(0)
+	client.APICache = cache
 	h := vaccinationsHandler.New(client, nil)
 
 	args := &grafanaJson.TableQueryArgs{CommonQueryArgs: grafanaJson.CommonQueryArgs{Range: grafanaJson.QueryRequestRange{
 		To: time.Date(2021, 10, 22, 0, 0, 0, 0, time.UTC),
 	}}}
 
-	cache.
-		On("Get", "Vaccinations").
-		Return(bigResponse, true)
-
-	_, err := h.Endpoints().TableQuery(context.Background(), "vacc-region-full", args)
-	require.NoError(b, err)
+	cache.On("Get", "Vaccinations").Return(buildBigResponse(), true)
 
 	b.ResetTimer()
 
 	for i := 0; i < 1000; i++ {
 		_, _ = h.Endpoints().TableQuery(context.Background(), "vacc-region-full", args)
 	}
+}
 
-	cache.AssertExpectations(b)
+func BenchmarkHandler_RateQuery(b *testing.B) {
+	cache := &mockCache.Holder{}
+	client := reporter.New(0)
+	client.APICache = cache
+	demo := &mockDemographics.Demographics{}
+	h := vaccinationsHandler.New(client, demo)
+
+	args := &grafanaJson.TableQueryArgs{CommonQueryArgs: grafanaJson.CommonQueryArgs{Range: grafanaJson.QueryRequestRange{
+		To: time.Date(2021, 10, 22, 0, 0, 0, 0, time.UTC),
+	}}}
+
+	cache.On("Get", "Vaccinations").Return(buildBigResponse(), true)
+	demo.On("GetRegionFigures").Return(map[string]int{
+		"Flanders": 5000,
+		"Brussels": 1000,
+		"Wallonia": 4000,
+	}, nil)
+
+	b.ResetTimer()
+
+	for i := 0; i < 1000; i++ {
+		_, _ = h.Endpoints().TableQuery(context.Background(), "vacc-region-rate-full", args)
+	}
 }

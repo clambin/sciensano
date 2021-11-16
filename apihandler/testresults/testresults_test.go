@@ -17,7 +17,7 @@ import (
 func TestHandler_Search(t *testing.T) {
 	getter := &mocks.Holder{}
 	client := reporter.New(time.Hour)
-	client.Sciensano = getter
+	client.APICache = getter
 	h := testresults.New(client)
 
 	targets := h.Search()
@@ -27,7 +27,7 @@ func TestHandler_Search(t *testing.T) {
 func TestHandler_TableQuery(t *testing.T) {
 	getter := &mocks.Holder{}
 	client := reporter.New(time.Hour)
-	client.Sciensano = getter
+	client.APICache = getter
 	h := testresults.New(client)
 
 	getter.

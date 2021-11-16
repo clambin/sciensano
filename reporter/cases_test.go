@@ -42,7 +42,7 @@ var (
 func TestClient_GetCases(t *testing.T) {
 	cache := &mocks.Holder{}
 	client := reporter.New(time.Hour)
-	client.Sciensano = cache
+	client.APICache = cache
 
 	cache.
 		On("Get", "Cases").
@@ -66,7 +66,7 @@ func TestClient_GetCases(t *testing.T) {
 func TestClient_GetCasesByProvince(t *testing.T) {
 	cache := &mocks.Holder{}
 	client := reporter.New(time.Hour)
-	client.Sciensano = cache
+	client.APICache = cache
 
 	cache.
 		On("Get", "Cases").
@@ -91,7 +91,7 @@ func TestClient_GetCasesByProvince(t *testing.T) {
 func TestClient_GetCasesByRegion(t *testing.T) {
 	cache := &mocks.Holder{}
 	client := reporter.New(time.Hour)
-	client.Sciensano = cache
+	client.APICache = cache
 
 	cache.
 		On("Get", "Cases").
@@ -116,7 +116,7 @@ func TestClient_GetCasesByRegion(t *testing.T) {
 func TestClient_GetCasesByAgeGroup(t *testing.T) {
 	cache := &mocks.Holder{}
 	client := reporter.New(time.Hour)
-	client.Sciensano = cache
+	client.APICache = cache
 
 	cache.
 		On("Get", "Cases").
@@ -142,7 +142,7 @@ func TestClient_GetCasesByAgeGroup(t *testing.T) {
 func TestClient_GetCases_Failure(t *testing.T) {
 	cache := &mocks.Holder{}
 	client := reporter.New(time.Hour)
-	client.Sciensano = cache
+	client.APICache = cache
 
 	cache.On("Get", "Cases").Return(nil, false)
 
@@ -164,7 +164,7 @@ func TestClient_GetCases_Failure(t *testing.T) {
 func TestClient_Cases_ApplyRegions(t *testing.T) {
 	cache := &mocks.Holder{}
 	client := reporter.New(time.Hour)
-	client.Sciensano = cache
+	client.APICache = cache
 
 	cache.
 		On("Get", "Cases").
@@ -208,7 +208,7 @@ func BenchmarkClient_GetCasesByRegion(b *testing.B) {
 	}
 	cache := &mocks.Holder{}
 	client := reporter.New(time.Hour)
-	client.Sciensano = cache
+	client.APICache = cache
 
 	cache.
 		On("GetCases", mock.AnythingOfType("*context.emptyCtx")).

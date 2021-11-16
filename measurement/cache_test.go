@@ -52,7 +52,7 @@ func (f *fetcher) Update(_ context.Context) (entries map[string][]measurement.Me
 func TestCache(t *testing.T) {
 	f := &fetcher{}
 	ct := &measurement.Cache{
-		Fetcher: f,
+		Fetchers: []measurement.Fetcher{f},
 	}
 
 	wg := sync.WaitGroup{}

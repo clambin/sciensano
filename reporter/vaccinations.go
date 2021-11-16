@@ -25,8 +25,8 @@ type VaccinationGetter interface {
 
 // GetVaccinations returns all vaccinations
 func (client *Client) GetVaccinations() (results *datasets.Dataset, err error) {
-	return client.Cache.MaybeGenerate("Vaccinations", func() (output *datasets.Dataset, err2 error) {
-		if apiResult, found := client.Sciensano.Get("Vaccinations"); found {
+	return client.ReportCache.MaybeGenerate("Vaccinations", func() (output *datasets.Dataset, err2 error) {
+		if apiResult, found := client.APICache.Get("Vaccinations"); found {
 			output = datasets.GroupMeasurements(apiResult)
 		} else {
 			err2 = fmt.Errorf("cache does not contain Vaccinations entries")
@@ -38,7 +38,7 @@ func (client *Client) GetVaccinations() (results *datasets.Dataset, err error) {
 // GetVaccinationsByAgeGroup returns all vaccinations, grouped by age group
 func (client *Client) GetVaccinationsByAgeGroup(vaccinationType int) (results *datasets.Dataset, err error) {
 	name := fmt.Sprintf("VaccinationsByAgeGroup-%d", vaccinationType)
-	return client.Cache.MaybeGenerate(name, func() (*datasets.Dataset, error) {
+	return client.ReportCache.MaybeGenerate(name, func() (*datasets.Dataset, error) {
 		return client.realGetVaccinationByType(measurement.GroupByAgeGroup, vaccinationType)
 	})
 }
@@ -46,13 +46,13 @@ func (client *Client) GetVaccinationsByAgeGroup(vaccinationType int) (results *d
 // GetVaccinationsByRegion returns all vaccinations, grouped by region
 func (client *Client) GetVaccinationsByRegion(vaccinationType int) (results *datasets.Dataset, err error) {
 	name := fmt.Sprintf("VaccinationsByRegion-%d", vaccinationType)
-	return client.Cache.MaybeGenerate(name, func() (*datasets.Dataset, error) {
+	return client.ReportCache.MaybeGenerate(name, func() (*datasets.Dataset, error) {
 		return client.realGetVaccinationByType(measurement.GroupByRegion, vaccinationType)
 	})
 }
 
 func (client *Client) realGetVaccinationByType(mode, vaccinationType int) (results *datasets.Dataset, err error) {
-	if apiResult, found := client.Sciensano.Get("Vaccinations"); found {
+	if apiResult, found := client.APICache.Get("Vaccinations"); found {
 		apiResult = filterVaccinations(apiResult, vaccinationType)
 		results = datasets.GroupMeasurementsByType(apiResult, mode)
 	} else {

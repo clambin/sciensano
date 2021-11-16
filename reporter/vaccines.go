@@ -14,8 +14,8 @@ type VaccinesGetter interface {
 
 // GetVaccines returns all vaccines data
 func (client *Client) GetVaccines() (results *datasets.Dataset, err error) {
-	return client.Cache.MaybeGenerate("Vaccines", func() (output *datasets.Dataset, err2 error) {
-		if apiResult, ok := client.Vaccines.Get("Vaccines"); ok {
+	return client.ReportCache.MaybeGenerate("Vaccines", func() (output *datasets.Dataset, err2 error) {
+		if apiResult, ok := client.APICache.Get("Vaccines"); ok {
 			output = datasets.GroupMeasurements(apiResult)
 		} else {
 			err2 = fmt.Errorf("cache does not contain Vaccines entries")
@@ -26,8 +26,8 @@ func (client *Client) GetVaccines() (results *datasets.Dataset, err error) {
 
 // GetVaccinesByManufacturer returns all hospitalisations, grouped by manufacturer
 func (client *Client) GetVaccinesByManufacturer() (results *datasets.Dataset, err error) {
-	return client.Cache.MaybeGenerate("VaccinesByManufacturer", func() (output *datasets.Dataset, err2 error) {
-		if apiResult, found := client.Vaccines.Get("Vaccines"); found {
+	return client.ReportCache.MaybeGenerate("VaccinesByManufacturer", func() (output *datasets.Dataset, err2 error) {
+		if apiResult, found := client.APICache.Get("Vaccines"); found {
 			output = datasets.GroupMeasurementsByType(apiResult, measurement.GroupByManufacturer)
 		} else {
 			err2 = fmt.Errorf("cache does not contain Vaccines entries")

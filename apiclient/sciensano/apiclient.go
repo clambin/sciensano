@@ -21,8 +21,10 @@ type Getter interface {
 	GetCases(ctx context.Context) (results []measurement.Measurement, err error)
 	GetMortality(ctx context.Context) (results []measurement.Measurement, err error)
 	GetHospitalisations(ctx context.Context) (results []measurement.Measurement, err error)
-	AutoRefresh(ctx context.Context)
 }
+
+var _ measurement.Fetcher = &Client{}
+var _ Getter = &Client{}
 
 // Client calls the different Sciensano APIs
 type Client struct {

@@ -92,7 +92,7 @@ var (
 func TestHandler_Search(t *testing.T) {
 	getter := &mockCache.Holder{}
 	client := reporter.New(time.Hour)
-	client.Sciensano = getter
+	client.APICache = getter
 	h := mortality.New(client)
 
 	targets := h.Search()
@@ -106,7 +106,7 @@ func TestHandler_Search(t *testing.T) {
 func TestHandler_TableQuery(t *testing.T) {
 	getter := &mockCache.Holder{}
 	client := reporter.New(time.Hour)
-	client.Sciensano = getter
+	client.APICache = getter
 	h := mortality.New(client)
 
 	args := &grafanajson.TableQueryArgs{CommonQueryArgs: grafanajson.CommonQueryArgs{Range: grafanajson.QueryRequestRange{
@@ -145,7 +145,7 @@ func BenchmarkHandler_TableQuery(b *testing.B) {
 
 	getter := &mockCache.Holder{}
 	client := reporter.New(time.Hour)
-	client.Sciensano = getter
+	client.APICache = getter
 	h := mortality.New(client)
 
 	args := &grafanajson.TableQueryArgs{CommonQueryArgs: grafanajson.CommonQueryArgs{Range: grafanajson.QueryRequestRange{

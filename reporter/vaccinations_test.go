@@ -68,7 +68,7 @@ func TestClient_GetVaccinations(t *testing.T) {
 	cache.On("Get", "Vaccinations").Return(testVaccinationsResponse, true)
 
 	r := reporter.New(time.Hour)
-	r.Sciensano = cache
+	r.APICache = cache
 
 	result, err := r.GetVaccinations()
 	require.NoError(t, err)
@@ -93,7 +93,7 @@ func TestClient_GetVaccinationsByAgeGroup(t *testing.T) {
 	cache.On("Get", "Vaccinations").Return(testVaccinationsResponse, true)
 
 	client := reporter.New(time.Hour)
-	client.Sciensano = cache
+	client.APICache = cache
 
 	testCases := []struct {
 		mode   int
@@ -146,7 +146,7 @@ func TestClient_GetVaccinationsByRegion(t *testing.T) {
 	cache.On("Get", "Vaccinations").Return(testVaccinationsResponse, true)
 
 	client := reporter.New(time.Hour)
-	client.Sciensano = cache
+	client.APICache = cache
 
 	testCases := []struct {
 		mode   int
@@ -199,7 +199,7 @@ func TestClient_GetVaccinations_Failure(t *testing.T) {
 	cache.On("Get", "Vaccinations").Return(nil, false)
 
 	client := reporter.New(time.Hour)
-	client.Sciensano = cache
+	client.APICache = cache
 
 	_, err := client.GetVaccinations()
 	require.Error(t, err)
@@ -216,7 +216,7 @@ func TestClient_GetVaccinations_Failure(t *testing.T) {
 func TestClient_Vaccinations_ApplyRegions(t *testing.T) {
 	cache := &mocks.Holder{}
 	client := reporter.New(time.Hour)
-	client.Sciensano = cache
+	client.APICache = cache
 
 	cache.
 		On("Get", "Vaccinations").
@@ -271,7 +271,7 @@ func BenchmarkClient_GetVaccination(b *testing.B) {
 	cache.On("Get", "Vaccinations").Return(bigVaccinationResponse, true)
 
 	client := reporter.New(0)
-	client.Sciensano = cache
+	client.APICache = cache
 
 	b.ResetTimer()
 
@@ -289,7 +289,7 @@ func BenchmarkClient_GetVaccinationsByAgeGroup(b *testing.B) {
 	cache.On("Get", "Vaccinations").Return(bigVaccinationResponse, true)
 
 	client := reporter.New(0)
-	client.Sciensano = cache
+	client.APICache = cache
 
 	b.ResetTimer()
 
@@ -307,7 +307,7 @@ func BenchmarkClient_GetVaccinationsByRegion(b *testing.B) {
 	cache.On("Get", "Vaccinations").Return(bigVaccinationResponse, true)
 
 	client := reporter.New(0)
-	client.Sciensano = cache
+	client.APICache = cache
 
 	b.ResetTimer()
 

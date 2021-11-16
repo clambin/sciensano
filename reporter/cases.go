@@ -16,8 +16,8 @@ type CasesGetter interface {
 
 // GetCases returns all cases
 func (client *Client) GetCases() (results *datasets.Dataset, err error) {
-	return client.Cache.MaybeGenerate("Cases", func() (output *datasets.Dataset, err2 error) {
-		if apiResult, found := client.Sciensano.Get("Cases"); found {
+	return client.ReportCache.MaybeGenerate("Cases", func() (output *datasets.Dataset, err2 error) {
+		if apiResult, found := client.APICache.Get("Cases"); found {
 			output = datasets.GroupMeasurements(apiResult)
 		} else {
 			err2 = fmt.Errorf("cache does not contain Cases entries")
@@ -28,8 +28,8 @@ func (client *Client) GetCases() (results *datasets.Dataset, err error) {
 
 // GetCasesByRegion returns all cases, grouped by region
 func (client *Client) GetCasesByRegion() (results *datasets.Dataset, err error) {
-	return client.Cache.MaybeGenerate("CasesByRegion", func() (output *datasets.Dataset, err2 error) {
-		if apiResult, found := client.Sciensano.Get("Cases"); found {
+	return client.ReportCache.MaybeGenerate("CasesByRegion", func() (output *datasets.Dataset, err2 error) {
+		if apiResult, found := client.APICache.Get("Cases"); found {
 			output = datasets.GroupMeasurementsByType(apiResult, measurement.GroupByRegion)
 		} else {
 			err2 = fmt.Errorf("cache does not contain Cases entries")
@@ -40,8 +40,8 @@ func (client *Client) GetCasesByRegion() (results *datasets.Dataset, err error) 
 
 // GetCasesByProvince returns all cases, grouped by province
 func (client *Client) GetCasesByProvince() (results *datasets.Dataset, err error) {
-	return client.Cache.MaybeGenerate("CasesByProvince", func() (output *datasets.Dataset, err2 error) {
-		if apiResult, found := client.Sciensano.Get("Cases"); found {
+	return client.ReportCache.MaybeGenerate("CasesByProvince", func() (output *datasets.Dataset, err2 error) {
+		if apiResult, found := client.APICache.Get("Cases"); found {
 			output = datasets.GroupMeasurementsByType(apiResult, measurement.GroupByProvince)
 		} else {
 			err2 = fmt.Errorf("cache does not contain Cases entries")
@@ -52,8 +52,8 @@ func (client *Client) GetCasesByProvince() (results *datasets.Dataset, err error
 
 // GetCasesByAgeGroup returns all cases, grouped by province
 func (client *Client) GetCasesByAgeGroup() (results *datasets.Dataset, err error) {
-	return client.Cache.MaybeGenerate("CasesByAgeGroup", func() (output *datasets.Dataset, err2 error) {
-		if apiResult, found := client.Sciensano.Get("Cases"); found {
+	return client.ReportCache.MaybeGenerate("CasesByAgeGroup", func() (output *datasets.Dataset, err2 error) {
+		if apiResult, found := client.APICache.Get("Cases"); found {
 			output = datasets.GroupMeasurementsByType(apiResult, measurement.GroupByAgeGroup)
 		} else {
 			err2 = fmt.Errorf("cache does not contain Cases entries")

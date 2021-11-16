@@ -21,9 +21,9 @@ type Holder interface {
 
 // Cache holds a list of measurements
 type Cache struct {
-	lock    sync.RWMutex
-	entries map[string][]Measurement
-	Fetcher Fetcher
+	lock     sync.RWMutex
+	entries  map[string][]Measurement
+	Fetchers []Fetcher
 }
 
 // Get retrieves a cached item
@@ -51,10 +51,18 @@ func (c *Cache) AutoRefresh(ctx context.Context, interval time.Duration) {
 
 // Refresh updates the cache
 func (c *Cache) Refresh(ctx context.Context) {
-	if entries, err := c.Fetcher.Update(ctx); err == nil {
+	newEntries := make(map[string][]Measurement)
+	for _, fetcher := range c.Fetchers {
+		if entries, err := fetcher.Update(ctx); err == nil {
+			for key, value := range entries {
+				newEntries[key] = value
+			}
+		}
+	}
+	if len(newEntries) > 0 {
 		c.lock.Lock()
-		defer c.lock.Unlock()
-		c.entries = entries
+		c.entries = newEntries
+		c.lock.Unlock()
 	}
 }
 

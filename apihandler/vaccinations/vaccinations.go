@@ -157,26 +157,19 @@ func filterUnknownColumns(columns []grafanajson.TableQueryResponseColumn) []graf
 }
 
 func prorateFigures(result *grafanajson.TableQueryResponse, groups map[string]int) {
-	newColumns := make([]grafanajson.TableQueryResponseColumn, 0, len(result.Columns))
 	for _, column := range result.Columns {
-		// TODO: perform this in a go routine and use WaitGroup to wait till done
-		// set up a benchmark to check speed improvement
-		if column.Text != "(empty)" {
-			switch data := column.Data.(type) {
-			case grafanajson.TableQueryResponseNumberColumn:
-				figure, ok := groups[column.Text]
-				for index, entry := range data {
-					if ok && figure != 0 {
-						data[index] = entry / float64(figure)
-					} else {
-						data[index] = 0
-					}
+		switch data := column.Data.(type) {
+		case grafanajson.TableQueryResponseNumberColumn:
+			figure, ok := groups[column.Text]
+			for index, entry := range data {
+				if ok && figure != 0 {
+					data[index] = entry / float64(figure)
+				} else {
+					data[index] = 0
 				}
 			}
-			newColumns = append(newColumns, column)
 		}
 	}
-	result.Columns = newColumns
 }
 
 func (handler *Handler) buildVaccinationLagTableResponse(_ context.Context, _ string, _ *grafanajson.TableQueryArgs) (response *grafanajson.TableQueryResponse, err error) {

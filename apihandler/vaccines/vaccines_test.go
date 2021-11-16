@@ -19,7 +19,7 @@ import (
 func TestHandler_Search(t *testing.T) {
 	cache := &mockCache.Holder{}
 	r := reporter.New(time.Hour)
-	r.Vaccines = cache
+	r.APICache = cache
 	h := vaccinesHandler.New(r)
 
 	targets := h.Search()
@@ -29,7 +29,7 @@ func TestHandler_Search(t *testing.T) {
 func TestHandler_TableQuery_Vaccines(t *testing.T) {
 	cache := &mockCache.Holder{}
 	r := reporter.New(time.Hour)
-	r.Vaccines = cache
+	r.APICache = cache
 	h := vaccinesHandler.New(r)
 
 	timestamp := time.Now()
@@ -65,7 +65,7 @@ func TestHandler_TableQuery_Vaccines(t *testing.T) {
 func TestHandler_TableQuery_VaccinesByManufacturer(t *testing.T) {
 	cache := &mockCache.Holder{}
 	r := reporter.New(time.Hour)
-	r.Vaccines = cache
+	r.APICache = cache
 	h := vaccinesHandler.New(r)
 
 	timestamp := time.Date(2021, time.September, 2, 0, 0, 0, 0, time.UTC)
@@ -110,16 +110,14 @@ func TestHandler_TableQuery_VaccinesByManufacturer(t *testing.T) {
 }
 
 func TestHandler_TableQuery_VaccinesStats(t *testing.T) {
-	vaccineCache := &mockCache.Holder{}
-	sciensanoCache := &mockCache.Holder{}
+	cache := &mockCache.Holder{}
 	r := reporter.New(time.Hour)
-	r.Vaccines = vaccineCache
-	r.Sciensano = sciensanoCache
+	r.APICache = cache
 	h := vaccinesHandler.New(r)
 
 	timestamp := time.Now()
 
-	vaccineCache.
+	cache.
 		On("Get", "Vaccines").
 		Return([]measurement.Measurement{
 			&vaccines.Batch{
@@ -128,7 +126,7 @@ func TestHandler_TableQuery_VaccinesStats(t *testing.T) {
 			},
 		}, true)
 
-	sciensanoCache.
+	cache.
 		On("Get", "Vaccinations").
 		Return([]measurement.Measurement{
 			&sciensano.APIVaccinationsResponseEntry{
@@ -152,18 +150,16 @@ func TestHandler_TableQuery_VaccinesStats(t *testing.T) {
 	assert.Equal(t, 20.0, response.Columns[1].Data.(grafanajson.TableQueryResponseNumberColumn)[0])
 	assert.Equal(t, 80.0, response.Columns[2].Data.(grafanajson.TableQueryResponseNumberColumn)[0])
 
-	mock.AssertExpectationsForObjects(t, sciensanoCache, vaccineCache)
+	mock.AssertExpectationsForObjects(t, cache, cache)
 }
 
 func TestHandler_TableQuery_VaccinesTime(t *testing.T) {
-	vaccineCache := &mockCache.Holder{}
-	sciensanoCache := &mockCache.Holder{}
+	cache := &mockCache.Holder{}
 	r := reporter.New(time.Hour)
-	r.Vaccines = vaccineCache
-	r.Sciensano = sciensanoCache
+	r.APICache = cache
 	h := vaccinesHandler.New(r)
 
-	vaccineCache.
+	cache.
 		On("Get", "Vaccines").
 		Return([]measurement.Measurement{
 			&vaccines.Batch{
@@ -176,7 +172,7 @@ func TestHandler_TableQuery_VaccinesTime(t *testing.T) {
 			},
 		}, true)
 
-	sciensanoCache.
+	cache.
 		On("Get", "Vaccinations").
 		Return([]measurement.Measurement{
 			&sciensano.APIVaccinationsResponseEntry{
@@ -224,5 +220,5 @@ func TestHandler_TableQuery_VaccinesTime(t *testing.T) {
 	assert.Equal(t, 5, int(response.Columns[1].Data.(grafanajson.TableQueryResponseNumberColumn)[1]))
 	assert.Equal(t, 1, int(response.Columns[1].Data.(grafanajson.TableQueryResponseNumberColumn)[2]))
 
-	mock.AssertExpectationsForObjects(t, sciensanoCache, vaccineCache)
+	mock.AssertExpectationsForObjects(t, cache, cache)
 }

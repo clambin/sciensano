@@ -60,18 +60,6 @@ func (handler *Handler) buildTestTableResponse(_ context.Context, _ string, args
 
 	if err == nil {
 		output = response.GenerateTableQueryResponse(tests, args)
-
-		// TODO: calculate ratio in reporter?
-		positiveRate := make(grafanajson.TableQueryResponseNumberColumn, len(tests.Timestamps))
-
-		for index := range tests.Timestamps {
-			positiveRate[index] = output.Columns[2].Data.(grafanajson.TableQueryResponseNumberColumn)[index] / output.Columns[1].Data.(grafanajson.TableQueryResponseNumberColumn)[index]
-		}
-
-		output.Columns = append(output.Columns, grafanajson.TableQueryResponseColumn{
-			Text: "rate",
-			Data: positiveRate,
-		})
 	}
 
 	return

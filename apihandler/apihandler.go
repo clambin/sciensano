@@ -52,8 +52,7 @@ func (server *Server) RunBackgroundTasks(ctx context.Context) {
 	// force load of demographics data on startup
 	go server.Demographics.GetRegionFigures()
 	// set up auto-refresh of reports
-	go server.Reporter.Sciensano.AutoRefresh(ctx, time.Hour)
-	go server.Reporter.Vaccines.AutoRefresh(ctx, time.Hour)
+	go server.Reporter.APICache.AutoRefresh(ctx, time.Hour)
 }
 
 // GetHandlers returns all configured handlers

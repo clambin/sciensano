@@ -24,17 +24,13 @@ func TestRun(t *testing.T) {
 
 	ctx := context.Background()
 	wg := sync.WaitGroup{}
-	wg.Add(3)
+	wg.Add(2)
 	go func() {
 		h.Demographics.GetAgeGroupFigures()
 		wg.Done()
 	}()
 	go func() {
-		h.Reporter.Sciensano.Refresh(ctx)
-		wg.Done()
-	}()
-	go func() {
-		h.Reporter.Vaccines.Refresh(ctx)
+		h.Reporter.APICache.Refresh(ctx)
 		wg.Done()
 	}()
 	wg.Wait()
@@ -73,6 +69,7 @@ func BenchmarkHandlers_Run(b *testing.B) {
 		},
 	}
 
+	h.Reporter.APICache.Refresh(context.Background())
 	_ = h.Demographics.GetRegionFigures()
 
 	b.ResetTimer()

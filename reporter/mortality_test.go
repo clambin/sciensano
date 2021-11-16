@@ -45,7 +45,7 @@ var (
 func TestClient_GetMortality(t *testing.T) {
 	cache := &mocks.Holder{}
 	client := reporter.New(time.Hour)
-	client.Sciensano = cache
+	client.APICache = cache
 
 	cache.
 		On("Get", "Mortality").
@@ -71,7 +71,7 @@ func TestClient_GetMortality(t *testing.T) {
 func TestClient_GetMortalityByRegion(t *testing.T) {
 	cache := &mocks.Holder{}
 	client := reporter.New(time.Hour)
-	client.Sciensano = cache
+	client.APICache = cache
 
 	cache.
 		On("Get", "Mortality").
@@ -98,7 +98,7 @@ func TestClient_GetMortalityByRegion(t *testing.T) {
 func TestClient_GetMortalityByAgeGroup(t *testing.T) {
 	cache := &mocks.Holder{}
 	client := reporter.New(time.Hour)
-	client.Sciensano = cache
+	client.APICache = cache
 
 	cache.
 		On("Get", "Mortality").
@@ -127,7 +127,7 @@ func TestClient_GetMortality_Failure(t *testing.T) {
 	cache.On("Get", "Mortality").Return(nil, false)
 
 	client := reporter.New(time.Hour)
-	client.Sciensano = cache
+	client.APICache = cache
 
 	_, err := client.GetMortality()
 	require.Error(t, err)
@@ -157,7 +157,7 @@ func BenchmarkClient_GetMortalityByRegion(b *testing.B) {
 	}
 	cache := &mocks.Holder{}
 	client := reporter.New(time.Hour)
-	client.Sciensano = cache
+	client.APICache = cache
 
 	cache.
 		On("Get", "Mortality").

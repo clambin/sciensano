@@ -19,6 +19,9 @@ type Getter interface {
 	GetBatches(ctx context.Context) (batches []measurement.Measurement, err error)
 }
 
+var _ measurement.Fetcher = &Client{}
+var _ Getter = &Client{}
+
 // Client calls the API to retrieve vaccine batches
 type Client struct {
 	URL        string
@@ -51,11 +54,11 @@ func (b Batch) GetTimestamp() time.Time {
 }
 
 // GetGroupFieldValue returns the value of a groupable field.  Not used for Batch.
-func (b Batch) GetGroupFieldValue(groupField int) string {
+func (b Batch) GetGroupFieldValue(groupField int) (value string) {
 	if groupField == measurement.GroupByManufacturer {
-		return b.Manufacturer
+		value = b.Manufacturer
 	}
-	return ""
+	return
 }
 
 // GetTotalValue returns the entry's total number of vaccines

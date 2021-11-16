@@ -15,8 +15,8 @@ type HospitalisationsGetter interface {
 
 // GetHospitalisations returns all hospitalisations
 func (client *Client) GetHospitalisations() (results *datasets.Dataset, err error) {
-	return client.Cache.MaybeGenerate("Hospitalisations", func() (output *datasets.Dataset, err2 error) {
-		if apiResult, found := client.Sciensano.Get("Hospitalisations"); found {
+	return client.ReportCache.MaybeGenerate("Hospitalisations", func() (output *datasets.Dataset, err2 error) {
+		if apiResult, found := client.APICache.Get("Hospitalisations"); found {
 			output = datasets.GroupMeasurements(apiResult)
 		} else {
 			err2 = fmt.Errorf("cache does not contain Hospitalisations entries")
@@ -27,8 +27,8 @@ func (client *Client) GetHospitalisations() (results *datasets.Dataset, err erro
 
 // GetHospitalisationsByRegion returns all hospitalisations, grouped by region
 func (client *Client) GetHospitalisationsByRegion() (results *datasets.Dataset, err error) {
-	return client.Cache.MaybeGenerate("HospitalisationsByRegion", func() (output *datasets.Dataset, err2 error) {
-		if apiResult, found := client.Sciensano.Get("Hospitalisations"); found {
+	return client.ReportCache.MaybeGenerate("HospitalisationsByRegion", func() (output *datasets.Dataset, err2 error) {
+		if apiResult, found := client.APICache.Get("Hospitalisations"); found {
 			output = datasets.GroupMeasurementsByType(apiResult, measurement.GroupByRegion)
 		} else {
 			err2 = fmt.Errorf("cache does not contain Hospitalisations entries")
@@ -39,8 +39,8 @@ func (client *Client) GetHospitalisationsByRegion() (results *datasets.Dataset, 
 
 // GetHospitalisationsByProvince returns all hospitalisations, grouped by province
 func (client *Client) GetHospitalisationsByProvince() (results *datasets.Dataset, err error) {
-	return client.Cache.MaybeGenerate("HospitalisationsByProvince", func() (output *datasets.Dataset, err2 error) {
-		if apiResult, found := client.Sciensano.Get("Hospitalisations"); found {
+	return client.ReportCache.MaybeGenerate("HospitalisationsByProvince", func() (output *datasets.Dataset, err2 error) {
+		if apiResult, found := client.APICache.Get("Hospitalisations"); found {
 			output = datasets.GroupMeasurementsByType(apiResult, measurement.GroupByProvince)
 		} else {
 			err2 = fmt.Errorf("cache does not contain Hospitalisations entries")
