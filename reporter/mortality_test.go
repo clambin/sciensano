@@ -1,10 +1,9 @@
 package reporter_test
 
 import (
-	"context"
 	"github.com/clambin/sciensano/apiclient/sciensano"
-	"github.com/clambin/sciensano/apiclient/sciensano/mocks"
 	"github.com/clambin/sciensano/measurement"
+	"github.com/clambin/sciensano/measurement/mocks"
 	"github.com/clambin/sciensano/reporter"
 	"github.com/clambin/sciensano/reporter/datasets"
 	"github.com/stretchr/testify/assert"
@@ -44,16 +43,15 @@ var (
 )
 
 func TestClient_GetMortality(t *testing.T) {
-	apiClient := &mocks.Getter{}
-	client := reporter.NewCachedClient(time.Hour)
-	client.Sciensano = apiClient
-	ctx := context.Background()
+	cache := &mocks.Holder{}
+	client := reporter.New(time.Hour)
+	client.Sciensano = cache
 
-	apiClient.
-		On("GetMortality", mock.AnythingOfType("*context.emptyCtx")).
-		Return(testMortalityResponse, nil)
+	cache.
+		On("Get", "Mortality").
+		Return(testMortalityResponse, true)
 
-	cases, err := client.GetMortality(ctx)
+	cases, err := client.GetMortality()
 	require.NoError(t, err)
 
 	assert.Equal(t, &datasets.Dataset{
@@ -67,20 +65,19 @@ func TestClient_GetMortality(t *testing.T) {
 		},
 	}, cases)
 
-	mock.AssertExpectationsForObjects(t, apiClient)
+	mock.AssertExpectationsForObjects(t, cache)
 }
 
 func TestClient_GetMortalityByRegion(t *testing.T) {
-	apiClient := &mocks.Getter{}
-	client := reporter.NewCachedClient(time.Hour)
-	client.Sciensano = apiClient
-	ctx := context.Background()
+	cache := &mocks.Holder{}
+	client := reporter.New(time.Hour)
+	client.Sciensano = cache
 
-	apiClient.
-		On("GetMortality", mock.AnythingOfType("*context.emptyCtx")).
-		Return(testMortalityResponse, nil)
+	cache.
+		On("Get", "Mortality").
+		Return(testMortalityResponse, true)
 
-	cases, err := client.GetMortalityByRegion(ctx)
+	cases, err := client.GetMortalityByRegion()
 	require.NoError(t, err)
 
 	assert.Equal(t, &datasets.Dataset{
@@ -95,20 +92,19 @@ func TestClient_GetMortalityByRegion(t *testing.T) {
 		},
 	}, cases)
 
-	mock.AssertExpectationsForObjects(t, apiClient)
+	mock.AssertExpectationsForObjects(t, cache)
 }
 
 func TestClient_GetMortalityByAgeGroup(t *testing.T) {
-	apiClient := &mocks.Getter{}
-	client := reporter.NewCachedClient(time.Hour)
-	client.Sciensano = apiClient
-	ctx := context.Background()
+	cache := &mocks.Holder{}
+	client := reporter.New(time.Hour)
+	client.Sciensano = cache
 
-	apiClient.
-		On("GetMortality", mock.AnythingOfType("*context.emptyCtx")).
-		Return(testMortalityResponse, nil)
+	cache.
+		On("Get", "Mortality").
+		Return(testMortalityResponse, true)
 
-	cases, err := client.GetMortalityByAgeGroup(ctx)
+	cases, err := client.GetMortalityByAgeGroup()
 	require.NoError(t, err)
 	assert.Equal(t, &datasets.Dataset{
 		Timestamps: []time.Time{
@@ -123,11 +119,30 @@ func TestClient_GetMortalityByAgeGroup(t *testing.T) {
 		},
 	}, cases)
 
-	mock.AssertExpectationsForObjects(t, apiClient)
+	mock.AssertExpectationsForObjects(t, cache)
+}
+
+func TestClient_GetMortality_Failure(t *testing.T) {
+	cache := &mocks.Holder{}
+	cache.On("Get", "Mortality").Return(nil, false)
+
+	client := reporter.New(time.Hour)
+	client.Sciensano = cache
+
+	_, err := client.GetMortality()
+	require.Error(t, err)
+
+	_, err = client.GetMortalityByRegion()
+	require.Error(t, err)
+
+	_, err = client.GetMortalityByAgeGroup()
+	require.Error(t, err)
+
+	mock.AssertExpectationsForObjects(t, cache)
 }
 
 func BenchmarkClient_GetMortalityByRegion(b *testing.B) {
-	var bigResponse sciensano.APIMortalityResponse
+	var bigResponse []measurement.Measurement
 	ts := time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)
 
 	for i := 0; i < 2*365; i++ {
@@ -140,17 +155,16 @@ func BenchmarkClient_GetMortalityByRegion(b *testing.B) {
 		}
 		ts = ts.Add(24 * time.Hour)
 	}
-	apiClient := &mocks.Getter{}
-	client := reporter.NewCachedClient(time.Hour)
-	client.Sciensano = apiClient
-	ctx := context.Background()
+	cache := &mocks.Holder{}
+	client := reporter.New(time.Hour)
+	client.Sciensano = cache
 
-	apiClient.
-		On("GetMortality", mock.AnythingOfType("*context.emptyCtx")).
-		Return(bigResponse, nil)
+	cache.
+		On("Get", "Mortality").
+		Return(bigResponse, true)
 
 	for i := 0; i < 100; i++ {
-		_, err := client.GetMortalityByRegion(ctx)
+		_, err := client.GetMortalityByRegion()
 		require.NoError(b, err)
 	}
 }

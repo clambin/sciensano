@@ -58,10 +58,6 @@ func (v APIMortalityResponseEntry) GetAttributeValues() (values []float64) {
 
 // GetMortality retrieves all recorded COVID-19 mortality figures
 func (client *Client) GetMortality(ctx context.Context) (results []measurement.Measurement, err error) {
-	return client.Call(ctx, "mortality", client.getMortality)
-}
-
-func (client *Client) getMortality(ctx context.Context) (results []measurement.Measurement, err error) {
 	timer := prometheus.NewTimer(metricRequestLatency.WithLabelValues("mortality"))
 	var body io.ReadCloser
 	if body, err = client.call(ctx, "COVID19BE_MORT.json"); err == nil {

@@ -64,3 +64,25 @@ func TestBatch_Measurement(t *testing.T) {
 	assert.Equal(t, []string{"total"}, b.GetAttributeNames())
 	assert.Equal(t, []float64{200}, b.GetAttributeValues())
 }
+
+func TestClient_Refresh(t *testing.T) {
+	server := fake.Server{}
+	apiServer := httptest.NewServer(http.HandlerFunc(server.Handler))
+
+	client := vaccines.Client{
+		URL:        apiServer.URL,
+		HTTPClient: &http.Client{},
+	}
+
+	response, err := client.Update(context.Background())
+	require.NoError(t, err)
+	assert.Len(t, response, 1)
+	require.Contains(t, response, "Vaccines")
+	assert.NotNil(t, response["Vaccines"])
+
+	apiServer.Close()
+
+	_, err = client.Update(context.Background())
+	assert.Error(t, err)
+
+}

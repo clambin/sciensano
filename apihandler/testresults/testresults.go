@@ -54,13 +54,14 @@ func (handler *Handler) TableQuery(ctx context.Context, target string, args *gra
 	return
 }
 
-func (handler *Handler) buildTestTableResponse(ctx context.Context, _ string, args *grafanajson.TableQueryArgs) (output *grafanajson.TableQueryResponse, err error) {
+func (handler *Handler) buildTestTableResponse(_ context.Context, _ string, args *grafanajson.TableQueryArgs) (output *grafanajson.TableQueryResponse, err error) {
 	var tests *datasets.Dataset
-	tests, err = handler.Sciensano.GetTestResults(ctx)
+	tests, err = handler.Sciensano.GetTestResults()
 
 	if err == nil {
 		output = response.GenerateTableQueryResponse(tests, args)
 
+		// TODO: calculate ratio in reporter?
 		positiveRate := make(grafanajson.TableQueryResponseNumberColumn, len(tests.Timestamps))
 
 		for index := range tests.Timestamps {

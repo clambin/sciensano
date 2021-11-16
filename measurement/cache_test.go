@@ -2,51 +2,81 @@ package measurement_test
 
 import (
 	"context"
-	"fmt"
 	"github.com/clambin/sciensano/measurement"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"sync"
 	"testing"
 	"time"
 )
 
-type CacheTester struct {
-	measurement.Cache
-	Count int
+type fetcher struct {
+	called int
 }
 
-func (ct *CacheTester) set(_ context.Context) (value []measurement.Measurement, err error) {
-	ct.Count++
+type value struct {
+	Timestamp time.Time
+	Value     float64
+}
+
+func (v value) GetTimestamp() time.Time {
+	panic("implement me")
+}
+
+func (v value) GetGroupFieldValue(_ int) string {
+	panic("implement me")
+}
+
+func (v value) GetTotalValue() float64 {
+	panic("implement me")
+}
+
+func (v value) GetAttributeNames() []string {
+	panic("implement me")
+}
+
+func (v value) GetAttributeValues() []float64 {
+	panic("implement me")
+}
+
+func (f *fetcher) Update(_ context.Context) (entries map[string][]measurement.Measurement, err error) {
+	f.called++
+	entries = map[string][]measurement.Measurement{
+		"foo": {
+			&value{},
+		},
+	}
 	return
 }
 
-func (ct *CacheTester) fail(_ context.Context) (value []measurement.Measurement, err error) {
-	return nil, fmt.Errorf("failed")
-}
-
 func TestCache(t *testing.T) {
-	ctx := context.Background()
-	ct := &CacheTester{
-		Cache: measurement.Cache{
-			Retention: 15 * time.Minute,
-		},
+	f := &fetcher{}
+	ct := &measurement.Cache{
+		Fetcher: f,
 	}
-	assert.Zero(t, ct.CacheSize())
 
-	_, err := ct.Call(ctx, "test", ct.fail)
-	assert.Error(t, err)
-	assert.Equal(t, 1, ct.CacheSize())
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+	ctx, cancel := context.WithCancel(context.Background())
 
-	_, err = ct.Call(ctx, "test", ct.set)
-	assert.NoError(t, err)
-	assert.Equal(t, 1, ct.CacheSize())
-	assert.Equal(t, 1, ct.Count)
+	go func() {
+		ct.AutoRefresh(ctx, 20*time.Millisecond)
+		wg.Done()
+	}()
 
-	_, err = ct.Call(ctx, "test", ct.set)
-	assert.Equal(t, 1, ct.CacheSize())
-	assert.Equal(t, 1, ct.Count)
+	require.Eventually(t, func() bool { return ct.CacheSize() == 1 }, 500*time.Millisecond, 10*time.Millisecond)
 
-	_, err = ct.Call(ctx, "test", ct.fail)
-	assert.NoError(t, err)
-	assert.Equal(t, 1, ct.CacheSize())
-	assert.Equal(t, 1, ct.Count)
+	entries, found := ct.Get("foo")
+	require.True(t, found)
+	assert.Len(t, entries, 1)
+
+	_, found = ct.Get("bar")
+	require.False(t, found)
+
+	time.Sleep(100 * time.Millisecond)
+	cancel()
+	wg.Wait()
+
+	assert.Greater(t, f.called, 1)
+
 }

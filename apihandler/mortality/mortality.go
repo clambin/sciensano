@@ -56,15 +56,15 @@ func (handler *Handler) TableQuery(ctx context.Context, target string, args *gra
 	return
 }
 
-func (handler *Handler) buildCasesResponse(ctx context.Context, target string, args *grafanajson.TableQueryArgs) (output *grafanajson.TableQueryResponse, err error) {
+func (handler *Handler) buildCasesResponse(_ context.Context, target string, args *grafanajson.TableQueryArgs) (output *grafanajson.TableQueryResponse, err error) {
 	var cases *datasets.Dataset
 	switch target {
 	case "mortality":
-		cases, err = handler.Sciensano.GetMortality(ctx)
+		cases, err = handler.Sciensano.GetMortality()
 	case "mortality-region":
-		cases, err = handler.Sciensano.GetMortalityByRegion(ctx)
+		cases, err = handler.Sciensano.GetMortalityByRegion()
 	case "mortality-age":
-		cases, err = handler.Sciensano.GetMortalityByAgeGroup(ctx)
+		cases, err = handler.Sciensano.GetMortalityByAgeGroup()
 	}
 
 	if err == nil {

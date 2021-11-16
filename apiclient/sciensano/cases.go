@@ -61,10 +61,6 @@ func (v APICasesResponseEntry) GetAttributeValues() (values []float64) {
 
 // GetCases retrieves all recorded COVID-19 cases
 func (client *Client) GetCases(ctx context.Context) (results []measurement.Measurement, err error) {
-	return client.Call(ctx, "cases", client.getCases)
-}
-
-func (client *Client) getCases(ctx context.Context) (results []measurement.Measurement, err error) {
 	timer := prometheus.NewTimer(metricRequestLatency.WithLabelValues("cases"))
 	var body io.ReadCloser
 	if body, err = client.call(ctx, "COVID19BE_CASES_AGESEX.json"); err == nil {

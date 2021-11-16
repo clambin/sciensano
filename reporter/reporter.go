@@ -10,8 +10,8 @@ import (
 
 // Client queries different Reporter APIs
 type Client struct {
-	Sciensano sciensano.Getter
-	Vaccines  vaccines.Getter
+	Sciensano measurement.Holder
+	Vaccines  measurement.Holder
 	Cache
 }
 
@@ -27,16 +27,18 @@ type Reporter interface {
 
 var _ Reporter = &Client{}
 
-// NewCachedClient creates a new Client which caches results for duration interval
-func NewCachedClient(duration time.Duration) *Client {
+// New creates a new Client which caches results for duration interval
+func New(duration time.Duration) *Client {
 	return &Client{
-		Sciensano: &sciensano.Client{
-			HTTPClient: &http.Client{},
-			Cache:      measurement.Cache{Retention: duration + 5*time.Second},
+		Sciensano: &measurement.Cache{
+			Fetcher: &sciensano.Client{
+				HTTPClient: &http.Client{},
+			},
 		},
-		Vaccines: &vaccines.Client{
-			HTTPClient: &http.Client{},
-			Cache:      measurement.Cache{Retention: duration + 5*time.Second},
+		Vaccines: &measurement.Cache{
+			Fetcher: &vaccines.Client{
+				HTTPClient: &http.Client{},
+			},
 		},
 		Cache: *NewCache(duration),
 	}

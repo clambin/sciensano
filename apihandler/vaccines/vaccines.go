@@ -56,9 +56,9 @@ func (handler *Handler) TableQuery(ctx context.Context, target string, args *gra
 	return
 }
 
-func (handler *Handler) buildVaccineTableResponse(ctx context.Context, _ string, args *grafanajson.TableQueryArgs) (output *grafanajson.TableQueryResponse, err error) {
+func (handler *Handler) buildVaccineTableResponse(_ context.Context, _ string, args *grafanajson.TableQueryArgs) (output *grafanajson.TableQueryResponse, err error) {
 	var batches *datasets.Dataset
-	batches, err = handler.Reporter.GetVaccines(ctx)
+	batches, err = handler.Reporter.GetVaccines()
 
 	if err == nil {
 		batches.Accumulate()
@@ -68,9 +68,9 @@ func (handler *Handler) buildVaccineTableResponse(ctx context.Context, _ string,
 	return
 }
 
-func (handler *Handler) buildVaccineStatsTableResponse(ctx context.Context, _ string, args *grafanajson.TableQueryArgs) (response *grafanajson.TableQueryResponse, err error) {
+func (handler *Handler) buildVaccineStatsTableResponse(_ context.Context, _ string, args *grafanajson.TableQueryArgs) (response *grafanajson.TableQueryResponse, err error) {
 	var batches *datasets.Dataset
-	batches, err = handler.Reporter.GetVaccines(ctx)
+	batches, err = handler.Reporter.GetVaccines()
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to get vaccine data: %s", err.Error())
@@ -80,7 +80,7 @@ func (handler *Handler) buildVaccineStatsTableResponse(ctx context.Context, _ st
 	batches.ApplyRange(args.Range.From, args.Range.To)
 
 	var vaccinations *datasets.Dataset
-	vaccinations, err = handler.Reporter.GetVaccinations(ctx)
+	vaccinations, err = handler.Reporter.GetVaccinations()
 
 	if err != nil {
 		return
@@ -130,9 +130,9 @@ func calculateVaccineReserve(vaccinationsData *datasets.Dataset, batches *datase
 	return
 }
 
-func (handler *Handler) buildVaccineTimeTableResponse(ctx context.Context, _ string, args *grafanajson.TableQueryArgs) (response *grafanajson.TableQueryResponse, err error) {
+func (handler *Handler) buildVaccineTimeTableResponse(_ context.Context, _ string, args *grafanajson.TableQueryArgs) (response *grafanajson.TableQueryResponse, err error) {
 	var batches *datasets.Dataset
-	batches, err = handler.Reporter.GetVaccines(ctx)
+	batches, err = handler.Reporter.GetVaccines()
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to get vaccine data: %s", err.Error())
@@ -142,7 +142,7 @@ func (handler *Handler) buildVaccineTimeTableResponse(ctx context.Context, _ str
 	batches.ApplyRange(args.Range.From, args.Range.To)
 
 	var vaccinations *datasets.Dataset
-	vaccinations, err = handler.Reporter.GetVaccinations(ctx)
+	vaccinations, err = handler.Reporter.GetVaccinations()
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to get vaccination data: %s", err.Error())

@@ -4,12 +4,11 @@ import (
 	"context"
 	grafanajson "github.com/clambin/grafana-json"
 	"github.com/clambin/sciensano/apiclient/sciensano"
-	mockAPI "github.com/clambin/sciensano/apiclient/sciensano/mocks"
 	"github.com/clambin/sciensano/apihandler/mortality"
 	"github.com/clambin/sciensano/measurement"
+	mockCache "github.com/clambin/sciensano/measurement/mocks"
 	"github.com/clambin/sciensano/reporter"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"testing"
 	"time"
@@ -91,8 +90,8 @@ var (
 )
 
 func TestHandler_Search(t *testing.T) {
-	getter := &mockAPI.Getter{}
-	client := reporter.NewCachedClient(time.Hour)
+	getter := &mockCache.Holder{}
+	client := reporter.New(time.Hour)
 	client.Sciensano = getter
 	h := mortality.New(client)
 
@@ -105,8 +104,8 @@ func TestHandler_Search(t *testing.T) {
 }
 
 func TestHandler_TableQuery(t *testing.T) {
-	getter := &mockAPI.Getter{}
-	client := reporter.NewCachedClient(time.Hour)
+	getter := &mockCache.Holder{}
+	client := reporter.New(time.Hour)
 	client.Sciensano = getter
 	h := mortality.New(client)
 
@@ -116,8 +115,8 @@ func TestHandler_TableQuery(t *testing.T) {
 	}}}
 
 	getter.
-		On("GetMortality", mock.AnythingOfType("*context.emptyCtx")).
-		Return(testResponse, nil)
+		On("Get", "Mortality").
+		Return(testResponse, true)
 
 	for _, testCase := range testCases {
 		response, err := h.Endpoints().TableQuery(context.Background(), testCase.Target, args)
@@ -144,8 +143,8 @@ func BenchmarkHandler_TableQuery(b *testing.B) {
 		timestamp = timestamp.Add(24 * time.Hour)
 	}
 
-	getter := &mockAPI.Getter{}
-	client := reporter.NewCachedClient(time.Hour)
+	getter := &mockCache.Holder{}
+	client := reporter.New(time.Hour)
 	client.Sciensano = getter
 	h := mortality.New(client)
 
@@ -154,8 +153,8 @@ func BenchmarkHandler_TableQuery(b *testing.B) {
 	}}}
 
 	getter.
-		On("GetMortality", mock.AnythingOfType("*context.emptyCtx")).
-		Return(bigResponse, nil)
+		On("Get", "Mortality").
+		Return(bigResponse, true)
 
 	b.ResetTimer()
 

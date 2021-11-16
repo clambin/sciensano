@@ -1,11 +1,10 @@
 package reporter_test
 
 import (
-	"context"
 	"fmt"
 	"github.com/clambin/sciensano/apiclient/sciensano"
-	"github.com/clambin/sciensano/apiclient/sciensano/mocks"
 	"github.com/clambin/sciensano/measurement"
+	"github.com/clambin/sciensano/measurement/mocks"
 	"github.com/clambin/sciensano/reporter"
 	"github.com/clambin/sciensano/reporter/datasets"
 	"github.com/stretchr/testify/assert"
@@ -65,13 +64,13 @@ var (
 )
 
 func TestClient_GetVaccinations(t *testing.T) {
-	apiClient := &mocks.Getter{}
-	apiClient.On("GetVaccinations", mock.Anything).Return(testVaccinationsResponse, nil)
+	cache := &mocks.Holder{}
+	cache.On("Get", "Vaccinations").Return(testVaccinationsResponse, true)
 
-	r := reporter.NewCachedClient(time.Hour)
-	r.Sciensano = apiClient
+	r := reporter.New(time.Hour)
+	r.Sciensano = cache
 
-	result, err := r.GetVaccinations(context.Background())
+	result, err := r.GetVaccinations()
 	require.NoError(t, err)
 
 	assert.Equal(t, &datasets.Dataset{
@@ -86,15 +85,15 @@ func TestClient_GetVaccinations(t *testing.T) {
 			{Name: "booster", Values: []float64{5, 5}},
 		}}, result)
 
-	mock.AssertExpectationsForObjects(t, apiClient)
+	mock.AssertExpectationsForObjects(t, cache)
 }
 
 func TestClient_GetVaccinationsByAgeGroup(t *testing.T) {
-	apiClient := &mocks.Getter{}
-	apiClient.On("GetVaccinations", mock.Anything).Return(testVaccinationsResponse, nil)
+	cache := &mocks.Holder{}
+	cache.On("Get", "Vaccinations").Return(testVaccinationsResponse, true)
 
-	client := reporter.NewCachedClient(time.Hour)
-	client.Sciensano = apiClient
+	client := reporter.New(time.Hour)
+	client.Sciensano = cache
 
 	testCases := []struct {
 		mode   int
@@ -134,20 +133,20 @@ func TestClient_GetVaccinationsByAgeGroup(t *testing.T) {
 	}
 
 	for index, testCase := range testCases {
-		result, err := client.GetVaccinationsByAgeGroup(context.Background(), testCase.mode)
+		result, err := client.GetVaccinationsByAgeGroup(testCase.mode)
 		require.NoError(t, err, index)
 
 		assert.Equal(t, testCase.output, result, index)
 	}
-	mock.AssertExpectationsForObjects(t, apiClient)
+	mock.AssertExpectationsForObjects(t, cache)
 }
 
 func TestClient_GetVaccinationsByRegion(t *testing.T) {
-	apiClient := &mocks.Getter{}
-	apiClient.On("GetVaccinations", mock.Anything).Return(testVaccinationsResponse, nil)
+	cache := &mocks.Holder{}
+	cache.On("Get", "Vaccinations").Return(testVaccinationsResponse, true)
 
-	client := reporter.NewCachedClient(time.Hour)
-	client.Sciensano = apiClient
+	client := reporter.New(time.Hour)
+	client.Sciensano = cache
 
 	testCases := []struct {
 		mode   int
@@ -187,46 +186,43 @@ func TestClient_GetVaccinationsByRegion(t *testing.T) {
 	}
 
 	for index, testCase := range testCases {
-		result, err := client.GetVaccinationsByRegion(context.Background(), testCase.mode)
+		result, err := client.GetVaccinationsByRegion(testCase.mode)
 		require.NoError(t, err, index)
 
 		assert.Equal(t, testCase.output, result, index)
 	}
-	mock.AssertExpectationsForObjects(t, apiClient)
+	mock.AssertExpectationsForObjects(t, cache)
 }
 
 func TestClient_GetVaccinations_Failure(t *testing.T) {
-	apiClient := &mocks.Getter{}
-	apiClient.On("GetVaccinations", mock.Anything).Return(nil, fmt.Errorf("API error"))
+	cache := &mocks.Holder{}
+	cache.On("Get", "Vaccinations").Return(nil, false)
 
-	client := reporter.NewCachedClient(time.Hour)
-	client.Sciensano = apiClient
+	client := reporter.New(time.Hour)
+	client.Sciensano = cache
 
-	ctx := context.Background()
-
-	_, err := client.GetVaccinations(ctx)
+	_, err := client.GetVaccinations()
 	require.Error(t, err)
 
-	_, err = client.GetVaccinationsByRegion(ctx, reporter.VaccinationTypePartial)
+	_, err = client.GetVaccinationsByRegion(reporter.VaccinationTypePartial)
 	require.Error(t, err)
 
-	_, err = client.GetVaccinationsByAgeGroup(ctx, reporter.VaccinationTypePartial)
+	_, err = client.GetVaccinationsByAgeGroup(reporter.VaccinationTypePartial)
 	require.Error(t, err)
 
-	mock.AssertExpectationsForObjects(t, apiClient)
+	mock.AssertExpectationsForObjects(t, cache)
 }
 
 func TestClient_Vaccinations_ApplyRegions(t *testing.T) {
-	apiClient := &mocks.Getter{}
-	client := reporter.NewCachedClient(time.Hour)
-	client.Sciensano = apiClient
-	ctx := context.Background()
+	cache := &mocks.Holder{}
+	client := reporter.New(time.Hour)
+	client.Sciensano = cache
 
-	apiClient.
-		On("GetVaccinations", mock.AnythingOfType("*context.emptyCtx")).
-		Return(testVaccinationsResponse, nil)
+	cache.
+		On("Get", "Vaccinations").
+		Return(testVaccinationsResponse, true)
 
-	cases, err := client.GetVaccinationsByAgeGroup(ctx, reporter.VaccinationTypeBooster)
+	cases, err := client.GetVaccinationsByAgeGroup(reporter.VaccinationTypeBooster)
 	require.NoError(t, err)
 	require.Len(t, cases.Timestamps, 2)
 	require.Equal(t, []datasets.DatasetGroup{{Name: "35-44", Values: []float64{5, 5}}}, cases.Groups)
@@ -235,7 +231,7 @@ func TestClient_Vaccinations_ApplyRegions(t *testing.T) {
 	require.Len(t, cases.Timestamps, 1)
 	require.Equal(t, []datasets.DatasetGroup{{Name: "35-44", Values: []float64{5}}}, cases.Groups)
 
-	mock.AssertExpectationsForObjects(t, apiClient)
+	mock.AssertExpectationsForObjects(t, cache)
 }
 
 var bigVaccinationResponse []measurement.Measurement
@@ -271,60 +267,54 @@ func buildBigVaccinationResponse() {
 
 func BenchmarkClient_GetVaccination(b *testing.B) {
 	buildBigVaccinationResponse()
-	apiClient := &mocks.Getter{}
-	apiClient.On("GetVaccinations", mock.Anything).Return(bigVaccinationResponse, nil)
+	cache := &mocks.Holder{}
+	cache.On("Get", "Vaccinations").Return(bigVaccinationResponse, true)
 
-	client := reporter.NewCachedClient(0)
-	client.Sciensano = apiClient
-
-	ctx := context.Background()
+	client := reporter.New(0)
+	client.Sciensano = cache
 
 	b.ResetTimer()
 
 	for i := 0; i < 100; i++ {
-		_, err := client.GetVaccinations(ctx)
+		_, err := client.GetVaccinations()
 		require.NoError(b, err)
 	}
 
-	mock.AssertExpectationsForObjects(b, apiClient)
+	mock.AssertExpectationsForObjects(b, cache)
 }
 
 func BenchmarkClient_GetVaccinationsByAgeGroup(b *testing.B) {
 	buildBigVaccinationResponse()
-	apiClient := &mocks.Getter{}
-	apiClient.On("GetVaccinations", mock.Anything).Return(bigVaccinationResponse, nil)
+	cache := &mocks.Holder{}
+	cache.On("Get", "Vaccinations").Return(bigVaccinationResponse, true)
 
-	client := reporter.NewCachedClient(0)
-	client.Sciensano = apiClient
-
-	ctx := context.Background()
+	client := reporter.New(0)
+	client.Sciensano = cache
 
 	b.ResetTimer()
 
 	for i := 0; i < 100; i++ {
-		_, err := client.GetVaccinationsByAgeGroup(ctx, reporter.VaccinationTypeFull)
+		_, err := client.GetVaccinationsByAgeGroup(reporter.VaccinationTypeFull)
 		require.NoError(b, err)
 	}
 
-	mock.AssertExpectationsForObjects(b, apiClient)
+	mock.AssertExpectationsForObjects(b, cache)
 }
 
 func BenchmarkClient_GetVaccinationsByRegion(b *testing.B) {
 	buildBigVaccinationResponse()
-	apiClient := &mocks.Getter{}
-	apiClient.On("GetVaccinations", mock.Anything).Return(bigVaccinationResponse, nil)
+	cache := &mocks.Holder{}
+	cache.On("Get", "Vaccinations").Return(bigVaccinationResponse, true)
 
-	client := reporter.NewCachedClient(0)
-	client.Sciensano = apiClient
-
-	ctx := context.Background()
+	client := reporter.New(0)
+	client.Sciensano = cache
 
 	b.ResetTimer()
 
-	for i := 0; i < 10; i++ {
-		_, err := client.GetVaccinationsByRegion(ctx, reporter.VaccinationTypeFull)
+	for i := 0; i < 100; i++ {
+		_, err := client.GetVaccinationsByRegion(reporter.VaccinationTypeFull)
 		require.NoError(b, err)
 	}
 
-	mock.AssertExpectationsForObjects(b, apiClient)
+	mock.AssertExpectationsForObjects(b, cache)
 }

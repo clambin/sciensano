@@ -1,10 +1,9 @@
 package reporter_test
 
 import (
-	"context"
 	"github.com/clambin/sciensano/apiclient/vaccines"
-	"github.com/clambin/sciensano/apiclient/vaccines/mocks"
 	"github.com/clambin/sciensano/measurement"
+	"github.com/clambin/sciensano/measurement/mocks"
 	"github.com/clambin/sciensano/reporter"
 	"github.com/clambin/sciensano/reporter/datasets"
 	"github.com/stretchr/testify/assert"
@@ -32,13 +31,13 @@ var (
 )
 
 func TestClient_GetVaccines(t *testing.T) {
-	apiClient := &mocks.Getter{}
-	apiClient.On("GetBatches", mock.Anything).Return(testVaccinesResponse, nil)
+	cache := &mocks.Holder{}
+	cache.On("Get", "Vaccines").Return(testVaccinesResponse, true)
 
-	client := reporter.NewCachedClient(time.Hour)
-	client.Vaccines = apiClient
+	client := reporter.New(time.Hour)
+	client.Vaccines = cache
 
-	result, err := client.GetVaccines(context.Background())
+	result, err := client.GetVaccines()
 	require.NoError(t, err)
 
 	assert.Equal(t, &datasets.Dataset{
@@ -50,4 +49,17 @@ func TestClient_GetVaccines(t *testing.T) {
 			{Name: "total", Values: []float64{30, 40}},
 		},
 	}, result)
+}
+
+func TestClient_GetVaccines_Failure(t *testing.T) {
+	cache := &mocks.Holder{}
+	cache.On("Get", "Vaccines").Return(nil, false)
+
+	client := reporter.New(time.Hour)
+	client.Vaccines = cache
+
+	_, err := client.GetVaccines()
+	require.Error(t, err)
+
+	mock.AssertExpectationsForObjects(t, cache)
 }

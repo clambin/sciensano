@@ -7,6 +7,7 @@ import (
 	"html"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -16,10 +17,14 @@ type Handler struct {
 	Slow      bool
 	Responses map[string]string
 	Count     int
+	lock      sync.Mutex
 }
 
 // Handle processes an incoming HTTP request
 func (handler *Handler) Handle(w http.ResponseWriter, req *http.Request) {
+	handler.lock.Lock()
+	defer handler.lock.Unlock()
+
 	log.WithField("path", req.URL.Path).Debug("Handler")
 
 	handler.Count++

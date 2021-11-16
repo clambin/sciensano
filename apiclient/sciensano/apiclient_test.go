@@ -3,71 +3,38 @@ package sciensano_test
 import (
 	"context"
 	"github.com/clambin/sciensano/apiclient/sciensano"
-	"github.com/clambin/sciensano/measurement"
+	"github.com/clambin/sciensano/apiclient/sciensano/fake"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"net/http"
 	"net/http/httptest"
-	"sync"
 	"testing"
 	"time"
 )
 
-func TestClient_AutoRefresh(t *testing.T) {
-	server := &Server{}
-	testServer := httptest.NewServer(http.HandlerFunc(server.handle))
+func TestClient_Update(t *testing.T) {
+	server := &fake.Handler{}
+	testServer := httptest.NewServer(http.HandlerFunc(server.Handle))
 	defer testServer.Close()
 
 	client := sciensano.Client{
 		URL:        testServer.URL,
 		HTTPClient: &http.Client{},
-		Cache:      measurement.Cache{Retention: 15 * time.Minute},
 	}
-	ctx, cancel := context.WithCancel(context.Background())
-	wg := sync.WaitGroup{}
-	wg.Add(1)
-	go func() {
-		client.AutoRefresh(ctx)
-		wg.Done()
-	}()
+	ctx := context.Background()
+	results, err := client.Update(ctx)
+	require.NoError(t, err)
+	assert.Len(t, results, 5)
+	assert.Contains(t, results, "TestResults")
+	assert.Contains(t, results, "Vaccinations")
+	assert.Contains(t, results, "Hospitalisations")
+	assert.Contains(t, results, "Cases")
+	assert.Contains(t, results, "Mortality")
 
-	assert.Eventually(t, func() bool { return len(server.calls()) == 5 }, 500*time.Millisecond, 10*time.Millisecond)
-	for key, value := range server.calls() {
-		assert.Equal(t, 1, value, key)
-	}
+	testServer.Close()
 
-	cancel()
-	wg.Wait()
-}
-
-type Server struct {
-	lock  sync.Mutex
-	paths map[string]int
-}
-
-func (s *Server) init() {
-	if s.paths == nil {
-		s.paths = make(map[string]int)
-	}
-}
-
-func (s *Server) handle(w http.ResponseWriter, req *http.Request) {
-	s.lock.Lock()
-	defer s.lock.Unlock()
-	s.init()
-	count, _ := s.paths[req.URL.Path]
-	s.paths[req.URL.Path] = count + 1
-	_, _ = w.Write([]byte(`[]`))
-}
-
-func (s *Server) calls() (calls map[string]int) {
-	s.lock.Lock()
-	defer s.lock.Unlock()
-	s.init()
-	calls = make(map[string]int)
-	for key, value := range s.paths {
-		calls[key] = value
-	}
-	return
+	_, err = client.Update(ctx)
+	assert.Error(t, err)
 }
 
 func TestTimeStamp_UnmarshalJSON(t *testing.T) {

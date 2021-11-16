@@ -59,10 +59,6 @@ func (v APITestResultsResponseEntry) GetAttributeValues() (values []float64) {
 
 // GetTestResults retrieves all COVID-19 test results.
 func (client *Client) GetTestResults(ctx context.Context) (results []measurement.Measurement, err error) {
-	return client.Call(ctx, "tests", client.getTestResults)
-}
-
-func (client *Client) getTestResults(ctx context.Context) (results []measurement.Measurement, err error) {
 	timer := prometheus.NewTimer(metricRequestLatency.WithLabelValues("tests"))
 	var body io.ReadCloser
 	if body, err = client.call(ctx, "COVID19BE_tests.json"); err == nil {

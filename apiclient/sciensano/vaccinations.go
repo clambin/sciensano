@@ -71,10 +71,6 @@ var _ measurement.Measurement = &APIVaccinationsResponseEntry{}
 
 // GetVaccinations retrieves all COVID-19 vaccinations.
 func (client *Client) GetVaccinations(ctx context.Context) (results []measurement.Measurement, err error) {
-	return client.Call(ctx, "vaccinations", client.getVaccinations)
-}
-
-func (client *Client) getVaccinations(ctx context.Context) (results []measurement.Measurement, err error) {
 	timer := prometheus.NewTimer(metricRequestLatency.WithLabelValues("vaccinations"))
 	var body io.ReadCloser
 	if body, err = client.call(ctx, "COVID19BE_VACC.json"); err == nil {

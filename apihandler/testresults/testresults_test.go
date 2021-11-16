@@ -4,20 +4,19 @@ import (
 	"context"
 	grafanajson "github.com/clambin/grafana-json"
 	"github.com/clambin/sciensano/apiclient/sciensano"
-	"github.com/clambin/sciensano/apiclient/sciensano/mocks"
 	"github.com/clambin/sciensano/apihandler/testresults"
 	"github.com/clambin/sciensano/measurement"
+	"github.com/clambin/sciensano/measurement/mocks"
 	"github.com/clambin/sciensano/reporter"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"testing"
 	"time"
 )
 
 func TestHandler_Search(t *testing.T) {
-	getter := &mocks.Getter{}
-	client := reporter.NewCachedClient(time.Hour)
+	getter := &mocks.Holder{}
+	client := reporter.New(time.Hour)
 	client.Sciensano = getter
 	h := testresults.New(client)
 
@@ -26,20 +25,20 @@ func TestHandler_Search(t *testing.T) {
 }
 
 func TestHandler_TableQuery(t *testing.T) {
-	getter := &mocks.Getter{}
-	client := reporter.NewCachedClient(time.Hour)
+	getter := &mocks.Holder{}
+	client := reporter.New(time.Hour)
 	client.Sciensano = getter
 	h := testresults.New(client)
 
 	getter.
-		On("GetTestResults", mock.AnythingOfType("*context.emptyCtx")).
+		On("Get", "TestResults").
 		Return([]measurement.Measurement{
 			&sciensano.APITestResultsResponseEntry{
 				TimeStamp: sciensano.TimeStamp{Time: time.Now().Add(-24 * time.Hour)},
 				Positive:  10,
 				Total:     20,
 			},
-		}, nil)
+		}, true)
 
 	args := &grafanajson.TableQueryArgs{CommonQueryArgs: grafanajson.CommonQueryArgs{Range: grafanajson.QueryRequestRange{
 		From: time.Time{},

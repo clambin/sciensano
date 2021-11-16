@@ -1,7 +1,6 @@
 package reporter
 
 import (
-	"context"
 	"fmt"
 	"github.com/clambin/sciensano/apiclient/sciensano"
 	"github.com/clambin/sciensano/measurement"
@@ -19,43 +18,45 @@ const (
 
 // VaccinationGetter contains all required methods to retrieve vaccination data
 type VaccinationGetter interface {
-	GetVaccinations(ctx context.Context) (results *datasets.Dataset, err error)
-	GetVaccinationsByAgeGroup(ctx context.Context, vaccinationType int) (results *datasets.Dataset, err error)
-	GetVaccinationsByRegion(ctx context.Context, vaccinationType int) (results *datasets.Dataset, err error)
+	GetVaccinations() (results *datasets.Dataset, err error)
+	GetVaccinationsByAgeGroup(vaccinationType int) (results *datasets.Dataset, err error)
+	GetVaccinationsByRegion(vaccinationType int) (results *datasets.Dataset, err error)
 }
 
 // GetVaccinations returns all vaccinations
-func (client *Client) GetVaccinations(ctx context.Context) (results *datasets.Dataset, err error) {
+func (client *Client) GetVaccinations() (results *datasets.Dataset, err error) {
 	return client.Cache.MaybeGenerate("Vaccinations", func() (output *datasets.Dataset, err2 error) {
-		var apiResult []measurement.Measurement
-		if apiResult, err2 = client.Sciensano.GetVaccinations(ctx); err2 == nil {
+		if apiResult, found := client.Sciensano.Get("Vaccinations"); found {
 			output = datasets.GroupMeasurements(apiResult)
+		} else {
+			err2 = fmt.Errorf("cache does not contain Vaccinations entries")
 		}
 		return output, err2
 	})
 }
 
 // GetVaccinationsByAgeGroup returns all vaccinations, grouped by age group
-func (client *Client) GetVaccinationsByAgeGroup(ctx context.Context, vaccinationType int) (results *datasets.Dataset, err error) {
+func (client *Client) GetVaccinationsByAgeGroup(vaccinationType int) (results *datasets.Dataset, err error) {
 	name := fmt.Sprintf("VaccinationsByAgeGroup-%d", vaccinationType)
 	return client.Cache.MaybeGenerate(name, func() (*datasets.Dataset, error) {
-		return client.realGetVaccinationByType(ctx, measurement.GroupByAgeGroup, vaccinationType)
+		return client.realGetVaccinationByType(measurement.GroupByAgeGroup, vaccinationType)
 	})
 }
 
 // GetVaccinationsByRegion returns all vaccinations, grouped by region
-func (client *Client) GetVaccinationsByRegion(ctx context.Context, vaccinationType int) (results *datasets.Dataset, err error) {
+func (client *Client) GetVaccinationsByRegion(vaccinationType int) (results *datasets.Dataset, err error) {
 	name := fmt.Sprintf("VaccinationsByRegion-%d", vaccinationType)
 	return client.Cache.MaybeGenerate(name, func() (*datasets.Dataset, error) {
-		return client.realGetVaccinationByType(ctx, measurement.GroupByRegion, vaccinationType)
+		return client.realGetVaccinationByType(measurement.GroupByRegion, vaccinationType)
 	})
 }
 
-func (client *Client) realGetVaccinationByType(ctx context.Context, mode, vaccinationType int) (results *datasets.Dataset, err error) {
-	var apiResult []measurement.Measurement
-	if apiResult, err = client.Sciensano.GetVaccinations(ctx); err == nil {
+func (client *Client) realGetVaccinationByType(mode, vaccinationType int) (results *datasets.Dataset, err error) {
+	if apiResult, found := client.Sciensano.Get("Vaccinations"); found {
 		apiResult = filterVaccinations(apiResult, vaccinationType)
 		results = datasets.GroupMeasurementsByType(apiResult, mode)
+	} else {
+		err = fmt.Errorf("cache does not contain Vaccinations entries")
 	}
 	return
 }

@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	grafanajson "github.com/clambin/grafana-json"
-	"github.com/clambin/sciensano/apiclient/vaccines"
 	casesHandler "github.com/clambin/sciensano/apihandler/cases"
 	hospitalisationsHandler "github.com/clambin/sciensano/apihandler/hospitalisations"
 	mortalityHandler "github.com/clambin/sciensano/apihandler/mortality"
@@ -12,7 +11,6 @@ import (
 	vaccinationsHandler "github.com/clambin/sciensano/apihandler/vaccinations"
 	vaccinesHandler "github.com/clambin/sciensano/apihandler/vaccines"
 	"github.com/clambin/sciensano/demographics"
-	"github.com/clambin/sciensano/measurement"
 	"github.com/clambin/sciensano/reporter"
 	"net/http"
 	"time"
@@ -21,7 +19,6 @@ import (
 // Server groups Grafana SimpleJson API handlers that retrieve Belgium COVID-19-related statistics
 type Server struct {
 	Reporter     *reporter.Client
-	Vaccines     vaccines.Getter
 	Demographics demographics.Demographics
 	handlers     []grafanajson.Handler
 }
@@ -31,21 +28,12 @@ const refreshInterval = 1 * time.Hour
 // NewServer a Server object
 func NewServer() (server *Server) {
 	server = &Server{
-		Reporter: reporter.NewCachedClient(refreshInterval),
-		Vaccines: &vaccines.Client{
-			HTTPClient: &http.Client{},
-			Cache:      measurement.Cache{Retention: 24 * time.Hour},
-		},
+		Reporter: reporter.New(refreshInterval),
 		Demographics: &demographics.Store{
 			Retention:   24 * time.Hour,
 			AgeBrackets: demographics.DefaultAgeBrackets,
 		},
 	}
-
-	// force load of demographics data on startup
-	go server.Demographics.GetRegionFigures()
-	// set up auto-refresh of reports
-	go server.Reporter.Sciensano.AutoRefresh(context.Background())
 
 	server.handlers = []grafanajson.Handler{
 		covidTestsHandler.New(server.Reporter),
@@ -59,6 +47,15 @@ func NewServer() (server *Server) {
 	return server
 }
 
+// RunBackgroundTasks starts background tasks to support Server
+func (server *Server) RunBackgroundTasks(ctx context.Context) {
+	// force load of demographics data on startup
+	go server.Demographics.GetRegionFigures()
+	// set up auto-refresh of reports
+	go server.Reporter.Sciensano.AutoRefresh(ctx, time.Hour)
+	go server.Reporter.Vaccines.AutoRefresh(ctx, time.Hour)
+}
+
 // GetHandlers returns all configured handlers
 func (server *Server) GetHandlers() []grafanajson.Handler {
 	return server.handlers
@@ -66,6 +63,7 @@ func (server *Server) GetHandlers() []grafanajson.Handler {
 
 // Run runs the API handler server
 func (server *Server) Run(port int) (err error) {
+	server.RunBackgroundTasks(context.Background())
 	s := grafanajson.Server{
 		Handlers: server.GetHandlers(),
 	}

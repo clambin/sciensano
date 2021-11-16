@@ -71,9 +71,9 @@ func (handler *Handler) TableQuery(ctx context.Context, target string, args *gra
 	return
 }
 
-func (handler *Handler) buildVaccinationTableResponse(ctx context.Context, _ string, args *grafanajson.TableQueryArgs) (output *grafanajson.TableQueryResponse, err error) {
+func (handler *Handler) buildVaccinationTableResponse(_ context.Context, _ string, args *grafanajson.TableQueryArgs) (output *grafanajson.TableQueryResponse, err error) {
 	var vaccinationData *datasets.Dataset
-	vaccinationData, err = handler.Sciensano.GetVaccinations(ctx)
+	vaccinationData, err = handler.Sciensano.GetVaccinations()
 
 	if err == nil {
 		vaccinationData.Accumulate()
@@ -87,7 +87,7 @@ func (handler *Handler) buildVaccinationTableResponse(ctx context.Context, _ str
 	return
 }
 
-func (handler *Handler) buildGroupedVaccinationTableResponse(ctx context.Context, target string, args *grafanajson.TableQueryArgs) (output *grafanajson.TableQueryResponse, err error) {
+func (handler *Handler) buildGroupedVaccinationTableResponse(_ context.Context, target string, args *grafanajson.TableQueryArgs) (output *grafanajson.TableQueryResponse, err error) {
 	var vaccinationType int
 	if strings.HasSuffix(target, "-partial") {
 		vaccinationType = reporter.VaccinationTypePartial
@@ -99,9 +99,9 @@ func (handler *Handler) buildGroupedVaccinationTableResponse(ctx context.Context
 
 	var vaccinationData *datasets.Dataset
 	if strings.HasPrefix(target, "vacc-age-") {
-		vaccinationData, err = handler.Sciensano.GetVaccinationsByAgeGroup(ctx, vaccinationType)
+		vaccinationData, err = handler.Sciensano.GetVaccinationsByAgeGroup(vaccinationType)
 	} else if strings.HasPrefix(target, "vacc-region-") {
-		vaccinationData, err = handler.Sciensano.GetVaccinationsByRegion(ctx, vaccinationType)
+		vaccinationData, err = handler.Sciensano.GetVaccinationsByRegion(vaccinationType)
 	} else {
 		err = fmt.Errorf("invalid target: " + target)
 	}
@@ -179,10 +179,10 @@ func prorateFigures(result *grafanajson.TableQueryResponse, groups map[string]in
 	result.Columns = newColumns
 }
 
-func (handler *Handler) buildVaccinationLagTableResponse(ctx context.Context, _ string, _ *grafanajson.TableQueryArgs) (response *grafanajson.TableQueryResponse, err error) {
+func (handler *Handler) buildVaccinationLagTableResponse(_ context.Context, _ string, _ *grafanajson.TableQueryArgs) (response *grafanajson.TableQueryResponse, err error) {
 	var vaccinationsData *datasets.Dataset
 
-	vaccinationsData, err = handler.Sciensano.GetVaccinations(ctx)
+	vaccinationsData, err = handler.Sciensano.GetVaccinations()
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to determine vaccination lag: %s", err.Error())

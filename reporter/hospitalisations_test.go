@@ -1,11 +1,9 @@
 package reporter_test
 
 import (
-	"context"
-	"fmt"
 	"github.com/clambin/sciensano/apiclient/sciensano"
-	"github.com/clambin/sciensano/apiclient/sciensano/mocks"
 	"github.com/clambin/sciensano/measurement"
+	"github.com/clambin/sciensano/measurement/mocks"
 	"github.com/clambin/sciensano/reporter"
 	"github.com/clambin/sciensano/reporter/datasets"
 	"github.com/stretchr/testify/assert"
@@ -48,16 +46,15 @@ var (
 )
 
 func TestClient_GetHospitalisations(t *testing.T) {
-	getter := &mocks.Getter{}
-	client := reporter.NewCachedClient(time.Hour)
-	client.Sciensano = getter
-	ctx := context.Background()
+	cache := &mocks.Holder{}
+	client := reporter.New(time.Hour)
+	client.Sciensano = cache
 
-	getter.
-		On("GetHospitalisations", mock.AnythingOfType("*context.emptyCtx")).
-		Return(testHospitalisationsResponse, nil)
+	cache.
+		On("Get", "Hospitalisations").
+		Return(testHospitalisationsResponse, true)
 
-	entries, err := client.GetHospitalisations(ctx)
+	entries, err := client.GetHospitalisations()
 	require.NoError(t, err)
 	assert.Equal(t, &datasets.Dataset{
 		Timestamps: []time.Time{
@@ -72,20 +69,19 @@ func TestClient_GetHospitalisations(t *testing.T) {
 		},
 	}, entries)
 
-	mock.AssertExpectationsForObjects(t, getter)
+	mock.AssertExpectationsForObjects(t, cache)
 }
 
 func TestClient_GetHospitalisationsByProvince(t *testing.T) {
-	getter := &mocks.Getter{}
-	client := reporter.NewCachedClient(time.Hour)
-	client.Sciensano = getter
-	ctx := context.Background()
+	cache := &mocks.Holder{}
+	client := reporter.New(time.Hour)
+	client.Sciensano = cache
 
-	getter.
-		On("GetHospitalisations", mock.AnythingOfType("*context.emptyCtx")).
-		Return(testHospitalisationsResponse, nil)
+	cache.
+		On("Get", "Hospitalisations").
+		Return(testHospitalisationsResponse, true)
 
-	entries, err := client.GetHospitalisationsByProvince(ctx)
+	entries, err := client.GetHospitalisationsByProvince()
 	require.NoError(t, err)
 	assert.Equal(t, &datasets.Dataset{
 		Timestamps: []time.Time{
@@ -97,20 +93,19 @@ func TestClient_GetHospitalisationsByProvince(t *testing.T) {
 			{Name: "VlaamsBrabant", Values: []float64{100, 50}},
 		},
 	}, entries)
-	getter.AssertExpectations(t)
+	cache.AssertExpectations(t)
 }
 
 func TestClient_GetHospitalisationsByRegion(t *testing.T) {
-	getter := &mocks.Getter{}
-	client := reporter.NewCachedClient(time.Hour)
-	client.Sciensano = getter
-	ctx := context.Background()
+	cache := &mocks.Holder{}
+	client := reporter.New(time.Hour)
+	client.Sciensano = cache
 
-	getter.
-		On("GetHospitalisations", mock.AnythingOfType("*context.emptyCtx")).
-		Return(testHospitalisationsResponse, nil)
+	cache.
+		On("Get", "Hospitalisations").
+		Return(testHospitalisationsResponse, true)
 
-	entries, err := client.GetHospitalisationsByRegion(ctx)
+	entries, err := client.GetHospitalisationsByRegion()
 	require.NoError(t, err)
 	assert.Equal(t, &datasets.Dataset{
 		Timestamps: []time.Time{
@@ -122,41 +117,38 @@ func TestClient_GetHospitalisationsByRegion(t *testing.T) {
 			{Name: "Flanders", Values: []float64{100, 50}},
 		},
 	}, entries)
-	getter.AssertExpectations(t)
+	cache.AssertExpectations(t)
 }
 
 func TestClient_GetHospitalisations_Failure(t *testing.T) {
-	getter := &mocks.Getter{}
-	getter.On("GetHospitalisations", mock.Anything).Return(nil, fmt.Errorf("API error"))
+	cache := &mocks.Holder{}
+	client := reporter.New(time.Hour)
+	client.Sciensano = cache
 
-	client := reporter.NewCachedClient(time.Hour)
-	client.Sciensano = getter
+	cache.On("Get", "Hospitalisations").Return(nil, false)
 
-	ctx := context.Background()
-
-	_, err := client.GetHospitalisations(ctx)
+	_, err := client.GetHospitalisations()
 	require.Error(t, err)
 
-	_, err = client.GetHospitalisationsByRegion(ctx)
+	_, err = client.GetHospitalisationsByRegion()
 	require.Error(t, err)
 
-	_, err = client.GetHospitalisationsByProvince(ctx)
+	_, err = client.GetHospitalisationsByProvince()
 	require.Error(t, err)
 
-	getter.AssertExpectations(t)
+	cache.AssertExpectations(t)
 }
 
 func TestClient_GetHospitalisations_ApplyRegions(t *testing.T) {
-	getter := &mocks.Getter{}
-	client := reporter.NewCachedClient(time.Hour)
-	client.Sciensano = getter
-	ctx := context.Background()
+	cache := &mocks.Holder{}
+	client := reporter.New(time.Hour)
+	client.Sciensano = cache
 
-	getter.
-		On("GetHospitalisations", mock.AnythingOfType("*context.emptyCtx")).
-		Return(testHospitalisationsResponse, nil)
+	cache.
+		On("Get", "Hospitalisations").
+		Return(testHospitalisationsResponse, true)
 
-	entries, err := client.GetHospitalisationsByRegion(ctx)
+	entries, err := client.GetHospitalisationsByRegion()
 	require.NoError(t, err)
 	require.Len(t, entries.Timestamps, 2)
 	require.Len(t, entries.Groups, 2)
@@ -169,18 +161,18 @@ func TestClient_GetHospitalisations_ApplyRegions(t *testing.T) {
 	require.Len(t, entries.Groups[0].Values, 1)
 	require.Len(t, entries.Groups[1].Values, 1)
 
-	entries, err = client.GetHospitalisationsByRegion(ctx)
+	entries, err = client.GetHospitalisationsByRegion()
 	require.NoError(t, err)
 	require.Len(t, entries.Timestamps, 2)
 	require.Len(t, entries.Groups, 2)
 	require.Len(t, entries.Groups[0].Values, 2)
 	require.Len(t, entries.Groups[1].Values, 2)
 
-	getter.AssertExpectations(t)
+	cache.AssertExpectations(t)
 }
 
 func BenchmarkClient_GetHospitalisationsByRegion(b *testing.B) {
-	var bigResponse sciensano.APIHospitalisationsResponse
+	var bigResponse []measurement.Measurement
 	ts := time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)
 
 	for i := 0; i < 2*365; i++ {
@@ -194,20 +186,19 @@ func BenchmarkClient_GetHospitalisationsByRegion(b *testing.B) {
 		}
 		ts = ts.Add(24 * time.Hour)
 	}
-	getter := &mocks.Getter{}
-	client := reporter.NewCachedClient(time.Hour)
-	client.Sciensano = getter
-	ctx := context.Background()
+	cache := &mocks.Holder{}
+	client := reporter.New(time.Hour)
+	client.Sciensano = cache
 
-	getter.
-		On("GetHospitalisations", mock.AnythingOfType("*context.emptyCtx")).
-		Return(bigResponse, nil).Once()
+	cache.
+		On("Get", "Hospitalisations").
+		Return(bigResponse, true)
 
 	b.ResetTimer()
 	for i := 0; i < 100; i++ {
-		_, err := client.GetHospitalisationsByRegion(ctx)
+		_, err := client.GetHospitalisationsByRegion()
 		require.NoError(b, err)
 	}
 
-	getter.AssertExpectations(b)
+	cache.AssertExpectations(b)
 }

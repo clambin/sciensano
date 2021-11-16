@@ -61,11 +61,6 @@ var _ measurement.Measurement = &APIHospitalisationsResponseEntry{}
 
 // GetHospitalisations retrieves all recorded COVID-19 cases
 func (client *Client) GetHospitalisations(ctx context.Context) (results []measurement.Measurement, err error) {
-	return client.Call(ctx, "hospitalisations", client.getHospitalisations)
-}
-
-func (client *Client) getHospitalisations(ctx context.Context) (results []measurement.Measurement, err error) {
-
 	timer := prometheus.NewTimer(metricRequestLatency.WithLabelValues("hospitalisations"))
 	var body io.ReadCloser
 	if body, err = client.call(ctx, "COVID19BE_HOSP.json"); err == nil {

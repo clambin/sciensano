@@ -17,7 +17,7 @@ func main() {
 		port  int
 	)
 
-	log.WithField("version", version.BuildVersion).Info("reporter API starting")
+	log.WithField("version", version.BuildVersion).Info("Sciensano API starting")
 	a := kingpin.New(filepath.Base(os.Args[0]), "reporter")
 	a.Version(version.BuildVersion)
 	a.HelpFlag.Short('h')

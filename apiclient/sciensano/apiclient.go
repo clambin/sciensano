@@ -28,52 +28,53 @@ type Getter interface {
 type Client struct {
 	URL        string
 	HTTPClient *http.Client
-	measurement.Cache
 }
 
-// AutoRefresh refreshes the cache on a period basis
-func (client *Client) AutoRefresh(ctx context.Context) {
-	client.refresh(ctx)
-	ticker := time.NewTicker(client.Cache.Retention + 5*time.Second)
-	for running := true; running; {
-		select {
-		case <-ctx.Done():
-			running = false
-		case <-ticker.C:
-			client.refresh(ctx)
-		}
-	}
-}
-
-func (client *Client) refresh(ctx context.Context) {
+// Update calls all endpoints and returns this to the caller. This is used by a cache to refresh its content
+func (client *Client) Update(ctx context.Context) (entries map[string][]measurement.Measurement, err error) {
 	before := time.Now()
 	log.Debug("refreshing API cache")
 
 	const maxParallel = 3
 	s := semaphore.NewWeighted(maxParallel)
 
-	for _, getter := range []func(context.Context) ([]measurement.Measurement, error){
-		client.GetVaccinations,
-		client.GetTestResults,
-		client.GetHospitalisations,
-		client.GetMortality,
-		client.GetCases,
-	} {
+	endpoints := map[string]func(context.Context) ([]measurement.Measurement, error){
+		"Vaccinations":     client.GetVaccinations,
+		"TestResults":      client.GetTestResults,
+		"Hospitalisations": client.GetHospitalisations,
+		"Mortality":        client.GetMortality,
+		"Cases":            client.GetCases,
+	}
+
+	type response struct {
+		name    string
+		results []measurement.Measurement
+		err     error
+	}
+	output := make(chan response, len(endpoints))
+	for name, getter := range endpoints {
 		_ = s.Acquire(ctx, 1)
-		go func(g func(context.Context) ([]measurement.Measurement, error)) {
-			if _, err := g(ctx); err != nil {
-				log.WithError(err).Warning("failed to call Sciensano endpoint")
-			}
+		go func(name string, g func(context.Context) ([]measurement.Measurement, error)) {
+			results, err2 := g(ctx)
+			output <- response{name: name, results: results, err: err2}
 			s.Release(1)
-		}(getter)
+		}(name, getter)
 	}
 
 	_ = s.Acquire(ctx, maxParallel)
-	log.WithFields(log.Fields{
-		"duration":  time.Now().Sub(before),
-		"size":      client.CacheSize(),
-		"retention": client.Retention,
-	}).Debugf("refreshed API cache")
+	close(output)
+
+	entries = make(map[string][]measurement.Measurement)
+	for resp := range output {
+		if resp.err == nil {
+			entries[resp.name] = resp.results
+		} else {
+			err = resp.err
+		}
+	}
+
+	log.WithField("duration", time.Now().Sub(before)).Debugf("refreshed Sciensano API cache")
+	return
 }
 
 const baseURL = "https://epistat.sciensano.be"

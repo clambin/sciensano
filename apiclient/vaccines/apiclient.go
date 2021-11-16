@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/clambin/sciensano/measurement"
+	log "github.com/sirupsen/logrus"
 	"io"
 	"net/http"
 	"sort"
@@ -85,12 +86,20 @@ func (date *Time) UnmarshalJSON(b []byte) (err error) {
 	return
 }
 
-// GetBatches returns all vaccine batches
-func (client *Client) GetBatches(ctx context.Context) (batches []measurement.Measurement, err error) {
-	return client.Cache.Call(ctx, "vaccines", client.getBatches)
+// Update calls all endpoints and returns this to the caller. This is used by a cache to refresh its content
+func (client *Client) Update(ctx context.Context) (entries map[string][]measurement.Measurement, err error) {
+	log.Debug("refreshing Vaccine API cache")
+	before := time.Now()
+
+	entries = make(map[string][]measurement.Measurement)
+	entries["Vaccines"], err = client.GetBatches(ctx)
+
+	log.WithField("duration", time.Now().Sub(before)).Debugf("refreshed Sciensano API cache")
+	return
 }
 
-func (client *Client) getBatches(ctx context.Context) (batches []measurement.Measurement, err error) {
+// GetBatches returns all vaccine batches
+func (client *Client) GetBatches(ctx context.Context) (batches []measurement.Measurement, err error) {
 	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, client.getURL()+"/api/v1/delivered.json", nil)
 
 	var resp *http.Response

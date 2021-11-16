@@ -4,10 +4,10 @@ import (
 	"context"
 	grafanaJson "github.com/clambin/grafana-json"
 	"github.com/clambin/sciensano/apiclient/sciensano"
-	mockAPI "github.com/clambin/sciensano/apiclient/sciensano/mocks"
 	vaccinationsHandler "github.com/clambin/sciensano/apihandler/vaccinations"
 	mockDemographics "github.com/clambin/sciensano/demographics/mocks"
 	"github.com/clambin/sciensano/measurement"
+	mockCache "github.com/clambin/sciensano/measurement/mocks"
 	"github.com/clambin/sciensano/reporter"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -185,9 +185,9 @@ var (
 )
 
 func TestHandler_Search(t *testing.T) {
-	getter := &mockAPI.Getter{}
-	client := reporter.NewCachedClient(time.Hour)
-	client.Sciensano = getter
+	cache := &mockCache.Holder{}
+	client := reporter.New(time.Hour)
+	client.Sciensano = cache
 	demo := &mockDemographics.Demographics{}
 	h := vaccinationsHandler.New(client, demo)
 
@@ -211,9 +211,9 @@ func TestHandler_Search(t *testing.T) {
 }
 
 func TestHandler_TableQuery(t *testing.T) {
-	getter := &mockAPI.Getter{}
-	client := reporter.NewCachedClient(time.Hour)
-	client.Sciensano = getter
+	cache := &mockCache.Holder{}
+	client := reporter.New(time.Hour)
+	client.Sciensano = cache
 	demo := &mockDemographics.Demographics{}
 	h := vaccinationsHandler.New(client, demo)
 
@@ -224,9 +224,9 @@ func TestHandler_TableQuery(t *testing.T) {
 		},
 	}
 
-	getter.
-		On("GetVaccinations", mock.Anything).
-		Return(vaccinationTestData, nil)
+	cache.
+		On("Get", "Vaccinations").
+		Return(vaccinationTestData, true)
 
 	demo.
 		On("GetRegionFigures").
@@ -249,7 +249,7 @@ func TestHandler_TableQuery(t *testing.T) {
 		assert.Equal(t, testCase.Response, response, testCase.Target)
 	}
 
-	mock.AssertExpectationsForObjects(t, getter, demo)
+	mock.AssertExpectationsForObjects(t, cache, demo)
 }
 
 func BenchmarkHandler_TableQuery(b *testing.B) {
@@ -275,18 +275,18 @@ func BenchmarkHandler_TableQuery(b *testing.B) {
 		ts = ts.Add(24 * time.Hour)
 	}
 
-	getter := &mockAPI.Getter{}
-	client := reporter.NewCachedClient(time.Hour)
-	client.Sciensano = getter
+	cache := &mockCache.Holder{}
+	client := reporter.New(time.Hour)
+	client.Sciensano = cache
 	h := vaccinationsHandler.New(client, nil)
 
 	args := &grafanaJson.TableQueryArgs{CommonQueryArgs: grafanaJson.CommonQueryArgs{Range: grafanaJson.QueryRequestRange{
 		To: time.Date(2021, 10, 22, 0, 0, 0, 0, time.UTC),
 	}}}
 
-	getter.
-		On("GetVaccinations", mock.AnythingOfType("*context.emptyCtx")).
-		Return(bigResponse, nil)
+	cache.
+		On("Get", "Vaccinations").
+		Return(bigResponse, true)
 
 	_, err := h.Endpoints().TableQuery(context.Background(), "vacc-region-full", args)
 	require.NoError(b, err)
@@ -297,5 +297,5 @@ func BenchmarkHandler_TableQuery(b *testing.B) {
 		_, _ = h.Endpoints().TableQuery(context.Background(), "vacc-region-full", args)
 	}
 
-	getter.AssertExpectations(b)
+	cache.AssertExpectations(b)
 }

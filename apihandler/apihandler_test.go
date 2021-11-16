@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"net/http"
+	"sync"
 	"testing"
 	"time"
 )
@@ -21,6 +22,23 @@ func TestCreate(t *testing.T) {
 func TestRun(t *testing.T) {
 	h := apihandler.NewServer()
 
+	ctx := context.Background()
+	wg := sync.WaitGroup{}
+	wg.Add(3)
+	go func() {
+		h.Demographics.GetAgeGroupFigures()
+		wg.Done()
+	}()
+	go func() {
+		h.Reporter.Sciensano.Refresh(ctx)
+		wg.Done()
+	}()
+	go func() {
+		h.Reporter.Vaccines.Refresh(ctx)
+		wg.Done()
+	}()
+	wg.Wait()
+
 	go func() {
 		err := h.Run(8080)
 		require.True(t, errors.Is(err, http.ErrServerClosed))
@@ -31,7 +49,6 @@ func TestRun(t *testing.T) {
 		return err == nil && response.StatusCode == http.StatusOK
 	}, 30*time.Second, 10*time.Millisecond)
 
-	ctx := context.Background()
 	args := &grafanajson.TableQueryArgs{
 		CommonQueryArgs: grafanajson.CommonQueryArgs{
 			Range: grafanajson.QueryRequestRange{To: time.Now()},
@@ -41,7 +58,7 @@ func TestRun(t *testing.T) {
 	for _, handler := range h.GetHandlers() {
 		for _, target := range handler.Endpoints().Search() {
 			_, err := handler.Endpoints().TableQuery(ctx, target, args)
-			require.NoError(t, err)
+			require.NoError(t, err, target)
 		}
 	}
 }

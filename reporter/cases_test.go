@@ -1,11 +1,9 @@
 package reporter_test
 
 import (
-	"context"
-	"fmt"
 	"github.com/clambin/sciensano/apiclient/sciensano"
-	"github.com/clambin/sciensano/apiclient/sciensano/mocks"
 	"github.com/clambin/sciensano/measurement"
+	"github.com/clambin/sciensano/measurement/mocks"
 	"github.com/clambin/sciensano/reporter"
 	"github.com/clambin/sciensano/reporter/datasets"
 	"github.com/stretchr/testify/assert"
@@ -42,16 +40,15 @@ var (
 )
 
 func TestClient_GetCases(t *testing.T) {
-	apiClient := &mocks.Getter{}
-	client := reporter.NewCachedClient(time.Hour)
-	client.Sciensano = apiClient
-	ctx := context.Background()
+	cache := &mocks.Holder{}
+	client := reporter.New(time.Hour)
+	client.Sciensano = cache
 
-	apiClient.
-		On("GetCases", mock.AnythingOfType("*context.emptyCtx")).
-		Return(testCasesResponse, nil)
+	cache.
+		On("Get", "Cases").
+		Return(testCasesResponse, true)
 
-	cases, err := client.GetCases(ctx)
+	cases, err := client.GetCases()
 	require.NoError(t, err)
 	assert.Equal(t, &datasets.Dataset{
 		Timestamps: []time.Time{
@@ -63,20 +60,19 @@ func TestClient_GetCases(t *testing.T) {
 		},
 	}, cases)
 
-	mock.AssertExpectationsForObjects(t, apiClient)
+	mock.AssertExpectationsForObjects(t, cache)
 }
 
 func TestClient_GetCasesByProvince(t *testing.T) {
-	apiClient := &mocks.Getter{}
-	client := reporter.NewCachedClient(time.Hour)
-	client.Sciensano = apiClient
-	ctx := context.Background()
+	cache := &mocks.Holder{}
+	client := reporter.New(time.Hour)
+	client.Sciensano = cache
 
-	apiClient.
-		On("GetCases", mock.AnythingOfType("*context.emptyCtx")).
-		Return(testCasesResponse, nil)
+	cache.
+		On("Get", "Cases").
+		Return(testCasesResponse, true)
 
-	cases, err := client.GetCasesByProvince(ctx)
+	cases, err := client.GetCasesByProvince()
 	require.NoError(t, err)
 	assert.Equal(t, &datasets.Dataset{
 		Timestamps: []time.Time{
@@ -89,20 +85,19 @@ func TestClient_GetCasesByProvince(t *testing.T) {
 		},
 	}, cases)
 
-	mock.AssertExpectationsForObjects(t, apiClient)
+	mock.AssertExpectationsForObjects(t, cache)
 }
 
 func TestClient_GetCasesByRegion(t *testing.T) {
-	apiClient := &mocks.Getter{}
-	client := reporter.NewCachedClient(time.Hour)
-	client.Sciensano = apiClient
-	ctx := context.Background()
+	cache := &mocks.Holder{}
+	client := reporter.New(time.Hour)
+	client.Sciensano = cache
 
-	apiClient.
-		On("GetCases", mock.AnythingOfType("*context.emptyCtx")).
-		Return(testCasesResponse, nil)
+	cache.
+		On("Get", "Cases").
+		Return(testCasesResponse, true)
 
-	cases, err := client.GetCasesByRegion(ctx)
+	cases, err := client.GetCasesByRegion()
 	require.NoError(t, err)
 	assert.Equal(t, &datasets.Dataset{
 		Timestamps: []time.Time{
@@ -115,20 +110,19 @@ func TestClient_GetCasesByRegion(t *testing.T) {
 		},
 	}, cases)
 
-	mock.AssertExpectationsForObjects(t, apiClient)
+	mock.AssertExpectationsForObjects(t, cache)
 }
 
 func TestClient_GetCasesByAgeGroup(t *testing.T) {
-	apiClient := &mocks.Getter{}
-	client := reporter.NewCachedClient(time.Hour)
-	client.Sciensano = apiClient
-	ctx := context.Background()
+	cache := &mocks.Holder{}
+	client := reporter.New(time.Hour)
+	client.Sciensano = cache
 
-	apiClient.
-		On("GetCases", mock.AnythingOfType("*context.emptyCtx")).
-		Return(testCasesResponse, nil)
+	cache.
+		On("Get", "Cases").
+		Return(testCasesResponse, true)
 
-	cases, err := client.GetCasesByAgeGroup(ctx)
+	cases, err := client.GetCasesByAgeGroup()
 	require.NoError(t, err)
 
 	assert.Equal(t, &datasets.Dataset{
@@ -142,44 +136,41 @@ func TestClient_GetCasesByAgeGroup(t *testing.T) {
 		},
 	}, cases)
 
-	mock.AssertExpectationsForObjects(t, apiClient)
+	mock.AssertExpectationsForObjects(t, cache)
 }
 
 func TestClient_GetCases_Failure(t *testing.T) {
-	apiClient := &mocks.Getter{}
-	apiClient.On("GetCases", mock.Anything).Return(nil, fmt.Errorf("API error"))
+	cache := &mocks.Holder{}
+	client := reporter.New(time.Hour)
+	client.Sciensano = cache
 
-	client := reporter.NewCachedClient(time.Hour)
-	client.Sciensano = apiClient
+	cache.On("Get", "Cases").Return(nil, false)
 
-	ctx := context.Background()
-
-	_, err := client.GetCases(ctx)
+	_, err := client.GetCases()
 	require.Error(t, err)
 
-	_, err = client.GetCasesByRegion(ctx)
+	_, err = client.GetCasesByRegion()
 	require.Error(t, err)
 
-	_, err = client.GetCasesByProvince(ctx)
+	_, err = client.GetCasesByProvince()
 	require.Error(t, err)
 
-	_, err = client.GetCasesByAgeGroup(ctx)
+	_, err = client.GetCasesByAgeGroup()
 	require.Error(t, err)
 
-	mock.AssertExpectationsForObjects(t, apiClient)
+	mock.AssertExpectationsForObjects(t, cache)
 }
 
 func TestClient_Cases_ApplyRegions(t *testing.T) {
-	apiClient := &mocks.Getter{}
-	client := reporter.NewCachedClient(time.Hour)
-	client.Sciensano = apiClient
-	ctx := context.Background()
+	cache := &mocks.Holder{}
+	client := reporter.New(time.Hour)
+	client.Sciensano = cache
 
-	apiClient.
-		On("GetCases", mock.AnythingOfType("*context.emptyCtx")).
-		Return(testCasesResponse, nil)
+	cache.
+		On("Get", "Cases").
+		Return(testCasesResponse, true)
 
-	cases, err := client.GetCasesByAgeGroup(ctx)
+	cases, err := client.GetCasesByAgeGroup()
 	require.NoError(t, err)
 	require.Len(t, cases.Timestamps, 2)
 	require.Len(t, cases.Groups, 2)
@@ -192,7 +183,7 @@ func TestClient_Cases_ApplyRegions(t *testing.T) {
 	require.Len(t, cases.Groups[0].Values, 1)
 	require.Len(t, cases.Groups[1].Values, 1)
 
-	cases, err = client.GetCasesByAgeGroup(ctx)
+	cases, err = client.GetCasesByAgeGroup()
 	require.NoError(t, err)
 	require.Len(t, cases.Timestamps, 2)
 	require.Len(t, cases.Groups, 2)
@@ -215,17 +206,17 @@ func BenchmarkClient_GetCasesByRegion(b *testing.B) {
 		}
 		ts = ts.Add(24 * time.Hour)
 	}
-	apiClient := &mocks.Getter{}
-	client := reporter.NewCachedClient(time.Hour)
-	client.Sciensano = apiClient
-	ctx := context.Background()
+	cache := &mocks.Holder{}
+	client := reporter.New(time.Hour)
+	client.Sciensano = cache
 
-	apiClient.
+	cache.
 		On("GetCases", mock.AnythingOfType("*context.emptyCtx")).
 		Return(bigResponse, nil)
 
+	b.ResetTimer()
 	for i := 0; i < 100; i++ {
-		_, err := client.GetCasesByRegion(ctx)
+		_, err := client.GetCasesByRegion()
 		require.NoError(b, err)
 	}
 }

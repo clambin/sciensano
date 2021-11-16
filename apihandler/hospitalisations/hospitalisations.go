@@ -56,15 +56,15 @@ func (handler *Handler) TableQuery(ctx context.Context, target string, args *gra
 	return
 }
 
-func (handler *Handler) buildHospitalisationsResponse(ctx context.Context, target string, args *grafanajson.TableQueryArgs) (output *grafanajson.TableQueryResponse, err error) {
+func (handler *Handler) buildHospitalisationsResponse(_ context.Context, target string, args *grafanajson.TableQueryArgs) (output *grafanajson.TableQueryResponse, err error) {
 	var entries *datasets.Dataset
 	switch target {
 	case "hospitalisations":
-		entries, err = handler.Sciensano.GetHospitalisations(ctx)
+		entries, err = handler.Sciensano.GetHospitalisations()
 	case "hospitalisations-region":
-		entries, err = handler.Sciensano.GetHospitalisationsByRegion(ctx)
+		entries, err = handler.Sciensano.GetHospitalisationsByRegion()
 	case "hospitalisations-province":
-		entries, err = handler.Sciensano.GetHospitalisationsByProvince(ctx)
+		entries, err = handler.Sciensano.GetHospitalisationsByProvince()
 	}
 
 	if err == nil {

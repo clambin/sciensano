@@ -4,11 +4,10 @@ import (
 	"context"
 	grafanajson "github.com/clambin/grafana-json"
 	"github.com/clambin/sciensano/apiclient/sciensano"
-	sciensanoMock "github.com/clambin/sciensano/apiclient/sciensano/mocks"
 	"github.com/clambin/sciensano/apiclient/vaccines"
-	vaccinesMock "github.com/clambin/sciensano/apiclient/vaccines/mocks"
 	vaccinesHandler "github.com/clambin/sciensano/apihandler/vaccines"
 	"github.com/clambin/sciensano/measurement"
+	mockCache "github.com/clambin/sciensano/measurement/mocks"
 	"github.com/clambin/sciensano/reporter"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -18,9 +17,9 @@ import (
 )
 
 func TestHandler_Search(t *testing.T) {
-	client := &vaccinesMock.Getter{}
-	r := reporter.NewCachedClient(time.Hour)
-	r.Vaccines = client
+	cache := &mockCache.Holder{}
+	r := reporter.New(time.Hour)
+	r.Vaccines = cache
 	h := vaccinesHandler.New(r)
 
 	targets := h.Search()
@@ -28,14 +27,14 @@ func TestHandler_Search(t *testing.T) {
 }
 
 func TestHandler_TableQuery_Vaccines(t *testing.T) {
-	client := &vaccinesMock.Getter{}
-	r := reporter.NewCachedClient(time.Hour)
-	r.Vaccines = client
+	cache := &mockCache.Holder{}
+	r := reporter.New(time.Hour)
+	r.Vaccines = cache
 	h := vaccinesHandler.New(r)
 
 	timestamp := time.Now()
-	client.
-		On("GetBatches", mock.AnythingOfType("*context.emptyCtx")).
+	cache.
+		On("Get", "Vaccines").
 		Return([]measurement.Measurement{
 			&vaccines.Batch{
 				Date:   vaccines.Time{Time: timestamp.Add(-24 * time.Hour)},
@@ -49,7 +48,7 @@ func TestHandler_TableQuery_Vaccines(t *testing.T) {
 				Date:   vaccines.Time{Time: timestamp.Add(24 * time.Hour)},
 				Amount: 200,
 			},
-		}, nil)
+		}, true)
 
 	args := &grafanajson.TableQueryArgs{CommonQueryArgs: grafanajson.CommonQueryArgs{Range: grafanajson.QueryRequestRange{To: timestamp}}}
 
@@ -60,30 +59,30 @@ func TestHandler_TableQuery_Vaccines(t *testing.T) {
 	assert.Equal(t, 100.0, response.Columns[1].Data.(grafanajson.TableQueryResponseNumberColumn)[0])
 	assert.Equal(t, 300.0, response.Columns[1].Data.(grafanajson.TableQueryResponseNumberColumn)[1])
 
-	client.AssertExpectations(t)
+	mock.AssertExpectationsForObjects(t, cache)
 }
 
 func TestHandler_TableQuery_VaccinesStats(t *testing.T) {
-	vaccineClient := &vaccinesMock.Getter{}
-	sciensanoClient := &sciensanoMock.Getter{}
-	r := reporter.NewCachedClient(time.Hour)
-	r.Vaccines = vaccineClient
-	r.Sciensano = sciensanoClient
+	vaccineCache := &mockCache.Holder{}
+	sciensanoCache := &mockCache.Holder{}
+	r := reporter.New(time.Hour)
+	r.Vaccines = vaccineCache
+	r.Sciensano = sciensanoCache
 	h := vaccinesHandler.New(r)
 
 	timestamp := time.Now()
 
-	vaccineClient.
-		On("GetBatches", mock.AnythingOfType("*context.emptyCtx")).
+	vaccineCache.
+		On("Get", "Vaccines").
 		Return([]measurement.Measurement{
 			&vaccines.Batch{
 				Date:   vaccines.Time{Time: timestamp.Add(-24 * time.Hour)},
 				Amount: 100,
 			},
-		}, nil)
+		}, true)
 
-	sciensanoClient.
-		On("GetVaccinations", mock.AnythingOfType("*context.emptyCtx")).
+	sciensanoCache.
+		On("Get", "Vaccinations").
 		Return([]measurement.Measurement{
 			&sciensano.APIVaccinationsResponseEntry{
 				TimeStamp: sciensano.TimeStamp{Time: timestamp.Add(-24 * time.Hour)},
@@ -95,7 +94,7 @@ func TestHandler_TableQuery_VaccinesStats(t *testing.T) {
 				Dose:      "B",
 				Count:     10,
 			},
-		}, nil)
+		}, true)
 
 	args := &grafanajson.TableQueryArgs{CommonQueryArgs: grafanajson.CommonQueryArgs{Range: grafanajson.QueryRequestRange{To: timestamp}}}
 
@@ -106,19 +105,19 @@ func TestHandler_TableQuery_VaccinesStats(t *testing.T) {
 	assert.Equal(t, 20.0, response.Columns[1].Data.(grafanajson.TableQueryResponseNumberColumn)[0])
 	assert.Equal(t, 80.0, response.Columns[2].Data.(grafanajson.TableQueryResponseNumberColumn)[0])
 
-	mock.AssertExpectationsForObjects(t, sciensanoClient, vaccineClient)
+	mock.AssertExpectationsForObjects(t, sciensanoCache, vaccineCache)
 }
 
 func TestHandler_TableQuery_VaccinesTime(t *testing.T) {
-	vaccineClient := &vaccinesMock.Getter{}
-	sciensanoClient := &sciensanoMock.Getter{}
-	r := reporter.NewCachedClient(time.Hour)
-	r.Vaccines = vaccineClient
-	r.Sciensano = sciensanoClient
+	vaccineCache := &mockCache.Holder{}
+	sciensanoCache := &mockCache.Holder{}
+	r := reporter.New(time.Hour)
+	r.Vaccines = vaccineCache
+	r.Sciensano = sciensanoCache
 	h := vaccinesHandler.New(r)
 
-	vaccineClient.
-		On("GetBatches", mock.AnythingOfType("*context.emptyCtx")).
+	vaccineCache.
+		On("Get", "Vaccines").
 		Return([]measurement.Measurement{
 			&vaccines.Batch{
 				Date:   vaccines.Time{Time: time.Now().Add(-7 * 24 * time.Hour)},
@@ -128,10 +127,10 @@ func TestHandler_TableQuery_VaccinesTime(t *testing.T) {
 				Date:   vaccines.Time{Time: time.Now().Add(-2 * 24 * time.Hour)},
 				Amount: 50,
 			},
-		}, nil)
+		}, true)
 
-	sciensanoClient.
-		On("GetVaccinations", mock.AnythingOfType("*context.emptyCtx")).
+	sciensanoCache.
+		On("Get", "Vaccinations").
 		Return([]measurement.Measurement{
 			&sciensano.APIVaccinationsResponseEntry{
 				TimeStamp: sciensano.TimeStamp{Time: time.Now().Add(-6 * 24 * time.Hour)},
@@ -163,7 +162,7 @@ func TestHandler_TableQuery_VaccinesTime(t *testing.T) {
 				Dose:      "A",
 				Count:     15,
 			},
-		}, nil)
+		}, true)
 
 	args := &grafanajson.TableQueryArgs{CommonQueryArgs: grafanajson.CommonQueryArgs{Range: grafanajson.QueryRequestRange{
 		From: time.Time{},
@@ -178,5 +177,5 @@ func TestHandler_TableQuery_VaccinesTime(t *testing.T) {
 	assert.Equal(t, 5, int(response.Columns[1].Data.(grafanajson.TableQueryResponseNumberColumn)[1]))
 	assert.Equal(t, 1, int(response.Columns[1].Data.(grafanajson.TableQueryResponseNumberColumn)[2]))
 
-	mock.AssertExpectationsForObjects(t, sciensanoClient, vaccineClient)
+	mock.AssertExpectationsForObjects(t, sciensanoCache, vaccineCache)
 }

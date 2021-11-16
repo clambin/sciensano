@@ -1,10 +1,9 @@
 package reporter_test
 
 import (
-	"context"
 	"github.com/clambin/sciensano/apiclient/sciensano"
-	"github.com/clambin/sciensano/apiclient/sciensano/mocks"
 	"github.com/clambin/sciensano/measurement"
+	"github.com/clambin/sciensano/measurement/mocks"
 	"github.com/clambin/sciensano/reporter"
 	"github.com/clambin/sciensano/reporter/datasets"
 	"github.com/stretchr/testify/assert"
@@ -38,14 +37,13 @@ var (
 )
 
 func TestGetTests(t *testing.T) {
-	apiClient := &mocks.Getter{}
-	client := reporter.NewCachedClient(time.Hour)
-	client.Sciensano = apiClient
-	ctx := context.Background()
+	cache := &mocks.Holder{}
+	client := reporter.New(time.Hour)
+	client.Sciensano = cache
 
-	apiClient.On("GetTestResults", mock.Anything).Return(testResultsResponse, nil)
+	cache.On("Get", "TestResults").Return(testResultsResponse, true)
 
-	result, err := client.GetTestResults(ctx)
+	result, err := client.GetTestResults()
 	require.NoError(t, err)
 
 	assert.Equal(t, &datasets.Dataset{
@@ -59,5 +57,18 @@ func TestGetTests(t *testing.T) {
 		},
 	}, result)
 
-	mock.AssertExpectationsForObjects(t, apiClient)
+	mock.AssertExpectationsForObjects(t, cache)
+}
+
+func TestClient_GetTestResults_Failure(t *testing.T) {
+	cache := &mocks.Holder{}
+	cache.On("Get", "TestResults").Return(nil, false)
+
+	client := reporter.New(time.Hour)
+	client.Sciensano = cache
+
+	_, err := client.GetTestResults()
+	require.Error(t, err)
+
+	mock.AssertExpectationsForObjects(t, cache)
 }
