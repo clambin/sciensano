@@ -38,11 +38,9 @@ func (client *Client) getURL() (url string) {
 
 // Batch represents one batch of vaccines
 type Batch struct {
-	// Date is the date the batch was received
-	Date Time
-	// Manufacturer string
-	// Amount is the number of vaccines in the batch
-	Amount int
+	Date         Timestamp `json:"date"`
+	Manufacturer string    `json:"manufacturer"`
+	Amount       int       `json:"amount"`
 }
 
 var _ measurement.Measurement = &Batch{}
@@ -53,7 +51,10 @@ func (b Batch) GetTimestamp() time.Time {
 }
 
 // GetGroupFieldValue returns the value of a groupable field.  Not used for Batch.
-func (b Batch) GetGroupFieldValue(_ int) string {
+func (b Batch) GetGroupFieldValue(groupField int) string {
+	if groupField == measurement.GroupByManufacturer {
+		return b.Manufacturer
+	}
 	return ""
 }
 
@@ -72,13 +73,13 @@ func (b Batch) GetAttributeValues() (values []float64) {
 	return []float64{float64(b.Amount)}
 }
 
-// Time representation for Batch. Needed to unmarshal the date as received from the API
-type Time struct {
+// Timestamp representation for Batch. Needed to unmarshal the date as received from the API
+type Timestamp struct {
 	time.Time
 }
 
-// UnmarshalJSON unmarshals the Time in a Batch
-func (date *Time) UnmarshalJSON(b []byte) (err error) {
+// UnmarshalJSON unmarshals the Timestamp in a Batch
+func (date *Timestamp) UnmarshalJSON(b []byte) (err error) {
 	var timestamp time.Time
 	if timestamp, err = time.Parse(`"2006-01-02"`, string(b)); err == nil {
 		date.Time = timestamp

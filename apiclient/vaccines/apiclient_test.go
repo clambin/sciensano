@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/clambin/sciensano/apiclient/vaccines"
 	"github.com/clambin/sciensano/apiclient/vaccines/fake"
+	"github.com/clambin/sciensano/measurement"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"net/http"
@@ -54,12 +55,14 @@ func BenchmarkClient_GetBatches(b *testing.B) {
 
 func TestBatch_Measurement(t *testing.T) {
 	b := vaccines.Batch{
-		Date:   vaccines.Time{Time: time.Now()},
-		Amount: 200,
+		Date:         vaccines.Timestamp{Time: time.Now()},
+		Manufacturer: "A",
+		Amount:       200,
 	}
 
 	assert.NotZero(t, b.GetTimestamp())
-	assert.Empty(t, b.GetGroupFieldValue(0))
+	assert.Empty(t, b.GetGroupFieldValue(measurement.GroupByAgeGroup))
+	assert.Equal(t, "A", b.GetGroupFieldValue(measurement.GroupByManufacturer))
 	assert.Equal(t, 200.0, b.GetTotalValue())
 	assert.Equal(t, []string{"total"}, b.GetAttributeNames())
 	assert.Equal(t, []float64{200}, b.GetAttributeValues())

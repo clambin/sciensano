@@ -24,9 +24,10 @@ func New(reporter reporter.Reporter) (handler *Handler) {
 	}
 
 	handler.targetTable = grafanajson.TargetTable{
-		"vaccines":       {TableQueryFunc: handler.buildVaccineTableResponse},
-		"vaccines-stats": {TableQueryFunc: handler.buildVaccineStatsTableResponse},
-		"vaccines-time":  {TableQueryFunc: handler.buildVaccineTimeTableResponse},
+		"vaccines":              {TableQueryFunc: handler.buildVaccineTableResponse},
+		"vaccines-manufacturer": {TableQueryFunc: handler.buildVaccineByManufacturerTableResponse},
+		"vaccines-stats":        {TableQueryFunc: handler.buildVaccineStatsTableResponse},
+		"vaccines-time":         {TableQueryFunc: handler.buildVaccineTimeTableResponse},
 	}
 
 	return
@@ -59,12 +60,20 @@ func (handler *Handler) TableQuery(ctx context.Context, target string, args *gra
 func (handler *Handler) buildVaccineTableResponse(_ context.Context, _ string, args *grafanajson.TableQueryArgs) (output *grafanajson.TableQueryResponse, err error) {
 	var batches *datasets.Dataset
 	batches, err = handler.Reporter.GetVaccines()
-
 	if err == nil {
 		batches.Accumulate()
 		output = response.GenerateTableQueryResponse(batches, args)
 	}
+	return
+}
 
+func (handler *Handler) buildVaccineByManufacturerTableResponse(_ context.Context, _ string, args *grafanajson.TableQueryArgs) (output *grafanajson.TableQueryResponse, err error) {
+	var batches *datasets.Dataset
+	batches, err = handler.Reporter.GetVaccinesByManufacturer()
+	if err == nil {
+		batches.Accumulate()
+		output = response.GenerateTableQueryResponse(batches, args)
+	}
 	return
 }
 

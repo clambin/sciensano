@@ -23,7 +23,7 @@ func TestHandler_Search(t *testing.T) {
 	h := vaccinesHandler.New(r)
 
 	targets := h.Search()
-	assert.Equal(t, []string{"vaccines", "vaccines-stats", "vaccines-time"}, targets)
+	assert.Equal(t, []string{"vaccines", "vaccines-manufacturer", "vaccines-stats", "vaccines-time"}, targets)
 }
 
 func TestHandler_TableQuery_Vaccines(t *testing.T) {
@@ -37,15 +37,15 @@ func TestHandler_TableQuery_Vaccines(t *testing.T) {
 		On("Get", "Vaccines").
 		Return([]measurement.Measurement{
 			&vaccines.Batch{
-				Date:   vaccines.Time{Time: timestamp.Add(-24 * time.Hour)},
+				Date:   vaccines.Timestamp{Time: timestamp.Add(-24 * time.Hour)},
 				Amount: 100,
 			},
 			&vaccines.Batch{
-				Date:   vaccines.Time{Time: timestamp},
+				Date:   vaccines.Timestamp{Time: timestamp},
 				Amount: 200,
 			},
 			&vaccines.Batch{
-				Date:   vaccines.Time{Time: timestamp.Add(24 * time.Hour)},
+				Date:   vaccines.Timestamp{Time: timestamp.Add(24 * time.Hour)},
 				Amount: 200,
 			},
 		}, true)
@@ -58,6 +58,53 @@ func TestHandler_TableQuery_Vaccines(t *testing.T) {
 	require.Len(t, response.Columns[0].Data, 2)
 	assert.Equal(t, 100.0, response.Columns[1].Data.(grafanajson.TableQueryResponseNumberColumn)[0])
 	assert.Equal(t, 300.0, response.Columns[1].Data.(grafanajson.TableQueryResponseNumberColumn)[1])
+
+	mock.AssertExpectationsForObjects(t, cache)
+}
+
+func TestHandler_TableQuery_VaccinesByManufacturer(t *testing.T) {
+	cache := &mockCache.Holder{}
+	r := reporter.New(time.Hour)
+	r.Vaccines = cache
+	h := vaccinesHandler.New(r)
+
+	timestamp := time.Date(2021, time.September, 2, 0, 0, 0, 0, time.UTC)
+	cache.
+		On("Get", "Vaccines").
+		Return([]measurement.Measurement{
+			&vaccines.Batch{
+				Date:         vaccines.Timestamp{Time: timestamp.Add(-24 * time.Hour)},
+				Manufacturer: "A",
+				Amount:       100,
+			},
+			&vaccines.Batch{
+				Date:         vaccines.Timestamp{Time: timestamp},
+				Manufacturer: "B",
+				Amount:       200,
+			},
+			&vaccines.Batch{
+				Date:         vaccines.Timestamp{Time: timestamp.Add(24 * time.Hour)},
+				Manufacturer: "C",
+				Amount:       200,
+			},
+		}, true)
+
+	args := &grafanajson.TableQueryArgs{CommonQueryArgs: grafanajson.CommonQueryArgs{Range: grafanajson.QueryRequestRange{To: timestamp}}}
+
+	response, err := h.Endpoints().TableQuery(context.Background(), "vaccines-manufacturer", args)
+	require.NoError(t, err)
+	assert.Equal(t, []grafanajson.TableQueryResponseColumn{
+		{
+			Text: "timestamp",
+			Data: grafanajson.TableQueryResponseTimeColumn{
+				time.Date(2021, time.September, 1, 0, 0, 0, 0, time.UTC),
+				time.Date(2021, time.September, 2, 0, 0, 0, 0, time.UTC),
+			},
+		},
+		{Text: "A", Data: grafanajson.TableQueryResponseNumberColumn{100, 100}},
+		{Text: "B", Data: grafanajson.TableQueryResponseNumberColumn{0, 200}},
+		{Text: "C", Data: grafanajson.TableQueryResponseNumberColumn{0, 0}},
+	}, response.Columns)
 
 	mock.AssertExpectationsForObjects(t, cache)
 }
@@ -76,7 +123,7 @@ func TestHandler_TableQuery_VaccinesStats(t *testing.T) {
 		On("Get", "Vaccines").
 		Return([]measurement.Measurement{
 			&vaccines.Batch{
-				Date:   vaccines.Time{Time: timestamp.Add(-24 * time.Hour)},
+				Date:   vaccines.Timestamp{Time: timestamp.Add(-24 * time.Hour)},
 				Amount: 100,
 			},
 		}, true)
@@ -120,11 +167,11 @@ func TestHandler_TableQuery_VaccinesTime(t *testing.T) {
 		On("Get", "Vaccines").
 		Return([]measurement.Measurement{
 			&vaccines.Batch{
-				Date:   vaccines.Time{Time: time.Now().Add(-7 * 24 * time.Hour)},
+				Date:   vaccines.Timestamp{Time: time.Now().Add(-7 * 24 * time.Hour)},
 				Amount: 100,
 			},
 			&vaccines.Batch{
-				Date:   vaccines.Time{Time: time.Now().Add(-2 * 24 * time.Hour)},
+				Date:   vaccines.Timestamp{Time: time.Now().Add(-2 * 24 * time.Hour)},
 				Amount: 50,
 			},
 		}, true)

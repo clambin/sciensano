@@ -22,7 +22,7 @@
   "fiscalYearStartMonth": 0,
   "gnetId": null,
   "graphTooltip": 0,
-  "id": 455,
+  "id": 480,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -311,7 +311,7 @@
       "fillGradient": 0,
       "gridPos": {
         "h": 9,
-        "w": 12,
+        "w": 7,
         "x": 12,
         "y": 10
       },
@@ -416,6 +416,61 @@
         "align": false,
         "alignLevel": 1
       }
+    },
+    {
+      "datasource": "sciensano",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            }
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 5,
+        "x": 19,
+        "y": 10
+      },
+      "id": 40,
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "values": [
+            "percent"
+          ]
+        },
+        "pieType": "pie",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "target": "vaccines-manufacturer",
+          "type": "table"
+        }
+      ],
+      "title": "Vaccines by Manufacturer",
+      "type": "piechart"
     },
     {
       "datasource": null,
@@ -1371,7 +1426,7 @@
       "type": "bargauge"
     }
   ],
-  "refresh": "1m",
+  "refresh": "5m",
   "schemaVersion": 31,
   "style": "dark",
   "tags": [],
@@ -1379,12 +1434,12 @@
     "list": []
   },
   "time": {
-    "from": "now-120d",
+    "from": "now-1y",
     "to": "now"
   },
   "timepicker": {},
   "timezone": "",
   "title": "Sciensano - Vaccinations",
   "uid": "KU9aRfgRz",
-  "version": 141
+  "version": 24
 }

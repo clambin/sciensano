@@ -22,4 +22,6 @@ const (
 	GroupByRegion
 	// GroupByProvince is used by GetGroupFieldName. This groups all data by Province
 	GroupByProvince
+	// GroupByManufacturer is used by GetGroupFieldNane. This groups all vaccines by manufacturer
+	GroupByManufacturer
 )

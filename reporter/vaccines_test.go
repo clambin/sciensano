@@ -16,16 +16,19 @@ import (
 var (
 	testVaccinesResponse = []measurement.Measurement{
 		&vaccines.Batch{
-			Date:   vaccines.Time{Time: timestamp},
-			Amount: 10,
+			Date:         vaccines.Timestamp{Time: timestamp},
+			Manufacturer: "A",
+			Amount:       10,
 		},
 		&vaccines.Batch{
-			Date:   vaccines.Time{Time: timestamp},
-			Amount: 20,
+			Date:         vaccines.Timestamp{Time: timestamp},
+			Manufacturer: "B",
+			Amount:       20,
 		},
 		&vaccines.Batch{
-			Date:   vaccines.Time{Time: timestamp.Add(24 * time.Hour)},
-			Amount: 40,
+			Date:         vaccines.Timestamp{Time: timestamp.Add(24 * time.Hour)},
+			Manufacturer: "A",
+			Amount:       40,
 		},
 	}
 )
@@ -51,6 +54,28 @@ func TestClient_GetVaccines(t *testing.T) {
 	}, result)
 }
 
+func TestClient_GetVaccinesByManufacturer(t *testing.T) {
+	cache := &mocks.Holder{}
+	cache.On("Get", "Vaccines").Return(testVaccinesResponse, true)
+
+	client := reporter.New(time.Hour)
+	client.Vaccines = cache
+
+	result, err := client.GetVaccinesByManufacturer()
+	require.NoError(t, err)
+
+	assert.Equal(t, &datasets.Dataset{
+		Timestamps: []time.Time{
+			timestamp,
+			timestamp.Add(24 * time.Hour),
+		},
+		Groups: []datasets.DatasetGroup{
+			{Name: "A", Values: []float64{10, 40}},
+			{Name: "B", Values: []float64{20, 0}},
+		},
+	}, result)
+}
+
 func TestClient_GetVaccines_Failure(t *testing.T) {
 	cache := &mocks.Holder{}
 	cache.On("Get", "Vaccines").Return(nil, false)
@@ -59,6 +84,9 @@ func TestClient_GetVaccines_Failure(t *testing.T) {
 	client.Vaccines = cache
 
 	_, err := client.GetVaccines()
+	require.Error(t, err)
+
+	_, err = client.GetVaccinesByManufacturer()
 	require.Error(t, err)
 
 	mock.AssertExpectationsForObjects(t, cache)
