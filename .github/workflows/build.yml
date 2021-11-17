@@ -5,7 +5,7 @@ on:
     branches:
     - master
     - refactor
-    - vaccine-brand
+    - health
     paths-ignore:
       - '**.md'
       - 'assets/grafana/dashboards/**'

@@ -12,6 +12,8 @@ type Demographics interface {
 	GetAgeGroupFigures() (figures map[string]int)
 	// GetRegionFigures returns the demographics grouped by region
 	GetRegionFigures() (figures map[string]int)
+	// Stats returns statistics on the cache
+	Stats() (stats map[string]int)
 }
 
 // DefaultAgeBrackets specifies the default age brackets for the demographics by age
@@ -48,24 +50,20 @@ func (store *Store) GetAgeGroupFigures() (figures map[string]int) {
 
 // GetByAge returns the total population in the specified age brackets
 func (store *Store) GetByAge(bracket Bracket) (count int, ok bool) {
-	store.lock.Lock()
-	defer store.lock.Unlock()
-
-	byAge, _, err := store.update()
-	if err == nil {
-		count, ok = byAge[bracket]
+	if err := store.update(); err == nil {
+		store.lock.RLock()
+		defer store.lock.RUnlock()
+		count, ok = store.byAge[bracket]
 	}
 	return
 }
 
 // GetAgeBrackets returns all age brackets found in the demographics data
 func (store *Store) GetAgeBrackets() (brackets []Bracket) {
-	store.lock.Lock()
-	defer store.lock.Unlock()
-
-	byAge, _, err := store.update()
-	if err == nil {
-		for bracket := range byAge {
+	if err := store.update(); err == nil {
+		store.lock.RLock()
+		defer store.lock.RUnlock()
+		for bracket := range store.byAge {
 			brackets = append(brackets, bracket)
 		}
 	}
@@ -86,26 +84,41 @@ func (store *Store) GetRegionFigures() (figures map[string]int) {
 
 // GetByRegion returns the total population for the specified region
 func (store *Store) GetByRegion(region string) (count int, ok bool) {
-	store.lock.Lock()
-	defer store.lock.Unlock()
-
-	_, byRegion, err := store.update()
-	if err == nil {
-		count, ok = byRegion[region]
+	if err := store.update(); err == nil {
+		store.lock.RLock()
+		defer store.lock.RUnlock()
+		count, ok = store.byRegion[region]
 	}
 	return
 }
 
 // GetRegions returns all regions found in the demographics data
 func (store *Store) GetRegions() (regions []string) {
-	store.lock.Lock()
-	defer store.lock.Unlock()
-
-	_, byRegion, err := store.update()
-	if err == nil {
-		for region := range byRegion {
+	if err := store.update(); err == nil {
+		store.lock.RLock()
+		defer store.lock.RUnlock()
+		for region := range store.byRegion {
 			regions = append(regions, region)
 		}
+	}
+	return
+}
+
+// Stats reports statistics on the case
+func (store *Store) Stats() (stats map[string]int) {
+	store.lock.RLock()
+	defer store.lock.RUnlock()
+
+	stats = map[string]int{
+		"Regions":     0,
+		"AgeBrackets": 0,
+	}
+
+	if store.byAge != nil {
+		stats["AgeBrackets"] = len(store.byAge)
+	}
+	if store.byRegion != nil {
+		stats["Regions"] = len(store.byRegion)
 	}
 	return
 }

@@ -48,3 +48,19 @@ func (_m *Holder) Get(name string) ([]measurement.Measurement, bool) {
 func (_m *Holder) Refresh(ctx context.Context) {
 	_m.Called(ctx)
 }
+
+// Stats provides a mock function with given fields:
+func (_m *Holder) Stats() map[string]int {
+	ret := _m.Called()
+
+	var r0 map[string]int
+	if rf, ok := ret.Get(0).(func() map[string]int); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(map[string]int)
+		}
+	}
+
+	return r0
+}

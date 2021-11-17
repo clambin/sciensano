@@ -14,11 +14,6 @@ type Getter struct {
 	mock.Mock
 }
 
-// AutoRefresh provides a mock function with given fields: ctx
-func (_m *Getter) AutoRefresh(ctx context.Context) {
-	_m.Called(ctx)
-}
-
 // GetCases provides a mock function with given fields: ctx
 func (_m *Getter) GetCases(ctx context.Context) ([]measurement.Measurement, error) {
 	ret := _m.Called(ctx)

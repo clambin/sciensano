@@ -48,6 +48,13 @@ func TestStore(t *testing.T) {
 	for _, region := range regions {
 		assert.Contains(t, figures, region)
 	}
+
+	stats := store.Stats()
+	require.Len(t, stats, 2)
+	require.Contains(t, stats, "Regions")
+	assert.Equal(t, len(regions), stats["Regions"])
+	require.Contains(t, stats, "AgeBrackets")
+	assert.Equal(t, len(brackets), stats["AgeBrackets"])
 }
 
 func TestStore_Server_Failure(t *testing.T) {

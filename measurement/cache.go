@@ -17,6 +17,7 @@ type Holder interface {
 	Get(name string) (entries []Measurement, found bool)
 	AutoRefresh(ctx context.Context, interval time.Duration)
 	Refresh(ctx context.Context)
+	Stats() (stats map[string]int)
 }
 
 // Cache holds a list of measurements
@@ -66,9 +67,13 @@ func (c *Cache) Refresh(ctx context.Context) {
 	}
 }
 
-// CacheSize returns the number of entries currently in the cache
-func (c *Cache) CacheSize() int {
+// Stats returns statistics on the cache
+func (c *Cache) Stats() (stats map[string]int) {
 	c.lock.RLock()
 	defer c.lock.RUnlock()
-	return len(c.entries)
+	stats = make(map[string]int)
+	for key, value := range c.entries {
+		stats[key] = len(value)
+	}
+	return
 }

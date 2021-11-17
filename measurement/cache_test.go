@@ -64,7 +64,7 @@ func TestCache(t *testing.T) {
 		wg.Done()
 	}()
 
-	require.Eventually(t, func() bool { return ct.CacheSize() == 1 }, 500*time.Millisecond, 10*time.Millisecond)
+	require.Eventually(t, func() bool { return len(ct.Stats()) == 1 }, 500*time.Millisecond, 10*time.Millisecond)
 
 	entries, found := ct.Get("foo")
 	require.True(t, found)

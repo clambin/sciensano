@@ -2,6 +2,7 @@ package apihandler
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	grafanajson "github.com/clambin/grafana-json"
 	casesHandler "github.com/clambin/sciensano/apihandler/cases"
@@ -68,5 +69,24 @@ func (server *Server) Run(port int) (err error) {
 	}
 	r := s.GetRouter()
 	r.PathPrefix("/debug/pprof/").Handler(http.DefaultServeMux)
+	r.Path("/health").Handler(http.HandlerFunc(server.health))
 	return http.ListenAndServe(fmt.Sprintf(":%d", port), r)
+}
+
+func (server *Server) health(w http.ResponseWriter, _ *http.Request) {
+	response := struct {
+		Handlers      int
+		APICache      map[string]int
+		ReporterCache map[string]int
+		Demographics  map[string]int
+	}{
+		Handlers:      len(server.handlers),
+		APICache:      server.Reporter.APICache.Stats(),
+		ReporterCache: server.Reporter.ReportCache.Stats(),
+		Demographics:  server.Demographics.Stats(),
+	}
+
+	encoder := json.NewEncoder(w)
+	encoder.SetIndent("", "  ")
+	_ = encoder.Encode(response)
 }

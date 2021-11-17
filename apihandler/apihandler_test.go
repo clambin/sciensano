@@ -7,8 +7,8 @@ import (
 	"github.com/clambin/sciensano/apihandler"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"io"
 	"net/http"
-	"sync"
 	"testing"
 	"time"
 )
@@ -22,28 +22,18 @@ func TestCreate(t *testing.T) {
 func TestRun(t *testing.T) {
 	h := apihandler.NewServer()
 
-	ctx := context.Background()
-	wg := sync.WaitGroup{}
-	wg.Add(2)
-	go func() {
-		h.Demographics.GetAgeGroupFigures()
-		wg.Done()
-	}()
-	go func() {
-		h.Reporter.APICache.Refresh(ctx)
-		wg.Done()
-	}()
-	wg.Wait()
-
 	go func() {
 		err := h.Run(8080)
 		require.True(t, errors.Is(err, http.ErrServerClosed))
 	}()
 
-	assert.Eventually(t, func() bool {
-		response, err := http.Post("http://localhost:8080/search", "", nil)
+	require.Eventually(t, func() bool {
+		response, err := http.Get("http://localhost:8080/health")
 		return err == nil && response.StatusCode == http.StatusOK
 	}, 30*time.Second, 10*time.Millisecond)
+
+	ctx := context.Background()
+	h.Reporter.APICache.Refresh(ctx)
 
 	args := &grafanajson.TableQueryArgs{
 		CommonQueryArgs: grafanajson.CommonQueryArgs{
@@ -57,6 +47,16 @@ func TestRun(t *testing.T) {
 			require.NoError(t, err, target)
 		}
 	}
+
+	response, err := http.Get("http://localhost:8080/health")
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, response.StatusCode)
+	body, _ := io.ReadAll(response.Body)
+	_ = response.Body.Close()
+	assert.Contains(t, string(body), `"Handlers": `)
+	assert.Contains(t, string(body), `"APICache": {`)
+	assert.Contains(t, string(body), `"ReporterCache": {`)
+	assert.Contains(t, string(body), `"Demographics": {`)
 }
 
 func BenchmarkHandlers_Run(b *testing.B) {
