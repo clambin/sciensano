@@ -6,6 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/clambin/sciensano/measurement"
+	"github.com/clambin/sciensano/metrics"
+	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
 	"io"
 	"net/http"
@@ -104,6 +106,16 @@ func (client *Client) Update(ctx context.Context) (entries map[string][]measurem
 
 // GetBatches returns all vaccine batches
 func (client *Client) GetBatches(ctx context.Context) (batches []measurement.Measurement, err error) {
+	timer := prometheus.NewTimer(metrics.MetricRequestLatency.WithLabelValues("vaccines"))
+	defer func() {
+		duration := timer.ObserveDuration()
+		log.WithField("duration", duration).Debug("called Vaccines API")
+		metrics.MetricRequestsTotal.WithLabelValues("vaccines").Add(1.0)
+		if err != nil {
+			metrics.MetricRequestErrorsTotal.WithLabelValues("vaccines").Add(1.0)
+		}
+	}()
+
 	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, client.getURL()+"/api/v1/delivered.json", nil)
 
 	var resp *http.Response

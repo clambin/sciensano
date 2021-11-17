@@ -31,7 +31,6 @@ func NewServer() (server *Server) {
 	server = &Server{
 		Reporter: reporter.New(refreshInterval),
 		Demographics: &demographics.Store{
-			Retention:   24 * time.Hour,
 			AgeBrackets: demographics.DefaultAgeBrackets,
 		},
 	}
@@ -51,7 +50,7 @@ func NewServer() (server *Server) {
 // RunBackgroundTasks starts background tasks to support Server
 func (server *Server) RunBackgroundTasks(ctx context.Context) {
 	// force load of demographics data on startup
-	go server.Demographics.GetRegionFigures()
+	go server.Demographics.AutoRefresh(ctx, 24*time.Hour)
 	// set up auto-refresh of reports
 	go server.Reporter.APICache.AutoRefresh(ctx, time.Hour)
 }

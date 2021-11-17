@@ -1,10 +1,12 @@
 package demographics_test
 
 import (
+	"context"
 	"github.com/clambin/sciensano/demographics"
 	"github.com/clambin/sciensano/demographics/fake"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"sync"
 	"testing"
 	"time"
 )
@@ -14,10 +16,12 @@ func TestStore(t *testing.T) {
 	defer testServer.Close()
 
 	store := demographics.Store{
-		Retention:   time.Hour,
 		AgeBrackets: demographics.DefaultAgeBrackets,
 		URL:         testServer.URL(),
 	}
+
+	store.Update()
+	require.Len(t, store.Stats(), 2)
 
 	brackets := store.GetAgeBrackets()
 	require.Len(t, brackets, len(demographics.DefaultAgeBrackets)+1)
@@ -61,7 +65,6 @@ func TestStore_Server_Failure(t *testing.T) {
 	testServer := fake.New("")
 
 	store := demographics.Store{
-		Retention:   time.Hour,
 		AgeBrackets: demographics.DefaultAgeBrackets,
 		URL:         testServer.URL(),
 	}
@@ -71,14 +74,41 @@ func TestStore_Server_Failure(t *testing.T) {
 	require.False(t, ok)
 }
 
-func BenchmarkStore(b *testing.B) {
-	testServer := fake.New("../data/big_demographics.zip")
+func TestStore_AutoRefresh(t *testing.T) {
+	testServer := fake.New("")
+	defer testServer.Close()
 
 	store := demographics.Store{
-		Retention:   time.Hour,
 		AgeBrackets: demographics.DefaultAgeBrackets,
 		URL:         testServer.URL(),
 	}
 
+	ctx, cancel := context.WithCancel(context.Background())
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+	go func() {
+		store.AutoRefresh(ctx, 50*time.Millisecond)
+		wg.Done()
+	}()
+
+	require.Eventually(t, func() bool {
+		return len(store.Stats()) == 2
+	}, 5*time.Second, 20*time.Millisecond)
+
+	time.Sleep(200 * time.Millisecond)
+
+	cancel()
+	wg.Wait()
+}
+
+func BenchmarkStore(b *testing.B) {
+	testServer := fake.New("../data/big_demographics.zip")
+	defer testServer.Close()
+
+	store := demographics.Store{
+		AgeBrackets: demographics.DefaultAgeBrackets,
+		URL:         testServer.URL(),
+	}
+	store.Update()
 	_ = store.GetRegions()
 }

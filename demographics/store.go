@@ -1,6 +1,7 @@
 package demographics
 
 import (
+	"context"
 	"sync"
 	"time"
 )
@@ -14,6 +15,8 @@ type Demographics interface {
 	GetRegionFigures() (figures map[string]int)
 	// Stats returns statistics on the cache
 	Stats() (stats map[string]int)
+	// AutoRefresh periodically updates the cache
+	AutoRefresh(ctx context.Context, interval time.Duration)
 }
 
 // DefaultAgeBrackets specifies the default age brackets for the demographics by age
@@ -21,11 +24,9 @@ var DefaultAgeBrackets = []float64{12, 16, 18, 25, 35, 45, 55, 65, 75, 85}
 
 // Store holds the demographics data
 type Store struct {
-	// Retention specifies how long to cache the data
-	Retention time.Duration
 	// AgeBrackets specifies the age brackets to group the data in. Defaults to DefaultAgeBrackets
 	AgeBrackets []float64
-	// TempDirectory specifies the directory to use for temporary files. Uses system-specified tempdir is left blank
+	// TempDirectory specifies the directory to use for temporary files. Uses system-specified tempdir if left blank
 	TempDirectory string
 	// URL is the URL that will be used to retrieve the data. Used for unit testing
 	URL      string
@@ -34,6 +35,21 @@ type Store struct {
 	lock     sync.RWMutex
 	once     *sync.Once
 	expiry   time.Time
+}
+
+// AutoRefresh periodically updates the cache
+func (store *Store) AutoRefresh(ctx context.Context, interval time.Duration) {
+	store.Update()
+
+	ticker := time.NewTicker(interval)
+	for running := true; running; {
+		select {
+		case <-ctx.Done():
+			running = false
+		case <-ticker.C:
+			store.Update()
+		}
+	}
 }
 
 // GetAgeGroupFigures returns the demographics grouped by age groups specified in AgeBrackets
@@ -50,9 +66,10 @@ func (store *Store) GetAgeGroupFigures() (figures map[string]int) {
 
 // GetByAge returns the total population in the specified age brackets
 func (store *Store) GetByAge(bracket Bracket) (count int, ok bool) {
-	if err := store.update(); err == nil {
-		store.lock.RLock()
-		defer store.lock.RUnlock()
+	store.lock.RLock()
+	defer store.lock.RUnlock()
+	ok = false
+	if store.byAge != nil {
 		count, ok = store.byAge[bracket]
 	}
 	return
@@ -60,9 +77,9 @@ func (store *Store) GetByAge(bracket Bracket) (count int, ok bool) {
 
 // GetAgeBrackets returns all age brackets found in the demographics data
 func (store *Store) GetAgeBrackets() (brackets []Bracket) {
-	if err := store.update(); err == nil {
-		store.lock.RLock()
-		defer store.lock.RUnlock()
+	store.lock.RLock()
+	defer store.lock.RUnlock()
+	if store.byAge != nil {
 		for bracket := range store.byAge {
 			brackets = append(brackets, bracket)
 		}
@@ -84,9 +101,10 @@ func (store *Store) GetRegionFigures() (figures map[string]int) {
 
 // GetByRegion returns the total population for the specified region
 func (store *Store) GetByRegion(region string) (count int, ok bool) {
-	if err := store.update(); err == nil {
-		store.lock.RLock()
-		defer store.lock.RUnlock()
+	store.lock.RLock()
+	defer store.lock.RUnlock()
+	ok = false
+	if store.byRegion != nil {
 		count, ok = store.byRegion[region]
 	}
 	return
@@ -94,9 +112,9 @@ func (store *Store) GetByRegion(region string) (count int, ok bool) {
 
 // GetRegions returns all regions found in the demographics data
 func (store *Store) GetRegions() (regions []string) {
-	if err := store.update(); err == nil {
-		store.lock.RLock()
-		defer store.lock.RUnlock()
+	store.lock.RLock()
+	defer store.lock.RUnlock()
+	if store.byRegion != nil {
 		for region := range store.byRegion {
 			regions = append(regions, region)
 		}

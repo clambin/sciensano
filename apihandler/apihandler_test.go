@@ -2,6 +2,7 @@ package apihandler_test
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	grafanajson "github.com/clambin/grafana-json"
 	"github.com/clambin/sciensano/apihandler"
@@ -9,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"io"
 	"net/http"
+	"sync"
 	"testing"
 	"time"
 )
@@ -41,22 +43,33 @@ func TestRun(t *testing.T) {
 		},
 	}
 
+	wg := sync.WaitGroup{}
 	for _, handler := range h.GetHandlers() {
 		for _, target := range handler.Endpoints().Search() {
-			_, err := handler.Endpoints().TableQuery(ctx, target, args)
-			require.NoError(t, err, target)
+			wg.Add(1)
+			go func(handler grafanajson.Handler, target string) {
+				_, err := handler.Endpoints().TableQuery(ctx, target, args)
+				require.NoError(t, err, target)
+				wg.Done()
+			}(handler, target)
 		}
 	}
+	wg.Wait()
 
 	response, err := http.Get("http://localhost:8080/health")
 	require.NoError(t, err)
-	assert.Equal(t, http.StatusOK, response.StatusCode)
+	require.Equal(t, http.StatusOK, response.StatusCode)
+
 	body, _ := io.ReadAll(response.Body)
 	_ = response.Body.Close()
-	assert.Contains(t, string(body), `"Handlers": `)
-	assert.Contains(t, string(body), `"APICache": {`)
-	assert.Contains(t, string(body), `"ReporterCache": {`)
-	assert.Contains(t, string(body), `"Demographics": {`)
+	var result interface{}
+	err = json.Unmarshal(body, &result)
+
+	require.NoError(t, err)
+	assert.Contains(t, result, "Handlers")
+	assert.Contains(t, result, "APICache")
+	assert.Contains(t, result, "ReporterCache")
+	assert.Contains(t, result, "Demographics")
 }
 
 func BenchmarkHandlers_Run(b *testing.B) {

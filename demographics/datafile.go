@@ -2,6 +2,9 @@ package demographics
 
 import (
 	"fmt"
+	"github.com/clambin/sciensano/metrics"
+	"github.com/prometheus/client_golang/prometheus"
+	log "github.com/sirupsen/logrus"
 	"io"
 	"net/http"
 	"os"
@@ -64,6 +67,16 @@ func (datafile *DataFile) makeTempDir() (name string, err error) {
 }
 
 func (datafile *DataFile) get(filename string) (err error) {
+	timer := prometheus.NewTimer(metrics.MetricRequestLatency.WithLabelValues("demographics"))
+	defer func() {
+		duration := timer.ObserveDuration()
+		log.WithField("duration", duration).Debug("called Demographics API")
+		metrics.MetricRequestsTotal.WithLabelValues("demographics").Add(1.0)
+		if err != nil {
+			metrics.MetricRequestErrorsTotal.WithLabelValues("demographics").Add(1.0)
+		}
+	}()
+
 	url := datafile.URL
 	if url == "" {
 		url = demographicsURL
