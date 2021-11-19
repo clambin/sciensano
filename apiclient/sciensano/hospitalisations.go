@@ -5,8 +5,6 @@ import (
 	"github.com/clambin/sciensano/measurement"
 	"github.com/clambin/sciensano/metrics"
 	"github.com/mailru/easyjson"
-	"github.com/prometheus/client_golang/prometheus"
-	log "github.com/sirupsen/logrus"
 	"io"
 	"time"
 )
@@ -62,7 +60,7 @@ var _ measurement.Measurement = &APIHospitalisationsResponseEntry{}
 
 // GetHospitalisations retrieves all recorded COVID-19 cases
 func (client *Client) GetHospitalisations(ctx context.Context) (results []measurement.Measurement, err error) {
-	timer := prometheus.NewTimer(metrics.MetricRequestLatency.WithLabelValues("hospitalisations"))
+	timer := metrics.NewTimerMetric("hospitalisations")
 	var body io.ReadCloser
 	if body, err = client.call(ctx, "COVID19BE_HOSP.json"); err == nil {
 		var cvt APIHospitalisationsResponse
@@ -74,11 +72,6 @@ func (client *Client) GetHospitalisations(ctx context.Context) (results []measur
 		}
 		_ = body.Close()
 	}
-	duration := timer.ObserveDuration()
-	log.WithField("duration", duration).Debug("called GetHospitalisations API")
-	metrics.MetricRequestsTotal.WithLabelValues("hospitalisations").Add(1.0)
-	if err != nil {
-		metrics.MetricRequestErrorsTotal.WithLabelValues("hospitalisations").Add(1.0)
-	}
+	timer.Report(err == nil)
 	return
 }

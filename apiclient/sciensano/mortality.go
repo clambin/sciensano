@@ -5,8 +5,6 @@ import (
 	"github.com/clambin/sciensano/measurement"
 	"github.com/clambin/sciensano/metrics"
 	"github.com/mailru/easyjson"
-	"github.com/prometheus/client_golang/prometheus"
-	log "github.com/sirupsen/logrus"
 	"io"
 	"time"
 )
@@ -59,7 +57,7 @@ func (v APIMortalityResponseEntry) GetAttributeValues() (values []float64) {
 
 // GetMortality retrieves all recorded COVID-19 mortality figures
 func (client *Client) GetMortality(ctx context.Context) (results []measurement.Measurement, err error) {
-	timer := prometheus.NewTimer(metrics.MetricRequestLatency.WithLabelValues("mortality"))
+	timer := metrics.NewTimerMetric("mortality")
 	var body io.ReadCloser
 	if body, err = client.call(ctx, "COVID19BE_MORT.json"); err == nil {
 		var cvt APIMortalityResponse
@@ -71,11 +69,6 @@ func (client *Client) GetMortality(ctx context.Context) (results []measurement.M
 		}
 		_ = body.Close()
 	}
-	duration := timer.ObserveDuration()
-	log.WithField("duration", duration).Debug("called GetMortality API")
-	metrics.MetricRequestsTotal.WithLabelValues("mortality").Add(1.0)
-	if err != nil {
-		metrics.MetricRequestErrorsTotal.WithLabelValues("mortality").Add(1.0)
-	}
+	timer.Report(err == nil)
 	return
 }

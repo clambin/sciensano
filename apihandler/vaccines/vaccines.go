@@ -86,7 +86,6 @@ func (handler *Handler) buildVaccineStatsTableResponse(_ context.Context, _ stri
 	}
 
 	batches.Accumulate()
-	batches.ApplyRange(args.Range.From, args.Range.To)
 
 	var vaccinations *datasets.Dataset
 	vaccinations, err = handler.Reporter.GetVaccinations()
@@ -97,13 +96,20 @@ func (handler *Handler) buildVaccineStatsTableResponse(_ context.Context, _ stri
 
 	summarizeVaccinations(vaccinations)
 	vaccinations.Accumulate()
+
+	vaccinations.Groups = append(vaccinations.Groups, datasets.DatasetGroup{
+		Name:   "reserve",
+		Values: calculateVaccineReserve(vaccinations, batches),
+	})
+
+	batches.ApplyRange(args.Range.From, args.Range.To)
 	vaccinations.ApplyRange(args.Range.From, args.Range.To)
 
 	response = new(grafanajson.TableQueryResponse)
 	response.Columns = []grafanajson.TableQueryResponseColumn{
 		{Text: "timestamp", Data: grafanajson.TableQueryResponseTimeColumn(vaccinations.Timestamps)},
 		{Text: "vaccinations", Data: grafanajson.TableQueryResponseNumberColumn(vaccinations.Groups[0].Values)},
-		{Text: "reserve", Data: grafanajson.TableQueryResponseNumberColumn(calculateVaccineReserve(vaccinations, batches))},
+		{Text: "reserve", Data: grafanajson.TableQueryResponseNumberColumn(vaccinations.Groups[1].Values)},
 	}
 	return
 }

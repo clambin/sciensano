@@ -4,10 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"github.com/clambin/sciensano/measurement"
 	"github.com/clambin/sciensano/metrics"
-	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
 	"io"
 	"net/http"
@@ -100,22 +98,34 @@ func (client *Client) Update(ctx context.Context) (entries map[string][]measurem
 	entries = make(map[string][]measurement.Measurement)
 	entries["Vaccines"], err = client.GetBatches(ctx)
 
-	log.WithField("duration", time.Now().Sub(before)).Debugf("refreshed Sciensano API cache")
+	log.WithField("duration", time.Now().Sub(before)).Debugf("refreshed Vaccine API cache")
 	return
+}
+
+type apiBatchesResponse struct {
+	Result struct {
+		Delivered []*Batch `json:"delivered"`
+	} `json:"result"`
 }
 
 // GetBatches returns all vaccine batches
 func (client *Client) GetBatches(ctx context.Context) (batches []measurement.Measurement, err error) {
-	timer := prometheus.NewTimer(metrics.MetricRequestLatency.WithLabelValues("vaccines"))
-	defer func() {
-		duration := timer.ObserveDuration()
-		log.WithField("duration", duration).Debug("called Vaccines API")
-		metrics.MetricRequestsTotal.WithLabelValues("vaccines").Add(1.0)
-		if err != nil {
-			metrics.MetricRequestErrorsTotal.WithLabelValues("vaccines").Add(1.0)
-		}
-	}()
+	timer := metrics.NewTimerMetric("vaccines")
 
+	var stats apiBatchesResponse
+	if stats, err = client.call(ctx); err == nil {
+		batches = make([]measurement.Measurement, 0, len(stats.Result.Delivered))
+		for _, entry := range stats.Result.Delivered {
+			batches = append(batches, entry)
+		}
+
+		sort.Slice(batches, func(i, j int) bool { return batches[i].GetTimestamp().Before(batches[j].GetTimestamp()) })
+	}
+	timer.Report(err == nil)
+	return
+}
+
+func (client *Client) call(ctx context.Context) (stats apiBatchesResponse, err error) {
 	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, client.getURL()+"/api/v1/delivered.json", nil)
 
 	var resp *http.Response
@@ -124,43 +134,17 @@ func (client *Client) GetBatches(ctx context.Context) (batches []measurement.Mea
 	if err != nil {
 		return
 	}
-
 	defer func(body io.ReadCloser) {
 		_ = body.Close()
 	}(resp.Body)
 
 	if resp.StatusCode != http.StatusOK {
-		err = errors.New(resp.Status)
-		return
+		return stats, errors.New(resp.Status)
 	}
 
 	var body []byte
-	body, err = io.ReadAll(resp.Body)
-
-	if err != nil {
-		err = fmt.Errorf("unable to parse vaccines response: %s", err.Error())
-		return
+	if body, err = io.ReadAll(resp.Body); err == nil {
+		err = json.Unmarshal(body, &stats)
 	}
-
-	var stats struct {
-		Result struct {
-			Delivered []*Batch `json:"delivered"`
-		} `json:"result"`
-	}
-
-	err = json.Unmarshal(body, &stats)
-
-	if err != nil {
-		err = fmt.Errorf("unable to parse vaccines response: %s", err.Error())
-		return
-	}
-
-	batches = make([]measurement.Measurement, 0, len(stats.Result.Delivered))
-	for _, entry := range stats.Result.Delivered {
-		batches = append(batches, entry)
-	}
-
-	sort.Slice(batches, func(i, j int) bool { return batches[i].GetTimestamp().Before(batches[j].GetTimestamp()) })
-
 	return
 }

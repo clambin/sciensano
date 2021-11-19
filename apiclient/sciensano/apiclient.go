@@ -35,7 +35,7 @@ type Client struct {
 // Update calls all endpoints and returns this to the caller. This is used by a cache to refresh its content
 func (client *Client) Update(ctx context.Context) (entries map[string][]measurement.Measurement, err error) {
 	before := time.Now()
-	log.Debug("refreshing API cache")
+	log.Debug("refreshing Sciensano API cache")
 
 	const maxParallel = 3
 	s := semaphore.NewWeighted(maxParallel)

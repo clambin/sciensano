@@ -3,8 +3,6 @@ package demographics
 import (
 	"fmt"
 	"github.com/clambin/sciensano/metrics"
-	"github.com/prometheus/client_golang/prometheus"
-	log "github.com/sirupsen/logrus"
 	"io"
 	"net/http"
 	"os"
@@ -67,45 +65,30 @@ func (datafile *DataFile) makeTempDir() (name string, err error) {
 }
 
 func (datafile *DataFile) get(filename string) (err error) {
-	timer := prometheus.NewTimer(metrics.MetricRequestLatency.WithLabelValues("demographics"))
-	defer func() {
-		duration := timer.ObserveDuration()
-		log.WithField("duration", duration).Debug("called Demographics API")
-		metrics.MetricRequestsTotal.WithLabelValues("demographics").Add(1.0)
-		if err != nil {
-			metrics.MetricRequestErrorsTotal.WithLabelValues("demographics").Add(1.0)
-		}
-	}()
+	timer := metrics.NewTimerMetric("demographics")
 
 	url := datafile.URL
 	if url == "" {
 		url = demographicsURL
 	}
 
-	resp, err := http.Get(url)
-
-	if err != nil {
-		return
+	var resp *http.Response
+	if resp, err = http.Get(url); err == nil {
+		if resp.StatusCode != http.StatusOK {
+			err = fmt.Errorf("server returned %s", resp.Status)
+		} else {
+			// Create the file
+			var out *os.File
+			if out, err = os.Create(filename); err == nil {
+				// Write the body to file
+				_, err = io.Copy(out, resp.Body)
+				_ = out.Close()
+			}
+		}
+		_ = resp.Body.Close()
 	}
 
-	defer func(body io.ReadCloser) {
-		_ = body.Close()
-	}(resp.Body)
-
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("server returned %s", resp.Status)
-	}
-
-	// Create the file
-	var out *os.File
-	out, err = os.Create(filename)
-
-	if err == nil {
-		// Write the body to file
-		_, err = io.Copy(out, resp.Body)
-		_ = out.Close()
-	}
-
+	timer.Report(err == nil)
 	return
 }
 

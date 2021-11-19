@@ -5,8 +5,6 @@ import (
 	"github.com/clambin/sciensano/measurement"
 	"github.com/clambin/sciensano/metrics"
 	"github.com/mailru/easyjson"
-	"github.com/prometheus/client_golang/prometheus"
-	log "github.com/sirupsen/logrus"
 	"io"
 	"time"
 )
@@ -72,7 +70,7 @@ var _ measurement.Measurement = &APIVaccinationsResponseEntry{}
 
 // GetVaccinations retrieves all COVID-19 vaccinations.
 func (client *Client) GetVaccinations(ctx context.Context) (results []measurement.Measurement, err error) {
-	timer := prometheus.NewTimer(metrics.MetricRequestLatency.WithLabelValues("vaccinations"))
+	timer := metrics.NewTimerMetric("vaccinations")
 	var body io.ReadCloser
 	if body, err = client.call(ctx, "COVID19BE_VACC.json"); err == nil {
 		var cvt APIVaccinationsResponse
@@ -84,11 +82,6 @@ func (client *Client) GetVaccinations(ctx context.Context) (results []measuremen
 		}
 		_ = body.Close()
 	}
-	duration := timer.ObserveDuration()
-	log.WithField("duration", duration).Debug("called GetVaccinations API")
-	metrics.MetricRequestsTotal.WithLabelValues("vaccinations").Add(1.0)
-	if err != nil {
-		metrics.MetricRequestErrorsTotal.WithLabelValues("vaccinations").Add(1.0)
-	}
+	timer.Report(err == nil)
 	return
 }

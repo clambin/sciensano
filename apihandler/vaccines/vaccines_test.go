@@ -119,12 +119,21 @@ func TestHandler_TableQuery_VaccinesStats(t *testing.T) {
 
 	cache.
 		On("Get", "Vaccines").
-		Return([]measurement.Measurement{
-			&vaccines.Batch{
-				Date:   vaccines.Timestamp{Time: timestamp.Add(-24 * time.Hour)},
-				Amount: 100,
-			},
-		}, true)
+		Return(
+			[]measurement.Measurement{
+				&vaccines.Batch{
+					Date:   vaccines.Timestamp{Time: timestamp.Add(-48 * time.Hour)},
+					Amount: 50,
+				},
+				&vaccines.Batch{
+					Date:   vaccines.Timestamp{Time: timestamp.Add(-24 * time.Hour)},
+					Amount: 100,
+				},
+				&vaccines.Batch{
+					Date:   vaccines.Timestamp{Time: timestamp},
+					Amount: 200,
+				},
+			}, true)
 
 	cache.
 		On("Get", "Vaccinations").
@@ -139,16 +148,32 @@ func TestHandler_TableQuery_VaccinesStats(t *testing.T) {
 				Dose:      "B",
 				Count:     10,
 			},
+			&sciensano.APIVaccinationsResponseEntry{
+				TimeStamp: sciensano.TimeStamp{Time: timestamp},
+				Dose:      "C",
+				Count:     10,
+			},
 		}, true)
 
-	args := &grafanajson.TableQueryArgs{CommonQueryArgs: grafanajson.CommonQueryArgs{Range: grafanajson.QueryRequestRange{To: timestamp}}}
+	args := &grafanajson.TableQueryArgs{CommonQueryArgs: grafanajson.CommonQueryArgs{
+		Range: grafanajson.QueryRequestRange{From: timestamp.Add(-24 * time.Hour)},
+	}}
 
 	response, err := h.Endpoints().TableQuery(context.Background(), "vaccines-stats", args)
 	require.NoError(t, err)
 	require.Len(t, response.Columns, 3)
-	require.Len(t, response.Columns[0].Data, 1)
-	assert.Equal(t, 20.0, response.Columns[1].Data.(grafanajson.TableQueryResponseNumberColumn)[0])
-	assert.Equal(t, 80.0, response.Columns[2].Data.(grafanajson.TableQueryResponseNumberColumn)[0])
+	assert.Equal(t, grafanajson.TableQueryResponseNumberColumn{20.0, 30.0}, response.Columns[1].Data)
+	assert.Equal(t, grafanajson.TableQueryResponseNumberColumn{130.0, 320.0}, response.Columns[2].Data)
+
+	args = &grafanajson.TableQueryArgs{CommonQueryArgs: grafanajson.CommonQueryArgs{
+		Range: grafanajson.QueryRequestRange{From: timestamp, To: timestamp},
+	}}
+
+	response, err = h.Endpoints().TableQuery(context.Background(), "vaccines-stats", args)
+	require.NoError(t, err)
+	require.Len(t, response.Columns, 3)
+	assert.Equal(t, grafanajson.TableQueryResponseNumberColumn{30.0}, response.Columns[1].Data)
+	assert.Equal(t, grafanajson.TableQueryResponseNumberColumn{320.0}, response.Columns[2].Data)
 
 	mock.AssertExpectationsForObjects(t, cache, cache)
 }

@@ -5,8 +5,6 @@ import (
 	"github.com/clambin/sciensano/measurement"
 	"github.com/clambin/sciensano/metrics"
 	"github.com/mailru/easyjson"
-	"github.com/prometheus/client_golang/prometheus"
-	log "github.com/sirupsen/logrus"
 	"io"
 	"time"
 )
@@ -60,7 +58,7 @@ func (v APITestResultsResponseEntry) GetAttributeValues() (values []float64) {
 
 // GetTestResults retrieves all COVID-19 test results.
 func (client *Client) GetTestResults(ctx context.Context) (results []measurement.Measurement, err error) {
-	timer := prometheus.NewTimer(metrics.MetricRequestLatency.WithLabelValues("tests"))
+	timer := metrics.NewTimerMetric("tests")
 	var body io.ReadCloser
 	if body, err = client.call(ctx, "COVID19BE_tests.json"); err == nil {
 		var cvt APITestResultsResponse
@@ -72,11 +70,6 @@ func (client *Client) GetTestResults(ctx context.Context) (results []measurement
 		}
 		_ = body.Close()
 	}
-	duration := timer.ObserveDuration()
-	log.WithField("duration", duration).Debug("called GetTestResults API")
-	metrics.MetricRequestsTotal.WithLabelValues("tests").Add(1.0)
-	if err != nil {
-		metrics.MetricRequestErrorsTotal.WithLabelValues("tests").Add(1.0)
-	}
+	timer.Report(err == nil)
 	return
 }
