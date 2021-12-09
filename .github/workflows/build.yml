@@ -88,6 +88,8 @@ jobs:
         uses: docker/metadata-action@v3.6.2
         with:
           images: ghcr.io/clambin/sciensano
+          flavor: |
+            latest=true
           tags: |
             type=sha
             type=semver,pattern={{version}}
