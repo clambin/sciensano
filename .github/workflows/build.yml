@@ -4,8 +4,7 @@ on:
   push:
     branches:
     - master
-    - refactor
-    - health
+    - docker
     paths-ignore:
       - '**.md'
       - 'assets/grafana/dashboards/**'
@@ -49,7 +48,7 @@ jobs:
           ARCH: ${{ matrix.arch }}
           RELEASE_VERSION: ${{ steps.vars.outputs.branch }}
         run: |
-          GOOS=$PLATFORM GOARCH=$ARCH \
+          CGO_ENABLED=0 GOOS=$PLATFORM GOARCH=$ARCH \
             go build \
               -ldflags "-X github.com/clambin/sciensano/version.BuildVersion=$RELEASE_VERSION" \
               -o bld/$TARGET-$PLATFORM-$ARCH \

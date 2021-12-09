@@ -8,5 +8,5 @@ ARG TARGETARCH
 COPY bld/sciensano-$TARGETOS-$TARGETARCH /app/sciensano
 
 EXPOSE 8080
-ENTRYPOINT ["/app/sciensano"]
+ENTRYPOINT [ "/app/sciensano" ]
 CMD []
