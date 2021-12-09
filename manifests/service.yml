@@ -1,0 +1,16 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sciensano
+  labels:
+    app: sciensano
+  annotations:
+    dev.okteto.com/auto-ingress: "true"
+spec:
+  selector:
+    app: sciensano
+  ports:
+    - port: 8080
+      targetPort: 8080
+---

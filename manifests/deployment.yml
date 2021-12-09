@@ -1,0 +1,31 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sciensano
+  labels:
+    app: sciensano
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sciensano
+  template:
+    metadata:
+      labels:
+        app: sciensano
+    spec:
+      restartPolicy: Always
+      containers:
+      - name: sciensano
+        image: ghcr.io/clambin/sciensano:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
+        resources:
+          requests:
+            cpu: 100m
+            memory: 200Mi
+          limits:
+            cpu: 150m
+---
