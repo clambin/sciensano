@@ -1,4 +1,3 @@
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -18,7 +17,7 @@ spec:
       restartPolicy: Always
       containers:
       - name: sciensano
-        image: ghcr.io/clambin/sciensano:latest
+        image: ghcr.io/clambin/sciensano
         imagePullPolicy: Always
         ports:
         - containerPort: 8080
