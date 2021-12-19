@@ -1,7 +1,6 @@
 package fake
 
 import (
-	log "github.com/sirupsen/logrus"
 	"html"
 	"net/http"
 )
@@ -13,8 +12,6 @@ type Server struct {
 
 // Handler processes incoming HTTP requests
 func (server *Server) Handler(w http.ResponseWriter, req *http.Request) {
-	log.Debug("apiHandler: " + html.EscapeString(req.URL.Path))
-
 	if server.Fail {
 		http.Error(w, "server set to fail", http.StatusInternalServerError)
 		return

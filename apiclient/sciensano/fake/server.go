@@ -3,7 +3,6 @@ package fake
 import (
 	"context"
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"html"
 	"net/http"
 	"strings"
@@ -24,8 +23,6 @@ type Handler struct {
 func (handler *Handler) Handle(w http.ResponseWriter, req *http.Request) {
 	handler.lock.Lock()
 	defer handler.lock.Unlock()
-
-	log.WithField("path", req.URL.Path).Debug("Handler")
 
 	handler.Count++
 
