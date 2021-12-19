@@ -64,6 +64,7 @@ func (server *Server) GetHandlers() []grafanajson.Handler {
 func (server *Server) Run(port int) (err error) {
 	server.RunBackgroundTasks(context.Background())
 	s := grafanajson.Server{
+		Name:     "sciensano",
 		Handlers: server.GetHandlers(),
 	}
 	r := s.GetRouter()
