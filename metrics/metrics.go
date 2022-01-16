@@ -1,7 +1,7 @@
 package metrics
 
 import (
-	"github.com/clambin/metrics"
+	"github.com/clambin/go-metrics"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 )

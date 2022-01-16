@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"github.com/clambin/metrics"
+	"github.com/clambin/go-metrics"
 	"github.com/clambin/sciensano/measurement"
 	log "github.com/sirupsen/logrus"
 	"io"

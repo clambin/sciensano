@@ -2,7 +2,7 @@ package demographics
 
 import (
 	"fmt"
-	"github.com/clambin/metrics"
+	"github.com/clambin/go-metrics"
 	"io"
 	"net/http"
 	"os"

@@ -2,7 +2,7 @@ package demographics
 
 import (
 	"context"
-	"github.com/clambin/metrics"
+	"github.com/clambin/go-metrics"
 	"sync"
 	"time"
 )
