@@ -3,7 +3,6 @@ package sciensano
 import (
 	"context"
 	"github.com/clambin/sciensano/measurement"
-	"github.com/clambin/sciensano/metrics"
 	"github.com/mailru/easyjson"
 	"io"
 	"time"
@@ -58,9 +57,10 @@ func (v APITestResultsResponseEntry) GetAttributeValues() (values []float64) {
 
 // GetTestResults retrieves all COVID-19 test results.
 func (client *Client) GetTestResults(ctx context.Context) (results []measurement.Measurement, err error) {
-	timer := metrics.NewTimerMetric("tests")
 	var body io.ReadCloser
-	if body, err = client.call(ctx, "COVID19BE_tests.json"); err == nil {
+	body, err = client.call(ctx, "tests")
+
+	if err == nil {
 		var cvt APITestResultsResponse
 		if err = easyjson.UnmarshalFromReader(body, &cvt); err == nil {
 			results = make([]measurement.Measurement, 0, len(cvt))
@@ -70,6 +70,5 @@ func (client *Client) GetTestResults(ctx context.Context) (results []measurement
 		}
 		_ = body.Close()
 	}
-	timer.Report(err == nil)
 	return
 }

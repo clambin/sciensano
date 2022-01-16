@@ -3,7 +3,6 @@ package sciensano
 import (
 	"context"
 	"github.com/clambin/sciensano/measurement"
-	"github.com/clambin/sciensano/metrics"
 	"github.com/mailru/easyjson"
 	"io"
 	"time"
@@ -57,9 +56,10 @@ func (v APIMortalityResponseEntry) GetAttributeValues() (values []float64) {
 
 // GetMortality retrieves all recorded COVID-19 mortality figures
 func (client *Client) GetMortality(ctx context.Context) (results []measurement.Measurement, err error) {
-	timer := metrics.NewTimerMetric("mortality")
 	var body io.ReadCloser
-	if body, err = client.call(ctx, "COVID19BE_MORT.json"); err == nil {
+	body, err = client.call(ctx, "mortality")
+
+	if err == nil {
 		var cvt APIMortalityResponse
 		if err = easyjson.UnmarshalFromReader(body, &cvt); err == nil {
 			results = make([]measurement.Measurement, 0, len(cvt))
@@ -69,6 +69,6 @@ func (client *Client) GetMortality(ctx context.Context) (results []measurement.M
 		}
 		_ = body.Close()
 	}
-	timer.Report(err == nil)
+
 	return
 }

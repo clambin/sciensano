@@ -2,7 +2,7 @@ package demographics
 
 import (
 	"fmt"
-	"github.com/clambin/sciensano/metrics"
+	"github.com/clambin/metrics"
 	"io"
 	"net/http"
 	"os"
@@ -13,10 +13,9 @@ const demographicsURL = "https://statbel.fgov.be/sites/default/files/files/opend
 
 // DataFile represents a demographics data file
 type DataFile struct {
-	// TempDirectory specifies the directory to use for temporary files. Uses system-specified tempdir is left blank
 	TempDirectory string
-	// URL
-	URL string
+	URL           string
+	Metrics       metrics.APIClientMetrics
 
 	tempdir  string
 	filename string
@@ -65,7 +64,10 @@ func (datafile *DataFile) makeTempDir() (name string, err error) {
 }
 
 func (datafile *DataFile) get(filename string) (err error) {
-	timer := metrics.NewTimerMetric("demographics")
+	defer func() {
+		datafile.Metrics.ReportErrors(err, "population")
+	}()
+	timer := datafile.Metrics.MakeLatencyTimer("demographics")
 
 	url := datafile.URL
 	if url == "" {
@@ -73,22 +75,32 @@ func (datafile *DataFile) get(filename string) (err error) {
 	}
 
 	var resp *http.Response
-	if resp, err = http.Get(url); err == nil {
-		if resp.StatusCode != http.StatusOK {
-			err = fmt.Errorf("server returned %s", resp.Status)
-		} else {
-			// Create the file
-			var out *os.File
-			if out, err = os.Create(filename); err == nil {
-				// Write the body to file
-				_, err = io.Copy(out, resp.Body)
-				_ = out.Close()
-			}
-		}
-		_ = resp.Body.Close()
+	resp, err = http.Get(url)
+
+	if timer != nil {
+		timer.ObserveDuration()
 	}
 
-	timer.Report(err == nil)
+	if err != nil {
+		return
+	}
+
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("%s", resp.Status)
+	}
+
+	// Create the file
+	var out *os.File
+	if out, err = os.Create(filename); err == nil {
+		// Write the body to file
+		_, err = io.Copy(out, resp.Body)
+		_ = out.Close()
+	}
+
 	return
 }
 

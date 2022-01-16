@@ -3,7 +3,6 @@ package sciensano
 import (
 	"context"
 	"github.com/clambin/sciensano/measurement"
-	"github.com/clambin/sciensano/metrics"
 	"github.com/mailru/easyjson"
 	"io"
 	"time"
@@ -70,9 +69,10 @@ var _ measurement.Measurement = &APIVaccinationsResponseEntry{}
 
 // GetVaccinations retrieves all COVID-19 vaccinations.
 func (client *Client) GetVaccinations(ctx context.Context) (results []measurement.Measurement, err error) {
-	timer := metrics.NewTimerMetric("vaccinations")
 	var body io.ReadCloser
-	if body, err = client.call(ctx, "COVID19BE_VACC.json"); err == nil {
+	body, err = client.call(ctx, "vaccinations")
+
+	if err == nil {
 		var cvt APIVaccinationsResponse
 		if err = easyjson.UnmarshalFromReader(body, &cvt); err == nil {
 			results = make([]measurement.Measurement, 0, len(cvt))
@@ -82,6 +82,5 @@ func (client *Client) GetVaccinations(ctx context.Context) (results []measuremen
 		}
 		_ = body.Close()
 	}
-	timer.Report(err == nil)
 	return
 }

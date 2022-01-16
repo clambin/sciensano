@@ -4,6 +4,7 @@ import (
 	"github.com/clambin/sciensano/apiclient/sciensano"
 	"github.com/clambin/sciensano/apiclient/vaccines"
 	"github.com/clambin/sciensano/measurement"
+	sciensanoMetrics "github.com/clambin/sciensano/metrics"
 	"net/http"
 	"time"
 )
@@ -31,7 +32,10 @@ func New(duration time.Duration) *Client {
 	return &Client{
 		APICache: &measurement.Cache{
 			Fetchers: []measurement.Fetcher{
-				&sciensano.Client{HTTPClient: &http.Client{}},
+				&sciensano.Client{
+					HTTPClient: &http.Client{},
+					Metrics:    sciensanoMetrics.Metrics,
+				},
 				&vaccines.Client{HTTPClient: &http.Client{}},
 			},
 		},

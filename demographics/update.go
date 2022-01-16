@@ -1,6 +1,7 @@
 package demographics
 
 import (
+	sciensanoMetrics "github.com/clambin/sciensano/metrics"
 	log "github.com/sirupsen/logrus"
 	"time"
 )
@@ -26,6 +27,7 @@ func (store *Store) refresh() (byAge map[Bracket]int, byRegion map[string]int, e
 	datafile := DataFile{
 		TempDirectory: store.TempDirectory,
 		URL:           store.URL,
+		Metrics:       sciensanoMetrics.Metrics,
 	}
 	defer datafile.Remove()
 

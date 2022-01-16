@@ -4,8 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"github.com/clambin/metrics"
 	"github.com/clambin/sciensano/measurement"
-	"github.com/clambin/sciensano/metrics"
 	log "github.com/sirupsen/logrus"
 	"io"
 	"net/http"
@@ -27,6 +27,7 @@ type Client struct {
 	URL        string
 	HTTPClient *http.Client
 	measurement.Cache
+	Metrics metrics.APIClientMetrics
 }
 
 const baseURL = "https://covid-vaccinatie.be"
@@ -110,10 +111,20 @@ type apiBatchesResponse struct {
 
 // GetBatches returns all vaccine batches
 func (client *Client) GetBatches(ctx context.Context) (batches []measurement.Measurement, err error) {
-	timer := metrics.NewTimerMetric("vaccines")
+	defer func() {
+		client.Metrics.ReportErrors(err, "vaccines")
+	}()
+
+	timer := client.Metrics.MakeLatencyTimer("vaccines")
 
 	var stats apiBatchesResponse
-	if stats, err = client.call(ctx); err == nil {
+	stats, err = client.call(ctx)
+
+	if timer != nil {
+		timer.ObserveDuration()
+	}
+
+	if err == nil {
 		batches = make([]measurement.Measurement, 0, len(stats.Result.Delivered))
 		for _, entry := range stats.Result.Delivered {
 			batches = append(batches, entry)
@@ -121,7 +132,6 @@ func (client *Client) GetBatches(ctx context.Context) (batches []measurement.Mea
 
 		sort.Slice(batches, func(i, j int) bool { return batches[i].GetTimestamp().Before(batches[j].GetTimestamp()) })
 	}
-	timer.Report(err == nil)
 	return
 }
 

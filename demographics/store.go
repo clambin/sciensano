@@ -2,6 +2,7 @@ package demographics
 
 import (
 	"context"
+	"github.com/clambin/metrics"
 	"sync"
 	"time"
 )
@@ -24,12 +25,11 @@ var DefaultAgeBrackets = []float64{12, 16, 18, 25, 35, 45, 55, 65, 75, 85}
 
 // Store holds the demographics data
 type Store struct {
-	// AgeBrackets specifies the age brackets to group the data in. Defaults to DefaultAgeBrackets
-	AgeBrackets []float64
-	// TempDirectory specifies the directory to use for temporary files. Uses system-specified tempdir if left blank
-	TempDirectory string
-	// URL is the URL that will be used to retrieve the data. Used for unit testing
-	URL      string
+	AgeBrackets   []float64                // age brackets to group the data in. Defaults to DefaultAgeBrackets
+	TempDirectory string                   // directory to use for temporary files. Uses system-specified tempdir if left blank
+	URL           string                   // used to retrieve the data. Used for unit testing
+	Metrics       metrics.APIClientMetrics // metrics to report API performance
+
 	byAge    map[Bracket]int
 	byRegion map[string]int
 	lock     sync.RWMutex

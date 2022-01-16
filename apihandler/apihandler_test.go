@@ -30,7 +30,7 @@ func TestRun(t *testing.T) {
 	}()
 
 	require.Eventually(t, func() bool {
-		response, err := http.Get("http://localhost:8080/health")
+		response, err := http.Get("http://127.0.0.1:8080/health")
 		return err == nil && response.StatusCode == http.StatusOK
 	}, 30*time.Second, 10*time.Millisecond)
 
@@ -56,7 +56,7 @@ func TestRun(t *testing.T) {
 	}
 	wg.Wait()
 
-	response, err := http.Get("http://localhost:8080/health")
+	response, err := http.Get("http://127.0.0.1:8080/health")
 	require.NoError(t, err)
 	require.Equal(t, http.StatusOK, response.StatusCode)
 

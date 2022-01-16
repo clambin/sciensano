@@ -4,7 +4,7 @@ on:
   push:
     branches:
     - master
-    - okteto
+    - metrics
     paths-ignore:
       - '**.md'
       - 'assets/grafana/dashboards/**'

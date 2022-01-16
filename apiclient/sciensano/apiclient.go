@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/clambin/metrics"
 	"github.com/clambin/sciensano/measurement"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/sync/semaphore"
@@ -30,6 +31,7 @@ var _ Getter = &Client{}
 type Client struct {
 	URL        string
 	HTTPClient *http.Client
+	Metrics    metrics.APIClientMetrics
 }
 
 // Update calls all endpoints and returns this to the caller. This is used by a cache to refresh its content
@@ -37,10 +39,7 @@ func (client *Client) Update(ctx context.Context) (entries map[string][]measurem
 	before := time.Now()
 	log.Debug("refreshing Sciensano API cache")
 
-	const maxParallel = 3
-	s := semaphore.NewWeighted(maxParallel)
-
-	endpoints := map[string]func(context.Context) ([]measurement.Measurement, error){
+	getters := map[string]func(context.Context) ([]measurement.Measurement, error){
 		"Vaccinations":     client.GetVaccinations,
 		"TestResults":      client.GetTestResults,
 		"Hospitalisations": client.GetHospitalisations,
@@ -48,13 +47,16 @@ func (client *Client) Update(ctx context.Context) (entries map[string][]measurem
 		"Cases":            client.GetCases,
 	}
 
+	const maxParallel = 3
+	s := semaphore.NewWeighted(maxParallel)
+
 	type response struct {
 		name    string
 		results []measurement.Measurement
 		err     error
 	}
-	output := make(chan response, len(endpoints))
-	for name, getter := range endpoints {
+	output := make(chan response, len(getters))
+	for name, getter := range getters {
 		_ = s.Acquire(ctx, 1)
 		go func(name string, g func(context.Context) ([]measurement.Measurement, error)) {
 			results, err2 := g(ctx)
@@ -89,20 +91,49 @@ func (client *Client) getURL() (url string) {
 	return
 }
 
+var endpoints = map[string]string{
+	"cases":            "COVID19BE_CASES_AGESEX.json",
+	"hospitalisations": "COVID19BE_HOSP.json",
+	"mortality":        "COVID19BE_MORT.json",
+	"tests":            "COVID19BE_tests.json",
+	"vaccinations":     "COVID19BE_VACC.json",
+}
+
 // call is a generic function to call the Sciensano API endpoints
-func (client *Client) call(ctx context.Context, endpoint string) (response io.ReadCloser, err error) {
+func (client *Client) call(ctx context.Context, category string) (response io.ReadCloser, err error) {
+	defer func() {
+		client.Metrics.ReportErrors(err, category)
+	}()
+
+	endpoint, ok := endpoints[category]
+	if ok == false {
+		err = fmt.Errorf("unsupporter category: %s", category)
+		return
+	}
+
+	timer := client.Metrics.MakeLatencyTimer(category)
 	target := client.getURL() + "/Data/" + endpoint
 
 	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, target, nil)
 
 	var resp *http.Response
-	if resp, err = client.HTTPClient.Do(req); err == nil {
-		if resp.StatusCode == http.StatusOK {
-			response = resp.Body
-		} else {
-			err = errors.New(resp.Status)
-		}
+	resp, err = client.HTTPClient.Do(req)
+
+	if timer != nil {
+		timer.ObserveDuration()
 	}
+
+	if err != nil {
+		return
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		_ = resp.Body.Close()
+		err = errors.New(resp.Status)
+		return
+	}
+
+	response = resp.Body
 	return
 }
 
