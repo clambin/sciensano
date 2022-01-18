@@ -2,13 +2,13 @@ package vaccinations_test
 
 import (
 	"context"
-	grafanaJson "github.com/clambin/grafana-json"
 	"github.com/clambin/sciensano/apiclient/sciensano"
 	vaccinationsHandler "github.com/clambin/sciensano/apihandler/vaccinations"
 	mockDemographics "github.com/clambin/sciensano/demographics/mocks"
 	"github.com/clambin/sciensano/measurement"
 	mockCache "github.com/clambin/sciensano/measurement/mocks"
 	"github.com/clambin/sciensano/reporter"
+	"github.com/clambin/simplejson"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -37,147 +37,147 @@ var (
 
 	testCases = []struct {
 		Target   string
-		Response *grafanaJson.TableQueryResponse
+		Response *simplejson.TableQueryResponse
 	}{
 		{
 			Target: "vaccinations",
-			Response: &grafanaJson.TableQueryResponse{
-				Columns: []grafanaJson.TableQueryResponseColumn{
-					{Text: "timestamp", Data: grafanaJson.TableQueryResponseTimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
-					{Text: "partial", Data: grafanaJson.TableQueryResponseNumberColumn{3, 8}},
-					{Text: "full", Data: grafanaJson.TableQueryResponseNumberColumn{3, 10}},
-					{Text: "booster", Data: grafanaJson.TableQueryResponseNumberColumn{1, 6}},
+			Response: &simplejson.TableQueryResponse{
+				Columns: []simplejson.TableQueryResponseColumn{
+					{Text: "timestamp", Data: simplejson.TableQueryResponseTimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
+					{Text: "partial", Data: simplejson.TableQueryResponseNumberColumn{3, 8}},
+					{Text: "full", Data: simplejson.TableQueryResponseNumberColumn{3, 10}},
+					{Text: "booster", Data: simplejson.TableQueryResponseNumberColumn{1, 6}},
 				},
 			},
 		},
 		{
 			Target: "vaccination-lag",
-			Response: &grafanaJson.TableQueryResponse{
-				Columns: []grafanaJson.TableQueryResponseColumn{
-					{Text: "timestamp", Data: grafanaJson.TableQueryResponseTimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
-					{Text: "lag", Data: grafanaJson.TableQueryResponseNumberColumn{0, 0}},
+			Response: &simplejson.TableQueryResponse{
+				Columns: []simplejson.TableQueryResponseColumn{
+					{Text: "timestamp", Data: simplejson.TableQueryResponseTimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
+					{Text: "lag", Data: simplejson.TableQueryResponseNumberColumn{0, 0}},
 				},
 			},
 		},
 		{
 			Target: "vacc-region-partial",
-			Response: &grafanaJson.TableQueryResponse{
-				Columns: []grafanaJson.TableQueryResponseColumn{
-					{Text: "timestamp", Data: grafanaJson.TableQueryResponseTimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
-					{Text: "(unknown)", Data: grafanaJson.TableQueryResponseNumberColumn{1, 1}},
-					{Text: "Brussels", Data: grafanaJson.TableQueryResponseNumberColumn{2, 7}},
-					{Text: "Flanders", Data: grafanaJson.TableQueryResponseNumberColumn{0, 0}},
+			Response: &simplejson.TableQueryResponse{
+				Columns: []simplejson.TableQueryResponseColumn{
+					{Text: "timestamp", Data: simplejson.TableQueryResponseTimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
+					{Text: "(unknown)", Data: simplejson.TableQueryResponseNumberColumn{1, 1}},
+					{Text: "Brussels", Data: simplejson.TableQueryResponseNumberColumn{2, 7}},
+					{Text: "Flanders", Data: simplejson.TableQueryResponseNumberColumn{0, 0}},
 				},
 			},
 		},
 		{
 			Target: "vacc-region-rate-partial",
-			Response: &grafanaJson.TableQueryResponse{
-				Columns: []grafanaJson.TableQueryResponseColumn{
-					{Text: "timestamp", Data: grafanaJson.TableQueryResponseTimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
-					{Text: "Brussels", Data: grafanaJson.TableQueryResponseNumberColumn{0.2, 0.7}},
-					{Text: "Flanders", Data: grafanaJson.TableQueryResponseNumberColumn{0, 0}},
+			Response: &simplejson.TableQueryResponse{
+				Columns: []simplejson.TableQueryResponseColumn{
+					{Text: "timestamp", Data: simplejson.TableQueryResponseTimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
+					{Text: "Brussels", Data: simplejson.TableQueryResponseNumberColumn{0.2, 0.7}},
+					{Text: "Flanders", Data: simplejson.TableQueryResponseNumberColumn{0, 0}},
 				},
 			},
 		},
 		{
 			Target: "vacc-region-full",
-			Response: &grafanaJson.TableQueryResponse{
-				Columns: []grafanaJson.TableQueryResponseColumn{
-					{Text: "timestamp", Data: grafanaJson.TableQueryResponseTimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
-					{Text: "Brussels", Data: grafanaJson.TableQueryResponseNumberColumn{2, 6}},
-					{Text: "Flanders", Data: grafanaJson.TableQueryResponseNumberColumn{1, 4}},
+			Response: &simplejson.TableQueryResponse{
+				Columns: []simplejson.TableQueryResponseColumn{
+					{Text: "timestamp", Data: simplejson.TableQueryResponseTimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
+					{Text: "Brussels", Data: simplejson.TableQueryResponseNumberColumn{2, 6}},
+					{Text: "Flanders", Data: simplejson.TableQueryResponseNumberColumn{1, 4}},
 				},
 			},
 		},
 		{
 			Target: "vacc-region-rate-full",
-			Response: &grafanaJson.TableQueryResponse{
-				Columns: []grafanaJson.TableQueryResponseColumn{
-					{Text: "timestamp", Data: grafanaJson.TableQueryResponseTimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
-					{Text: "Brussels", Data: grafanaJson.TableQueryResponseNumberColumn{0.2, 0.6}},
-					{Text: "Flanders", Data: grafanaJson.TableQueryResponseNumberColumn{0.01, 0.04}},
+			Response: &simplejson.TableQueryResponse{
+				Columns: []simplejson.TableQueryResponseColumn{
+					{Text: "timestamp", Data: simplejson.TableQueryResponseTimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
+					{Text: "Brussels", Data: simplejson.TableQueryResponseNumberColumn{0.2, 0.6}},
+					{Text: "Flanders", Data: simplejson.TableQueryResponseNumberColumn{0.01, 0.04}},
 				},
 			},
 		},
 		{
 			Target: "vacc-region-booster",
-			Response: &grafanaJson.TableQueryResponse{
-				Columns: []grafanaJson.TableQueryResponseColumn{
-					{Text: "timestamp", Data: grafanaJson.TableQueryResponseTimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
-					{Text: "Brussels", Data: grafanaJson.TableQueryResponseNumberColumn{0, 5}},
-					{Text: "Flanders", Data: grafanaJson.TableQueryResponseNumberColumn{1, 1}},
+			Response: &simplejson.TableQueryResponse{
+				Columns: []simplejson.TableQueryResponseColumn{
+					{Text: "timestamp", Data: simplejson.TableQueryResponseTimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
+					{Text: "Brussels", Data: simplejson.TableQueryResponseNumberColumn{0, 5}},
+					{Text: "Flanders", Data: simplejson.TableQueryResponseNumberColumn{1, 1}},
 				},
 			},
 		},
 		{
 			Target: "vacc-region-rate-booster",
-			Response: &grafanaJson.TableQueryResponse{
-				Columns: []grafanaJson.TableQueryResponseColumn{
-					{Text: "timestamp", Data: grafanaJson.TableQueryResponseTimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
-					{Text: "Brussels", Data: grafanaJson.TableQueryResponseNumberColumn{0, 0.5}},
-					{Text: "Flanders", Data: grafanaJson.TableQueryResponseNumberColumn{0.01, 0.01}},
+			Response: &simplejson.TableQueryResponse{
+				Columns: []simplejson.TableQueryResponseColumn{
+					{Text: "timestamp", Data: simplejson.TableQueryResponseTimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
+					{Text: "Brussels", Data: simplejson.TableQueryResponseNumberColumn{0, 0.5}},
+					{Text: "Flanders", Data: simplejson.TableQueryResponseNumberColumn{0.01, 0.01}},
 				},
 			},
 		},
 		{
 			Target: "vacc-age-partial",
-			Response: &grafanaJson.TableQueryResponse{
-				Columns: []grafanaJson.TableQueryResponseColumn{
-					{Text: "timestamp", Data: grafanaJson.TableQueryResponseTimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
-					{Text: "(unknown)", Data: grafanaJson.TableQueryResponseNumberColumn{1, 1}},
-					{Text: "25-34", Data: grafanaJson.TableQueryResponseNumberColumn{2, 2}},
-					{Text: "35-44", Data: grafanaJson.TableQueryResponseNumberColumn{0, 5}},
+			Response: &simplejson.TableQueryResponse{
+				Columns: []simplejson.TableQueryResponseColumn{
+					{Text: "timestamp", Data: simplejson.TableQueryResponseTimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
+					{Text: "(unknown)", Data: simplejson.TableQueryResponseNumberColumn{1, 1}},
+					{Text: "25-34", Data: simplejson.TableQueryResponseNumberColumn{2, 2}},
+					{Text: "35-44", Data: simplejson.TableQueryResponseNumberColumn{0, 5}},
 				},
 			},
 		},
 		{
 			Target: "vacc-age-rate-partial",
-			Response: &grafanaJson.TableQueryResponse{
-				Columns: []grafanaJson.TableQueryResponseColumn{
-					{Text: "timestamp", Data: grafanaJson.TableQueryResponseTimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
-					{Text: "25-34", Data: grafanaJson.TableQueryResponseNumberColumn{0.02, 0.02}},
-					{Text: "35-44", Data: grafanaJson.TableQueryResponseNumberColumn{0, 0.5}},
+			Response: &simplejson.TableQueryResponse{
+				Columns: []simplejson.TableQueryResponseColumn{
+					{Text: "timestamp", Data: simplejson.TableQueryResponseTimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
+					{Text: "25-34", Data: simplejson.TableQueryResponseNumberColumn{0.02, 0.02}},
+					{Text: "35-44", Data: simplejson.TableQueryResponseNumberColumn{0, 0.5}},
 				},
 			},
 		},
 		{
 			Target: "vacc-age-full",
-			Response: &grafanaJson.TableQueryResponse{
-				Columns: []grafanaJson.TableQueryResponseColumn{
-					{Text: "timestamp", Data: grafanaJson.TableQueryResponseTimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
-					{Text: "25-34", Data: grafanaJson.TableQueryResponseNumberColumn{1, 4}},
-					{Text: "35-44", Data: grafanaJson.TableQueryResponseNumberColumn{2, 6}},
+			Response: &simplejson.TableQueryResponse{
+				Columns: []simplejson.TableQueryResponseColumn{
+					{Text: "timestamp", Data: simplejson.TableQueryResponseTimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
+					{Text: "25-34", Data: simplejson.TableQueryResponseNumberColumn{1, 4}},
+					{Text: "35-44", Data: simplejson.TableQueryResponseNumberColumn{2, 6}},
 				},
 			},
 		},
 		{
 			Target: "vacc-age-rate-full",
-			Response: &grafanaJson.TableQueryResponse{
-				Columns: []grafanaJson.TableQueryResponseColumn{
-					{Text: "timestamp", Data: grafanaJson.TableQueryResponseTimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
-					{Text: "25-34", Data: grafanaJson.TableQueryResponseNumberColumn{0.01, 0.04}},
-					{Text: "35-44", Data: grafanaJson.TableQueryResponseNumberColumn{0.2, 0.6}},
+			Response: &simplejson.TableQueryResponse{
+				Columns: []simplejson.TableQueryResponseColumn{
+					{Text: "timestamp", Data: simplejson.TableQueryResponseTimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
+					{Text: "25-34", Data: simplejson.TableQueryResponseNumberColumn{0.01, 0.04}},
+					{Text: "35-44", Data: simplejson.TableQueryResponseNumberColumn{0.2, 0.6}},
 				},
 			},
 		},
 		{
 			Target: "vacc-age-booster",
-			Response: &grafanaJson.TableQueryResponse{
-				Columns: []grafanaJson.TableQueryResponseColumn{
-					{Text: "timestamp", Data: grafanaJson.TableQueryResponseTimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
-					{Text: "25-34", Data: grafanaJson.TableQueryResponseNumberColumn{0, 5}},
-					{Text: "35-44", Data: grafanaJson.TableQueryResponseNumberColumn{1, 1}},
+			Response: &simplejson.TableQueryResponse{
+				Columns: []simplejson.TableQueryResponseColumn{
+					{Text: "timestamp", Data: simplejson.TableQueryResponseTimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
+					{Text: "25-34", Data: simplejson.TableQueryResponseNumberColumn{0, 5}},
+					{Text: "35-44", Data: simplejson.TableQueryResponseNumberColumn{1, 1}},
 				},
 			},
 		},
 		{
 			Target: "vacc-age-rate-booster",
-			Response: &grafanaJson.TableQueryResponse{
-				Columns: []grafanaJson.TableQueryResponseColumn{
-					{Text: "timestamp", Data: grafanaJson.TableQueryResponseTimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
-					{Text: "25-34", Data: grafanaJson.TableQueryResponseNumberColumn{0, 0.05}},
-					{Text: "35-44", Data: grafanaJson.TableQueryResponseNumberColumn{0.1, 0.1}},
+			Response: &simplejson.TableQueryResponse{
+				Columns: []simplejson.TableQueryResponseColumn{
+					{Text: "timestamp", Data: simplejson.TableQueryResponseTimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
+					{Text: "25-34", Data: simplejson.TableQueryResponseNumberColumn{0, 0.05}},
+					{Text: "35-44", Data: simplejson.TableQueryResponseNumberColumn{0.1, 0.1}},
 				},
 			},
 		},
@@ -218,9 +218,9 @@ func TestHandler_TableQuery(t *testing.T) {
 	h := vaccinationsHandler.New(client, demo)
 
 	endDate := timestamp.Add(24 * time.Hour)
-	args := &grafanaJson.TableQueryArgs{
-		CommonQueryArgs: grafanaJson.CommonQueryArgs{
-			Range: grafanaJson.QueryRequestRange{To: endDate},
+	args := &simplejson.TableQueryArgs{
+		Args: simplejson.Args{
+			Range: simplejson.Range{To: endDate},
 		},
 	}
 
@@ -283,7 +283,7 @@ func BenchmarkHandler_TableQuery(b *testing.B) {
 	client.APICache = cache
 	h := vaccinationsHandler.New(client, nil)
 
-	args := &grafanaJson.TableQueryArgs{CommonQueryArgs: grafanaJson.CommonQueryArgs{Range: grafanaJson.QueryRequestRange{
+	args := &simplejson.TableQueryArgs{Args: simplejson.Args{Range: simplejson.Range{
 		To: time.Date(2021, 10, 22, 0, 0, 0, 0, time.UTC),
 	}}}
 
@@ -303,7 +303,7 @@ func BenchmarkHandler_RateQuery(b *testing.B) {
 	demo := &mockDemographics.Demographics{}
 	h := vaccinationsHandler.New(client, demo)
 
-	args := &grafanaJson.TableQueryArgs{CommonQueryArgs: grafanaJson.CommonQueryArgs{Range: grafanaJson.QueryRequestRange{
+	args := &simplejson.TableQueryArgs{Args: simplejson.Args{Range: simplejson.Range{
 		To: time.Date(2021, 10, 22, 0, 0, 0, 0, time.UTC),
 	}}}
 

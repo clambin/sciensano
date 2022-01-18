@@ -4,8 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	grafanajson "github.com/clambin/grafana-json"
 	"github.com/clambin/sciensano/apihandler"
+	"github.com/clambin/simplejson"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"io"
@@ -37,17 +37,13 @@ func TestRun(t *testing.T) {
 	ctx := context.Background()
 	h.Reporter.APICache.Refresh(ctx)
 
-	args := &grafanajson.TableQueryArgs{
-		CommonQueryArgs: grafanajson.CommonQueryArgs{
-			Range: grafanajson.QueryRequestRange{To: time.Now()},
-		},
-	}
+	args := &simplejson.TableQueryArgs{Args: simplejson.Args{Range: simplejson.Range{To: time.Now()}}}
 
 	wg := sync.WaitGroup{}
 	for _, handler := range h.GetHandlers() {
 		for _, target := range handler.Endpoints().Search() {
 			wg.Add(1)
-			go func(handler grafanajson.Handler, target string) {
+			go func(handler simplejson.Handler, target string) {
 				_, err := handler.Endpoints().TableQuery(ctx, target, args)
 				require.NoError(t, err, target)
 				wg.Done()
@@ -76,11 +72,7 @@ func BenchmarkHandlers_Run(b *testing.B) {
 	h := apihandler.NewServer()
 
 	ctx := context.Background()
-	args := &grafanajson.TableQueryArgs{
-		CommonQueryArgs: grafanajson.CommonQueryArgs{
-			Range: grafanajson.QueryRequestRange{To: time.Now()},
-		},
-	}
+	args := &simplejson.TableQueryArgs{Args: simplejson.Args{Range: simplejson.Range{To: time.Now()}}}
 
 	h.Reporter.APICache.Refresh(context.Background())
 	_ = h.Demographics.GetRegionFigures()

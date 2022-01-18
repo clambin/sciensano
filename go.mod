@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
-	github.com/clambin/grafana-json v0.8.1
+	github.com/clambin/simplejson v0.9.1
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/prometheus/client_golang v1.11.0
 	github.com/prometheus/common v0.32.1 // indirect
@@ -16,7 +16,7 @@ require (
 )
 
 require (
-	github.com/clambin/go-metrics v0.2.0
+	github.com/clambin/go-metrics v0.2.1
 	github.com/mailru/easyjson v0.7.7
 	github.com/rovaughn/fastcsv v0.0.0-20170331030356-1090019547fb
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
@@ -27,6 +27,7 @@ require (
 	github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751 // indirect
 	github.com/alecthomas/units v0.0.0-20211218093645-b94a6e3cc137 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
+	github.com/clambin/simplejson v0.9.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/gorilla/mux v1.8.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect

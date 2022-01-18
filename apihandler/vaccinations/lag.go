@@ -1,11 +1,11 @@
 package vaccinations
 
 import (
-	grafanaJson "github.com/clambin/grafana-json"
 	"github.com/clambin/sciensano/reporter/datasets"
+	"github.com/clambin/simplejson"
 )
 
-func buildLag(vaccinationsData *datasets.Dataset) (timestamps grafanaJson.TableQueryResponseTimeColumn, lag grafanaJson.TableQueryResponseNumberColumn) {
+func buildLag(vaccinationsData *datasets.Dataset) (timestamps simplejson.TableQueryResponseTimeColumn, lag simplejson.TableQueryResponseNumberColumn) {
 	var firstDoseIndex, lastSecondDose int
 
 	/*

@@ -2,13 +2,13 @@ package vaccines_test
 
 import (
 	"context"
-	grafanajson "github.com/clambin/grafana-json"
 	"github.com/clambin/sciensano/apiclient/sciensano"
 	"github.com/clambin/sciensano/apiclient/vaccines"
 	vaccinesHandler "github.com/clambin/sciensano/apihandler/vaccines"
 	"github.com/clambin/sciensano/measurement"
 	mockCache "github.com/clambin/sciensano/measurement/mocks"
 	"github.com/clambin/sciensano/reporter"
+	"github.com/clambin/simplejson"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -50,14 +50,14 @@ func TestHandler_TableQuery_Vaccines(t *testing.T) {
 			},
 		}, true)
 
-	args := &grafanajson.TableQueryArgs{CommonQueryArgs: grafanajson.CommonQueryArgs{Range: grafanajson.QueryRequestRange{To: timestamp}}}
+	args := &simplejson.TableQueryArgs{Args: simplejson.Args{Range: simplejson.Range{To: timestamp}}}
 
 	response, err := h.Endpoints().TableQuery(context.Background(), "vaccines", args)
 	require.NoError(t, err)
 	require.Len(t, response.Columns, 2)
 	require.Len(t, response.Columns[0].Data, 2)
-	assert.Equal(t, 100.0, response.Columns[1].Data.(grafanajson.TableQueryResponseNumberColumn)[0])
-	assert.Equal(t, 300.0, response.Columns[1].Data.(grafanajson.TableQueryResponseNumberColumn)[1])
+	assert.Equal(t, 100.0, response.Columns[1].Data.(simplejson.TableQueryResponseNumberColumn)[0])
+	assert.Equal(t, 300.0, response.Columns[1].Data.(simplejson.TableQueryResponseNumberColumn)[1])
 
 	mock.AssertExpectationsForObjects(t, cache)
 }
@@ -89,21 +89,21 @@ func TestHandler_TableQuery_VaccinesByManufacturer(t *testing.T) {
 			},
 		}, true)
 
-	args := &grafanajson.TableQueryArgs{CommonQueryArgs: grafanajson.CommonQueryArgs{Range: grafanajson.QueryRequestRange{To: timestamp}}}
+	args := &simplejson.TableQueryArgs{Args: simplejson.Args{Range: simplejson.Range{To: timestamp}}}
 
 	response, err := h.Endpoints().TableQuery(context.Background(), "vaccines-manufacturer", args)
 	require.NoError(t, err)
-	assert.Equal(t, []grafanajson.TableQueryResponseColumn{
+	assert.Equal(t, []simplejson.TableQueryResponseColumn{
 		{
 			Text: "timestamp",
-			Data: grafanajson.TableQueryResponseTimeColumn{
+			Data: simplejson.TableQueryResponseTimeColumn{
 				time.Date(2021, time.September, 1, 0, 0, 0, 0, time.UTC),
 				time.Date(2021, time.September, 2, 0, 0, 0, 0, time.UTC),
 			},
 		},
-		{Text: "A", Data: grafanajson.TableQueryResponseNumberColumn{100, 100}},
-		{Text: "B", Data: grafanajson.TableQueryResponseNumberColumn{0, 200}},
-		{Text: "C", Data: grafanajson.TableQueryResponseNumberColumn{0, 0}},
+		{Text: "A", Data: simplejson.TableQueryResponseNumberColumn{100, 100}},
+		{Text: "B", Data: simplejson.TableQueryResponseNumberColumn{0, 200}},
+		{Text: "C", Data: simplejson.TableQueryResponseNumberColumn{0, 0}},
 	}, response.Columns)
 
 	mock.AssertExpectationsForObjects(t, cache)
@@ -155,25 +155,23 @@ func TestHandler_TableQuery_VaccinesStats(t *testing.T) {
 			},
 		}, true)
 
-	args := &grafanajson.TableQueryArgs{CommonQueryArgs: grafanajson.CommonQueryArgs{
-		Range: grafanajson.QueryRequestRange{From: timestamp.Add(-24 * time.Hour)},
+	args := &simplejson.TableQueryArgs{Args: simplejson.Args{
+		Range: simplejson.Range{From: timestamp.Add(-24 * time.Hour)},
 	}}
 
 	response, err := h.Endpoints().TableQuery(context.Background(), "vaccines-stats", args)
 	require.NoError(t, err)
 	require.Len(t, response.Columns, 3)
-	assert.Equal(t, grafanajson.TableQueryResponseNumberColumn{20.0, 30.0}, response.Columns[1].Data)
-	assert.Equal(t, grafanajson.TableQueryResponseNumberColumn{130.0, 320.0}, response.Columns[2].Data)
+	assert.Equal(t, simplejson.TableQueryResponseNumberColumn{20.0, 30.0}, response.Columns[1].Data)
+	assert.Equal(t, simplejson.TableQueryResponseNumberColumn{130.0, 320.0}, response.Columns[2].Data)
 
-	args = &grafanajson.TableQueryArgs{CommonQueryArgs: grafanajson.CommonQueryArgs{
-		Range: grafanajson.QueryRequestRange{From: timestamp, To: timestamp},
-	}}
+	args = &simplejson.TableQueryArgs{Args: simplejson.Args{Range: simplejson.Range{From: timestamp, To: timestamp}}}
 
 	response, err = h.Endpoints().TableQuery(context.Background(), "vaccines-stats", args)
 	require.NoError(t, err)
 	require.Len(t, response.Columns, 3)
-	assert.Equal(t, grafanajson.TableQueryResponseNumberColumn{30.0}, response.Columns[1].Data)
-	assert.Equal(t, grafanajson.TableQueryResponseNumberColumn{320.0}, response.Columns[2].Data)
+	assert.Equal(t, simplejson.TableQueryResponseNumberColumn{30.0}, response.Columns[1].Data)
+	assert.Equal(t, simplejson.TableQueryResponseNumberColumn{320.0}, response.Columns[2].Data)
 
 	mock.AssertExpectationsForObjects(t, cache, cache)
 }
@@ -232,7 +230,7 @@ func TestHandler_TableQuery_VaccinesTime(t *testing.T) {
 			},
 		}, true)
 
-	args := &grafanajson.TableQueryArgs{CommonQueryArgs: grafanajson.CommonQueryArgs{Range: grafanajson.QueryRequestRange{
+	args := &simplejson.TableQueryArgs{Args: simplejson.Args{Range: simplejson.Range{
 		From: time.Time{},
 		To:   time.Now(),
 	}}}
@@ -241,9 +239,9 @@ func TestHandler_TableQuery_VaccinesTime(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, response.Columns, 2)
 	require.Len(t, response.Columns[0].Data, 3)
-	assert.Equal(t, 4, int(response.Columns[1].Data.(grafanajson.TableQueryResponseNumberColumn)[0]))
-	assert.Equal(t, 5, int(response.Columns[1].Data.(grafanajson.TableQueryResponseNumberColumn)[1]))
-	assert.Equal(t, 1, int(response.Columns[1].Data.(grafanajson.TableQueryResponseNumberColumn)[2]))
+	assert.Equal(t, 4, int(response.Columns[1].Data.(simplejson.TableQueryResponseNumberColumn)[0]))
+	assert.Equal(t, 5, int(response.Columns[1].Data.(simplejson.TableQueryResponseNumberColumn)[1]))
+	assert.Equal(t, 1, int(response.Columns[1].Data.(simplejson.TableQueryResponseNumberColumn)[2]))
 
 	mock.AssertExpectationsForObjects(t, cache, cache)
 }

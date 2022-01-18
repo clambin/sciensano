@@ -2,12 +2,12 @@ package hospitalisations_test
 
 import (
 	"context"
-	grafanajson "github.com/clambin/grafana-json"
 	"github.com/clambin/sciensano/apiclient/sciensano"
 	hospitalisationsHandler "github.com/clambin/sciensano/apihandler/hospitalisations"
 	"github.com/clambin/sciensano/measurement"
 	mockCache "github.com/clambin/sciensano/measurement/mocks"
 	"github.com/clambin/sciensano/reporter"
+	"github.com/clambin/simplejson"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"testing"
@@ -65,39 +65,39 @@ var (
 
 	testCases = []struct {
 		Target   string
-		Response *grafanajson.TableQueryResponse
+		Response *simplejson.TableQueryResponse
 	}{
 		{
 			Target: "hospitalisations",
-			Response: &grafanajson.TableQueryResponse{
-				Columns: []grafanajson.TableQueryResponseColumn{
-					{Text: "timestamp", Data: grafanajson.TableQueryResponseTimeColumn{time.Date(2021, time.October, 21, 0, 0, 0, 0, time.UTC), time.Date(2021, time.October, 22, 0, 0, 0, 0, time.UTC)}},
-					{Text: "in", Data: grafanajson.TableQueryResponseNumberColumn{150.0, 91.0}},
-					{Text: "inICU", Data: grafanajson.TableQueryResponseNumberColumn{11.0, 11.0}},
-					{Text: "inResp", Data: grafanajson.TableQueryResponseNumberColumn{5.0, 5.0}},
-					{Text: "inECMO", Data: grafanajson.TableQueryResponseNumberColumn{1.0, 1.0}},
+			Response: &simplejson.TableQueryResponse{
+				Columns: []simplejson.TableQueryResponseColumn{
+					{Text: "timestamp", Data: simplejson.TableQueryResponseTimeColumn{time.Date(2021, time.October, 21, 0, 0, 0, 0, time.UTC), time.Date(2021, time.October, 22, 0, 0, 0, 0, time.UTC)}},
+					{Text: "in", Data: simplejson.TableQueryResponseNumberColumn{150.0, 91.0}},
+					{Text: "inICU", Data: simplejson.TableQueryResponseNumberColumn{11.0, 11.0}},
+					{Text: "inResp", Data: simplejson.TableQueryResponseNumberColumn{5.0, 5.0}},
+					{Text: "inECMO", Data: simplejson.TableQueryResponseNumberColumn{1.0, 1.0}},
 				},
 			},
 		},
 		{
 			Target: "hospitalisations-province",
-			Response: &grafanajson.TableQueryResponse{
-				Columns: []grafanajson.TableQueryResponseColumn{
-					{Text: "timestamp", Data: grafanajson.TableQueryResponseTimeColumn{time.Date(2021, time.October, 21, 0, 0, 0, 0, time.UTC), time.Date(2021, time.October, 22, 0, 0, 0, 0, time.UTC)}},
-					{Text: "(unknown)", Data: grafanajson.TableQueryResponseNumberColumn{0.0, 1.0}},
-					{Text: "Brussels", Data: grafanajson.TableQueryResponseNumberColumn{50.0, 0.0}},
-					{Text: "VlaamsBrabant", Data: grafanajson.TableQueryResponseNumberColumn{100.0, 90.0}},
+			Response: &simplejson.TableQueryResponse{
+				Columns: []simplejson.TableQueryResponseColumn{
+					{Text: "timestamp", Data: simplejson.TableQueryResponseTimeColumn{time.Date(2021, time.October, 21, 0, 0, 0, 0, time.UTC), time.Date(2021, time.October, 22, 0, 0, 0, 0, time.UTC)}},
+					{Text: "(unknown)", Data: simplejson.TableQueryResponseNumberColumn{0.0, 1.0}},
+					{Text: "Brussels", Data: simplejson.TableQueryResponseNumberColumn{50.0, 0.0}},
+					{Text: "VlaamsBrabant", Data: simplejson.TableQueryResponseNumberColumn{100.0, 90.0}},
 				},
 			},
 		},
 		{
 			Target: "hospitalisations-region",
-			Response: &grafanajson.TableQueryResponse{
-				Columns: []grafanajson.TableQueryResponseColumn{
-					{Text: "timestamp", Data: grafanajson.TableQueryResponseTimeColumn{time.Date(2021, time.October, 21, 0, 0, 0, 0, time.UTC), time.Date(2021, time.October, 22, 0, 0, 0, 0, time.UTC)}},
-					{Text: "(unknown)", Data: grafanajson.TableQueryResponseNumberColumn{0.0, 1.0}},
-					{Text: "Brussels", Data: grafanajson.TableQueryResponseNumberColumn{50.0, 0.0}},
-					{Text: "Flanders", Data: grafanajson.TableQueryResponseNumberColumn{100.0, 90.0}},
+			Response: &simplejson.TableQueryResponse{
+				Columns: []simplejson.TableQueryResponseColumn{
+					{Text: "timestamp", Data: simplejson.TableQueryResponseTimeColumn{time.Date(2021, time.October, 21, 0, 0, 0, 0, time.UTC), time.Date(2021, time.October, 22, 0, 0, 0, 0, time.UTC)}},
+					{Text: "(unknown)", Data: simplejson.TableQueryResponseNumberColumn{0.0, 1.0}},
+					{Text: "Brussels", Data: simplejson.TableQueryResponseNumberColumn{50.0, 0.0}},
+					{Text: "Flanders", Data: simplejson.TableQueryResponseNumberColumn{100.0, 90.0}},
 				},
 			},
 		},
@@ -124,7 +124,7 @@ func TestHandler_TableQuery(t *testing.T) {
 	client.APICache = getter
 	h := hospitalisationsHandler.New(client)
 
-	args := &grafanajson.TableQueryArgs{CommonQueryArgs: grafanajson.CommonQueryArgs{Range: grafanajson.QueryRequestRange{
+	args := &simplejson.TableQueryArgs{Args: simplejson.Args{Range: simplejson.Range{
 		From: time.Time{},
 		To:   time.Date(2021, 10, 22, 0, 0, 0, 0, time.UTC),
 	}}}
@@ -164,7 +164,7 @@ func BenchmarkHandler_TableQuery(b *testing.B) {
 	client.APICache = getter
 	h := hospitalisationsHandler.New(client)
 
-	args := &grafanajson.TableQueryArgs{CommonQueryArgs: grafanajson.CommonQueryArgs{Range: grafanajson.QueryRequestRange{
+	args := &simplejson.TableQueryArgs{Args: simplejson.Args{Range: simplejson.Range{
 		To: time.Date(2021, 10, 22, 0, 0, 0, 0, time.UTC),
 	}}}
 

@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	grafanajson "github.com/clambin/grafana-json"
 	casesHandler "github.com/clambin/sciensano/apihandler/cases"
 	hospitalisationsHandler "github.com/clambin/sciensano/apihandler/hospitalisations"
 	mortalityHandler "github.com/clambin/sciensano/apihandler/mortality"
@@ -13,6 +12,7 @@ import (
 	vaccinesHandler "github.com/clambin/sciensano/apihandler/vaccines"
 	"github.com/clambin/sciensano/demographics"
 	"github.com/clambin/sciensano/reporter"
+	"github.com/clambin/simplejson"
 	"net/http"
 	"time"
 )
@@ -21,7 +21,7 @@ import (
 type Server struct {
 	Reporter     *reporter.Client
 	Demographics demographics.Demographics
-	handlers     []grafanajson.Handler
+	handlers     []simplejson.Handler
 }
 
 const refreshInterval = 1 * time.Hour
@@ -35,7 +35,7 @@ func NewServer() (server *Server) {
 		},
 	}
 
-	server.handlers = []grafanajson.Handler{
+	server.handlers = []simplejson.Handler{
 		covidTestsHandler.New(server.Reporter),
 		vaccinationsHandler.New(server.Reporter, server.Demographics),
 		vaccinesHandler.New(server.Reporter),
@@ -56,14 +56,14 @@ func (server *Server) RunBackgroundTasks(ctx context.Context) {
 }
 
 // GetHandlers returns all configured handlers
-func (server *Server) GetHandlers() []grafanajson.Handler {
+func (server *Server) GetHandlers() []simplejson.Handler {
 	return server.handlers
 }
 
 // Run runs the API handler server
 func (server *Server) Run(port int) (err error) {
 	server.RunBackgroundTasks(context.Background())
-	s := grafanajson.Server{
+	s := simplejson.Server{
 		Name:     "sciensano",
 		Handlers: server.GetHandlers(),
 	}

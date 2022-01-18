@@ -3,11 +3,11 @@ package vaccinations
 import (
 	"context"
 	"fmt"
-	grafanajson "github.com/clambin/grafana-json"
 	"github.com/clambin/sciensano/apihandler/response"
 	"github.com/clambin/sciensano/demographics"
 	"github.com/clambin/sciensano/reporter"
 	"github.com/clambin/sciensano/reporter/datasets"
+	"github.com/clambin/simplejson"
 	log "github.com/sirupsen/logrus"
 	"strings"
 	"time"
@@ -17,7 +17,7 @@ import (
 type Handler struct {
 	Sciensano    reporter.Reporter
 	Demographics demographics.Demographics
-	targetTable  grafanajson.TargetTable
+	targetTable  simplejson.TargetTable
 }
 
 // New creates a new Handler
@@ -27,7 +27,7 @@ func New(client reporter.Reporter, demographics demographics.Demographics) (hand
 		Demographics: demographics,
 	}
 
-	handler.targetTable = grafanajson.TargetTable{
+	handler.targetTable = simplejson.TargetTable{
 		"vaccinations":             {TableQueryFunc: handler.buildVaccinationTableResponse},
 		"vacc-age-partial":         {TableQueryFunc: handler.buildGroupedVaccinationTableResponse},
 		"vacc-age-full":            {TableQueryFunc: handler.buildGroupedVaccinationTableResponse},
@@ -48,8 +48,8 @@ func New(client reporter.Reporter, demographics demographics.Demographics) (hand
 }
 
 // Endpoints implements the grafana-json Endpoint function. It returns all supported endpoints
-func (handler *Handler) Endpoints() grafanajson.Endpoints {
-	return grafanajson.Endpoints{
+func (handler *Handler) Endpoints() simplejson.Endpoints {
+	return simplejson.Endpoints{
 		Search:     handler.Search,
 		TableQuery: handler.TableQuery,
 	}
@@ -61,7 +61,7 @@ func (handler *Handler) Search() (targets []string) {
 }
 
 // TableQuery implements the grafana-json TableQuery function. It processes incoming TableQuery requests
-func (handler *Handler) TableQuery(ctx context.Context, target string, args *grafanajson.TableQueryArgs) (response *grafanajson.TableQueryResponse, err error) {
+func (handler *Handler) TableQuery(ctx context.Context, target string, args *simplejson.TableQueryArgs) (response *simplejson.TableQueryResponse, err error) {
 	start := time.Now()
 	response, err = handler.targetTable.RunTableQuery(ctx, target, args)
 	if err != nil {
@@ -71,7 +71,7 @@ func (handler *Handler) TableQuery(ctx context.Context, target string, args *gra
 	return
 }
 
-func (handler *Handler) buildVaccinationTableResponse(_ context.Context, _ string, args *grafanajson.TableQueryArgs) (output *grafanajson.TableQueryResponse, err error) {
+func (handler *Handler) buildVaccinationTableResponse(_ context.Context, _ string, args *simplejson.TableQueryArgs) (output *simplejson.TableQueryResponse, err error) {
 	var vaccinationData *datasets.Dataset
 	vaccinationData, err = handler.Sciensano.GetVaccinations()
 
@@ -87,7 +87,7 @@ func (handler *Handler) buildVaccinationTableResponse(_ context.Context, _ strin
 	return
 }
 
-func (handler *Handler) buildGroupedVaccinationTableResponse(_ context.Context, target string, args *grafanajson.TableQueryArgs) (output *grafanajson.TableQueryResponse, err error) {
+func (handler *Handler) buildGroupedVaccinationTableResponse(_ context.Context, target string, args *simplejson.TableQueryArgs) (output *simplejson.TableQueryResponse, err error) {
 	var vaccinationType int
 	if strings.HasSuffix(target, "-partial") {
 		vaccinationType = reporter.VaccinationTypePartial
@@ -114,7 +114,7 @@ func (handler *Handler) buildGroupedVaccinationTableResponse(_ context.Context, 
 	return
 }
 
-func (handler *Handler) buildGroupedVaccinationRateTableResponse(ctx context.Context, target string, args *grafanajson.TableQueryArgs) (response *grafanajson.TableQueryResponse, err error) {
+func (handler *Handler) buildGroupedVaccinationRateTableResponse(ctx context.Context, target string, args *simplejson.TableQueryArgs) (response *simplejson.TableQueryResponse, err error) {
 	response, err = handler.buildGroupedVaccinationTableResponse(ctx, target, args)
 
 	if err != nil {
@@ -140,8 +140,8 @@ func (handler *Handler) buildGroupedVaccinationRateTableResponse(ctx context.Con
 	return
 }
 
-func filterUnknownColumns(columns []grafanajson.TableQueryResponseColumn) []grafanajson.TableQueryResponseColumn {
-	newColumns := make([]grafanajson.TableQueryResponseColumn, 0, len(columns))
+func filterUnknownColumns(columns []simplejson.TableQueryResponseColumn) []simplejson.TableQueryResponseColumn {
+	newColumns := make([]simplejson.TableQueryResponseColumn, 0, len(columns))
 	shouldReplace := false
 	for _, column := range columns {
 		if column.Text == "(unknown)" {
@@ -156,10 +156,10 @@ func filterUnknownColumns(columns []grafanajson.TableQueryResponseColumn) []graf
 	return columns
 }
 
-func prorateFigures(result *grafanajson.TableQueryResponse, groups map[string]int) {
+func prorateFigures(result *simplejson.TableQueryResponse, groups map[string]int) {
 	for _, column := range result.Columns {
 		switch data := column.Data.(type) {
-		case grafanajson.TableQueryResponseNumberColumn:
+		case simplejson.TableQueryResponseNumberColumn:
 			figure, ok := groups[column.Text]
 			for index, entry := range data {
 				if ok && figure != 0 {
@@ -172,7 +172,7 @@ func prorateFigures(result *grafanajson.TableQueryResponse, groups map[string]in
 	}
 }
 
-func (handler *Handler) buildVaccinationLagTableResponse(_ context.Context, _ string, _ *grafanajson.TableQueryArgs) (response *grafanajson.TableQueryResponse, err error) {
+func (handler *Handler) buildVaccinationLagTableResponse(_ context.Context, _ string, _ *simplejson.TableQueryArgs) (response *simplejson.TableQueryResponse, err error) {
 	var vaccinationsData *datasets.Dataset
 
 	vaccinationsData, err = handler.Sciensano.GetVaccinations()
@@ -185,8 +185,8 @@ func (handler *Handler) buildVaccinationLagTableResponse(_ context.Context, _ st
 	// vaccinationsData.ApplyRange(args.Range.From, args.Range.To)
 	timestamps, lag := buildLag(vaccinationsData)
 
-	response = new(grafanajson.TableQueryResponse)
-	response.Columns = []grafanajson.TableQueryResponseColumn{
+	response = new(simplejson.TableQueryResponse)
+	response.Columns = []simplejson.TableQueryResponseColumn{
 		{Text: "timestamp", Data: timestamps},
 		{Text: "lag", Data: lag},
 	}

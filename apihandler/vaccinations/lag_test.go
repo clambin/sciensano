@@ -1,8 +1,8 @@
 package vaccinations
 
 import (
-	grafanajson "github.com/clambin/grafana-json"
 	"github.com/clambin/sciensano/reporter/datasets"
+	"github.com/clambin/simplejson"
 	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
@@ -25,12 +25,12 @@ func TestVaccinationLag(t *testing.T) {
 		},
 	}
 	_, lag := buildLag(vaccinations)
-	assert.Equal(t, grafanajson.TableQueryResponseNumberColumn{1.0, 1.0, 1.0, 1.0, 1.0}, lag)
+	assert.Equal(t, simplejson.TableQueryResponseNumberColumn{1.0, 1.0, 1.0, 1.0, 1.0}, lag)
 
 	vaccinations.Groups = []datasets.DatasetGroup{
 		{Name: "partial", Values: []float64{1, 1, 2, 3, 4, 4, 6}},
 		{Name: "full", Values: []float64{1, 1, 1, 2, 3, 4, 5}},
 	}
 	_, lag = buildLag(vaccinations)
-	assert.Equal(t, grafanajson.TableQueryResponseNumberColumn{0.0, 1.0, 1.0, 1.0, 0.0}, lag)
+	assert.Equal(t, simplejson.TableQueryResponseNumberColumn{0.0, 1.0, 1.0, 1.0, 0.0}, lag)
 }

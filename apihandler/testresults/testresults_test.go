@@ -2,12 +2,12 @@ package testresults_test
 
 import (
 	"context"
-	grafanajson "github.com/clambin/grafana-json"
 	"github.com/clambin/sciensano/apiclient/sciensano"
 	"github.com/clambin/sciensano/apihandler/testresults"
 	"github.com/clambin/sciensano/measurement"
 	"github.com/clambin/sciensano/measurement/mocks"
 	"github.com/clambin/sciensano/reporter"
+	"github.com/clambin/simplejson"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"testing"
@@ -40,7 +40,7 @@ func TestHandler_TableQuery(t *testing.T) {
 			},
 		}, true)
 
-	args := &grafanajson.TableQueryArgs{CommonQueryArgs: grafanajson.CommonQueryArgs{Range: grafanajson.QueryRequestRange{
+	args := &simplejson.TableQueryArgs{Args: simplejson.Args{Range: simplejson.Range{
 		From: time.Time{},
 		To:   time.Now(),
 	}}}
@@ -49,9 +49,9 @@ func TestHandler_TableQuery(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, response.Columns, 4)
 	require.Len(t, response.Columns[0].Data, 1)
-	assert.Equal(t, 20.0, response.Columns[1].Data.(grafanajson.TableQueryResponseNumberColumn)[0])
-	assert.Equal(t, 10.0, response.Columns[2].Data.(grafanajson.TableQueryResponseNumberColumn)[0])
-	assert.Equal(t, 0.5, response.Columns[3].Data.(grafanajson.TableQueryResponseNumberColumn)[0])
+	assert.Equal(t, 20.0, response.Columns[1].Data.(simplejson.TableQueryResponseNumberColumn)[0])
+	assert.Equal(t, 10.0, response.Columns[2].Data.(simplejson.TableQueryResponseNumberColumn)[0])
+	assert.Equal(t, 0.5, response.Columns[3].Data.(simplejson.TableQueryResponseNumberColumn)[0])
 
 	getter.AssertExpectations(t)
 }

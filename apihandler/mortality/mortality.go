@@ -3,10 +3,10 @@ package mortality
 import (
 	"context"
 	"fmt"
-	grafanajson "github.com/clambin/grafana-json"
 	"github.com/clambin/sciensano/apihandler/response"
 	"github.com/clambin/sciensano/reporter"
 	"github.com/clambin/sciensano/reporter/datasets"
+	"github.com/clambin/simplejson"
 	log "github.com/sirupsen/logrus"
 	"time"
 )
@@ -14,7 +14,7 @@ import (
 // Handler implements a grafana-json handler for COVID-19 cases
 type Handler struct {
 	Sciensano   reporter.Reporter
-	targetTable grafanajson.TargetTable
+	targetTable simplejson.TargetTable
 }
 
 // New creates a new Handler
@@ -23,7 +23,7 @@ func New(client reporter.Reporter) (handler *Handler) {
 		Sciensano: client,
 	}
 
-	handler.targetTable = grafanajson.TargetTable{
+	handler.targetTable = simplejson.TargetTable{
 		"mortality":        {TableQueryFunc: handler.buildCasesResponse},
 		"mortality-region": {TableQueryFunc: handler.buildCasesResponse},
 		"mortality-age":    {TableQueryFunc: handler.buildCasesResponse},
@@ -33,8 +33,8 @@ func New(client reporter.Reporter) (handler *Handler) {
 }
 
 // Endpoints implements the grafana-json Endpoint function. It returns all supported endpoints
-func (handler *Handler) Endpoints() grafanajson.Endpoints {
-	return grafanajson.Endpoints{
+func (handler *Handler) Endpoints() simplejson.Endpoints {
+	return simplejson.Endpoints{
 		Search:     handler.Search,
 		TableQuery: handler.TableQuery,
 	}
@@ -46,7 +46,7 @@ func (handler *Handler) Search() (targets []string) {
 }
 
 // TableQuery implements the grafana-json TableQuery function. It processes incoming TableQuery requests
-func (handler *Handler) TableQuery(ctx context.Context, target string, args *grafanajson.TableQueryArgs) (response *grafanajson.TableQueryResponse, err error) {
+func (handler *Handler) TableQuery(ctx context.Context, target string, args *simplejson.TableQueryArgs) (response *simplejson.TableQueryResponse, err error) {
 	start := time.Now()
 	response, err = handler.targetTable.RunTableQuery(ctx, target, args)
 	if err != nil {
@@ -56,7 +56,7 @@ func (handler *Handler) TableQuery(ctx context.Context, target string, args *gra
 	return
 }
 
-func (handler *Handler) buildCasesResponse(_ context.Context, target string, args *grafanajson.TableQueryArgs) (output *grafanajson.TableQueryResponse, err error) {
+func (handler *Handler) buildCasesResponse(_ context.Context, target string, args *simplejson.TableQueryArgs) (output *simplejson.TableQueryResponse, err error) {
 	var cases *datasets.Dataset
 	switch target {
 	case "mortality":

@@ -3,10 +3,10 @@ package vaccines
 import (
 	"context"
 	"fmt"
-	grafanajson "github.com/clambin/grafana-json"
 	"github.com/clambin/sciensano/apihandler/response"
 	"github.com/clambin/sciensano/reporter"
 	"github.com/clambin/sciensano/reporter/datasets"
+	"github.com/clambin/simplejson"
 	log "github.com/sirupsen/logrus"
 	"time"
 )
@@ -14,7 +14,7 @@ import (
 // Handler implements a grafana-json handler for COVID-19 cases
 type Handler struct {
 	Reporter    reporter.Reporter
-	targetTable grafanajson.TargetTable
+	targetTable simplejson.TargetTable
 }
 
 // New creates a new Handler
@@ -23,7 +23,7 @@ func New(reporter reporter.Reporter) (handler *Handler) {
 		Reporter: reporter,
 	}
 
-	handler.targetTable = grafanajson.TargetTable{
+	handler.targetTable = simplejson.TargetTable{
 		"vaccines":              {TableQueryFunc: handler.buildVaccineTableResponse},
 		"vaccines-manufacturer": {TableQueryFunc: handler.buildVaccineByManufacturerTableResponse},
 		"vaccines-stats":        {TableQueryFunc: handler.buildVaccineStatsTableResponse},
@@ -34,8 +34,8 @@ func New(reporter reporter.Reporter) (handler *Handler) {
 }
 
 // Endpoints implements the grafana-json Endpoint function. It returns all supported endpoints
-func (handler *Handler) Endpoints() grafanajson.Endpoints {
-	return grafanajson.Endpoints{
+func (handler *Handler) Endpoints() simplejson.Endpoints {
+	return simplejson.Endpoints{
 		Search:     handler.Search,
 		TableQuery: handler.TableQuery,
 	}
@@ -47,7 +47,7 @@ func (handler *Handler) Search() (targets []string) {
 }
 
 // TableQuery implements the grafana-json TableQuery function. It processes incoming TableQuery requests
-func (handler *Handler) TableQuery(ctx context.Context, target string, args *grafanajson.TableQueryArgs) (response *grafanajson.TableQueryResponse, err error) {
+func (handler *Handler) TableQuery(ctx context.Context, target string, args *simplejson.TableQueryArgs) (response *simplejson.TableQueryResponse, err error) {
 	start := time.Now()
 	response, err = handler.targetTable.RunTableQuery(ctx, target, args)
 	if err != nil {
@@ -57,7 +57,7 @@ func (handler *Handler) TableQuery(ctx context.Context, target string, args *gra
 	return
 }
 
-func (handler *Handler) buildVaccineTableResponse(_ context.Context, _ string, args *grafanajson.TableQueryArgs) (output *grafanajson.TableQueryResponse, err error) {
+func (handler *Handler) buildVaccineTableResponse(_ context.Context, _ string, args *simplejson.TableQueryArgs) (output *simplejson.TableQueryResponse, err error) {
 	var batches *datasets.Dataset
 	batches, err = handler.Reporter.GetVaccines()
 	if err == nil {
@@ -67,7 +67,7 @@ func (handler *Handler) buildVaccineTableResponse(_ context.Context, _ string, a
 	return
 }
 
-func (handler *Handler) buildVaccineByManufacturerTableResponse(_ context.Context, _ string, args *grafanajson.TableQueryArgs) (output *grafanajson.TableQueryResponse, err error) {
+func (handler *Handler) buildVaccineByManufacturerTableResponse(_ context.Context, _ string, args *simplejson.TableQueryArgs) (output *simplejson.TableQueryResponse, err error) {
 	var batches *datasets.Dataset
 	batches, err = handler.Reporter.GetVaccinesByManufacturer()
 	if err == nil {
@@ -77,7 +77,7 @@ func (handler *Handler) buildVaccineByManufacturerTableResponse(_ context.Contex
 	return
 }
 
-func (handler *Handler) buildVaccineStatsTableResponse(_ context.Context, _ string, args *grafanajson.TableQueryArgs) (response *grafanajson.TableQueryResponse, err error) {
+func (handler *Handler) buildVaccineStatsTableResponse(_ context.Context, _ string, args *simplejson.TableQueryArgs) (response *simplejson.TableQueryResponse, err error) {
 	var batches *datasets.Dataset
 	batches, err = handler.Reporter.GetVaccines()
 
@@ -105,11 +105,11 @@ func (handler *Handler) buildVaccineStatsTableResponse(_ context.Context, _ stri
 	batches.ApplyRange(args.Range.From, args.Range.To)
 	vaccinations.ApplyRange(args.Range.From, args.Range.To)
 
-	response = new(grafanajson.TableQueryResponse)
-	response.Columns = []grafanajson.TableQueryResponseColumn{
-		{Text: "timestamp", Data: grafanajson.TableQueryResponseTimeColumn(vaccinations.Timestamps)},
-		{Text: "vaccinations", Data: grafanajson.TableQueryResponseNumberColumn(vaccinations.Groups[0].Values)},
-		{Text: "reserve", Data: grafanajson.TableQueryResponseNumberColumn(vaccinations.Groups[1].Values)},
+	response = new(simplejson.TableQueryResponse)
+	response.Columns = []simplejson.TableQueryResponseColumn{
+		{Text: "timestamp", Data: simplejson.TableQueryResponseTimeColumn(vaccinations.Timestamps)},
+		{Text: "vaccinations", Data: simplejson.TableQueryResponseNumberColumn(vaccinations.Groups[0].Values)},
+		{Text: "reserve", Data: simplejson.TableQueryResponseNumberColumn(vaccinations.Groups[1].Values)},
 	}
 	return
 }
@@ -145,7 +145,7 @@ func calculateVaccineReserve(vaccinationsData *datasets.Dataset, batches *datase
 	return
 }
 
-func (handler *Handler) buildVaccineTimeTableResponse(_ context.Context, _ string, args *grafanajson.TableQueryArgs) (response *grafanajson.TableQueryResponse, err error) {
+func (handler *Handler) buildVaccineTimeTableResponse(_ context.Context, _ string, args *simplejson.TableQueryArgs) (response *simplejson.TableQueryResponse, err error) {
 	var batches *datasets.Dataset
 	batches, err = handler.Reporter.GetVaccines()
 
@@ -168,15 +168,15 @@ func (handler *Handler) buildVaccineTimeTableResponse(_ context.Context, _ strin
 
 	timestampColumn, timeColumn := calculateVaccineDelay(vaccinations, batches)
 
-	response = new(grafanajson.TableQueryResponse)
-	response.Columns = []grafanajson.TableQueryResponseColumn{
+	response = new(simplejson.TableQueryResponse)
+	response.Columns = []simplejson.TableQueryResponseColumn{
 		{Text: "timestamp", Data: timestampColumn},
 		{Text: "time", Data: timeColumn},
 	}
 	return
 }
 
-func calculateVaccineDelay(vaccinationsData *datasets.Dataset, batches *datasets.Dataset) (timestamps grafanajson.TableQueryResponseTimeColumn, delays grafanajson.TableQueryResponseNumberColumn) {
+func calculateVaccineDelay(vaccinationsData *datasets.Dataset, batches *datasets.Dataset) (timestamps simplejson.TableQueryResponseTimeColumn, delays simplejson.TableQueryResponseNumberColumn) {
 	batchIndex := 0
 	batchCount := len(batches.Timestamps)
 
