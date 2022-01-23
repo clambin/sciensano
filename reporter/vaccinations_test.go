@@ -96,7 +96,7 @@ func TestClient_GetVaccinationsByAgeGroup(t *testing.T) {
 	client.APICache = cache
 
 	testCases := []struct {
-		mode   int
+		mode   reporter.VaccinationType
 		output *datasets.Dataset
 	}{
 		{
@@ -149,7 +149,7 @@ func TestClient_GetVaccinationsByRegion(t *testing.T) {
 	client.APICache = cache
 
 	testCases := []struct {
-		mode   int
+		mode   reporter.VaccinationType
 		output *datasets.Dataset
 	}{
 		{
@@ -262,7 +262,7 @@ func buildBigVaccinationResponse() {
 		}
 		startDate = startDate.Add(24 * time.Hour)
 	}
-	fmt.Printf("response had %d entries\n", len(bigVaccinationResponse))
+	fmt.Printf("responder had %d entries\n", len(bigVaccinationResponse))
 }
 
 func BenchmarkClient_GetVaccination(b *testing.B) {

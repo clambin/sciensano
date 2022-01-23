@@ -1,9 +1,44 @@
 package vaccinations
 
 import (
+	"context"
+	"fmt"
+	"github.com/clambin/sciensano/reporter"
 	"github.com/clambin/sciensano/reporter/datasets"
 	"github.com/clambin/simplejson"
 )
+
+// LagHandler returns the time difference between partial and full COVID-19 vaccination
+type LagHandler struct {
+	reporter.Reporter
+}
+
+func (handler LagHandler) Endpoints() simplejson.Endpoints {
+	return simplejson.Endpoints{TableQuery: handler.tableQuery}
+}
+
+func (handler *LagHandler) tableQuery(_ context.Context, _ *simplejson.TableQueryArgs) (response *simplejson.TableQueryResponse, err error) {
+	var vaccinationsData *datasets.Dataset
+
+	vaccinationsData, err = handler.Reporter.GetVaccinations()
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to determine vaccination lag: %w", err)
+	}
+
+	vaccinationsData.Accumulate()
+	// vaccinationsData.ApplyRange(args.Range.From, args.Range.To)
+	timestamps, lag := buildLag(vaccinationsData)
+
+	response = &simplejson.TableQueryResponse{
+		Columns: []simplejson.TableQueryResponseColumn{
+			{Text: "timestamp", Data: timestamps},
+			{Text: "lag", Data: lag},
+		},
+	}
+
+	return
+}
 
 func buildLag(vaccinationsData *datasets.Dataset) (timestamps simplejson.TableQueryResponseTimeColumn, lag simplejson.TableQueryResponseNumberColumn) {
 	var firstDoseIndex, lastSecondDose int

@@ -82,8 +82,8 @@ func (cache *Cache) Clear(name string) {
 
 // MaybeGenerate loads a report from Cache, or generates it if the report does not exist or is expired
 func (cache *Cache) MaybeGenerate(name string, generate func() (*datasets.Dataset, error)) (report *datasets.Dataset, err error) {
-	before := time.Now()
-	defer func() { log.WithField("time", time.Now().Sub(before)).Debug(name + " done") }()
+	start := time.Now()
+	defer func() { log.WithField("time", time.Since(start)).Debug(name + " done") }()
 
 	log.Debug("running " + name)
 	entry := cache.Load(name)

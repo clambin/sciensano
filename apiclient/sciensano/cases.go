@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-// APICasesResponse is the response of the Sciensano cases API
+// APICasesResponse is the responder of the Reporter cases API
 //easyjson:json
 type APICasesResponse []*APICasesResponseEntry
 

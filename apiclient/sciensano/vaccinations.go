@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-// APIVaccinationsResponse is the response of the Sciensano vaccinations API
+// APIVaccinationsResponse is the responder of the Reporter vaccinations API
 //easyjson:json
 type APIVaccinationsResponse []*APIVaccinationsResponseEntry
 

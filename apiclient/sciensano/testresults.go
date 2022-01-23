@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-// APITestResultsResponse is the response of the Sciensano test results API
+// APITestResultsResponse is the responder of the Reporter test results API
 //easyjson:json
 type APITestResultsResponse []*APITestResultsResponseEntry
 

@@ -4,7 +4,7 @@ on:
   push:
     branches:
     - master
-    - metrics
+    - simplejson
     paths-ignore:
       - '**.md'
       - 'assets/grafana/dashboards/**'

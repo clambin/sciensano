@@ -14,7 +14,7 @@ import (
 	"time"
 )
 
-// Getter interface exposes the different supported Sciensano APIs
+// Getter interface exposes the different supported Reporter APIs
 //go:generate mockery --name Getter
 type Getter interface {
 	GetTestResults(ctx context.Context) (results []measurement.Measurement, err error)
@@ -27,7 +27,7 @@ type Getter interface {
 var _ measurement.Fetcher = &Client{}
 var _ Getter = &Client{}
 
-// Client calls the different Sciensano APIs
+// Client calls the different Reporter APIs
 type Client struct {
 	URL        string
 	HTTPClient *http.Client
@@ -37,7 +37,7 @@ type Client struct {
 // Update calls all endpoints and returns this to the caller. This is used by a cache to refresh its content
 func (client *Client) Update(ctx context.Context) (entries map[string][]measurement.Measurement, err error) {
 	before := time.Now()
-	log.Debug("refreshing Sciensano API cache")
+	log.Debug("refreshing Reporter API cache")
 
 	getters := map[string]func(context.Context) ([]measurement.Measurement, error){
 		"Vaccinations":     client.GetVaccinations,
@@ -77,7 +77,7 @@ func (client *Client) Update(ctx context.Context) (entries map[string][]measurem
 		}
 	}
 
-	log.WithField("duration", time.Now().Sub(before)).Debugf("refreshed Sciensano API cache")
+	log.WithField("duration", time.Now().Sub(before)).Debugf("refreshed Reporter API cache")
 	return
 }
 
@@ -99,7 +99,7 @@ var endpoints = map[string]string{
 	"vaccinations":     "COVID19BE_VACC.json",
 }
 
-// call is a generic function to call the Sciensano API endpoints
+// call is a generic function to call the Reporter API endpoints
 func (client *Client) call(ctx context.Context, category string) (response io.ReadCloser, err error) {
 	defer func() {
 		client.Metrics.ReportErrors(err, category)
@@ -137,12 +137,12 @@ func (client *Client) call(ctx context.Context, category string) (response io.Re
 	return
 }
 
-// TimeStamp represents a timestamp in the API response. Needed for parsing purposes
+// TimeStamp represents a timestamp in the API responder. Needed for parsing purposes
 type TimeStamp struct {
 	time.Time
 }
 
-// UnmarshalJSON unmarshalls a TimeStamp from the API response.
+// UnmarshalJSON unmarshalls a TimeStamp from the API responder.
 func (ts *TimeStamp) UnmarshalJSON(b []byte) (err error) {
 	s := string(b)
 	if len(s) != 12 || s[0] != '"' && s[11] != '"' {

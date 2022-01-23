@@ -1,7 +1,8 @@
 package main
 
 import (
-	"github.com/clambin/sciensano/apihandler"
+	"errors"
+	"github.com/clambin/sciensano/simplejsonserver"
 	"github.com/clambin/sciensano/version"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/alecthomas/kingpin.v2"
@@ -17,7 +18,7 @@ func main() {
 		port  int
 	)
 
-	log.WithField("version", version.BuildVersion).Info("Sciensano API starting")
+	log.WithField("version", version.BuildVersion).Info("Reporter API starting")
 	a := kingpin.New(filepath.Base(os.Args[0]), "reporter")
 	a.Version(version.BuildVersion)
 	a.HelpFlag.Short('h')
@@ -34,9 +35,9 @@ func main() {
 		log.SetLevel(log.DebugLevel)
 	}
 
-	handler := apihandler.NewServer()
+	handler := simplejsonserver.NewServer()
 
-	if err := handler.Run(port); err != http.ErrServerClosed {
+	if err := handler.Run(port); errors.Is(err, http.ErrServerClosed) == false {
 		log.WithError(err).Fatal("failed to start HTTP server")
 	}
 }

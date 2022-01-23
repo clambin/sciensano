@@ -1,7 +1,7 @@
 package reporter
 
 import (
-	"fmt"
+	"errors"
 	"github.com/clambin/sciensano/measurement"
 	"github.com/clambin/sciensano/reporter/datasets"
 )
@@ -14,24 +14,25 @@ type VaccinesGetter interface {
 
 // GetVaccines returns all vaccines data
 func (client *Client) GetVaccines() (results *datasets.Dataset, err error) {
-	return client.ReportCache.MaybeGenerate("Vaccines", func() (output *datasets.Dataset, err2 error) {
-		if apiResult, ok := client.APICache.Get("Vaccines"); ok {
-			output = datasets.GroupMeasurements(apiResult)
-		} else {
-			err2 = fmt.Errorf("cache does not contain Vaccines entries")
+	return client.ReportCache.MaybeGenerate("Vaccines", func() (*datasets.Dataset, error) {
+		apiResult, ok := client.APICache.Get("Vaccines")
+
+		if ok == false {
+			return nil, errors.New("cache does not contain Vaccines entries")
 		}
-		return
+		return datasets.GroupMeasurements(apiResult), nil
+
 	})
 }
 
 // GetVaccinesByManufacturer returns all hospitalisations, grouped by manufacturer
 func (client *Client) GetVaccinesByManufacturer() (results *datasets.Dataset, err error) {
-	return client.ReportCache.MaybeGenerate("VaccinesByManufacturer", func() (output *datasets.Dataset, err2 error) {
-		if apiResult, found := client.APICache.Get("Vaccines"); found {
-			output = datasets.GroupMeasurementsByType(apiResult, measurement.GroupByManufacturer)
-		} else {
-			err2 = fmt.Errorf("cache does not contain Vaccines entries")
+	return client.ReportCache.MaybeGenerate("VaccinesByManufacturer", func() (*datasets.Dataset, error) {
+		apiResult, ok := client.APICache.Get("Vaccines")
+
+		if ok == false {
+			return nil, errors.New("cache does not contain Vaccines entries")
 		}
-		return
+		return datasets.GroupMeasurementsByType(apiResult, measurement.GroupByManufacturer), nil
 	})
 }

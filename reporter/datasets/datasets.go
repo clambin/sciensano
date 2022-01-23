@@ -2,7 +2,7 @@ package datasets
 
 import "time"
 
-// Dataset is the processed response of a sciensano/vaccine API call
+// Dataset is the processed responder of a sciensano/vaccine API call
 type Dataset struct {
 	Timestamps []time.Time
 	Groups     []DatasetGroup

@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-// APIMortalityResponse is the response of the Sciensano cases API
+// APIMortalityResponse is the responder of the Reporter cases API
 //easyjson:json
 type APIMortalityResponse []*APIMortalityResponseEntry
 

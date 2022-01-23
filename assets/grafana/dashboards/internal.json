@@ -20,14 +20,12 @@
   },
   "editable": true,
   "fiscalYearStartMonth": 0,
-  "gnetId": null,
   "graphTooltip": 0,
   "id": 469,
   "links": [],
   "liveNow": false,
   "panels": [
     {
-      "datasource": null,
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -39,7 +37,10 @@
       "type": "row"
     },
     {
-      "datasource": "Prometheus",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -110,8 +111,12 @@
       },
       "targets": [
         {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
           "exemplar": true,
-          "expr": "sum by (target) (rate(grafana_api_query_duration_seconds_count{app=\"sciensano\"}[5m]))",
+          "expr": "sum by (target) (rate(simplejson_query_duration_seconds_count{app=\"sciensano\"}[2m]))",
           "interval": "",
           "legendFormat": "{{target}}",
           "refId": "A"
@@ -121,7 +126,10 @@
       "type": "timeseries"
     },
     {
-      "datasource": "Prometheus",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -146,7 +154,7 @@
               "type": "linear"
             },
             "showPoints": "never",
-            "spanNulls": false,
+            "spanNulls": true,
             "stacking": {
               "group": "A",
               "mode": "none"
@@ -192,8 +200,12 @@
       },
       "targets": [
         {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
           "exemplar": true,
-          "expr": "sum by (target) (rate(grafana_api_query_duration_seconds_sum{app=\"sciensano\"}[5m]) / rate(grafana_api_query_duration_seconds_count{app=\"sciensano\"}[5m]))",
+          "expr": "sum by (target) (rate(simplejson_query_duration_seconds_sum{app=\"sciensano\"}[2m]) / rate(simplejson_query_duration_seconds_count{app=\"sciensano\"}[2m]))",
           "interval": "",
           "legendFormat": "{{target}}",
           "refId": "A"
@@ -203,7 +215,10 @@
       "type": "timeseries"
     },
     {
-      "datasource": "Prometheus",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -227,7 +242,7 @@
             "scaleDistribution": {
               "type": "linear"
             },
-            "showPoints": "auto",
+            "showPoints": "never",
             "spanNulls": true,
             "stacking": {
               "group": "A",
@@ -289,7 +304,6 @@
       "type": "timeseries"
     },
     {
-      "datasource": null,
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -301,7 +315,10 @@
       "type": "row"
     },
     {
-      "datasource": "Prometheus",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -355,7 +372,7 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 6,
+        "w": 9,
         "x": 0,
         "y": 10
       },
@@ -372,8 +389,12 @@
       },
       "targets": [
         {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
           "exemplar": true,
-          "expr": "sum by (endpoint) (rate(sciensano_api_requests_total[5m]))",
+          "expr": "sum by (endpoint) (rate(sciensano_api_latency_count[5m]))",
           "interval": "",
           "legendFormat": "{{endpoint}}",
           "queryType": "randomWalk",
@@ -384,7 +405,10 @@
       "type": "timeseries"
     },
     {
-      "datasource": "Prometheus",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -406,7 +430,8 @@
             "lineWidth": 1,
             "pointSize": 5,
             "scaleDistribution": {
-              "type": "linear"
+              "log": 10,
+              "type": "log"
             },
             "showPoints": "never",
             "spanNulls": true,
@@ -438,8 +463,8 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 6,
-        "x": 6,
+        "w": 9,
+        "x": 9,
         "y": 10
       },
       "id": 6,
@@ -455,6 +480,10 @@
       },
       "targets": [
         {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
           "exemplar": true,
           "expr": "sum by (endpoint) (rate(sciensano_api_latency_sum[5m]) / rate(sciensano_api_latency_count[5m]))",
           "interval": "",
@@ -467,7 +496,10 @@
       "type": "timeseries"
     },
     {
-      "datasource": "Prometheus",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -518,14 +550,14 @@
               }
             ]
           },
-          "unit": "percentunit"
+          "unit": "short"
         },
         "overrides": []
       },
       "gridPos": {
         "h": 8,
         "w": 6,
-        "x": 12,
+        "x": 18,
         "y": 10
       },
       "id": 4,
@@ -541,118 +573,37 @@
       },
       "targets": [
         {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
           "exemplar": true,
-          "expr": "sum by (endpoint) (rate(sciensano_api_request_errors_total[5m]) / rate(sciensano_api_requests_total[5m]))",
+          "expr": "sum by (endpoint) (increase(sciensano_api_errors_total[5m]))",
           "interval": "",
           "legendFormat": "{{endpoint}}",
           "queryType": "randomWalk",
           "refId": "A"
         }
       ],
-      "title": "API error rate",
-      "type": "timeseries"
-    },
-    {
-      "datasource": "Prometheus",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 0,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "lineInterpolation": "stepAfter",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "spanNulls": true,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "max": 1,
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "percentunit"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 6,
-        "x": 18,
-        "y": 10
-      },
-      "id": 8,
-      "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom"
-        },
-        "tooltip": {
-          "mode": "single"
-        }
-      },
-      "targets": [
-        {
-          "exemplar": true,
-          "expr": "sum by (endpoint) (sciensano_cache_hit_total / (sciensano_cache_miss_total+sciensano_cache_hit_total))",
-          "hide": false,
-          "interval": "",
-          "legendFormat": "{{endpoint}}",
-          "queryType": "randomWalk",
-          "refId": "A"
-        }
-      ],
-      "title": "API Cache hit rate",
+      "title": "API errors",
       "type": "timeseries"
     }
   ],
-  "refresh": "1m",
-  "schemaVersion": 31,
+  "refresh": "30s",
+  "schemaVersion": 34,
   "style": "dark",
   "tags": [],
   "templating": {
     "list": []
   },
   "time": {
-    "from": "now-30m",
+    "from": "now-6h",
     "to": "now"
   },
   "timepicker": {},
   "timezone": "",
   "title": "Sciensano - internal",
   "uid": "PTQPklInk",
-  "version": 53
+  "version": 142,
+  "weekStart": ""
 }

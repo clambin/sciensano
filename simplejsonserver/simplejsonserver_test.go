@@ -1,10 +1,10 @@
-package apihandler_test
+package simplejsonserver_test
 
 import (
 	"context"
 	"encoding/json"
 	"errors"
-	"github.com/clambin/sciensano/apihandler"
+	"github.com/clambin/sciensano/simplejsonserver"
 	"github.com/clambin/simplejson"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -15,14 +15,44 @@ import (
 	"time"
 )
 
-func TestCreate(t *testing.T) {
-	h := apihandler.NewServer()
+func TestTargets(t *testing.T) {
+	h := simplejsonserver.NewServer()
 
-	assert.Len(t, h.GetHandlers(), 6)
+	assert.Equal(t, []string{
+		"cases",
+		"cases-age",
+		"cases-province",
+		"cases-region",
+		"hospitalisations",
+		"hospitalisations-province",
+		"hospitalisations-region",
+		"mortality",
+		"mortality-age",
+		"mortality-region",
+		"tests",
+		"vacc-age-booster",
+		"vacc-age-full",
+		"vacc-age-partial",
+		"vacc-age-rate-booster",
+		"vacc-age-rate-full",
+		"vacc-age-rate-partial",
+		"vacc-region-booster",
+		"vacc-region-full",
+		"vacc-region-partial",
+		"vacc-region-rate-booster",
+		"vacc-region-rate-full",
+		"vacc-region-rate-partial",
+		"vaccination-lag",
+		"vaccinations",
+		"vaccines",
+		"vaccines-manufacturer",
+		"vaccines-stats",
+		"vaccines-time",
+	}, h.Targets())
 }
 
 func TestRun(t *testing.T) {
-	h := apihandler.NewServer()
+	h := simplejsonserver.NewServer()
 
 	go func() {
 		err := h.Run(8080)
@@ -40,15 +70,13 @@ func TestRun(t *testing.T) {
 	args := &simplejson.TableQueryArgs{Args: simplejson.Args{Range: simplejson.Range{To: time.Now()}}}
 
 	wg := sync.WaitGroup{}
-	for _, handler := range h.GetHandlers() {
-		for _, target := range handler.Endpoints().Search() {
-			wg.Add(1)
-			go func(handler simplejson.Handler, target string) {
-				_, err := handler.Endpoints().TableQuery(ctx, target, args)
-				require.NoError(t, err, target)
-				wg.Done()
-			}(handler, target)
-		}
+	for target, handler := range h.Handlers {
+		wg.Add(1)
+		go func(handler simplejson.Handler, target string) {
+			_, err := handler.Endpoints().TableQuery(ctx, args)
+			require.NoError(t, err, target)
+			wg.Done()
+		}(handler, target)
 	}
 	wg.Wait()
 
@@ -69,7 +97,7 @@ func TestRun(t *testing.T) {
 }
 
 func BenchmarkHandlers_Run(b *testing.B) {
-	h := apihandler.NewServer()
+	h := simplejsonserver.NewServer()
 
 	ctx := context.Background()
 	args := &simplejson.TableQueryArgs{Args: simplejson.Args{Range: simplejson.Range{To: time.Now()}}}
@@ -78,13 +106,10 @@ func BenchmarkHandlers_Run(b *testing.B) {
 	_ = h.Demographics.GetRegionFigures()
 
 	b.ResetTimer()
-	for i := 0; i < 1; i++ {
-		for _, handler := range h.GetHandlers() {
-			for _, target := range handler.Endpoints().Search() {
-				_, err := handler.Endpoints().TableQuery(ctx, target, args)
-				assert.NoError(b, err)
-			}
+	for i := 0; i < b.N; i++ {
+		for _, handler := range h.Handlers {
+			_, err := handler.Endpoints().TableQuery(ctx, args)
+			assert.NoError(b, err)
 		}
 	}
-
 }

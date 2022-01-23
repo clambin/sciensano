@@ -1,12 +1,12 @@
-package mortality_test
+package cases_test
 
 import (
 	"context"
 	"github.com/clambin/sciensano/apiclient/sciensano"
-	"github.com/clambin/sciensano/apihandler/mortality"
 	"github.com/clambin/sciensano/measurement"
 	mockCache "github.com/clambin/sciensano/measurement/mocks"
 	"github.com/clambin/sciensano/reporter"
+	"github.com/clambin/sciensano/simplejsonserver/cases"
 	"github.com/clambin/simplejson"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -15,47 +15,52 @@ import (
 )
 
 type TestCase struct {
-	Target   string
+	Scope    cases.Scope
 	Response *simplejson.TableQueryResponse
 }
 
 var (
 	testResponse = []measurement.Measurement{
-		&sciensano.APIMortalityResponseEntry{
+		&sciensano.APICasesResponseEntry{
 			TimeStamp: sciensano.TimeStamp{Time: time.Date(2021, 10, 21, 0, 0, 0, 0, time.UTC)},
 			Region:    "Flanders",
+			Province:  "VlaamsBrabant",
 			AgeGroup:  "85+",
-			Deaths:    100,
+			Cases:     100,
 		},
-		&sciensano.APIMortalityResponseEntry{
+		&sciensano.APICasesResponseEntry{
 			TimeStamp: sciensano.TimeStamp{Time: time.Date(2021, 10, 21, 0, 0, 0, 0, time.UTC)},
 			Region:    "Brussels",
+			Province:  "Brussels",
 			AgeGroup:  "25-34",
-			Deaths:    150,
+			Cases:     150,
 		},
-		&sciensano.APIMortalityResponseEntry{
+		&sciensano.APICasesResponseEntry{
 			TimeStamp: sciensano.TimeStamp{Time: time.Date(2021, 10, 22, 0, 0, 0, 0, time.UTC)},
 			Region:    "Flanders",
+			Province:  "VlaamsBrabant",
 			AgeGroup:  "25-34",
-			Deaths:    120,
+			Cases:     120,
 		},
-		&sciensano.APIMortalityResponseEntry{
+		&sciensano.APICasesResponseEntry{
 			TimeStamp: sciensano.TimeStamp{Time: time.Date(2021, 10, 22, 0, 0, 0, 0, time.UTC)},
 			Region:    "",
+			Province:  "",
 			AgeGroup:  "",
-			Deaths:    5,
+			Cases:     5,
 		},
-		&sciensano.APIMortalityResponseEntry{
+		&sciensano.APICasesResponseEntry{
 			TimeStamp: sciensano.TimeStamp{Time: time.Date(2021, 10, 23, 0, 0, 0, 0, time.UTC)},
 			Region:    "Flanders",
+			Province:  "VlaamsBrabant",
 			AgeGroup:  "65-74",
-			Deaths:    100,
+			Cases:     100,
 		},
 	}
 
 	testCases = []TestCase{
 		{
-			Target: "mortality",
+			Scope: cases.ScopeAll,
 			Response: &simplejson.TableQueryResponse{
 				Columns: []simplejson.TableQueryResponseColumn{
 					{Text: "timestamp", Data: simplejson.TableQueryResponseTimeColumn{time.Date(2021, time.October, 21, 0, 0, 0, 0, time.UTC), time.Date(2021, time.October, 22, 0, 0, 0, 0, time.UTC)}},
@@ -64,7 +69,18 @@ var (
 			},
 		},
 		{
-			Target: "mortality-region",
+			Scope: cases.ScopeProvince,
+			Response: &simplejson.TableQueryResponse{
+				Columns: []simplejson.TableQueryResponseColumn{
+					{Text: "timestamp", Data: simplejson.TableQueryResponseTimeColumn{time.Date(2021, time.October, 21, 0, 0, 0, 0, time.UTC), time.Date(2021, time.October, 22, 0, 0, 0, 0, time.UTC)}},
+					{Text: "(unknown)", Data: simplejson.TableQueryResponseNumberColumn{0.0, 5.0}},
+					{Text: "Brussels", Data: simplejson.TableQueryResponseNumberColumn{150.0, 0.0}},
+					{Text: "VlaamsBrabant", Data: simplejson.TableQueryResponseNumberColumn{100.0, 120.0}},
+				},
+			},
+		},
+		{
+			Scope: cases.ScopeRegion,
 			Response: &simplejson.TableQueryResponse{
 				Columns: []simplejson.TableQueryResponseColumn{
 					{Text: "timestamp", Data: simplejson.TableQueryResponseTimeColumn{time.Date(2021, time.October, 21, 0, 0, 0, 0, time.UTC), time.Date(2021, time.October, 22, 0, 0, 0, 0, time.UTC)}},
@@ -75,7 +91,7 @@ var (
 			},
 		},
 		{
-			Target: "mortality-age",
+			Scope: cases.ScopeAge,
 			Response: &simplejson.TableQueryResponse{
 				Columns: []simplejson.TableQueryResponseColumn{
 					{Text: "timestamp", Data: simplejson.TableQueryResponseTimeColumn{time.Date(2021, time.October, 21, 0, 0, 0, 0, time.UTC), time.Date(2021, time.October, 22, 0, 0, 0, 0, time.UTC)}},
@@ -89,25 +105,10 @@ var (
 	}
 )
 
-func TestHandler_Search(t *testing.T) {
-	getter := &mockCache.Holder{}
-	client := reporter.New(time.Hour)
-	client.APICache = getter
-	h := mortality.New(client)
-
-	targets := h.Search()
-	assert.Equal(t, []string{
-		"mortality",
-		"mortality-age",
-		"mortality-region",
-	}, targets)
-}
-
 func TestHandler_TableQuery(t *testing.T) {
 	getter := &mockCache.Holder{}
 	client := reporter.New(time.Hour)
 	client.APICache = getter
-	h := mortality.New(client)
 
 	args := &simplejson.TableQueryArgs{Args: simplejson.Args{Range: simplejson.Range{
 		From: time.Time{},
@@ -115,14 +116,39 @@ func TestHandler_TableQuery(t *testing.T) {
 	}}}
 
 	getter.
-		On("Get", "Mortality").
+		On("Get", "Cases").
 		Return(testResponse, true)
 
-	for _, testCase := range testCases {
-		response, err := h.Endpoints().TableQuery(context.Background(), testCase.Target, args)
-		require.NoError(t, err, testCase.Target)
-		assert.Equal(t, testCase.Response, response, testCase.Target)
+	for index, testCase := range testCases {
+		h := cases.Handler{
+			Reporter: client,
+			Scope:    testCase.Scope,
+		}
+		response, err := h.Endpoints().TableQuery(context.Background(), args)
+		require.NoError(t, err, index)
+		assert.Equal(t, testCase.Response, response, index)
 	}
+
+	getter.AssertExpectations(t)
+}
+
+func TestHandler_Failure(t *testing.T) {
+	getter := &mockCache.Holder{}
+	client := reporter.New(time.Hour)
+	client.APICache = getter
+
+	args := &simplejson.TableQueryArgs{}
+
+	getter.
+		On("Get", "Cases").
+		Return(nil, false)
+
+	h := cases.Handler{
+		Reporter: client,
+		Scope:    cases.ScopeAll,
+	}
+	_, err := h.Endpoints().TableQuery(context.Background(), args)
+	assert.Error(t, err)
 
 	getter.AssertExpectations(t)
 }
@@ -133,10 +159,11 @@ func BenchmarkHandler_TableQuery(b *testing.B) {
 
 	for i := 0; i < 2*365; i++ {
 		for _, region := range []string{"Brussels", "Flanders", "Wallonia"} {
-			bigResponse = append(bigResponse, &sciensano.APIMortalityResponseEntry{
+			bigResponse = append(bigResponse, &sciensano.APICasesResponseEntry{
 				TimeStamp: sciensano.TimeStamp{Time: timestamp},
+				Province:  region,
 				Region:    region,
-				Deaths:    i,
+				Cases:     i,
 			})
 		}
 
@@ -146,22 +173,25 @@ func BenchmarkHandler_TableQuery(b *testing.B) {
 	getter := &mockCache.Holder{}
 	client := reporter.New(time.Hour)
 	client.APICache = getter
-	h := mortality.New(client)
+	h := cases.Handler{
+		Reporter: client,
+		Scope:    cases.ScopeRegion,
+	}
 
 	args := &simplejson.TableQueryArgs{Args: simplejson.Args{Range: simplejson.Range{
 		To: time.Date(2021, 10, 22, 0, 0, 0, 0, time.UTC),
 	}}}
 
 	getter.
-		On("Get", "Mortality").
+		On("Get", "Cases").
 		Return(bigResponse, true)
 
 	b.ResetTimer()
 
-	for i := 0; i < 100; i++ {
-		_, err := h.Endpoints().TableQuery(context.Background(), "mortality-region", args)
-		require.NoError(b, err)
+	for i := 0; i < b.N; i++ {
+		_, err := h.Endpoints().TableQuery(context.Background(), args)
+		if err != nil {
+			b.Fatal(err)
+		}
 	}
-
-	getter.AssertExpectations(b)
 }

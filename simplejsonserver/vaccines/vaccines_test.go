@@ -4,10 +4,10 @@ import (
 	"context"
 	"github.com/clambin/sciensano/apiclient/sciensano"
 	"github.com/clambin/sciensano/apiclient/vaccines"
-	vaccinesHandler "github.com/clambin/sciensano/apihandler/vaccines"
 	"github.com/clambin/sciensano/measurement"
 	mockCache "github.com/clambin/sciensano/measurement/mocks"
 	"github.com/clambin/sciensano/reporter"
+	vaccinesHandler "github.com/clambin/sciensano/simplejsonserver/vaccines"
 	"github.com/clambin/simplejson"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -16,21 +16,11 @@ import (
 	"time"
 )
 
-func TestHandler_Search(t *testing.T) {
-	cache := &mockCache.Holder{}
-	r := reporter.New(time.Hour)
-	r.APICache = cache
-	h := vaccinesHandler.New(r)
-
-	targets := h.Search()
-	assert.Equal(t, []string{"vaccines", "vaccines-manufacturer", "vaccines-stats", "vaccines-time"}, targets)
-}
-
 func TestHandler_TableQuery_Vaccines(t *testing.T) {
 	cache := &mockCache.Holder{}
 	r := reporter.New(time.Hour)
 	r.APICache = cache
-	h := vaccinesHandler.New(r)
+	h := vaccinesHandler.OverviewHandler{Reporter: r}
 
 	timestamp := time.Now()
 	cache.
@@ -52,7 +42,7 @@ func TestHandler_TableQuery_Vaccines(t *testing.T) {
 
 	args := &simplejson.TableQueryArgs{Args: simplejson.Args{Range: simplejson.Range{To: timestamp}}}
 
-	response, err := h.Endpoints().TableQuery(context.Background(), "vaccines", args)
+	response, err := h.Endpoints().TableQuery(context.Background(), args)
 	require.NoError(t, err)
 	require.Len(t, response.Columns, 2)
 	require.Len(t, response.Columns[0].Data, 2)
@@ -66,7 +56,7 @@ func TestHandler_TableQuery_VaccinesByManufacturer(t *testing.T) {
 	cache := &mockCache.Holder{}
 	r := reporter.New(time.Hour)
 	r.APICache = cache
-	h := vaccinesHandler.New(r)
+	h := vaccinesHandler.ManufacturerHandler{Reporter: r}
 
 	timestamp := time.Date(2021, time.September, 2, 0, 0, 0, 0, time.UTC)
 	cache.
@@ -91,7 +81,7 @@ func TestHandler_TableQuery_VaccinesByManufacturer(t *testing.T) {
 
 	args := &simplejson.TableQueryArgs{Args: simplejson.Args{Range: simplejson.Range{To: timestamp}}}
 
-	response, err := h.Endpoints().TableQuery(context.Background(), "vaccines-manufacturer", args)
+	response, err := h.Endpoints().TableQuery(context.Background(), args)
 	require.NoError(t, err)
 	assert.Equal(t, []simplejson.TableQueryResponseColumn{
 		{
@@ -113,7 +103,7 @@ func TestHandler_TableQuery_VaccinesStats(t *testing.T) {
 	cache := &mockCache.Holder{}
 	r := reporter.New(time.Hour)
 	r.APICache = cache
-	h := vaccinesHandler.New(r)
+	h := vaccinesHandler.StatsHandler{Reporter: r}
 
 	timestamp := time.Now()
 
@@ -159,7 +149,7 @@ func TestHandler_TableQuery_VaccinesStats(t *testing.T) {
 		Range: simplejson.Range{From: timestamp.Add(-24 * time.Hour)},
 	}}
 
-	response, err := h.Endpoints().TableQuery(context.Background(), "vaccines-stats", args)
+	response, err := h.Endpoints().TableQuery(context.Background(), args)
 	require.NoError(t, err)
 	require.Len(t, response.Columns, 3)
 	assert.Equal(t, simplejson.TableQueryResponseNumberColumn{20.0, 30.0}, response.Columns[1].Data)
@@ -167,7 +157,7 @@ func TestHandler_TableQuery_VaccinesStats(t *testing.T) {
 
 	args = &simplejson.TableQueryArgs{Args: simplejson.Args{Range: simplejson.Range{From: timestamp, To: timestamp}}}
 
-	response, err = h.Endpoints().TableQuery(context.Background(), "vaccines-stats", args)
+	response, err = h.Endpoints().TableQuery(context.Background(), args)
 	require.NoError(t, err)
 	require.Len(t, response.Columns, 3)
 	assert.Equal(t, simplejson.TableQueryResponseNumberColumn{30.0}, response.Columns[1].Data)
@@ -180,7 +170,7 @@ func TestHandler_TableQuery_VaccinesTime(t *testing.T) {
 	cache := &mockCache.Holder{}
 	r := reporter.New(time.Hour)
 	r.APICache = cache
-	h := vaccinesHandler.New(r)
+	h := vaccinesHandler.DelayHandler{Reporter: r}
 
 	cache.
 		On("Get", "Vaccines").
@@ -235,7 +225,7 @@ func TestHandler_TableQuery_VaccinesTime(t *testing.T) {
 		To:   time.Now(),
 	}}}
 
-	response, err := h.Endpoints().TableQuery(context.Background(), "vaccines-time", args)
+	response, err := h.Endpoints().TableQuery(context.Background(), args)
 	require.NoError(t, err)
 	require.Len(t, response.Columns, 2)
 	require.Len(t, response.Columns[0].Data, 3)
@@ -244,4 +234,47 @@ func TestHandler_TableQuery_VaccinesTime(t *testing.T) {
 	assert.Equal(t, 1, int(response.Columns[1].Data.(simplejson.TableQueryResponseNumberColumn)[2]))
 
 	mock.AssertExpectationsForObjects(t, cache, cache)
+}
+
+func TestHandler_Failures(t *testing.T) {
+	cache := &mockCache.Holder{}
+	r := reporter.New(time.Hour)
+	r.APICache = cache
+
+	ctx := context.Background()
+	args := simplejson.TableQueryArgs{Args: simplejson.Args{Range: simplejson.Range{
+		From: time.Time{},
+		To:   time.Now(),
+	}}}
+
+	cache.On("Get", "Vaccinations").Return(nil, false)
+
+	cache.On("Get", "Vaccines").Return(nil, false).Once()
+	o := vaccinesHandler.OverviewHandler{Reporter: r}
+	_, err := o.Endpoints().TableQuery(ctx, &args)
+	assert.Error(t, err)
+
+	cache.On("Get", "Vaccines").Return(nil, false).Once()
+	m := vaccinesHandler.ManufacturerHandler{Reporter: r}
+	_, err = m.Endpoints().TableQuery(ctx, &args)
+	assert.Error(t, err)
+
+	cache.On("Get", "Vaccines").Return(nil, false).Once()
+	s := vaccinesHandler.StatsHandler{Reporter: r}
+	_, err = s.Endpoints().TableQuery(ctx, &args)
+	assert.Error(t, err)
+
+	cache.On("Get", "Vaccines").Return(nil, false).Once()
+	d := vaccinesHandler.DelayHandler{Reporter: r}
+	_, err = d.Endpoints().TableQuery(ctx, &args)
+	assert.Error(t, err)
+
+	cache.On("Get", "Vaccines").Return([]measurement.Measurement{}, true).Once()
+	_, err = d.Endpoints().TableQuery(ctx, &args)
+	assert.Error(t, err)
+
+	cache.On("Get", "Vaccines").Return([]measurement.Measurement{}, true).Once()
+	s = vaccinesHandler.StatsHandler{Reporter: r}
+	_, err = s.Endpoints().TableQuery(ctx, &args)
+	assert.Error(t, err)
 }

@@ -1,4 +1,4 @@
-package response
+package responder
 
 import (
 	"github.com/clambin/sciensano/reporter/datasets"
@@ -9,9 +9,9 @@ import (
 func GenerateTableQueryResponse(input *datasets.Dataset, args *simplejson.TableQueryArgs) (response *simplejson.TableQueryResponse) {
 	input.ApplyRange(args.Range.From, args.Range.To)
 
-	timestampColumn := make(simplejson.TableQueryResponseTimeColumn, 0, len(input.Timestamps))
-	for _, timestamp := range input.Timestamps {
-		timestampColumn = append(timestampColumn, timestamp)
+	timestampColumn := make(simplejson.TableQueryResponseTimeColumn, len(input.Timestamps))
+	for index, timestamp := range input.Timestamps {
+		timestampColumn[index] = timestamp
 	}
 
 	response = &simplejson.TableQueryResponse{
@@ -22,9 +22,9 @@ func GenerateTableQueryResponse(input *datasets.Dataset, args *simplejson.TableQ
 	}
 
 	for _, group := range input.Groups {
-		dataColumn := make(simplejson.TableQueryResponseNumberColumn, 0, len(group.Values))
-		for _, value := range group.Values {
-			dataColumn = append(dataColumn, value)
+		dataColumn := make(simplejson.TableQueryResponseNumberColumn, len(group.Values))
+		for index, value := range group.Values {
+			dataColumn[index] = value
 		}
 
 		name := group.Name

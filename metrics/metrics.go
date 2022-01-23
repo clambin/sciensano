@@ -10,13 +10,13 @@ var (
 	// ErrorMetric measures API call failures
 	ErrorMetric = promauto.NewCounterVec(prometheus.CounterOpts{
 		Name: "sciensano_api_errors_total",
-		Help: "Number of failed Sciensano API calls",
+		Help: "Number of failed Reporter API calls",
 	}, []string{"endpoint"})
 
 	// LatencyMetric measures API call duration
 	LatencyMetric = promauto.NewSummaryVec(prometheus.SummaryOpts{
 		Name: "sciensano_api_latency",
-		Help: "Latency of Sciensano API calls",
+		Help: "Latency of Reporter API calls",
 	}, []string{"endpoint"})
 
 	// Metrics contains all APIClientMetrics

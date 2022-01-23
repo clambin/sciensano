@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-// APIHospitalisationsResponse is the response of the Sciensano hospitalisations API
+// APIHospitalisationsResponse is the responder of the Reporter hospitalisations API
 //easyjson:json
 type APIHospitalisationsResponse []*APIHospitalisationsResponseEntry
 

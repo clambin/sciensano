@@ -54,6 +54,7 @@ func (c *Cache) AutoRefresh(ctx context.Context, interval time.Duration) {
 func (c *Cache) Refresh(ctx context.Context) {
 	newEntries := make(map[string][]Measurement)
 	for _, fetcher := range c.Fetchers {
+		// TODO: run these in parallel?
 		if entries, err := fetcher.Update(ctx); err == nil {
 			for key, value := range entries {
 				newEntries[key] = value

@@ -3,95 +3,77 @@ package vaccines
 import (
 	"context"
 	"fmt"
-	"github.com/clambin/sciensano/apihandler/response"
 	"github.com/clambin/sciensano/reporter"
 	"github.com/clambin/sciensano/reporter/datasets"
+	"github.com/clambin/sciensano/simplejsonserver/responder"
 	"github.com/clambin/simplejson"
-	log "github.com/sirupsen/logrus"
-	"time"
 )
 
-// Handler implements a grafana-json handler for COVID-19 cases
-type Handler struct {
-	Reporter    reporter.Reporter
-	targetTable simplejson.TargetTable
+type OverviewHandler struct {
+	reporter.Reporter
 }
 
-// New creates a new Handler
-func New(reporter reporter.Reporter) (handler *Handler) {
-	handler = &Handler{
-		Reporter: reporter,
-	}
+var _ simplejson.Handler = &OverviewHandler{}
 
-	handler.targetTable = simplejson.TargetTable{
-		"vaccines":              {TableQueryFunc: handler.buildVaccineTableResponse},
-		"vaccines-manufacturer": {TableQueryFunc: handler.buildVaccineByManufacturerTableResponse},
-		"vaccines-stats":        {TableQueryFunc: handler.buildVaccineStatsTableResponse},
-		"vaccines-time":         {TableQueryFunc: handler.buildVaccineTimeTableResponse},
-	}
-
-	return
+func (o OverviewHandler) Endpoints() simplejson.Endpoints {
+	return simplejson.Endpoints{TableQuery: o.tableQuery}
 }
 
-// Endpoints implements the grafana-json Endpoint function. It returns all supported endpoints
-func (handler *Handler) Endpoints() simplejson.Endpoints {
-	return simplejson.Endpoints{
-		Search:     handler.Search,
-		TableQuery: handler.TableQuery,
-	}
-}
-
-// Search implements the grafana-json Search function. It returns all supported targets
-func (handler *Handler) Search() (targets []string) {
-	return handler.targetTable.Targets()
-}
-
-// TableQuery implements the grafana-json TableQuery function. It processes incoming TableQuery requests
-func (handler *Handler) TableQuery(ctx context.Context, target string, args *simplejson.TableQueryArgs) (response *simplejson.TableQueryResponse, err error) {
-	start := time.Now()
-	response, err = handler.targetTable.RunTableQuery(ctx, target, args)
+func (o *OverviewHandler) tableQuery(_ context.Context, args *simplejson.TableQueryArgs) (response *simplejson.TableQueryResponse, err error) {
+	var batches *datasets.Dataset
+	batches, err = o.Reporter.GetVaccines()
 	if err != nil {
-		return nil, fmt.Errorf("unable to build table query response for target '%s': %s", target, err.Error())
+		return nil, fmt.Errorf("vaccine call failed: %w", err)
 	}
-	log.WithFields(log.Fields{"duration": time.Now().Sub(start), "target": target}).Info("TableQuery called")
-	return
+	batches.Accumulate()
+	return responder.GenerateTableQueryResponse(batches, args), nil
 }
 
-func (handler *Handler) buildVaccineTableResponse(_ context.Context, _ string, args *simplejson.TableQueryArgs) (output *simplejson.TableQueryResponse, err error) {
-	var batches *datasets.Dataset
-	batches, err = handler.Reporter.GetVaccines()
-	if err == nil {
-		batches.Accumulate()
-		output = response.GenerateTableQueryResponse(batches, args)
-	}
-	return
+type ManufacturerHandler struct {
+	reporter.Reporter
 }
 
-func (handler *Handler) buildVaccineByManufacturerTableResponse(_ context.Context, _ string, args *simplejson.TableQueryArgs) (output *simplejson.TableQueryResponse, err error) {
-	var batches *datasets.Dataset
-	batches, err = handler.Reporter.GetVaccinesByManufacturer()
-	if err == nil {
-		batches.Accumulate()
-		output = response.GenerateTableQueryResponse(batches, args)
-	}
-	return
+var _ simplejson.Handler = &ManufacturerHandler{}
+
+func (m ManufacturerHandler) Endpoints() simplejson.Endpoints {
+	return simplejson.Endpoints{TableQuery: m.tableQuery}
 }
 
-func (handler *Handler) buildVaccineStatsTableResponse(_ context.Context, _ string, args *simplejson.TableQueryArgs) (response *simplejson.TableQueryResponse, err error) {
+func (m *ManufacturerHandler) tableQuery(_ context.Context, args *simplejson.TableQueryArgs) (response *simplejson.TableQueryResponse, err error) {
 	var batches *datasets.Dataset
-	batches, err = handler.Reporter.GetVaccines()
+	batches, err = m.Reporter.GetVaccinesByManufacturer()
+	if err != nil {
+		return nil, fmt.Errorf("vaccine manufacturer call failed: %w", err)
+	}
+	batches.Accumulate()
+	return responder.GenerateTableQueryResponse(batches, args), nil
+}
+
+type StatsHandler struct {
+	reporter.Reporter
+}
+
+var _ simplejson.Handler = &StatsHandler{}
+
+func (s StatsHandler) Endpoints() simplejson.Endpoints {
+	return simplejson.Endpoints{TableQuery: s.tableQuery}
+}
+
+func (s *StatsHandler) tableQuery(_ context.Context, args *simplejson.TableQueryArgs) (response *simplejson.TableQueryResponse, err error) {
+	var batches *datasets.Dataset
+	batches, err = s.Reporter.GetVaccines()
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to get vaccine data: %s", err.Error())
+		return nil, fmt.Errorf("vaccine call failed: %w", err)
 	}
 
 	batches.Accumulate()
 
 	var vaccinations *datasets.Dataset
-	vaccinations, err = handler.Reporter.GetVaccinations()
+	vaccinations, err = s.Reporter.GetVaccinations()
 
 	if err != nil {
-		return
+		return nil, fmt.Errorf("vaccinations call failed: %w", err)
 	}
 
 	summarizeVaccinations(vaccinations)
@@ -131,8 +113,7 @@ func calculateVaccineReserve(vaccinationsData *datasets.Dataset, batches *datase
 
 	for index, timestamp := range vaccinationsData.Timestamps {
 		// find the last time we received vaccines
-		for batchIndex < len(batches.Timestamps) &&
-			!batches.Timestamps[batchIndex].After(timestamp) {
+		for batchIndex < len(batches.Timestamps) && batches.Timestamps[batchIndex].After(timestamp) == false {
 			// how many vaccines have we received so far?
 			lastBatch = batches.Groups[0].Values[batchIndex]
 			batchIndex++
@@ -145,22 +126,32 @@ func calculateVaccineReserve(vaccinationsData *datasets.Dataset, batches *datase
 	return
 }
 
-func (handler *Handler) buildVaccineTimeTableResponse(_ context.Context, _ string, args *simplejson.TableQueryArgs) (response *simplejson.TableQueryResponse, err error) {
+type DelayHandler struct {
+	reporter.Reporter
+}
+
+var _ simplejson.Handler = &DelayHandler{}
+
+func (d DelayHandler) Endpoints() simplejson.Endpoints {
+	return simplejson.Endpoints{TableQuery: d.tableQuery}
+}
+
+func (d *DelayHandler) tableQuery(_ context.Context, args *simplejson.TableQueryArgs) (response *simplejson.TableQueryResponse, err error) {
 	var batches *datasets.Dataset
-	batches, err = handler.Reporter.GetVaccines()
+	batches, err = d.Reporter.GetVaccines()
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to get vaccine data: %s", err.Error())
+		return nil, fmt.Errorf("vaccine call failed: %w", err)
 	}
 
 	batches.Accumulate()
 	batches.ApplyRange(args.Range.From, args.Range.To)
 
 	var vaccinations *datasets.Dataset
-	vaccinations, err = handler.Reporter.GetVaccinations()
+	vaccinations, err = d.Reporter.GetVaccinations()
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to get vaccination data: %s", err.Error())
+		return nil, fmt.Errorf("vaccination call failed: %w", err)
 	}
 
 	vaccinations.Accumulate()

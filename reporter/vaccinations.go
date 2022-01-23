@@ -7,9 +7,11 @@ import (
 	"github.com/clambin/sciensano/reporter/datasets"
 )
 
+type VaccinationType int
+
 const (
 	// VaccinationTypePartial tells GetValue to return the partial vaccination count
-	VaccinationTypePartial int = iota
+	VaccinationTypePartial = iota
 	// VaccinationTypeFull tells GetValue to return the full vaccination count. It counts 2nd vaccinations and single dose vaccinations
 	VaccinationTypeFull
 	// VaccinationTypeBooster tells GetValue to return the booster vaccination count
@@ -19,8 +21,8 @@ const (
 // VaccinationGetter contains all required methods to retrieve vaccination data
 type VaccinationGetter interface {
 	GetVaccinations() (results *datasets.Dataset, err error)
-	GetVaccinationsByAgeGroup(vaccinationType int) (results *datasets.Dataset, err error)
-	GetVaccinationsByRegion(vaccinationType int) (results *datasets.Dataset, err error)
+	GetVaccinationsByAgeGroup(vaccinationType VaccinationType) (results *datasets.Dataset, err error)
+	GetVaccinationsByRegion(vaccinationType VaccinationType) (results *datasets.Dataset, err error)
 }
 
 // GetVaccinations returns all vaccinations
@@ -36,7 +38,7 @@ func (client *Client) GetVaccinations() (results *datasets.Dataset, err error) {
 }
 
 // GetVaccinationsByAgeGroup returns all vaccinations, grouped by age group
-func (client *Client) GetVaccinationsByAgeGroup(vaccinationType int) (results *datasets.Dataset, err error) {
+func (client *Client) GetVaccinationsByAgeGroup(vaccinationType VaccinationType) (results *datasets.Dataset, err error) {
 	name := fmt.Sprintf("VaccinationsByAgeGroup-%d", vaccinationType)
 	return client.ReportCache.MaybeGenerate(name, func() (*datasets.Dataset, error) {
 		return client.realGetVaccinationByType(measurement.GroupByAgeGroup, vaccinationType)
@@ -44,14 +46,14 @@ func (client *Client) GetVaccinationsByAgeGroup(vaccinationType int) (results *d
 }
 
 // GetVaccinationsByRegion returns all vaccinations, grouped by region
-func (client *Client) GetVaccinationsByRegion(vaccinationType int) (results *datasets.Dataset, err error) {
+func (client *Client) GetVaccinationsByRegion(vaccinationType VaccinationType) (results *datasets.Dataset, err error) {
 	name := fmt.Sprintf("VaccinationsByRegion-%d", vaccinationType)
 	return client.ReportCache.MaybeGenerate(name, func() (*datasets.Dataset, error) {
 		return client.realGetVaccinationByType(measurement.GroupByRegion, vaccinationType)
 	})
 }
 
-func (client *Client) realGetVaccinationByType(mode, vaccinationType int) (results *datasets.Dataset, err error) {
+func (client *Client) realGetVaccinationByType(mode int, vaccinationType VaccinationType) (results *datasets.Dataset, err error) {
 	if apiResult, found := client.APICache.Get("Vaccinations"); found {
 		apiResult = filterVaccinations(apiResult, vaccinationType)
 		results = datasets.GroupMeasurementsByType(apiResult, mode)
@@ -61,7 +63,7 @@ func (client *Client) realGetVaccinationByType(mode, vaccinationType int) (resul
 	return
 }
 
-func filterVaccinations(input []measurement.Measurement, vaccinationType int) (output []measurement.Measurement) {
+func filterVaccinations(input []measurement.Measurement, vaccinationType VaccinationType) (output []measurement.Measurement) {
 	output = make([]measurement.Measurement, 0, len(input))
 	for _, entry := range input {
 		// this is faster than using measurement.GetAttributeValues()

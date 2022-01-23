@@ -3,10 +3,10 @@ package hospitalisations_test
 import (
 	"context"
 	"github.com/clambin/sciensano/apiclient/sciensano"
-	hospitalisationsHandler "github.com/clambin/sciensano/apihandler/hospitalisations"
 	"github.com/clambin/sciensano/measurement"
 	mockCache "github.com/clambin/sciensano/measurement/mocks"
 	"github.com/clambin/sciensano/reporter"
+	"github.com/clambin/sciensano/simplejsonserver/hospitalisations"
 	"github.com/clambin/simplejson"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -64,11 +64,11 @@ var (
 	}
 
 	testCases = []struct {
-		Target   string
+		Scope    hospitalisations.Scope
 		Response *simplejson.TableQueryResponse
 	}{
 		{
-			Target: "hospitalisations",
+			Scope: hospitalisations.ScopeAll,
 			Response: &simplejson.TableQueryResponse{
 				Columns: []simplejson.TableQueryResponseColumn{
 					{Text: "timestamp", Data: simplejson.TableQueryResponseTimeColumn{time.Date(2021, time.October, 21, 0, 0, 0, 0, time.UTC), time.Date(2021, time.October, 22, 0, 0, 0, 0, time.UTC)}},
@@ -80,7 +80,7 @@ var (
 			},
 		},
 		{
-			Target: "hospitalisations-province",
+			Scope: hospitalisations.ScopeProvince,
 			Response: &simplejson.TableQueryResponse{
 				Columns: []simplejson.TableQueryResponseColumn{
 					{Text: "timestamp", Data: simplejson.TableQueryResponseTimeColumn{time.Date(2021, time.October, 21, 0, 0, 0, 0, time.UTC), time.Date(2021, time.October, 22, 0, 0, 0, 0, time.UTC)}},
@@ -91,7 +91,7 @@ var (
 			},
 		},
 		{
-			Target: "hospitalisations-region",
+			Scope: hospitalisations.ScopeRegion,
 			Response: &simplejson.TableQueryResponse{
 				Columns: []simplejson.TableQueryResponseColumn{
 					{Text: "timestamp", Data: simplejson.TableQueryResponseTimeColumn{time.Date(2021, time.October, 21, 0, 0, 0, 0, time.UTC), time.Date(2021, time.October, 22, 0, 0, 0, 0, time.UTC)}},
@@ -104,25 +104,10 @@ var (
 	}
 )
 
-func TestHandler_Search(t *testing.T) {
-	getter := &mockCache.Holder{}
-	client := reporter.New(time.Hour)
-	client.APICache = getter
-	h := hospitalisationsHandler.New(client)
-
-	targets := h.Search()
-	assert.Equal(t, []string{
-		"hospitalisations",
-		"hospitalisations-province",
-		"hospitalisations-region",
-	}, targets)
-}
-
 func TestHandler_TableQuery(t *testing.T) {
 	getter := &mockCache.Holder{}
 	client := reporter.New(time.Hour)
 	client.APICache = getter
-	h := hospitalisationsHandler.New(client)
 
 	args := &simplejson.TableQueryArgs{Args: simplejson.Args{Range: simplejson.Range{
 		From: time.Time{},
@@ -133,11 +118,36 @@ func TestHandler_TableQuery(t *testing.T) {
 		On("Get", "Hospitalisations").
 		Return(testResponse, true)
 
-	for _, testCase := range testCases {
-		response, err := h.Endpoints().TableQuery(context.Background(), testCase.Target, args)
-		require.NoError(t, err, testCase.Target)
-		assert.Equal(t, testCase.Response, response, testCase.Target)
+	for index, testCase := range testCases {
+		h := hospitalisations.Handler{
+			Reporter: client,
+			Scope:    testCase.Scope,
+		}
+		response, err := h.Endpoints().TableQuery(context.Background(), args)
+		require.NoError(t, err, index)
+		assert.Equal(t, testCase.Response, response, index)
 	}
+
+	getter.AssertExpectations(t)
+}
+
+func TestHandler_Failure(t *testing.T) {
+	getter := &mockCache.Holder{}
+	client := reporter.New(time.Hour)
+	client.APICache = getter
+
+	args := &simplejson.TableQueryArgs{}
+
+	getter.
+		On("Get", "Hospitalisations").
+		Return(nil, false)
+
+	h := hospitalisations.Handler{
+		Reporter: client,
+		Scope:    hospitalisations.ScopeAll,
+	}
+	_, err := h.Endpoints().TableQuery(context.Background(), args)
+	assert.Error(t, err)
 
 	getter.AssertExpectations(t)
 }
@@ -162,7 +172,10 @@ func BenchmarkHandler_TableQuery(b *testing.B) {
 	getter := &mockCache.Holder{}
 	client := reporter.New(time.Hour)
 	client.APICache = getter
-	h := hospitalisationsHandler.New(client)
+	h := hospitalisations.Handler{
+		Reporter: client,
+		Scope:    hospitalisations.ScopeRegion,
+	}
 
 	args := &simplejson.TableQueryArgs{Args: simplejson.Args{Range: simplejson.Range{
 		To: time.Date(2021, 10, 22, 0, 0, 0, 0, time.UTC),
@@ -174,10 +187,10 @@ func BenchmarkHandler_TableQuery(b *testing.B) {
 
 	b.ResetTimer()
 
-	for i := 0; i < 100; i++ {
-		_, err := h.Endpoints().TableQuery(context.Background(), "hospitalisations-region", args)
-		require.NoError(b, err)
+	for i := 0; i < b.N; i++ {
+		_, err := h.Endpoints().TableQuery(context.Background(), args)
+		if err != nil {
+			b.Fatal(err)
+		}
 	}
-
-	getter.AssertExpectations(b)
 }
