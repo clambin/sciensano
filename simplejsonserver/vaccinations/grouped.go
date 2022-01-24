@@ -6,7 +6,8 @@ import (
 	"github.com/clambin/sciensano/reporter"
 	"github.com/clambin/sciensano/reporter/datasets"
 	"github.com/clambin/sciensano/simplejsonserver/responder"
-	"github.com/clambin/simplejson"
+	"github.com/clambin/simplejson/v2"
+	"github.com/clambin/simplejson/v2/query"
 )
 
 // GroupedHandler returns COVID-19 vaccinations grouped by region or age group, for a specific type (i.e. partial, full or booster vaccination)
@@ -30,7 +31,7 @@ func (handler GroupedHandler) Endpoints() simplejson.Endpoints {
 	return simplejson.Endpoints{TableQuery: handler.tableQuery}
 }
 
-func (handler *GroupedHandler) tableQuery(_ context.Context, args *simplejson.TableQueryArgs) (response *simplejson.TableQueryResponse, err error) {
+func (handler *GroupedHandler) tableQuery(_ context.Context, args query.Args) (response *query.TableResponse, err error) {
 	var vaccinationData *datasets.Dataset
 	switch handler.Scope {
 	case ScopeAge:

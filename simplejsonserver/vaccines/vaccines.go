@@ -6,7 +6,8 @@ import (
 	"github.com/clambin/sciensano/reporter"
 	"github.com/clambin/sciensano/reporter/datasets"
 	"github.com/clambin/sciensano/simplejsonserver/responder"
-	"github.com/clambin/simplejson"
+	"github.com/clambin/simplejson/v2"
+	"github.com/clambin/simplejson/v2/query"
 )
 
 type OverviewHandler struct {
@@ -19,7 +20,7 @@ func (o OverviewHandler) Endpoints() simplejson.Endpoints {
 	return simplejson.Endpoints{TableQuery: o.tableQuery}
 }
 
-func (o *OverviewHandler) tableQuery(_ context.Context, args *simplejson.TableQueryArgs) (response *simplejson.TableQueryResponse, err error) {
+func (o *OverviewHandler) tableQuery(_ context.Context, args query.Args) (response *query.TableResponse, err error) {
 	var batches *datasets.Dataset
 	batches, err = o.Reporter.GetVaccines()
 	if err != nil {
@@ -39,7 +40,7 @@ func (m ManufacturerHandler) Endpoints() simplejson.Endpoints {
 	return simplejson.Endpoints{TableQuery: m.tableQuery}
 }
 
-func (m *ManufacturerHandler) tableQuery(_ context.Context, args *simplejson.TableQueryArgs) (response *simplejson.TableQueryResponse, err error) {
+func (m *ManufacturerHandler) tableQuery(_ context.Context, args query.Args) (response *query.TableResponse, err error) {
 	var batches *datasets.Dataset
 	batches, err = m.Reporter.GetVaccinesByManufacturer()
 	if err != nil {
@@ -59,7 +60,7 @@ func (s StatsHandler) Endpoints() simplejson.Endpoints {
 	return simplejson.Endpoints{TableQuery: s.tableQuery}
 }
 
-func (s *StatsHandler) tableQuery(_ context.Context, args *simplejson.TableQueryArgs) (response *simplejson.TableQueryResponse, err error) {
+func (s *StatsHandler) tableQuery(_ context.Context, args query.Args) (response *query.TableResponse, err error) {
 	var batches *datasets.Dataset
 	batches, err = s.Reporter.GetVaccines()
 
@@ -87,11 +88,12 @@ func (s *StatsHandler) tableQuery(_ context.Context, args *simplejson.TableQuery
 	batches.ApplyRange(args.Range.From, args.Range.To)
 	vaccinations.ApplyRange(args.Range.From, args.Range.To)
 
-	response = new(simplejson.TableQueryResponse)
-	response.Columns = []simplejson.TableQueryResponseColumn{
-		{Text: "timestamp", Data: simplejson.TableQueryResponseTimeColumn(vaccinations.Timestamps)},
-		{Text: "vaccinations", Data: simplejson.TableQueryResponseNumberColumn(vaccinations.Groups[0].Values)},
-		{Text: "reserve", Data: simplejson.TableQueryResponseNumberColumn(vaccinations.Groups[1].Values)},
+	response = &query.TableResponse{
+		Columns: []query.Column{
+			{Text: "timestamp", Data: query.TimeColumn(vaccinations.Timestamps)},
+			{Text: "vaccinations", Data: query.NumberColumn(vaccinations.Groups[0].Values)},
+			{Text: "reserve", Data: query.NumberColumn(vaccinations.Groups[1].Values)},
+		},
 	}
 	return
 }
@@ -136,7 +138,7 @@ func (d DelayHandler) Endpoints() simplejson.Endpoints {
 	return simplejson.Endpoints{TableQuery: d.tableQuery}
 }
 
-func (d *DelayHandler) tableQuery(_ context.Context, args *simplejson.TableQueryArgs) (response *simplejson.TableQueryResponse, err error) {
+func (d *DelayHandler) tableQuery(_ context.Context, args query.Args) (response *query.TableResponse, err error) {
 	var batches *datasets.Dataset
 	batches, err = d.Reporter.GetVaccines()
 
@@ -159,15 +161,16 @@ func (d *DelayHandler) tableQuery(_ context.Context, args *simplejson.TableQuery
 
 	timestampColumn, timeColumn := calculateVaccineDelay(vaccinations, batches)
 
-	response = new(simplejson.TableQueryResponse)
-	response.Columns = []simplejson.TableQueryResponseColumn{
-		{Text: "timestamp", Data: timestampColumn},
-		{Text: "time", Data: timeColumn},
+	response = &query.TableResponse{
+		Columns: []query.Column{
+			{Text: "timestamp", Data: timestampColumn},
+			{Text: "time", Data: timeColumn},
+		},
 	}
 	return
 }
 
-func calculateVaccineDelay(vaccinationsData *datasets.Dataset, batches *datasets.Dataset) (timestamps simplejson.TableQueryResponseTimeColumn, delays simplejson.TableQueryResponseNumberColumn) {
+func calculateVaccineDelay(vaccinationsData *datasets.Dataset, batches *datasets.Dataset) (timestamps query.TimeColumn, delays query.NumberColumn) {
 	batchIndex := 0
 	batchCount := len(batches.Timestamps)
 

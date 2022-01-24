@@ -6,7 +6,8 @@ import (
 	"github.com/clambin/sciensano/reporter"
 	"github.com/clambin/sciensano/reporter/datasets"
 	"github.com/clambin/sciensano/simplejsonserver/responder"
-	"github.com/clambin/simplejson"
+	"github.com/clambin/simplejson/v2"
+	"github.com/clambin/simplejson/v2/query"
 )
 
 // Handler returns the overall COVID-19 vaccinations
@@ -19,7 +20,7 @@ func (handler Handler) Endpoints() simplejson.Endpoints {
 	return simplejson.Endpoints{TableQuery: handler.tableQuery}
 }
 
-func (handler *Handler) tableQuery(_ context.Context, args *simplejson.TableQueryArgs) (output *simplejson.TableQueryResponse, err error) {
+func (handler *Handler) tableQuery(_ context.Context, args query.Args) (output *query.TableResponse, err error) {
 	var vaccinationData *datasets.Dataset
 	vaccinationData, err = handler.Reporter.GetVaccinations()
 

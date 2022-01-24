@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"github.com/clambin/sciensano/demographics"
 	"github.com/clambin/sciensano/reporter"
-	"github.com/clambin/simplejson"
+	"github.com/clambin/simplejson/v2"
+	"github.com/clambin/simplejson/v2/query"
 )
 
 type RateHandler struct {
@@ -22,7 +23,7 @@ func (r RateHandler) Endpoints() simplejson.Endpoints {
 	return simplejson.Endpoints{TableQuery: r.tableQuery}
 }
 
-func (r *RateHandler) tableQuery(ctx context.Context, args *simplejson.TableQueryArgs) (response *simplejson.TableQueryResponse, err error) {
+func (r *RateHandler) tableQuery(ctx context.Context, args query.Args) (response *query.TableResponse, err error) {
 	if r.helper == nil {
 		r.helper = &GroupedHandler{
 			Reporter:        r.Reporter,
@@ -59,8 +60,8 @@ func (r *RateHandler) tableQuery(ctx context.Context, args *simplejson.TableQuer
 	return
 }
 
-func filterUnknownColumns(columns []simplejson.TableQueryResponseColumn) []simplejson.TableQueryResponseColumn {
-	newColumns := make([]simplejson.TableQueryResponseColumn, 0, len(columns))
+func filterUnknownColumns(columns []query.Column) []query.Column {
+	newColumns := make([]query.Column, 0, len(columns))
 	shouldReplace := false
 	for _, column := range columns {
 		if column.Text == "(unknown)" {
@@ -75,10 +76,10 @@ func filterUnknownColumns(columns []simplejson.TableQueryResponseColumn) []simpl
 	return columns
 }
 
-func prorateFigures(result *simplejson.TableQueryResponse, groups map[string]int) {
+func prorateFigures(result *query.TableResponse, groups map[string]int) {
 	for _, column := range result.Columns {
 		switch data := column.Data.(type) {
-		case simplejson.TableQueryResponseNumberColumn:
+		case query.NumberColumn:
 			figure, ok := groups[column.Text]
 			for index, entry := range data {
 				if ok && figure != 0 {

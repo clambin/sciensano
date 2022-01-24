@@ -6,7 +6,8 @@ import (
 	"github.com/clambin/sciensano/reporter"
 	"github.com/clambin/sciensano/reporter/datasets"
 	"github.com/clambin/sciensano/simplejsonserver/responder"
-	"github.com/clambin/simplejson"
+	"github.com/clambin/simplejson/v2"
+	"github.com/clambin/simplejson/v2/query"
 )
 
 // Handler returns the number of hospitalisations. Use Scope to report by Region or Province.
@@ -30,7 +31,7 @@ func (handler *Handler) Endpoints() simplejson.Endpoints {
 	}
 }
 
-func (handler *Handler) tableQuery(_ context.Context, args *simplejson.TableQueryArgs) (response *simplejson.TableQueryResponse, err error) {
+func (handler *Handler) tableQuery(_ context.Context, args query.Args) (response *query.TableResponse, err error) {
 	var entries *datasets.Dataset
 	switch handler.Scope {
 	case ScopeAll:

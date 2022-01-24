@@ -5,7 +5,9 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/clambin/sciensano/simplejsonserver"
-	"github.com/clambin/simplejson"
+	"github.com/clambin/simplejson/v2"
+	"github.com/clambin/simplejson/v2/common"
+	"github.com/clambin/simplejson/v2/query"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"io"
@@ -67,7 +69,7 @@ func TestRun(t *testing.T) {
 	ctx := context.Background()
 	h.Reporter.APICache.Refresh(ctx)
 
-	args := &simplejson.TableQueryArgs{Args: simplejson.Args{Range: simplejson.Range{To: time.Now()}}}
+	args := query.Args{Args: common.Args{Range: common.Range{To: time.Now()}}}
 
 	wg := sync.WaitGroup{}
 	for target, handler := range h.Handlers {
@@ -100,7 +102,11 @@ func BenchmarkHandlers_Run(b *testing.B) {
 	h := simplejsonserver.NewServer()
 
 	ctx := context.Background()
-	args := &simplejson.TableQueryArgs{Args: simplejson.Args{Range: simplejson.Range{To: time.Now()}}}
+	args := query.Args{
+		Args: common.Args{
+			Range: common.Range{To: time.Now()},
+		},
+	}
 
 	h.Reporter.APICache.Refresh(context.Background())
 	_ = h.Demographics.GetRegionFigures()

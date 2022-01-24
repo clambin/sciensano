@@ -6,7 +6,8 @@ import (
 	mockCache "github.com/clambin/sciensano/measurement/mocks"
 	"github.com/clambin/sciensano/reporter"
 	"github.com/clambin/sciensano/simplejsonserver/vaccinations"
-	"github.com/clambin/simplejson"
+	"github.com/clambin/simplejson/v2/common"
+	"github.com/clambin/simplejson/v2/query"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -18,71 +19,71 @@ func TestRateHandler(t *testing.T) {
 	var testCases = []struct {
 		vaccinations.Scope
 		reporter.VaccinationType
-		expected *simplejson.TableQueryResponse
+		expected *query.TableResponse
 	}{
 		{
 			Scope:           vaccinations.ScopeRegion,
 			VaccinationType: reporter.VaccinationTypePartial,
-			expected: &simplejson.TableQueryResponse{
-				Columns: []simplejson.TableQueryResponseColumn{
-					{Text: "timestamp", Data: simplejson.TableQueryResponseTimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
-					{Text: "Brussels", Data: simplejson.TableQueryResponseNumberColumn{0, 0}},
-					{Text: "Flanders", Data: simplejson.TableQueryResponseNumberColumn{0, 0}},
+			expected: &query.TableResponse{
+				Columns: []query.Column{
+					{Text: "timestamp", Data: query.TimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
+					{Text: "Brussels", Data: query.NumberColumn{0, 0}},
+					{Text: "Flanders", Data: query.NumberColumn{0, 0}},
 				},
 			},
 		},
 		{
 			Scope:           vaccinations.ScopeRegion,
 			VaccinationType: reporter.VaccinationTypeFull,
-			expected: &simplejson.TableQueryResponse{
-				Columns: []simplejson.TableQueryResponseColumn{
-					{Text: "timestamp", Data: simplejson.TableQueryResponseTimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
-					{Text: "Brussels", Data: simplejson.TableQueryResponseNumberColumn{0, 0}},
-					{Text: "Flanders", Data: simplejson.TableQueryResponseNumberColumn{0.01, 0.04}},
+			expected: &query.TableResponse{
+				Columns: []query.Column{
+					{Text: "timestamp", Data: query.TimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
+					{Text: "Brussels", Data: query.NumberColumn{0, 0}},
+					{Text: "Flanders", Data: query.NumberColumn{0.01, 0.04}},
 				},
 			},
 		},
 		{
 			Scope:           vaccinations.ScopeRegion,
 			VaccinationType: reporter.VaccinationTypeBooster,
-			expected: &simplejson.TableQueryResponse{
-				Columns: []simplejson.TableQueryResponseColumn{
-					{Text: "timestamp", Data: simplejson.TableQueryResponseTimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
-					{Text: "Brussels", Data: simplejson.TableQueryResponseNumberColumn{0, 0}},
-					{Text: "Flanders", Data: simplejson.TableQueryResponseNumberColumn{0.01, 0.01}},
+			expected: &query.TableResponse{
+				Columns: []query.Column{
+					{Text: "timestamp", Data: query.TimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
+					{Text: "Brussels", Data: query.NumberColumn{0, 0}},
+					{Text: "Flanders", Data: query.NumberColumn{0.01, 0.01}},
 				},
 			},
 		},
 		{
 			Scope:           vaccinations.ScopeAge,
 			VaccinationType: reporter.VaccinationTypePartial,
-			expected: &simplejson.TableQueryResponse{
-				Columns: []simplejson.TableQueryResponseColumn{
-					{Text: "timestamp", Data: simplejson.TableQueryResponseTimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
-					{Text: "25-34", Data: simplejson.TableQueryResponseNumberColumn{0.02, 0.02}},
-					{Text: "35-44", Data: simplejson.TableQueryResponseNumberColumn{0, 0.5}},
+			expected: &query.TableResponse{
+				Columns: []query.Column{
+					{Text: "timestamp", Data: query.TimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
+					{Text: "25-34", Data: query.NumberColumn{0.02, 0.02}},
+					{Text: "35-44", Data: query.NumberColumn{0, 0.5}},
 				},
 			},
 		},
 		{
 			Scope:           vaccinations.ScopeAge,
 			VaccinationType: reporter.VaccinationTypeFull,
-			expected: &simplejson.TableQueryResponse{
-				Columns: []simplejson.TableQueryResponseColumn{
-					{Text: "timestamp", Data: simplejson.TableQueryResponseTimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
-					{Text: "25-34", Data: simplejson.TableQueryResponseNumberColumn{0.01, 0.04}},
-					{Text: "35-44", Data: simplejson.TableQueryResponseNumberColumn{0.2, 0.6}},
+			expected: &query.TableResponse{
+				Columns: []query.Column{
+					{Text: "timestamp", Data: query.TimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
+					{Text: "25-34", Data: query.NumberColumn{0.01, 0.04}},
+					{Text: "35-44", Data: query.NumberColumn{0.2, 0.6}},
 				},
 			},
 		},
 		{
 			Scope:           vaccinations.ScopeAge,
 			VaccinationType: reporter.VaccinationTypeBooster,
-			expected: &simplejson.TableQueryResponse{
-				Columns: []simplejson.TableQueryResponseColumn{
-					{Text: "timestamp", Data: simplejson.TableQueryResponseTimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
-					{Text: "25-34", Data: simplejson.TableQueryResponseNumberColumn{0, 0.05}},
-					{Text: "35-44", Data: simplejson.TableQueryResponseNumberColumn{0.1, 0.1}},
+			expected: &query.TableResponse{
+				Columns: []query.Column{
+					{Text: "timestamp", Data: query.TimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
+					{Text: "25-34", Data: query.NumberColumn{0, 0.05}},
+					{Text: "35-44", Data: query.NumberColumn{0.1, 0.1}},
 				},
 			},
 		},
@@ -109,7 +110,7 @@ func TestRateHandler(t *testing.T) {
 		})
 
 	ctx := context.Background()
-	args := simplejson.TableQueryArgs{Args: simplejson.Args{Range: simplejson.Range{To: timestamp.Add(24 * time.Hour)}}}
+	args := query.Args{Args: common.Args{Range: common.Range{To: timestamp.Add(24 * time.Hour)}}}
 
 	for index, testCase := range testCases {
 		h := vaccinations.RateHandler{
@@ -119,7 +120,7 @@ func TestRateHandler(t *testing.T) {
 			Demographics:    demographics,
 		}
 
-		response, err := h.Endpoints().TableQuery(ctx, &args)
+		response, err := h.Endpoints().TableQuery(ctx, args)
 		require.NoError(t, err, index)
 		assert.Equal(t, testCase.expected, response, index)
 	}
@@ -135,7 +136,7 @@ func TestRateHandler_Failure(t *testing.T) {
 	demographics := &mocks.Demographics{}
 
 	ctx := context.Background()
-	args := simplejson.TableQueryArgs{Args: simplejson.Args{Range: simplejson.Range{To: timestamp.Add(24 * time.Hour)}}}
+	args := query.Args{Args: common.Args{Range: common.Range{To: timestamp.Add(24 * time.Hour)}}}
 	h := vaccinations.RateHandler{
 		Reporter:        client,
 		VaccinationType: reporter.VaccinationTypeBooster,
@@ -144,7 +145,7 @@ func TestRateHandler_Failure(t *testing.T) {
 	}
 
 	cache.On("Get", "Vaccinations").Return(nil, false).Once()
-	_, err := h.Endpoints().TableQuery(ctx, &args)
+	_, err := h.Endpoints().TableQuery(ctx, args)
 	assert.Error(t, err)
 
 	mock.AssertExpectationsForObjects(t, cache, demographics)
@@ -169,7 +170,7 @@ func BenchmarkRateHandler(b *testing.B) {
 	}
 
 	for i := 0; i < b.N; i++ {
-		_, err := h.Endpoints().TableQuery(context.Background(), &simplejson.TableQueryArgs{})
+		_, err := h.Endpoints().TableQuery(context.Background(), query.Args{})
 		if err != nil {
 			b.Fatal(err)
 		}

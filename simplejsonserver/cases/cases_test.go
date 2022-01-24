@@ -7,7 +7,8 @@ import (
 	mockCache "github.com/clambin/sciensano/measurement/mocks"
 	"github.com/clambin/sciensano/reporter"
 	"github.com/clambin/sciensano/simplejsonserver/cases"
-	"github.com/clambin/simplejson"
+	"github.com/clambin/simplejson/v2/common"
+	"github.com/clambin/simplejson/v2/query"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"testing"
@@ -16,7 +17,7 @@ import (
 
 type TestCase struct {
 	Scope    cases.Scope
-	Response *simplejson.TableQueryResponse
+	Response *query.TableResponse
 }
 
 var (
@@ -61,44 +62,44 @@ var (
 	testCases = []TestCase{
 		{
 			Scope: cases.ScopeAll,
-			Response: &simplejson.TableQueryResponse{
-				Columns: []simplejson.TableQueryResponseColumn{
-					{Text: "timestamp", Data: simplejson.TableQueryResponseTimeColumn{time.Date(2021, time.October, 21, 0, 0, 0, 0, time.UTC), time.Date(2021, time.October, 22, 0, 0, 0, 0, time.UTC)}},
-					{Text: "total", Data: simplejson.TableQueryResponseNumberColumn{250.0, 125.0}},
+			Response: &query.TableResponse{
+				Columns: []query.Column{
+					{Text: "timestamp", Data: query.TimeColumn{time.Date(2021, time.October, 21, 0, 0, 0, 0, time.UTC), time.Date(2021, time.October, 22, 0, 0, 0, 0, time.UTC)}},
+					{Text: "total", Data: query.NumberColumn{250.0, 125.0}},
 				},
 			},
 		},
 		{
 			Scope: cases.ScopeProvince,
-			Response: &simplejson.TableQueryResponse{
-				Columns: []simplejson.TableQueryResponseColumn{
-					{Text: "timestamp", Data: simplejson.TableQueryResponseTimeColumn{time.Date(2021, time.October, 21, 0, 0, 0, 0, time.UTC), time.Date(2021, time.October, 22, 0, 0, 0, 0, time.UTC)}},
-					{Text: "(unknown)", Data: simplejson.TableQueryResponseNumberColumn{0.0, 5.0}},
-					{Text: "Brussels", Data: simplejson.TableQueryResponseNumberColumn{150.0, 0.0}},
-					{Text: "VlaamsBrabant", Data: simplejson.TableQueryResponseNumberColumn{100.0, 120.0}},
+			Response: &query.TableResponse{
+				Columns: []query.Column{
+					{Text: "timestamp", Data: query.TimeColumn{time.Date(2021, time.October, 21, 0, 0, 0, 0, time.UTC), time.Date(2021, time.October, 22, 0, 0, 0, 0, time.UTC)}},
+					{Text: "(unknown)", Data: query.NumberColumn{0.0, 5.0}},
+					{Text: "Brussels", Data: query.NumberColumn{150.0, 0.0}},
+					{Text: "VlaamsBrabant", Data: query.NumberColumn{100.0, 120.0}},
 				},
 			},
 		},
 		{
 			Scope: cases.ScopeRegion,
-			Response: &simplejson.TableQueryResponse{
-				Columns: []simplejson.TableQueryResponseColumn{
-					{Text: "timestamp", Data: simplejson.TableQueryResponseTimeColumn{time.Date(2021, time.October, 21, 0, 0, 0, 0, time.UTC), time.Date(2021, time.October, 22, 0, 0, 0, 0, time.UTC)}},
-					{Text: "(unknown)", Data: simplejson.TableQueryResponseNumberColumn{0.0, 5.0}},
-					{Text: "Brussels", Data: simplejson.TableQueryResponseNumberColumn{150.0, 0.0}},
-					{Text: "Flanders", Data: simplejson.TableQueryResponseNumberColumn{100.0, 120.0}},
+			Response: &query.TableResponse{
+				Columns: []query.Column{
+					{Text: "timestamp", Data: query.TimeColumn{time.Date(2021, time.October, 21, 0, 0, 0, 0, time.UTC), time.Date(2021, time.October, 22, 0, 0, 0, 0, time.UTC)}},
+					{Text: "(unknown)", Data: query.NumberColumn{0.0, 5.0}},
+					{Text: "Brussels", Data: query.NumberColumn{150.0, 0.0}},
+					{Text: "Flanders", Data: query.NumberColumn{100.0, 120.0}},
 				},
 			},
 		},
 		{
 			Scope: cases.ScopeAge,
-			Response: &simplejson.TableQueryResponse{
-				Columns: []simplejson.TableQueryResponseColumn{
-					{Text: "timestamp", Data: simplejson.TableQueryResponseTimeColumn{time.Date(2021, time.October, 21, 0, 0, 0, 0, time.UTC), time.Date(2021, time.October, 22, 0, 0, 0, 0, time.UTC)}},
-					{Text: "(unknown)", Data: simplejson.TableQueryResponseNumberColumn{0.0, 5.0}},
-					{Text: "25-34", Data: simplejson.TableQueryResponseNumberColumn{150.0, 120.0}},
-					{Text: "65-74", Data: simplejson.TableQueryResponseNumberColumn{0.0, 0.0}},
-					{Text: "85+", Data: simplejson.TableQueryResponseNumberColumn{100.0, 0.0}},
+			Response: &query.TableResponse{
+				Columns: []query.Column{
+					{Text: "timestamp", Data: query.TimeColumn{time.Date(2021, time.October, 21, 0, 0, 0, 0, time.UTC), time.Date(2021, time.October, 22, 0, 0, 0, 0, time.UTC)}},
+					{Text: "(unknown)", Data: query.NumberColumn{0.0, 5.0}},
+					{Text: "25-34", Data: query.NumberColumn{150.0, 120.0}},
+					{Text: "65-74", Data: query.NumberColumn{0.0, 0.0}},
+					{Text: "85+", Data: query.NumberColumn{100.0, 0.0}},
 				},
 			},
 		},
@@ -110,7 +111,7 @@ func TestHandler_TableQuery(t *testing.T) {
 	client := reporter.New(time.Hour)
 	client.APICache = getter
 
-	args := &simplejson.TableQueryArgs{Args: simplejson.Args{Range: simplejson.Range{
+	args := query.Args{Args: common.Args{Range: common.Range{
 		From: time.Time{},
 		To:   time.Date(2021, 10, 22, 0, 0, 0, 0, time.UTC),
 	}}}
@@ -137,7 +138,7 @@ func TestHandler_Failure(t *testing.T) {
 	client := reporter.New(time.Hour)
 	client.APICache = getter
 
-	args := &simplejson.TableQueryArgs{}
+	args := query.Args{}
 
 	getter.
 		On("Get", "Cases").
@@ -178,7 +179,7 @@ func BenchmarkHandler_TableQuery(b *testing.B) {
 		Scope:    cases.ScopeRegion,
 	}
 
-	args := &simplejson.TableQueryArgs{Args: simplejson.Args{Range: simplejson.Range{
+	args := query.Args{Args: common.Args{Range: common.Range{
 		To: time.Date(2021, 10, 22, 0, 0, 0, 0, time.UTC),
 	}}}
 

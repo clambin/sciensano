@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"github.com/clambin/sciensano/reporter"
 	"github.com/clambin/sciensano/reporter/datasets"
-	"github.com/clambin/simplejson"
+	"github.com/clambin/simplejson/v2"
+	"github.com/clambin/simplejson/v2/query"
 )
 
 // LagHandler returns the time difference between partial and full COVID-19 vaccination
@@ -17,7 +18,7 @@ func (handler LagHandler) Endpoints() simplejson.Endpoints {
 	return simplejson.Endpoints{TableQuery: handler.tableQuery}
 }
 
-func (handler *LagHandler) tableQuery(_ context.Context, _ *simplejson.TableQueryArgs) (response *simplejson.TableQueryResponse, err error) {
+func (handler *LagHandler) tableQuery(_ context.Context, _ query.Args) (response *query.TableResponse, err error) {
 	var vaccinationsData *datasets.Dataset
 
 	vaccinationsData, err = handler.Reporter.GetVaccinations()
@@ -30,8 +31,8 @@ func (handler *LagHandler) tableQuery(_ context.Context, _ *simplejson.TableQuer
 	// vaccinationsData.ApplyRange(args.Range.From, args.Range.To)
 	timestamps, lag := buildLag(vaccinationsData)
 
-	response = &simplejson.TableQueryResponse{
-		Columns: []simplejson.TableQueryResponseColumn{
+	response = &query.TableResponse{
+		Columns: []query.Column{
 			{Text: "timestamp", Data: timestamps},
 			{Text: "lag", Data: lag},
 		},
@@ -40,7 +41,7 @@ func (handler *LagHandler) tableQuery(_ context.Context, _ *simplejson.TableQuer
 	return
 }
 
-func buildLag(vaccinationsData *datasets.Dataset) (timestamps simplejson.TableQueryResponseTimeColumn, lag simplejson.TableQueryResponseNumberColumn) {
+func buildLag(vaccinationsData *datasets.Dataset) (timestamps query.TimeColumn, lag query.NumberColumn) {
 	var firstDoseIndex, lastSecondDose int
 
 	/*

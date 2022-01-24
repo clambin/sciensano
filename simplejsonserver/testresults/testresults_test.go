@@ -7,7 +7,8 @@ import (
 	mockCache "github.com/clambin/sciensano/measurement/mocks"
 	"github.com/clambin/sciensano/reporter"
 	"github.com/clambin/sciensano/simplejsonserver/testresults"
-	"github.com/clambin/simplejson"
+	"github.com/clambin/simplejson/v2/common"
+	"github.com/clambin/simplejson/v2/query"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"testing"
@@ -30,7 +31,7 @@ func TestHandler_TableQuery(t *testing.T) {
 			},
 		}, true)
 
-	args := &simplejson.TableQueryArgs{Args: simplejson.Args{Range: simplejson.Range{
+	args := query.Args{Args: common.Args{Range: common.Range{
 		From: time.Time{},
 		To:   time.Now(),
 	}}}
@@ -39,9 +40,9 @@ func TestHandler_TableQuery(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, response.Columns, 4)
 	require.Len(t, response.Columns[0].Data, 1)
-	assert.Equal(t, 20.0, response.Columns[1].Data.(simplejson.TableQueryResponseNumberColumn)[0])
-	assert.Equal(t, 10.0, response.Columns[2].Data.(simplejson.TableQueryResponseNumberColumn)[0])
-	assert.Equal(t, 0.5, response.Columns[3].Data.(simplejson.TableQueryResponseNumberColumn)[0])
+	assert.Equal(t, 20.0, response.Columns[1].Data.(query.NumberColumn)[0])
+	assert.Equal(t, 10.0, response.Columns[2].Data.(query.NumberColumn)[0])
+	assert.Equal(t, 0.5, response.Columns[3].Data.(query.NumberColumn)[0])
 
 	getter.AssertExpectations(t)
 }
@@ -51,7 +52,7 @@ func TestHandler_Failure(t *testing.T) {
 	client := reporter.New(time.Hour)
 	client.APICache = getter
 
-	args := &simplejson.TableQueryArgs{}
+	args := query.Args{}
 
 	getter.
 		On("Get", "TestResults").
