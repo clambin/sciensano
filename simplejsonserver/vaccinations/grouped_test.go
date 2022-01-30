@@ -5,8 +5,8 @@ import (
 	mockCache "github.com/clambin/sciensano/measurement/mocks"
 	"github.com/clambin/sciensano/reporter"
 	"github.com/clambin/sciensano/simplejsonserver/vaccinations"
-	"github.com/clambin/simplejson/v2/common"
-	"github.com/clambin/simplejson/v2/query"
+	"github.com/clambin/simplejson/v3/common"
+	"github.com/clambin/simplejson/v3/query"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"testing"
@@ -90,7 +90,7 @@ func TestGroupedHandler(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	args := query.Args{Args: common.Args{Range: common.Range{To: timestamp.Add(24 * time.Hour)}}}
+	req := query.Request{Args: query.Args{Args: common.Args{Range: common.Range{To: timestamp.Add(24 * time.Hour)}}}}
 
 	cache := &mockCache.Holder{}
 	client := reporter.New(time.Hour)
@@ -105,7 +105,7 @@ func TestGroupedHandler(t *testing.T) {
 			Scope:           testCase.Scope,
 		}
 
-		response, err := h.Endpoints().TableQuery(ctx, args)
+		response, err := h.Endpoints().Query(ctx, req)
 		require.NoError(t, err, index)
 		assert.Equal(t, testCase.expected, response, index)
 	}
@@ -124,7 +124,7 @@ func TestGroupedHandler_Failure(t *testing.T) {
 		Scope:           vaccinations.ScopeAge,
 	}
 
-	_, err := h.Endpoints().TableQuery(context.Background(), query.Args{})
+	_, err := h.Endpoints().Query(context.Background(), query.Request{})
 	require.Error(t, err)
 }
 
@@ -143,7 +143,7 @@ func BenchmarkGroupedHandler(b *testing.B) {
 	}
 
 	for i := 0; i < b.N; i++ {
-		_, err := h.Endpoints().TableQuery(context.Background(), query.Args{})
+		_, err := h.Endpoints().Query(context.Background(), query.Request{})
 		if err != nil {
 			b.Fatal(err)
 		}

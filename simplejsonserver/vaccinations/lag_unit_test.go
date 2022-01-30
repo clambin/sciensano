@@ -2,7 +2,7 @@ package vaccinations
 
 import (
 	"github.com/clambin/sciensano/reporter/datasets"
-	"github.com/clambin/simplejson/v2/query"
+	"github.com/clambin/simplejson/v3/query"
 	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"

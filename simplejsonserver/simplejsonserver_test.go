@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/clambin/sciensano/simplejsonserver"
-	"github.com/clambin/simplejson/v2"
-	"github.com/clambin/simplejson/v2/common"
-	"github.com/clambin/simplejson/v2/query"
+	"github.com/clambin/simplejson/v3"
+	"github.com/clambin/simplejson/v3/common"
+	"github.com/clambin/simplejson/v3/query"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"io"
@@ -69,13 +69,13 @@ func TestRun(t *testing.T) {
 	ctx := context.Background()
 	h.Reporter.APICache.Refresh(ctx)
 
-	args := query.Args{Args: common.Args{Range: common.Range{To: time.Now()}}}
+	req := query.Request{Args: query.Args{Args: common.Args{Range: common.Range{To: time.Now()}}}}
 
 	wg := sync.WaitGroup{}
 	for target, handler := range h.Handlers {
 		wg.Add(1)
 		go func(handler simplejson.Handler, target string) {
-			_, err := handler.Endpoints().TableQuery(ctx, args)
+			_, err := handler.Endpoints().Query(ctx, req)
 			require.NoError(t, err, target)
 			wg.Done()
 		}(handler, target)
@@ -102,11 +102,7 @@ func BenchmarkHandlers_Run(b *testing.B) {
 	h := simplejsonserver.NewServer()
 
 	ctx := context.Background()
-	args := query.Args{
-		Args: common.Args{
-			Range: common.Range{To: time.Now()},
-		},
-	}
+	req := query.Request{Args: query.Args{Args: common.Args{Range: common.Range{To: time.Now()}}}}
 
 	h.Reporter.APICache.Refresh(context.Background())
 	_ = h.Demographics.GetRegionFigures()
@@ -114,7 +110,7 @@ func BenchmarkHandlers_Run(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		for _, handler := range h.Handlers {
-			_, err := handler.Endpoints().TableQuery(ctx, args)
+			_, err := handler.Endpoints().Query(ctx, req)
 			assert.NoError(b, err)
 		}
 	}

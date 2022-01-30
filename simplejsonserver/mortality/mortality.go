@@ -6,8 +6,8 @@ import (
 	"github.com/clambin/sciensano/reporter"
 	"github.com/clambin/sciensano/reporter/datasets"
 	"github.com/clambin/sciensano/simplejsonserver/responder"
-	"github.com/clambin/simplejson/v2"
-	"github.com/clambin/simplejson/v2/query"
+	"github.com/clambin/simplejson/v3"
+	"github.com/clambin/simplejson/v3/query"
 )
 
 // Handler returns the number of deaths. Use Scope to report by Region or Age
@@ -27,11 +27,11 @@ const (
 // Endpoints implements the grafana-json Endpoint function. It returns all supported endpoints
 func (handler *Handler) Endpoints() simplejson.Endpoints {
 	return simplejson.Endpoints{
-		TableQuery: handler.tableQuery,
+		Query: handler.tableQuery,
 	}
 }
 
-func (handler *Handler) tableQuery(_ context.Context, args query.Args) (response *query.TableResponse, err error) {
+func (handler *Handler) tableQuery(_ context.Context, req query.Request) (response query.Response, err error) {
 	var entries *datasets.Dataset
 	switch handler.Scope {
 	case ScopeAll:
@@ -46,5 +46,5 @@ func (handler *Handler) tableQuery(_ context.Context, args query.Args) (response
 		return nil, fmt.Errorf("mortality failed: %w", err)
 	}
 
-	return responder.GenerateTableQueryResponse(entries, args), nil
+	return responder.GenerateTableQueryResponse(entries, req.Args), nil
 }

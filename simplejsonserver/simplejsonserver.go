@@ -12,7 +12,7 @@ import (
 	"github.com/clambin/sciensano/simplejsonserver/testresults"
 	"github.com/clambin/sciensano/simplejsonserver/vaccinations"
 	vaccinesHandler "github.com/clambin/sciensano/simplejsonserver/vaccines"
-	"github.com/clambin/simplejson/v2"
+	"github.com/clambin/simplejson/v3"
 	"net/http"
 	"time"
 )

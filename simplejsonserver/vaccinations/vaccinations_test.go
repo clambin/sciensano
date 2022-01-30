@@ -7,8 +7,8 @@ import (
 	mockCache "github.com/clambin/sciensano/measurement/mocks"
 	"github.com/clambin/sciensano/reporter"
 	"github.com/clambin/sciensano/simplejsonserver/vaccinations"
-	"github.com/clambin/simplejson/v2/common"
-	"github.com/clambin/simplejson/v2/query"
+	"github.com/clambin/simplejson/v3/common"
+	"github.com/clambin/simplejson/v3/query"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"testing"
@@ -25,14 +25,14 @@ func TestHandler(t *testing.T) {
 	cache.On("Get", "Vaccinations").Return(nil, false).Once()
 
 	ctx := context.Background()
-	args := query.Args{Args: common.Args{Range: common.Range{To: timestamp.Add(24 * time.Hour)}}}
+	req := query.Request{Args: query.Args{Args: common.Args{Range: common.Range{To: timestamp.Add(24 * time.Hour)}}}}
 
-	_, err := h.Endpoints().TableQuery(ctx, args)
+	_, err := h.Endpoints().Query(ctx, req)
 	assert.Error(t, err)
 
 	cache.On("Get", "Vaccinations").Return(vaccinationTestData, true)
 
-	response, err := h.Endpoints().TableQuery(ctx, args)
+	response, err := h.Endpoints().Query(ctx, req)
 	require.NoError(t, err)
 	assert.Equal(t, &query.TableResponse{
 		Columns: []query.Column{

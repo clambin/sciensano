@@ -3,13 +3,15 @@ package vaccines_test
 import (
 	"context"
 	"github.com/clambin/sciensano/apiclient/sciensano"
+
+	// "github.com/clambin/sciensano/apiclient/sciensano"
 	"github.com/clambin/sciensano/apiclient/vaccines"
 	"github.com/clambin/sciensano/measurement"
 	mockCache "github.com/clambin/sciensano/measurement/mocks"
 	"github.com/clambin/sciensano/reporter"
 	vaccinesHandler "github.com/clambin/sciensano/simplejsonserver/vaccines"
-	"github.com/clambin/simplejson/v2/common"
-	"github.com/clambin/simplejson/v2/query"
+	"github.com/clambin/simplejson/v3/common"
+	"github.com/clambin/simplejson/v3/query"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -41,14 +43,14 @@ func TestHandler_TableQuery_Vaccines(t *testing.T) {
 			},
 		}, true)
 
-	args := query.Args{Args: common.Args{Range: common.Range{To: timestamp}}}
+	req := query.Request{Args: query.Args{Args: common.Args{Range: common.Range{To: timestamp}}}}
 
-	response, err := h.Endpoints().TableQuery(context.Background(), args)
+	response, err := h.Endpoints().Query(context.Background(), req)
 	require.NoError(t, err)
-	require.Len(t, response.Columns, 2)
-	require.Len(t, response.Columns[0].Data, 2)
-	assert.Equal(t, 100.0, response.Columns[1].Data.(query.NumberColumn)[0])
-	assert.Equal(t, 300.0, response.Columns[1].Data.(query.NumberColumn)[1])
+	assert.Equal(t, &query.TableResponse{Columns: []query.Column{
+		{Text: "timestamp", Data: query.TimeColumn{timestamp.Add(-24 * time.Hour), timestamp}},
+		{Text: "total", Data: query.NumberColumn{100, 300}},
+	}}, response)
 
 	mock.AssertExpectationsForObjects(t, cache)
 }
@@ -80,11 +82,11 @@ func TestHandler_TableQuery_VaccinesByManufacturer(t *testing.T) {
 			},
 		}, true)
 
-	args := query.Args{Args: common.Args{Range: common.Range{To: timestamp}}}
+	req := query.Request{Args: query.Args{Args: common.Args{Range: common.Range{To: timestamp}}}}
 
-	response, err := h.Endpoints().TableQuery(context.Background(), args)
+	response, err := h.Endpoints().Query(context.Background(), req)
 	require.NoError(t, err)
-	assert.Equal(t, []query.Column{
+	assert.Equal(t, &query.TableResponse{Columns: []query.Column{
 		{
 			Text: "timestamp",
 			Data: query.TimeColumn{
@@ -95,7 +97,7 @@ func TestHandler_TableQuery_VaccinesByManufacturer(t *testing.T) {
 		{Text: "A", Data: query.NumberColumn{100, 100}},
 		{Text: "B", Data: query.NumberColumn{0, 200}},
 		{Text: "C", Data: query.NumberColumn{0, 0}},
-	}, response.Columns)
+	}}, response)
 
 	mock.AssertExpectationsForObjects(t, cache)
 }
@@ -146,23 +148,27 @@ func TestHandler_TableQuery_VaccinesStats(t *testing.T) {
 			},
 		}, true)
 
-	args := query.Args{Args: common.Args{
+	request := query.Request{Args: query.Args{Args: common.Args{
 		Range: common.Range{From: timestamp.Add(-24 * time.Hour)},
-	}}
+	}}}
 
-	response, err := h.Endpoints().TableQuery(context.Background(), args)
+	response, err := h.Endpoints().Query(context.Background(), request)
 	require.NoError(t, err)
-	require.Len(t, response.Columns, 3)
-	assert.Equal(t, query.NumberColumn{20.0, 30.0}, response.Columns[1].Data)
-	assert.Equal(t, query.NumberColumn{130.0, 320.0}, response.Columns[2].Data)
+	assert.Equal(t, &query.TableResponse{Columns: []query.Column{
+		{Text: "timestamp", Data: query.TimeColumn{timestamp.Add(-24 * time.Hour), timestamp}},
+		{Text: "vaccinations", Data: query.NumberColumn{20.0, 30.0}},
+		{Text: "reserve", Data: query.NumberColumn{130.0, 320.0}},
+	}}, response)
 
-	args = query.Args{Args: common.Args{Range: common.Range{From: timestamp, To: timestamp}}}
+	request = query.Request{Args: query.Args{Args: common.Args{Range: common.Range{From: timestamp, To: timestamp}}}}
 
-	response, err = h.Endpoints().TableQuery(context.Background(), args)
+	response, err = h.Endpoints().Query(context.Background(), request)
 	require.NoError(t, err)
-	require.Len(t, response.Columns, 3)
-	assert.Equal(t, query.NumberColumn{30.0}, response.Columns[1].Data)
-	assert.Equal(t, query.NumberColumn{320.0}, response.Columns[2].Data)
+	assert.Equal(t, &query.TableResponse{Columns: []query.Column{
+		{Text: "timestamp", Data: query.TimeColumn{timestamp}},
+		{Text: "vaccinations", Data: query.NumberColumn{30.0}},
+		{Text: "reserve", Data: query.NumberColumn{320.0}},
+	}}, response)
 
 	mock.AssertExpectationsForObjects(t, cache, cache)
 }
@@ -172,16 +178,17 @@ func TestHandler_TableQuery_VaccinesTime(t *testing.T) {
 	r := reporter.New(time.Hour)
 	r.APICache = cache
 	h := vaccinesHandler.DelayHandler{Reporter: r}
+	timestamp := time.Date(2022, 1, 26, 0, 0, 0, 0, time.UTC)
 
 	cache.
 		On("Get", "Vaccines").
 		Return([]measurement.Measurement{
 			&vaccines.Batch{
-				Date:   vaccines.Timestamp{Time: time.Now().Add(-7 * 24 * time.Hour)},
+				Date:   vaccines.Timestamp{Time: timestamp.Add(-7 * 24 * time.Hour)},
 				Amount: 100,
 			},
 			&vaccines.Batch{
-				Date:   vaccines.Timestamp{Time: time.Now().Add(-2 * 24 * time.Hour)},
+				Date:   vaccines.Timestamp{Time: timestamp.Add(-2 * 24 * time.Hour)},
 				Amount: 50,
 			},
 		}, true)
@@ -190,49 +197,47 @@ func TestHandler_TableQuery_VaccinesTime(t *testing.T) {
 		On("Get", "Vaccinations").
 		Return([]measurement.Measurement{
 			&sciensano.APIVaccinationsResponseEntry{
-				TimeStamp: sciensano.TimeStamp{Time: time.Now().Add(-6 * 24 * time.Hour)},
+				TimeStamp: sciensano.TimeStamp{Time: timestamp.Add(-6 * 24 * time.Hour)},
 				Dose:      "A",
 				Count:     50,
 			},
 			&sciensano.APIVaccinationsResponseEntry{
-				TimeStamp: sciensano.TimeStamp{Time: time.Now().Add(-5 * 24 * time.Hour)},
+				TimeStamp: sciensano.TimeStamp{Time: timestamp.Add(-5 * 24 * time.Hour)},
 				Dose:      "A",
 				Count:     25,
 			},
 			&sciensano.APIVaccinationsResponseEntry{
-				TimeStamp: sciensano.TimeStamp{Time: time.Now().Add(-4 * 24 * time.Hour)},
+				TimeStamp: sciensano.TimeStamp{Time: timestamp.Add(-4 * 24 * time.Hour)},
 				Dose:      "A",
 				Count:     15,
 			},
 			&sciensano.APIVaccinationsResponseEntry{
-				TimeStamp: sciensano.TimeStamp{Time: time.Now().Add(-3 * 24 * time.Hour)},
+				TimeStamp: sciensano.TimeStamp{Time: timestamp.Add(-3 * 24 * time.Hour)},
 				Dose:      "A",
 				Count:     15,
 			},
 			&sciensano.APIVaccinationsResponseEntry{
-				TimeStamp: sciensano.TimeStamp{Time: time.Now().Add(-2 * 24 * time.Hour)},
+				TimeStamp: sciensano.TimeStamp{Time: timestamp.Add(-2 * 24 * time.Hour)},
 				Dose:      "A",
 				Count:     40,
 			},
 			&sciensano.APIVaccinationsResponseEntry{
-				TimeStamp: sciensano.TimeStamp{Time: time.Now().Add(-1 * 24 * time.Hour)},
+				TimeStamp: sciensano.TimeStamp{Time: timestamp.Add(-1 * 24 * time.Hour)},
 				Dose:      "A",
 				Count:     15,
 			},
 		}, true)
 
-	args := query.Args{Args: common.Args{Range: common.Range{
-		From: time.Time{},
-		To:   time.Now(),
-	}}}
+	request := query.Request{Args: query.Args{Args: common.Args{Range: common.Range{
+		To: timestamp,
+	}}}}
 
-	response, err := h.Endpoints().TableQuery(context.Background(), args)
+	response, err := h.Endpoints().Query(context.Background(), request)
 	require.NoError(t, err)
-	require.Len(t, response.Columns, 2)
-	require.Len(t, response.Columns[0].Data, 3)
-	assert.Equal(t, 4, int(response.Columns[1].Data.(query.NumberColumn)[0]))
-	assert.Equal(t, 5, int(response.Columns[1].Data.(query.NumberColumn)[1]))
-	assert.Equal(t, 1, int(response.Columns[1].Data.(query.NumberColumn)[2]))
+	assert.Equal(t, &query.TableResponse{Columns: []query.Column{
+		{Text: "timestamp", Data: query.TimeColumn{timestamp.Add(-3 * 24 * time.Hour), timestamp.Add(-2 * 24 * time.Hour), timestamp.Add(-24 * time.Hour)}},
+		{Text: "time", Data: query.NumberColumn{4, 5, 1}},
+	}}, response)
 
 	mock.AssertExpectationsForObjects(t, cache, cache)
 }
@@ -243,39 +248,38 @@ func TestHandler_Failures(t *testing.T) {
 	r.APICache = cache
 
 	ctx := context.Background()
-	args := query.Args{Args: common.Args{Range: common.Range{
-		From: time.Time{},
-		To:   time.Now(),
-	}}}
+	req := query.Request{Args: query.Args{Args: common.Args{Range: common.Range{
+		To: time.Now(),
+	}}}}
 
 	cache.On("Get", "Vaccinations").Return(nil, false)
 
 	cache.On("Get", "Vaccines").Return(nil, false).Once()
 	o := vaccinesHandler.OverviewHandler{Reporter: r}
-	_, err := o.Endpoints().TableQuery(ctx, args)
+	_, err := o.Endpoints().Query(ctx, req)
 	assert.Error(t, err)
 
 	cache.On("Get", "Vaccines").Return(nil, false).Once()
 	m := vaccinesHandler.ManufacturerHandler{Reporter: r}
-	_, err = m.Endpoints().TableQuery(ctx, args)
+	_, err = m.Endpoints().Query(ctx, req)
 	assert.Error(t, err)
 
 	cache.On("Get", "Vaccines").Return(nil, false).Once()
 	s := vaccinesHandler.StatsHandler{Reporter: r}
-	_, err = s.Endpoints().TableQuery(ctx, args)
+	_, err = s.Endpoints().Query(ctx, req)
 	assert.Error(t, err)
 
 	cache.On("Get", "Vaccines").Return(nil, false).Once()
 	d := vaccinesHandler.DelayHandler{Reporter: r}
-	_, err = d.Endpoints().TableQuery(ctx, args)
+	_, err = d.Endpoints().Query(ctx, req)
 	assert.Error(t, err)
 
 	cache.On("Get", "Vaccines").Return([]measurement.Measurement{}, true).Once()
-	_, err = d.Endpoints().TableQuery(ctx, args)
+	_, err = d.Endpoints().Query(ctx, req)
 	assert.Error(t, err)
 
 	cache.On("Get", "Vaccines").Return([]measurement.Measurement{}, true).Once()
 	s = vaccinesHandler.StatsHandler{Reporter: r}
-	_, err = s.Endpoints().TableQuery(ctx, args)
+	_, err = s.Endpoints().Query(ctx, req)
 	assert.Error(t, err)
 }

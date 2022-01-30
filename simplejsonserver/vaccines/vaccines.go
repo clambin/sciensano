@@ -6,8 +6,8 @@ import (
 	"github.com/clambin/sciensano/reporter"
 	"github.com/clambin/sciensano/reporter/datasets"
 	"github.com/clambin/sciensano/simplejsonserver/responder"
-	"github.com/clambin/simplejson/v2"
-	"github.com/clambin/simplejson/v2/query"
+	"github.com/clambin/simplejson/v3"
+	"github.com/clambin/simplejson/v3/query"
 )
 
 type OverviewHandler struct {
@@ -17,17 +17,17 @@ type OverviewHandler struct {
 var _ simplejson.Handler = &OverviewHandler{}
 
 func (o OverviewHandler) Endpoints() simplejson.Endpoints {
-	return simplejson.Endpoints{TableQuery: o.tableQuery}
+	return simplejson.Endpoints{Query: o.tableQuery}
 }
 
-func (o *OverviewHandler) tableQuery(_ context.Context, args query.Args) (response *query.TableResponse, err error) {
+func (o *OverviewHandler) tableQuery(_ context.Context, req query.Request) (response query.Response, err error) {
 	var batches *datasets.Dataset
 	batches, err = o.Reporter.GetVaccines()
 	if err != nil {
 		return nil, fmt.Errorf("vaccine call failed: %w", err)
 	}
 	batches.Accumulate()
-	return responder.GenerateTableQueryResponse(batches, args), nil
+	return responder.GenerateTableQueryResponse(batches, req.Args), nil
 }
 
 type ManufacturerHandler struct {
@@ -37,17 +37,17 @@ type ManufacturerHandler struct {
 var _ simplejson.Handler = &ManufacturerHandler{}
 
 func (m ManufacturerHandler) Endpoints() simplejson.Endpoints {
-	return simplejson.Endpoints{TableQuery: m.tableQuery}
+	return simplejson.Endpoints{Query: m.tableQuery}
 }
 
-func (m *ManufacturerHandler) tableQuery(_ context.Context, args query.Args) (response *query.TableResponse, err error) {
+func (m *ManufacturerHandler) tableQuery(_ context.Context, req query.Request) (response query.Response, err error) {
 	var batches *datasets.Dataset
 	batches, err = m.Reporter.GetVaccinesByManufacturer()
 	if err != nil {
 		return nil, fmt.Errorf("vaccine manufacturer call failed: %w", err)
 	}
 	batches.Accumulate()
-	return responder.GenerateTableQueryResponse(batches, args), nil
+	return responder.GenerateTableQueryResponse(batches, req.Args), nil
 }
 
 type StatsHandler struct {
@@ -57,10 +57,10 @@ type StatsHandler struct {
 var _ simplejson.Handler = &StatsHandler{}
 
 func (s StatsHandler) Endpoints() simplejson.Endpoints {
-	return simplejson.Endpoints{TableQuery: s.tableQuery}
+	return simplejson.Endpoints{Query: s.tableQuery}
 }
 
-func (s *StatsHandler) tableQuery(_ context.Context, args query.Args) (response *query.TableResponse, err error) {
+func (s *StatsHandler) tableQuery(_ context.Context, req query.Request) (response query.Response, err error) {
 	var batches *datasets.Dataset
 	batches, err = s.Reporter.GetVaccines()
 
@@ -85,8 +85,8 @@ func (s *StatsHandler) tableQuery(_ context.Context, args query.Args) (response 
 		Values: calculateVaccineReserve(vaccinations, batches),
 	})
 
-	batches.ApplyRange(args.Range.From, args.Range.To)
-	vaccinations.ApplyRange(args.Range.From, args.Range.To)
+	batches.ApplyRange(req.Range.From, req.Range.To)
+	vaccinations.ApplyRange(req.Range.From, req.Range.To)
 
 	response = &query.TableResponse{
 		Columns: []query.Column{
@@ -135,10 +135,10 @@ type DelayHandler struct {
 var _ simplejson.Handler = &DelayHandler{}
 
 func (d DelayHandler) Endpoints() simplejson.Endpoints {
-	return simplejson.Endpoints{TableQuery: d.tableQuery}
+	return simplejson.Endpoints{Query: d.tableQuery}
 }
 
-func (d *DelayHandler) tableQuery(_ context.Context, args query.Args) (response *query.TableResponse, err error) {
+func (d *DelayHandler) tableQuery(_ context.Context, req query.Request) (response query.Response, err error) {
 	var batches *datasets.Dataset
 	batches, err = d.Reporter.GetVaccines()
 
@@ -147,7 +147,7 @@ func (d *DelayHandler) tableQuery(_ context.Context, args query.Args) (response 
 	}
 
 	batches.Accumulate()
-	batches.ApplyRange(args.Range.From, args.Range.To)
+	batches.ApplyRange(req.Range.From, req.Range.To)
 
 	var vaccinations *datasets.Dataset
 	vaccinations, err = d.Reporter.GetVaccinations()
@@ -157,7 +157,7 @@ func (d *DelayHandler) tableQuery(_ context.Context, args query.Args) (response 
 	}
 
 	vaccinations.Accumulate()
-	vaccinations.ApplyRange(args.Range.From, args.Range.To)
+	vaccinations.ApplyRange(req.Range.From, req.Range.To)
 
 	timestampColumn, timeColumn := calculateVaccineDelay(vaccinations, batches)
 

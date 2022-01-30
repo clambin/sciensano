@@ -8,8 +8,8 @@ import (
 	"github.com/clambin/sciensano/reporter"
 	"github.com/clambin/sciensano/simplejsonserver/cases"
 	"github.com/clambin/sciensano/simplejsonserver/mortality"
-	"github.com/clambin/simplejson/v2/common"
-	"github.com/clambin/simplejson/v2/query"
+	"github.com/clambin/simplejson/v3/common"
+	"github.com/clambin/simplejson/v3/query"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"testing"
@@ -96,10 +96,10 @@ func TestHandler_TableQuery(t *testing.T) {
 	client := reporter.New(time.Hour)
 	client.APICache = getter
 
-	args := query.Args{Args: common.Args{Range: common.Range{
+	req := query.Request{Args: query.Args{Args: common.Args{Range: common.Range{
 		From: time.Time{},
 		To:   time.Date(2021, 10, 22, 0, 0, 0, 0, time.UTC),
-	}}}
+	}}}}
 
 	getter.
 		On("Get", "Mortality").
@@ -110,7 +110,7 @@ func TestHandler_TableQuery(t *testing.T) {
 			Reporter: client,
 			Scope:    testCase.Scope,
 		}
-		response, err := h.Endpoints().TableQuery(context.Background(), args)
+		response, err := h.Endpoints().Query(context.Background(), req)
 		require.NoError(t, err, index)
 		assert.Equal(t, testCase.Response, response, index)
 	}
@@ -123,7 +123,7 @@ func TestHandler_Failure(t *testing.T) {
 	client := reporter.New(time.Hour)
 	client.APICache = getter
 
-	args := query.Args{}
+	req := query.Request{}
 
 	getter.
 		On("Get", "Mortality").
@@ -133,7 +133,7 @@ func TestHandler_Failure(t *testing.T) {
 		Reporter: client,
 		Scope:    cases.ScopeAll,
 	}
-	_, err := h.Endpoints().TableQuery(context.Background(), args)
+	_, err := h.Endpoints().Query(context.Background(), req)
 	assert.Error(t, err)
 
 	getter.AssertExpectations(t)
@@ -163,9 +163,9 @@ func BenchmarkHandler_TableQuery(b *testing.B) {
 		Scope:    mortality.ScopeRegion,
 	}
 
-	args := query.Args{Args: common.Args{Range: common.Range{
+	req := query.Request{Args: query.Args{Args: common.Args{Range: common.Range{
 		To: time.Date(2021, 10, 22, 0, 0, 0, 0, time.UTC),
-	}}}
+	}}}}
 
 	getter.
 		On("Get", "Mortality").
@@ -174,7 +174,7 @@ func BenchmarkHandler_TableQuery(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		_, err := h.Endpoints().TableQuery(context.Background(), args)
+		_, err := h.Endpoints().Query(context.Background(), req)
 		if err != nil {
 			b.Fatal(err)
 		}

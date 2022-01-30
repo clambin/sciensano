@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"github.com/clambin/sciensano/demographics"
 	"github.com/clambin/sciensano/reporter"
-	"github.com/clambin/simplejson/v2"
-	"github.com/clambin/simplejson/v2/query"
+	"github.com/clambin/simplejson/v3"
+	"github.com/clambin/simplejson/v3/query"
 )
 
 type RateHandler struct {
@@ -20,10 +20,10 @@ type RateHandler struct {
 var _ simplejson.Handler = &RateHandler{}
 
 func (r RateHandler) Endpoints() simplejson.Endpoints {
-	return simplejson.Endpoints{TableQuery: r.tableQuery}
+	return simplejson.Endpoints{Query: r.tableQuery}
 }
 
-func (r *RateHandler) tableQuery(ctx context.Context, args query.Args) (response *query.TableResponse, err error) {
+func (r *RateHandler) tableQuery(ctx context.Context, req query.Request) (response query.Response, err error) {
 	if r.helper == nil {
 		r.helper = &GroupedHandler{
 			Reporter:        r.Reporter,
@@ -32,18 +32,19 @@ func (r *RateHandler) tableQuery(ctx context.Context, args query.Args) (response
 		}
 	}
 
-	response, err = r.helper.tableQuery(ctx, args)
+	response, err = r.helper.tableQuery(ctx, req)
 
 	if err != nil {
 		return nil, fmt.Errorf("vaccination rate failed: %w", err)
 	}
 
-	response.Columns = filterUnknownColumns(response.Columns)
+	resp := response.(*query.TableResponse)
+	resp.Columns = filterUnknownColumns(resp.Columns)
 
 	switch r.Scope {
 	case ScopeAge:
 		ageGroupFigures := r.Demographics.GetAgeGroupFigures()
-		prorateFigures(response, ageGroupFigures)
+		prorateFigures(resp, ageGroupFigures)
 	case ScopeRegion:
 		regionFigures := r.Demographics.GetRegionFigures()
 		// demographics counts figures for Ostbelgien as part of Wallonia. Hardcode the split here.
@@ -55,7 +56,7 @@ func (r *RateHandler) tableQuery(ctx context.Context, args query.Args) (response
 			regionFigures["Wallonia"] = population
 			regionFigures["Ostbelgien"] = 78000
 		}
-		prorateFigures(response, regionFigures)
+		prorateFigures(resp, regionFigures)
 	}
 	return
 }

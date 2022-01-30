@@ -2,7 +2,7 @@ package responder
 
 import (
 	"github.com/clambin/sciensano/reporter/datasets"
-	"github.com/clambin/simplejson/v2/query"
+	"github.com/clambin/simplejson/v3/query"
 )
 
 // GenerateTableQueryResponse generates a TableQueryResponse from a Dataset

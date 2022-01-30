@@ -6,8 +6,8 @@ import (
 	"github.com/clambin/sciensano/reporter"
 	"github.com/clambin/sciensano/reporter/datasets"
 	"github.com/clambin/sciensano/simplejsonserver/responder"
-	"github.com/clambin/simplejson/v2"
-	"github.com/clambin/simplejson/v2/query"
+	"github.com/clambin/simplejson/v3"
+	"github.com/clambin/simplejson/v3/query"
 )
 
 // GroupedHandler returns COVID-19 vaccinations grouped by region or age group, for a specific type (i.e. partial, full or booster vaccination)
@@ -28,10 +28,10 @@ const (
 
 // Endpoints implements the grafana-json Endpoint function. It returns all supported endpoints
 func (handler GroupedHandler) Endpoints() simplejson.Endpoints {
-	return simplejson.Endpoints{TableQuery: handler.tableQuery}
+	return simplejson.Endpoints{Query: handler.tableQuery}
 }
 
-func (handler *GroupedHandler) tableQuery(_ context.Context, args query.Args) (response *query.TableResponse, err error) {
+func (handler *GroupedHandler) tableQuery(_ context.Context, req query.Request) (response query.Response, err error) {
 	var vaccinationData *datasets.Dataset
 	switch handler.Scope {
 	case ScopeAge:
@@ -45,5 +45,5 @@ func (handler *GroupedHandler) tableQuery(_ context.Context, args query.Args) (r
 	}
 
 	vaccinationData.Accumulate()
-	return responder.GenerateTableQueryResponse(vaccinationData, args), nil
+	return responder.GenerateTableQueryResponse(vaccinationData, req.Args), nil
 }
