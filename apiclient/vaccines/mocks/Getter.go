@@ -5,7 +5,8 @@ package mocks
 import (
 	context "context"
 
-	measurement "github.com/clambin/sciensano/measurement"
+	apiclient "github.com/clambin/sciensano/apiclient"
+
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -15,15 +16,15 @@ type Getter struct {
 }
 
 // GetBatches provides a mock function with given fields: ctx
-func (_m *Getter) GetBatches(ctx context.Context) ([]measurement.Measurement, error) {
+func (_m *Getter) GetBatches(ctx context.Context) ([]apiclient.APIResponse, error) {
 	ret := _m.Called(ctx)
 
-	var r0 []measurement.Measurement
-	if rf, ok := ret.Get(0).(func(context.Context) []measurement.Measurement); ok {
+	var r0 []apiclient.APIResponse
+	if rf, ok := ret.Get(0).(func(context.Context) []apiclient.APIResponse); ok {
 		r0 = rf(ctx)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]measurement.Measurement)
+			r0 = ret.Get(0).([]apiclient.APIResponse)
 		}
 	}
 

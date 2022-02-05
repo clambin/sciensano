@@ -2,9 +2,9 @@ package hospitalisations_test
 
 import (
 	"context"
+	"github.com/clambin/sciensano/apiclient"
+	mockCache "github.com/clambin/sciensano/apiclient/cache/mocks"
 	"github.com/clambin/sciensano/apiclient/sciensano"
-	"github.com/clambin/sciensano/measurement"
-	mockCache "github.com/clambin/sciensano/measurement/mocks"
 	"github.com/clambin/sciensano/reporter"
 	"github.com/clambin/sciensano/simplejsonserver/hospitalisations"
 	"github.com/clambin/simplejson/v3/common"
@@ -16,8 +16,8 @@ import (
 )
 
 var (
-	testResponse = []measurement.Measurement{
-		&sciensano.APIHospitalisationsResponseEntry{
+	testResponse = []apiclient.APIResponse{
+		&sciensano.APIHospitalisationsResponse{
 			TimeStamp:   sciensano.TimeStamp{Time: time.Date(2021, 10, 21, 0, 0, 0, 0, time.UTC)},
 			Region:      "Flanders",
 			Province:    "VlaamsBrabant",
@@ -26,7 +26,7 @@ var (
 			TotalInResp: 5,
 			TotalInECMO: 1,
 		},
-		&sciensano.APIHospitalisationsResponseEntry{
+		&sciensano.APIHospitalisationsResponse{
 			TimeStamp:   sciensano.TimeStamp{Time: time.Date(2021, 10, 21, 0, 0, 0, 0, time.UTC)},
 			Region:      "Brussels",
 			Province:    "Brussels",
@@ -35,7 +35,7 @@ var (
 			TotalInResp: 0,
 			TotalInECMO: 0,
 		},
-		&sciensano.APIHospitalisationsResponseEntry{
+		&sciensano.APIHospitalisationsResponse{
 			TimeStamp:   sciensano.TimeStamp{Time: time.Date(2021, 10, 22, 0, 0, 0, 0, time.UTC)},
 			Region:      "Flanders",
 			Province:    "VlaamsBrabant",
@@ -44,7 +44,7 @@ var (
 			TotalInResp: 5,
 			TotalInECMO: 1,
 		},
-		&sciensano.APIHospitalisationsResponseEntry{
+		&sciensano.APIHospitalisationsResponse{
 			TimeStamp:   sciensano.TimeStamp{Time: time.Date(2021, 10, 22, 0, 0, 0, 0, time.UTC)},
 			Region:      "",
 			Province:    "",
@@ -53,7 +53,7 @@ var (
 			TotalInResp: 0,
 			TotalInECMO: 0,
 		},
-		&sciensano.APIHospitalisationsResponseEntry{
+		&sciensano.APIHospitalisationsResponse{
 			TimeStamp:   sciensano.TimeStamp{Time: time.Date(2021, 10, 23, 0, 0, 0, 0, time.UTC)},
 			Region:      "Flanders",
 			Province:    "VlaamsBrabant",
@@ -74,9 +74,9 @@ var (
 				Columns: []query.Column{
 					{Text: "timestamp", Data: query.TimeColumn{time.Date(2021, time.October, 21, 0, 0, 0, 0, time.UTC), time.Date(2021, time.October, 22, 0, 0, 0, 0, time.UTC)}},
 					{Text: "in", Data: query.NumberColumn{150.0, 91.0}},
+					{Text: "inECMO", Data: query.NumberColumn{1.0, 1.0}},
 					{Text: "inICU", Data: query.NumberColumn{11.0, 11.0}},
 					{Text: "inResp", Data: query.NumberColumn{5.0, 5.0}},
-					{Text: "inECMO", Data: query.NumberColumn{1.0, 1.0}},
 				},
 			},
 		},
@@ -153,13 +153,13 @@ func TestHandler_Failure(t *testing.T) {
 	getter.AssertExpectations(t)
 }
 
-func BenchmarkHandler_TableQuery(b *testing.B) {
-	var bigResponse []measurement.Measurement
+func BenchmarkHospitalisationHandler(b *testing.B) {
+	var bigResponse []apiclient.APIResponse
 	timestamp := time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)
 
 	for i := 0; i < 2*365; i++ {
 		for _, region := range []string{"Brussels", "Flanders", "Wallonia"} {
-			bigResponse = append(bigResponse, &sciensano.APIHospitalisationsResponseEntry{
+			bigResponse = append(bigResponse, &sciensano.APIHospitalisationsResponse{
 				TimeStamp: sciensano.TimeStamp{Time: timestamp},
 				Province:  region,
 				Region:    region,

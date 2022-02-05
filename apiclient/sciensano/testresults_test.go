@@ -2,9 +2,9 @@ package sciensano_test
 
 import (
 	"context"
+	"github.com/clambin/sciensano/apiclient"
 	"github.com/clambin/sciensano/apiclient/sciensano"
 	"github.com/clambin/sciensano/apiclient/sciensano/fake"
-	"github.com/clambin/sciensano/measurement"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"net/http"
@@ -27,7 +27,7 @@ func TestClient_GetTestResults(t *testing.T) {
 
 	require.NoError(t, err)
 	require.Len(t, result, 3)
-	assert.Equal(t, &sciensano.APITestResultsResponseEntry{
+	assert.Equal(t, &sciensano.APITestResultsResponse{
 		TimeStamp: sciensano.TimeStamp{Time: time.Date(2021, 3, 11, 0, 0, 0, 0, time.UTC)},
 		Region:    "Flanders",
 		Province:  "",
@@ -45,7 +45,7 @@ func TestClient_GetTestResults(t *testing.T) {
 }
 
 func TestClient_TestResult_Measurement(t *testing.T) {
-	entry := sciensano.APITestResultsResponseEntry{
+	entry := sciensano.APITestResultsResponse{
 		TimeStamp: sciensano.TimeStamp{Time: time.Now()},
 		Region:    "Flanders",
 		Province:  "VlaamsBrabant",
@@ -54,9 +54,9 @@ func TestClient_TestResult_Measurement(t *testing.T) {
 	}
 
 	assert.NotZero(t, entry.GetTimestamp())
-	assert.Equal(t, "Flanders", entry.GetGroupFieldValue(measurement.GroupByRegion))
-	assert.Equal(t, "VlaamsBrabant", entry.GetGroupFieldValue(measurement.GroupByProvince))
-	assert.Empty(t, entry.GetGroupFieldValue(measurement.GroupByAgeGroup))
+	assert.Equal(t, "Flanders", entry.GetGroupFieldValue(apiclient.GroupByRegion))
+	assert.Equal(t, "VlaamsBrabant", entry.GetGroupFieldValue(apiclient.GroupByProvince))
+	assert.Empty(t, entry.GetGroupFieldValue(apiclient.GroupByAgeGroup))
 	assert.Equal(t, 100.0, entry.GetTotalValue())
 	assert.Equal(t, []string{"total", "positive"}, entry.GetAttributeNames())
 	assert.Equal(t, []float64{100, 10}, entry.GetAttributeValues())

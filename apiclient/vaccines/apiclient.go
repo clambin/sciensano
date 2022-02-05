@@ -5,7 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/clambin/go-metrics"
-	"github.com/clambin/sciensano/measurement"
+	"github.com/clambin/sciensano/apiclient"
+	"github.com/clambin/sciensano/apiclient/cache"
 	log "github.com/sirupsen/logrus"
 	"io"
 	"net/http"
@@ -16,17 +17,17 @@ import (
 // Getter interface retrieves vaccine batches
 //go:generate mockery --name Getter
 type Getter interface {
-	GetBatches(ctx context.Context) (batches []measurement.Measurement, err error)
+	GetBatches(ctx context.Context) (batches []apiclient.APIResponse, err error)
 }
 
-var _ measurement.Fetcher = &Client{}
+var _ cache.Fetcher = &Client{}
 var _ Getter = &Client{}
 
 // Client calls the API to retrieve vaccine batches
 type Client struct {
 	URL        string
 	HTTPClient *http.Client
-	measurement.Cache
+	cache.Cache
 	Metrics metrics.APIClientMetrics
 }
 
@@ -40,49 +41,49 @@ func (client *Client) getURL() (url string) {
 	return
 }
 
-// Batch represents one batch of vaccines
-type Batch struct {
+// APIBatchResponse represents one batch of vaccines
+type APIBatchResponse struct {
 	Date         Timestamp `json:"date"`
 	Manufacturer string    `json:"manufacturer"`
 	Amount       int       `json:"amount"`
 }
 
-var _ measurement.Measurement = &Batch{}
+var _ apiclient.APIResponse = &APIBatchResponse{}
 
 // GetTimestamp returns the batch's timestamp
-func (b Batch) GetTimestamp() time.Time {
+func (b APIBatchResponse) GetTimestamp() time.Time {
 	return b.Date.Time
 }
 
-// GetGroupFieldValue returns the value of a groupable field.  Not used for Batch.
-func (b Batch) GetGroupFieldValue(groupField int) (value string) {
-	if groupField == measurement.GroupByManufacturer {
+// GetGroupFieldValue returns the value of a groupable field.  Not used for APIBatchResponse.
+func (b APIBatchResponse) GetGroupFieldValue(groupField int) (value string) {
+	if groupField == apiclient.GroupByManufacturer {
 		value = b.Manufacturer
 	}
 	return
 }
 
 // GetTotalValue returns the entry's total number of vaccines
-func (b Batch) GetTotalValue() float64 {
+func (b APIBatchResponse) GetTotalValue() float64 {
 	return float64(b.Amount)
 }
 
 // GetAttributeNames returns the names of the types of vaccinations
-func (b Batch) GetAttributeNames() []string {
+func (b APIBatchResponse) GetAttributeNames() []string {
 	return []string{"total"}
 }
 
 // GetAttributeValues gets the value for each supported type of vaccination
-func (b Batch) GetAttributeValues() (values []float64) {
+func (b APIBatchResponse) GetAttributeValues() (values []float64) {
 	return []float64{float64(b.Amount)}
 }
 
-// Timestamp representation for Batch. Needed to unmarshal the date as received from the API
+// Timestamp representation for APIBatchResponse. Needed to unmarshal the date as received from the API
 type Timestamp struct {
 	time.Time
 }
 
-// UnmarshalJSON unmarshals the Timestamp in a Batch
+// UnmarshalJSON unmarshals the Timestamp in a APIBatchResponse
 func (date *Timestamp) UnmarshalJSON(b []byte) (err error) {
 	var timestamp time.Time
 	if timestamp, err = time.Parse(`"2006-01-02"`, string(b)); err == nil {
@@ -92,11 +93,11 @@ func (date *Timestamp) UnmarshalJSON(b []byte) (err error) {
 }
 
 // Update calls all endpoints and returns this to the caller. This is used by a cache to refresh its content
-func (client *Client) Update(ctx context.Context) (entries map[string][]measurement.Measurement, err error) {
+func (client *Client) Update(ctx context.Context) (entries map[string][]apiclient.APIResponse, err error) {
 	log.Debug("refreshing Vaccine API cache")
 	before := time.Now()
 
-	entries = make(map[string][]measurement.Measurement)
+	entries = make(map[string][]apiclient.APIResponse)
 	entries["Vaccines"], err = client.GetBatches(ctx)
 
 	log.WithField("duration", time.Now().Sub(before)).Debugf("refreshed Vaccine API cache")
@@ -105,12 +106,12 @@ func (client *Client) Update(ctx context.Context) (entries map[string][]measurem
 
 type apiBatchesResponse struct {
 	Result struct {
-		Delivered []*Batch `json:"delivered"`
+		Delivered []*APIBatchResponse `json:"delivered"`
 	} `json:"result"`
 }
 
 // GetBatches returns all vaccine batches
-func (client *Client) GetBatches(ctx context.Context) (batches []measurement.Measurement, err error) {
+func (client *Client) GetBatches(ctx context.Context) (batches []apiclient.APIResponse, err error) {
 	defer func() {
 		client.Metrics.ReportErrors(err, "vaccines")
 	}()
@@ -125,7 +126,7 @@ func (client *Client) GetBatches(ctx context.Context) (batches []measurement.Mea
 	}
 
 	if err == nil {
-		batches = make([]measurement.Measurement, 0, len(stats.Result.Delivered))
+		batches = make([]apiclient.APIResponse, 0, len(stats.Result.Delivered))
 		for _, entry := range stats.Result.Delivered {
 			batches = append(batches, entry)
 		}

@@ -2,9 +2,9 @@ package cases_test
 
 import (
 	"context"
+	"github.com/clambin/sciensano/apiclient"
+	mockCache "github.com/clambin/sciensano/apiclient/cache/mocks"
 	"github.com/clambin/sciensano/apiclient/sciensano"
-	"github.com/clambin/sciensano/measurement"
-	mockCache "github.com/clambin/sciensano/measurement/mocks"
 	"github.com/clambin/sciensano/reporter"
 	"github.com/clambin/sciensano/simplejsonserver/cases"
 	"github.com/clambin/simplejson/v3/common"
@@ -21,36 +21,36 @@ type TestCase struct {
 }
 
 var (
-	testResponse = []measurement.Measurement{
-		&sciensano.APICasesResponseEntry{
+	testResponse = []apiclient.APIResponse{
+		&sciensano.APICasesResponse{
 			TimeStamp: sciensano.TimeStamp{Time: time.Date(2021, 10, 21, 0, 0, 0, 0, time.UTC)},
 			Region:    "Flanders",
 			Province:  "VlaamsBrabant",
 			AgeGroup:  "85+",
 			Cases:     100,
 		},
-		&sciensano.APICasesResponseEntry{
+		&sciensano.APICasesResponse{
 			TimeStamp: sciensano.TimeStamp{Time: time.Date(2021, 10, 21, 0, 0, 0, 0, time.UTC)},
 			Region:    "Brussels",
 			Province:  "Brussels",
 			AgeGroup:  "25-34",
 			Cases:     150,
 		},
-		&sciensano.APICasesResponseEntry{
+		&sciensano.APICasesResponse{
 			TimeStamp: sciensano.TimeStamp{Time: time.Date(2021, 10, 22, 0, 0, 0, 0, time.UTC)},
 			Region:    "Flanders",
 			Province:  "VlaamsBrabant",
 			AgeGroup:  "25-34",
 			Cases:     120,
 		},
-		&sciensano.APICasesResponseEntry{
+		&sciensano.APICasesResponse{
 			TimeStamp: sciensano.TimeStamp{Time: time.Date(2021, 10, 22, 0, 0, 0, 0, time.UTC)},
 			Region:    "",
 			Province:  "",
 			AgeGroup:  "",
 			Cases:     5,
 		},
-		&sciensano.APICasesResponseEntry{
+		&sciensano.APICasesResponse{
 			TimeStamp: sciensano.TimeStamp{Time: time.Date(2021, 10, 23, 0, 0, 0, 0, time.UTC)},
 			Region:    "Flanders",
 			Province:  "VlaamsBrabant",
@@ -154,13 +154,13 @@ func TestHandler_Failure(t *testing.T) {
 	getter.AssertExpectations(t)
 }
 
-func BenchmarkHandler_TableQuery(b *testing.B) {
-	var bigResponse []measurement.Measurement
+func BenchmarkCasesHandler(b *testing.B) {
+	var bigResponse []apiclient.APIResponse
 	timestamp := time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)
 
 	for i := 0; i < 2*365; i++ {
 		for _, region := range []string{"Brussels", "Flanders", "Wallonia"} {
-			bigResponse = append(bigResponse, &sciensano.APICasesResponseEntry{
+			bigResponse = append(bigResponse, &sciensano.APICasesResponse{
 				TimeStamp: sciensano.TimeStamp{Time: timestamp},
 				Province:  region,
 				Region:    region,

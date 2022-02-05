@@ -1,11 +1,10 @@
 package reporter_test
 
 import (
+	"github.com/clambin/sciensano/apiclient"
+	"github.com/clambin/sciensano/apiclient/cache/mocks"
 	"github.com/clambin/sciensano/apiclient/sciensano"
-	"github.com/clambin/sciensano/measurement"
-	"github.com/clambin/sciensano/measurement/mocks"
 	"github.com/clambin/sciensano/reporter"
-	"github.com/clambin/sciensano/reporter/datasets"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -14,8 +13,8 @@ import (
 )
 
 var (
-	testHospitalisationsResponse = []measurement.Measurement{
-		&sciensano.APIHospitalisationsResponseEntry{
+	testHospitalisationsResponse = []apiclient.APIResponse{
+		&sciensano.APIHospitalisationsResponse{
 			TimeStamp:   sciensano.TimeStamp{Time: time.Date(2021, 10, 21, 0, 0, 0, 0, time.UTC)},
 			Region:      "Flanders",
 			Province:    "VlaamsBrabant",
@@ -24,7 +23,7 @@ var (
 			TotalInResp: 25,
 			TotalInECMO: 10,
 		},
-		&sciensano.APIHospitalisationsResponseEntry{
+		&sciensano.APIHospitalisationsResponse{
 			TimeStamp:   sciensano.TimeStamp{Time: time.Date(2021, 10, 21, 0, 0, 0, 0, time.UTC)},
 			Region:      "Brussels",
 			Province:    "Brussels",
@@ -33,7 +32,7 @@ var (
 			TotalInResp: 3,
 			TotalInECMO: 1,
 		},
-		&sciensano.APIHospitalisationsResponseEntry{
+		&sciensano.APIHospitalisationsResponse{
 			TimeStamp:   sciensano.TimeStamp{Time: time.Date(2021, 10, 22, 0, 0, 0, 0, time.UTC)},
 			Region:      "Flanders",
 			Province:    "VlaamsBrabant",
@@ -56,18 +55,27 @@ func TestClient_GetHospitalisations(t *testing.T) {
 
 	entries, err := client.GetHospitalisations()
 	require.NoError(t, err)
-	assert.Equal(t, &datasets.Dataset{
-		Timestamps: []time.Time{
-			time.Date(2021, time.October, 21, 0, 0, 0, 0, time.UTC),
-			time.Date(2021, time.October, 22, 0, 0, 0, 0, time.UTC),
-		},
-		Groups: []datasets.DatasetGroup{
-			{Name: "in", Values: []float64{110, 50}},
-			{Name: "inICU", Values: []float64{55, 25}},
-			{Name: "inResp", Values: []float64{28, 12}},
-			{Name: "inECMO", Values: []float64{11, 5}},
-		},
-	}, entries)
+
+	assert.Equal(t, []time.Time{
+		time.Date(2021, time.October, 21, 0, 0, 0, 0, time.UTC),
+		time.Date(2021, time.October, 22, 0, 0, 0, 0, time.UTC),
+	}, entries.GetTimestamps())
+
+	assert.Equal(t, []string{"in", "inECMO", "inICU", "inResp"}, entries.GetColumns())
+
+	for _, testCase := range []struct {
+		column   string
+		expected []float64
+	}{
+		{column: "in", expected: []float64{110, 50}},
+		{column: "inICU", expected: []float64{55, 25}},
+		{column: "inResp", expected: []float64{28, 12}},
+		{column: "inECMO", expected: []float64{11, 5}},
+	} {
+		values, ok := entries.GetValues(testCase.column)
+		require.True(t, ok, testCase.column)
+		assert.Equal(t, testCase.expected, values, testCase.column)
+	}
 
 	mock.AssertExpectationsForObjects(t, cache)
 }
@@ -83,16 +91,22 @@ func TestClient_GetHospitalisationsByProvince(t *testing.T) {
 
 	entries, err := client.GetHospitalisationsByProvince()
 	require.NoError(t, err)
-	assert.Equal(t, &datasets.Dataset{
-		Timestamps: []time.Time{
-			time.Date(2021, time.October, 21, 0, 0, 0, 0, time.UTC),
-			time.Date(2021, time.October, 22, 0, 0, 0, 0, time.UTC),
-		},
-		Groups: []datasets.DatasetGroup{
-			{Name: "Brussels", Values: []float64{10, 0}},
-			{Name: "VlaamsBrabant", Values: []float64{100, 50}},
-		},
-	}, entries)
+
+	assert.Equal(t, []time.Time{
+		time.Date(2021, time.October, 21, 0, 0, 0, 0, time.UTC),
+		time.Date(2021, time.October, 22, 0, 0, 0, 0, time.UTC),
+	}, entries.GetTimestamps())
+
+	assert.Equal(t, []string{"Brussels", "VlaamsBrabant"}, entries.GetColumns())
+
+	values, ok := entries.GetValues("Brussels")
+	require.True(t, ok)
+	assert.Equal(t, []float64{10, 0}, values)
+
+	values, ok = entries.GetValues("VlaamsBrabant")
+	require.True(t, ok)
+	assert.Equal(t, []float64{100, 50}, values)
+
 	cache.AssertExpectations(t)
 }
 
@@ -107,16 +121,22 @@ func TestClient_GetHospitalisationsByRegion(t *testing.T) {
 
 	entries, err := client.GetHospitalisationsByRegion()
 	require.NoError(t, err)
-	assert.Equal(t, &datasets.Dataset{
-		Timestamps: []time.Time{
-			time.Date(2021, time.October, 21, 0, 0, 0, 0, time.UTC),
-			time.Date(2021, time.October, 22, 0, 0, 0, 0, time.UTC),
-		},
-		Groups: []datasets.DatasetGroup{
-			{Name: "Brussels", Values: []float64{10, 0}},
-			{Name: "Flanders", Values: []float64{100, 50}},
-		},
-	}, entries)
+
+	assert.Equal(t, []time.Time{
+		time.Date(2021, time.October, 21, 0, 0, 0, 0, time.UTC),
+		time.Date(2021, time.October, 22, 0, 0, 0, 0, time.UTC),
+	}, entries.GetTimestamps())
+
+	assert.Equal(t, []string{"Brussels", "Flanders"}, entries.GetColumns())
+
+	values, ok := entries.GetValues("Brussels")
+	require.True(t, ok)
+	assert.Equal(t, []float64{10, 0}, values)
+
+	values, ok = entries.GetValues("Flanders")
+	require.True(t, ok)
+	assert.Equal(t, []float64{100, 50}, values)
+
 	cache.AssertExpectations(t)
 }
 
@@ -139,45 +159,13 @@ func TestClient_GetHospitalisations_Failure(t *testing.T) {
 	cache.AssertExpectations(t)
 }
 
-func TestClient_GetHospitalisations_ApplyRegions(t *testing.T) {
-	cache := &mocks.Holder{}
-	client := reporter.New(time.Hour)
-	client.APICache = cache
-
-	cache.
-		On("Get", "Hospitalisations").
-		Return(testHospitalisationsResponse, true)
-
-	entries, err := client.GetHospitalisationsByRegion()
-	require.NoError(t, err)
-	require.Len(t, entries.Timestamps, 2)
-	require.Len(t, entries.Groups, 2)
-	require.Len(t, entries.Groups[0].Values, 2)
-	require.Len(t, entries.Groups[1].Values, 2)
-
-	entries.ApplyRange(time.Time{}, time.Date(2021, 10, 21, 0, 0, 0, 0, time.UTC))
-	require.Len(t, entries.Timestamps, 1)
-	require.Len(t, entries.Groups, 2)
-	require.Len(t, entries.Groups[0].Values, 1)
-	require.Len(t, entries.Groups[1].Values, 1)
-
-	entries, err = client.GetHospitalisationsByRegion()
-	require.NoError(t, err)
-	require.Len(t, entries.Timestamps, 2)
-	require.Len(t, entries.Groups, 2)
-	require.Len(t, entries.Groups[0].Values, 2)
-	require.Len(t, entries.Groups[1].Values, 2)
-
-	cache.AssertExpectations(t)
-}
-
 func BenchmarkClient_GetHospitalisationsByRegion(b *testing.B) {
-	var bigResponse []measurement.Measurement
+	var bigResponse []apiclient.APIResponse
 	ts := time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)
 
 	for i := 0; i < 2*365; i++ {
 		for _, region := range []string{"Flanders", "Wallonia", "Brussels"} {
-			bigResponse = append(bigResponse, &sciensano.APIHospitalisationsResponseEntry{
+			bigResponse = append(bigResponse, &sciensano.APIHospitalisationsResponse{
 				TimeStamp: sciensano.TimeStamp{Time: ts},
 				Region:    region,
 				Province:  region,
@@ -201,5 +189,4 @@ func BenchmarkClient_GetHospitalisationsByRegion(b *testing.B) {
 			b.Fatal(err)
 		}
 	}
-	cache.AssertExpectations(b)
 }

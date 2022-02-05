@@ -14,27 +14,16 @@ type TestResultsGetter interface {
 func (client *Client) GetTestResults() (results *datasets.Dataset, err error) {
 	return client.ReportCache.MaybeGenerate("TestResults", func() (output *datasets.Dataset, err2 error) {
 		if apiResult, found := client.APICache.Get("TestResults"); found {
-			output = datasets.GroupMeasurements(apiResult)
-			calculateRatio(output)
+			output = datasets.NewFromAPIResponse(apiResult)
+			output.AddColumn("rate", func(values map[string]float64) (rate float64) {
+				if values["total"] != 0 {
+					rate = values["positive"] / values["total"]
+				}
+				return
+			})
 		} else {
 			err2 = fmt.Errorf("cache does not contain TestResults entries")
 		}
 		return
-	})
-}
-
-func calculateRatio(input *datasets.Dataset) {
-	ratios := make([]float64, len(input.Timestamps))
-	for index := range input.Timestamps {
-		var ratio float64
-		if input.Groups[0].Values[index] != 0 {
-			ratio = input.Groups[1].Values[index] / input.Groups[0].Values[index]
-		}
-		ratios[index] = ratio
-	}
-
-	input.Groups = append(input.Groups, datasets.DatasetGroup{
-		Name:   "rate",
-		Values: ratios,
 	})
 }

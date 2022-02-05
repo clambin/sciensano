@@ -2,7 +2,7 @@ package reporter
 
 import (
 	"fmt"
-	"github.com/clambin/sciensano/measurement"
+	"github.com/clambin/sciensano/apiclient"
 	"github.com/clambin/sciensano/reporter/datasets"
 )
 
@@ -17,7 +17,7 @@ type HospitalisationsGetter interface {
 func (client *Client) GetHospitalisations() (results *datasets.Dataset, err error) {
 	return client.ReportCache.MaybeGenerate("Hospitalisations", func() (output *datasets.Dataset, err2 error) {
 		if apiResult, found := client.APICache.Get("Hospitalisations"); found {
-			output = datasets.GroupMeasurements(apiResult)
+			output = datasets.NewFromAPIResponse(apiResult)
 		} else {
 			err2 = fmt.Errorf("cache does not contain Hospitalisations entries")
 		}
@@ -29,7 +29,7 @@ func (client *Client) GetHospitalisations() (results *datasets.Dataset, err erro
 func (client *Client) GetHospitalisationsByRegion() (results *datasets.Dataset, err error) {
 	return client.ReportCache.MaybeGenerate("HospitalisationsByRegion", func() (output *datasets.Dataset, err2 error) {
 		if apiResult, found := client.APICache.Get("Hospitalisations"); found {
-			output = datasets.GroupMeasurementsByType(apiResult, measurement.GroupByRegion)
+			output = datasets.NewGroupedFromAPIResponse(apiResult, apiclient.GroupByRegion)
 		} else {
 			err2 = fmt.Errorf("cache does not contain Hospitalisations entries")
 		}
@@ -41,7 +41,7 @@ func (client *Client) GetHospitalisationsByRegion() (results *datasets.Dataset, 
 func (client *Client) GetHospitalisationsByProvince() (results *datasets.Dataset, err error) {
 	return client.ReportCache.MaybeGenerate("HospitalisationsByProvince", func() (output *datasets.Dataset, err2 error) {
 		if apiResult, found := client.APICache.Get("Hospitalisations"); found {
-			output = datasets.GroupMeasurementsByType(apiResult, measurement.GroupByProvince)
+			output = datasets.NewGroupedFromAPIResponse(apiResult, apiclient.GroupByProvince)
 		} else {
 			err2 = fmt.Errorf("cache does not contain Hospitalisations entries")
 		}

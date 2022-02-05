@@ -2,9 +2,9 @@ package mortality_test
 
 import (
 	"context"
+	"github.com/clambin/sciensano/apiclient"
+	mockCache "github.com/clambin/sciensano/apiclient/cache/mocks"
 	"github.com/clambin/sciensano/apiclient/sciensano"
-	"github.com/clambin/sciensano/measurement"
-	mockCache "github.com/clambin/sciensano/measurement/mocks"
 	"github.com/clambin/sciensano/reporter"
 	"github.com/clambin/sciensano/simplejsonserver/cases"
 	"github.com/clambin/sciensano/simplejsonserver/mortality"
@@ -22,32 +22,32 @@ type TestCase struct {
 }
 
 var (
-	testResponse = []measurement.Measurement{
-		&sciensano.APIMortalityResponseEntry{
+	testResponse = []apiclient.APIResponse{
+		&sciensano.APIMortalityResponse{
 			TimeStamp: sciensano.TimeStamp{Time: time.Date(2021, 10, 21, 0, 0, 0, 0, time.UTC)},
 			Region:    "Flanders",
 			AgeGroup:  "85+",
 			Deaths:    100,
 		},
-		&sciensano.APIMortalityResponseEntry{
+		&sciensano.APIMortalityResponse{
 			TimeStamp: sciensano.TimeStamp{Time: time.Date(2021, 10, 21, 0, 0, 0, 0, time.UTC)},
 			Region:    "Brussels",
 			AgeGroup:  "25-34",
 			Deaths:    150,
 		},
-		&sciensano.APIMortalityResponseEntry{
+		&sciensano.APIMortalityResponse{
 			TimeStamp: sciensano.TimeStamp{Time: time.Date(2021, 10, 22, 0, 0, 0, 0, time.UTC)},
 			Region:    "Flanders",
 			AgeGroup:  "25-34",
 			Deaths:    120,
 		},
-		&sciensano.APIMortalityResponseEntry{
+		&sciensano.APIMortalityResponse{
 			TimeStamp: sciensano.TimeStamp{Time: time.Date(2021, 10, 22, 0, 0, 0, 0, time.UTC)},
 			Region:    "",
 			AgeGroup:  "",
 			Deaths:    5,
 		},
-		&sciensano.APIMortalityResponseEntry{
+		&sciensano.APIMortalityResponse{
 			TimeStamp: sciensano.TimeStamp{Time: time.Date(2021, 10, 23, 0, 0, 0, 0, time.UTC)},
 			Region:    "Flanders",
 			AgeGroup:  "65-74",
@@ -139,13 +139,13 @@ func TestHandler_Failure(t *testing.T) {
 	getter.AssertExpectations(t)
 }
 
-func BenchmarkHandler_TableQuery(b *testing.B) {
-	var bigResponse []measurement.Measurement
+func BenchmarkMortalityHandler(b *testing.B) {
+	var bigResponse []apiclient.APIResponse
 	timestamp := time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)
 
 	for i := 0; i < 2*365; i++ {
 		for _, region := range []string{"Brussels", "Flanders", "Wallonia"} {
-			bigResponse = append(bigResponse, &sciensano.APIMortalityResponseEntry{
+			bigResponse = append(bigResponse, &sciensano.APIMortalityResponse{
 				TimeStamp: sciensano.TimeStamp{Time: timestamp},
 				Region:    region,
 				Deaths:    i,

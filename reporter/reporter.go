@@ -1,9 +1,9 @@
 package reporter
 
 import (
+	"github.com/clambin/sciensano/apiclient/cache"
 	"github.com/clambin/sciensano/apiclient/sciensano"
 	"github.com/clambin/sciensano/apiclient/vaccines"
-	"github.com/clambin/sciensano/measurement"
 	sciensanoMetrics "github.com/clambin/sciensano/metrics"
 	"net/http"
 	"time"
@@ -11,7 +11,7 @@ import (
 
 // Client queries different Reporter APIs
 type Client struct {
-	APICache    measurement.Holder
+	APICache    cache.Holder
 	ReportCache *Cache
 }
 
@@ -30,8 +30,8 @@ var _ Reporter = &Client{}
 // New creates a new Client which caches results for duration interval
 func New(duration time.Duration) *Client {
 	return &Client{
-		APICache: &measurement.Cache{
-			Fetchers: []measurement.Fetcher{
+		APICache: &cache.Cache{
+			Fetchers: []cache.Fetcher{
 				&sciensano.Client{
 					HTTPClient: &http.Client{},
 					Metrics:    sciensanoMetrics.Metrics,

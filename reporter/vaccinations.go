@@ -2,9 +2,10 @@ package reporter
 
 import (
 	"fmt"
+	"github.com/clambin/sciensano/apiclient"
 	"github.com/clambin/sciensano/apiclient/sciensano"
-	"github.com/clambin/sciensano/measurement"
 	"github.com/clambin/sciensano/reporter/datasets"
+	"strconv"
 )
 
 type VaccinationType int
@@ -29,7 +30,7 @@ type VaccinationGetter interface {
 func (client *Client) GetVaccinations() (results *datasets.Dataset, err error) {
 	return client.ReportCache.MaybeGenerate("Vaccinations", func() (output *datasets.Dataset, err2 error) {
 		if apiResult, found := client.APICache.Get("Vaccinations"); found {
-			output = datasets.GroupMeasurements(apiResult)
+			output = datasets.NewFromAPIResponse(apiResult)
 		} else {
 			err2 = fmt.Errorf("cache does not contain Vaccinations entries")
 		}
@@ -39,35 +40,35 @@ func (client *Client) GetVaccinations() (results *datasets.Dataset, err error) {
 
 // GetVaccinationsByAgeGroup returns all vaccinations, grouped by age group
 func (client *Client) GetVaccinationsByAgeGroup(vaccinationType VaccinationType) (results *datasets.Dataset, err error) {
-	name := fmt.Sprintf("VaccinationsByAgeGroup-%d", vaccinationType)
+	name := "VaccinationsByAgeGroup-" + strconv.Itoa(int(vaccinationType))
 	return client.ReportCache.MaybeGenerate(name, func() (*datasets.Dataset, error) {
-		return client.realGetVaccinationByType(measurement.GroupByAgeGroup, vaccinationType)
+		return client.realGetVaccinationByType(apiclient.GroupByAgeGroup, vaccinationType)
 	})
 }
 
 // GetVaccinationsByRegion returns all vaccinations, grouped by region
 func (client *Client) GetVaccinationsByRegion(vaccinationType VaccinationType) (results *datasets.Dataset, err error) {
-	name := fmt.Sprintf("VaccinationsByRegion-%d", vaccinationType)
+	name := "VaccinationsByRegion-" + strconv.Itoa(int(vaccinationType))
 	return client.ReportCache.MaybeGenerate(name, func() (*datasets.Dataset, error) {
-		return client.realGetVaccinationByType(measurement.GroupByRegion, vaccinationType)
+		return client.realGetVaccinationByType(apiclient.GroupByRegion, vaccinationType)
 	})
 }
 
 func (client *Client) realGetVaccinationByType(mode int, vaccinationType VaccinationType) (results *datasets.Dataset, err error) {
 	if apiResult, found := client.APICache.Get("Vaccinations"); found {
 		apiResult = filterVaccinations(apiResult, vaccinationType)
-		results = datasets.GroupMeasurementsByType(apiResult, mode)
+		results = datasets.NewGroupedFromAPIResponse(apiResult, mode)
 	} else {
 		err = fmt.Errorf("cache does not contain Vaccinations entries")
 	}
 	return
 }
 
-func filterVaccinations(input []measurement.Measurement, vaccinationType VaccinationType) (output []measurement.Measurement) {
-	output = make([]measurement.Measurement, 0, len(input))
+func filterVaccinations(input []apiclient.APIResponse, vaccinationType VaccinationType) (output []apiclient.APIResponse) {
+	output = make([]apiclient.APIResponse, 0, len(input))
 	for _, entry := range input {
-		// this is faster than using measurement.GetAttributeValues()
-		dose := entry.(*sciensano.APIVaccinationsResponseEntry).Dose
+		// this is faster than using cache.GetAttributeValues()
+		dose := entry.(*sciensano.APIVaccinationsResponse).Dose
 		if (vaccinationType == VaccinationTypePartial && dose == "A") ||
 			(vaccinationType == VaccinationTypeFull && (dose == "B" || dose == "C")) ||
 			(vaccinationType == VaccinationTypeBooster && dose == "E") {

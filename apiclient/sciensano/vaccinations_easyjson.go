@@ -17,7 +17,85 @@ var (
 	_ easyjson.Marshaler
 )
 
-func easyjson320b91e2DecodeGithubComClambinSciensanoApiclient(in *jlexer.Lexer, out *APIVaccinationsResponseEntry) {
+func easyjson320b91e2DecodeGithubComClambinSciensanoApiclientSciensano(in *jlexer.Lexer, out *APIVaccinationsResponses) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		in.Skip()
+		*out = nil
+	} else {
+		in.Delim('[')
+		if *out == nil {
+			if !in.IsDelim(']') {
+				*out = make(APIVaccinationsResponses, 0, 8)
+			} else {
+				*out = APIVaccinationsResponses{}
+			}
+		} else {
+			*out = (*out)[:0]
+		}
+		for !in.IsDelim(']') {
+			var v1 *APIVaccinationsResponse
+			if in.IsNull() {
+				in.Skip()
+				v1 = nil
+			} else {
+				if v1 == nil {
+					v1 = new(APIVaccinationsResponse)
+				}
+				easyjson320b91e2DecodeGithubComClambinSciensanoApiclientSciensano1(in, v1)
+			}
+			*out = append(*out, v1)
+			in.WantComma()
+		}
+		in.Delim(']')
+	}
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjson320b91e2EncodeGithubComClambinSciensanoApiclientSciensano(out *jwriter.Writer, in APIVaccinationsResponses) {
+	if in == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
+		out.RawString("null")
+	} else {
+		out.RawByte('[')
+		for v2, v3 := range in {
+			if v2 > 0 {
+				out.RawByte(',')
+			}
+			if v3 == nil {
+				out.RawString("null")
+			} else {
+				easyjson320b91e2EncodeGithubComClambinSciensanoApiclientSciensano1(out, *v3)
+			}
+		}
+		out.RawByte(']')
+	}
+}
+
+// MarshalJSON supports json.Marshaler interface
+func (v APIVaccinationsResponses) MarshalJSON() ([]byte, error) {
+	w := jwriter.Writer{}
+	easyjson320b91e2EncodeGithubComClambinSciensanoApiclientSciensano(&w, v)
+	return w.Buffer.BuildBytes(), w.Error
+}
+
+// MarshalEasyJSON supports easyjson.Marshaler interface
+func (v APIVaccinationsResponses) MarshalEasyJSON(w *jwriter.Writer) {
+	easyjson320b91e2EncodeGithubComClambinSciensanoApiclientSciensano(w, v)
+}
+
+// UnmarshalJSON supports json.Unmarshaler interface
+func (v *APIVaccinationsResponses) UnmarshalJSON(data []byte) error {
+	r := jlexer.Lexer{Data: data}
+	easyjson320b91e2DecodeGithubComClambinSciensanoApiclientSciensano(&r, v)
+	return r.Error()
+}
+
+// UnmarshalEasyJSON supports easyjson.Unmarshaler interface
+func (v *APIVaccinationsResponses) UnmarshalEasyJSON(l *jlexer.Lexer) {
+	easyjson320b91e2DecodeGithubComClambinSciensanoApiclientSciensano(l, v)
+}
+func easyjson320b91e2DecodeGithubComClambinSciensanoApiclientSciensano1(in *jlexer.Lexer, out *APIVaccinationsResponse) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -60,7 +138,7 @@ func easyjson320b91e2DecodeGithubComClambinSciensanoApiclient(in *jlexer.Lexer, 
 		in.Consumed()
 	}
 }
-func easyjson320b91e2EncodeGithubComClambinSciensanoApiclient(out *jwriter.Writer, in APIVaccinationsResponseEntry) {
+func easyjson320b91e2EncodeGithubComClambinSciensanoApiclientSciensano1(out *jwriter.Writer, in APIVaccinationsResponse) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -95,106 +173,4 @@ func easyjson320b91e2EncodeGithubComClambinSciensanoApiclient(out *jwriter.Write
 		out.Int(int(in.Count))
 	}
 	out.RawByte('}')
-}
-
-// MarshalJSON supports json.Marshaler interface
-func (v APIVaccinationsResponseEntry) MarshalJSON() ([]byte, error) {
-	w := jwriter.Writer{}
-	easyjson320b91e2EncodeGithubComClambinSciensanoApiclient(&w, v)
-	return w.Buffer.BuildBytes(), w.Error
-}
-
-// MarshalEasyJSON supports easyjson.Marshaler interface
-func (v APIVaccinationsResponseEntry) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjson320b91e2EncodeGithubComClambinSciensanoApiclient(w, v)
-}
-
-// UnmarshalJSON supports json.Unmarshaler interface
-func (v *APIVaccinationsResponseEntry) UnmarshalJSON(data []byte) error {
-	r := jlexer.Lexer{Data: data}
-	easyjson320b91e2DecodeGithubComClambinSciensanoApiclient(&r, v)
-	return r.Error()
-}
-
-// UnmarshalEasyJSON supports easyjson.Unmarshaler interface
-func (v *APIVaccinationsResponseEntry) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjson320b91e2DecodeGithubComClambinSciensanoApiclient(l, v)
-}
-func easyjson320b91e2DecodeGithubComClambinSciensanoApiclient1(in *jlexer.Lexer, out *APIVaccinationsResponse) {
-	isTopLevel := in.IsStart()
-	if in.IsNull() {
-		in.Skip()
-		*out = nil
-	} else {
-		in.Delim('[')
-		if *out == nil {
-			if !in.IsDelim(']') {
-				*out = make(APIVaccinationsResponse, 0, 8)
-			} else {
-				*out = APIVaccinationsResponse{}
-			}
-		} else {
-			*out = (*out)[:0]
-		}
-		for !in.IsDelim(']') {
-			var v1 *APIVaccinationsResponseEntry
-			if in.IsNull() {
-				in.Skip()
-				v1 = nil
-			} else {
-				if v1 == nil {
-					v1 = new(APIVaccinationsResponseEntry)
-				}
-				(*v1).UnmarshalEasyJSON(in)
-			}
-			*out = append(*out, v1)
-			in.WantComma()
-		}
-		in.Delim(']')
-	}
-	if isTopLevel {
-		in.Consumed()
-	}
-}
-func easyjson320b91e2EncodeGithubComClambinSciensanoApiclient1(out *jwriter.Writer, in APIVaccinationsResponse) {
-	if in == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
-		out.RawString("null")
-	} else {
-		out.RawByte('[')
-		for v2, v3 := range in {
-			if v2 > 0 {
-				out.RawByte(',')
-			}
-			if v3 == nil {
-				out.RawString("null")
-			} else {
-				(*v3).MarshalEasyJSON(out)
-			}
-		}
-		out.RawByte(']')
-	}
-}
-
-// MarshalJSON supports json.Marshaler interface
-func (v APIVaccinationsResponse) MarshalJSON() ([]byte, error) {
-	w := jwriter.Writer{}
-	easyjson320b91e2EncodeGithubComClambinSciensanoApiclient1(&w, v)
-	return w.Buffer.BuildBytes(), w.Error
-}
-
-// MarshalEasyJSON supports easyjson.Marshaler interface
-func (v APIVaccinationsResponse) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjson320b91e2EncodeGithubComClambinSciensanoApiclient1(w, v)
-}
-
-// UnmarshalJSON supports json.Unmarshaler interface
-func (v *APIVaccinationsResponse) UnmarshalJSON(data []byte) error {
-	r := jlexer.Lexer{Data: data}
-	easyjson320b91e2DecodeGithubComClambinSciensanoApiclient1(&r, v)
-	return r.Error()
-}
-
-// UnmarshalEasyJSON supports easyjson.Unmarshaler interface
-func (v *APIVaccinationsResponse) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjson320b91e2DecodeGithubComClambinSciensanoApiclient1(l, v)
 }

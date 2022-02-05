@@ -1,60 +1,59 @@
 package reporter_test
 
 import (
-	"fmt"
+	"github.com/clambin/sciensano/apiclient"
+	"time"
+)
+
+import (
+	"github.com/clambin/sciensano/apiclient/cache/mocks"
 	"github.com/clambin/sciensano/apiclient/sciensano"
-	"github.com/clambin/sciensano/measurement"
-	"github.com/clambin/sciensano/measurement/mocks"
 	"github.com/clambin/sciensano/reporter"
-	"github.com/clambin/sciensano/reporter/datasets"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"testing"
-	"time"
 )
 
 var (
-	timestamp = time.Date(2021, 3, 10, 0, 0, 0, 0, time.UTC)
-
-	testVaccinationsResponse = []measurement.Measurement{
-		&sciensano.APIVaccinationsResponseEntry{
-			TimeStamp: sciensano.TimeStamp{Time: timestamp},
-			Region:    "Flanders",
-			AgeGroup:  "25-34",
-			Dose:      "A",
-			Count:     1,
-		},
-		&sciensano.APIVaccinationsResponseEntry{
-			TimeStamp: sciensano.TimeStamp{Time: timestamp},
-			Region:    "Flanders",
-			AgeGroup:  "35-44",
-			Dose:      "A",
-			Count:     1,
-		},
-		&sciensano.APIVaccinationsResponseEntry{
-			TimeStamp: sciensano.TimeStamp{Time: timestamp},
-			Region:    "Flanders",
-			AgeGroup:  "35-44",
-			Dose:      "C",
-			Count:     4,
-		},
-		&sciensano.APIVaccinationsResponseEntry{
-			TimeStamp: sciensano.TimeStamp{Time: timestamp},
-			Region:    "Brussels",
-			AgeGroup:  "35-44",
-			Dose:      "B",
-			Count:     1,
-		},
-		&sciensano.APIVaccinationsResponseEntry{
-			TimeStamp: sciensano.TimeStamp{Time: timestamp},
+	testVaccinationsResponse = []apiclient.APIResponse{
+		&sciensano.APIVaccinationsResponse{
+			TimeStamp: sciensano.TimeStamp{Time: time.Date(2021, 3, 11, 0, 0, 0, 0, time.UTC)},
 			Region:    "Brussels",
 			AgeGroup:  "35-44",
 			Dose:      "E",
 			Count:     5,
 		},
-		&sciensano.APIVaccinationsResponseEntry{
-			TimeStamp: sciensano.TimeStamp{Time: timestamp.Add(24 * time.Hour)},
+		&sciensano.APIVaccinationsResponse{
+			TimeStamp: sciensano.TimeStamp{Time: time.Date(2021, 3, 10, 0, 0, 0, 0, time.UTC)},
+			Region:    "Flanders",
+			AgeGroup:  "25-34",
+			Dose:      "A",
+			Count:     1,
+		},
+		&sciensano.APIVaccinationsResponse{
+			TimeStamp: sciensano.TimeStamp{Time: time.Date(2021, 3, 10, 0, 0, 0, 0, time.UTC)},
+			Region:    "Flanders",
+			AgeGroup:  "35-44",
+			Dose:      "A",
+			Count:     1,
+		},
+		&sciensano.APIVaccinationsResponse{
+			TimeStamp: sciensano.TimeStamp{Time: time.Date(2021, 3, 10, 0, 0, 0, 0, time.UTC)},
+			Region:    "Flanders",
+			AgeGroup:  "35-44",
+			Dose:      "C",
+			Count:     4,
+		},
+		&sciensano.APIVaccinationsResponse{
+			TimeStamp: sciensano.TimeStamp{Time: time.Date(2021, 3, 10, 0, 0, 0, 0, time.UTC)},
+			Region:    "Brussels",
+			AgeGroup:  "35-44",
+			Dose:      "B",
+			Count:     1,
+		},
+		&sciensano.APIVaccinationsResponse{
+			TimeStamp: sciensano.TimeStamp{Time: time.Date(2021, 3, 10, 0, 0, 0, 0, time.UTC)},
 			Region:    "Brussels",
 			AgeGroup:  "35-44",
 			Dose:      "E",
@@ -70,22 +69,39 @@ func TestClient_GetVaccinations(t *testing.T) {
 	r := reporter.New(time.Hour)
 	r.APICache = cache
 
-	result, err := r.GetVaccinations()
+	entries, err := r.GetVaccinations()
 	require.NoError(t, err)
 
-	assert.Equal(t, &datasets.Dataset{
-		Timestamps: []time.Time{
-			time.Date(2021, time.March, 10, 0, 0, 0, 0, time.UTC),
-			time.Date(2021, time.March, 11, 0, 0, 0, 0, time.UTC),
-		},
-		Groups: []datasets.DatasetGroup{
-			{Name: "partial", Values: []float64{2, 0}},
-			{Name: "full", Values: []float64{1, 0}},
-			{Name: "singledose", Values: []float64{4, 0}},
-			{Name: "booster", Values: []float64{5, 5}},
-		}}, result)
+	assert.Equal(t, []time.Time{
+		time.Date(2021, time.March, 10, 0, 0, 0, 0, time.UTC),
+		time.Date(2021, time.March, 11, 0, 0, 0, 0, time.UTC),
+	}, entries.GetTimestamps())
+
+	assert.Equal(t, []string{"booster", "full", "partial", "singledose"}, entries.GetColumns())
+
+	values, ok := entries.GetValues("partial")
+	require.True(t, ok)
+	assert.Equal(t, []float64{2, 0}, values)
+
+	values, ok = entries.GetValues("full")
+	require.True(t, ok)
+	assert.Equal(t, []float64{1, 0}, values)
+
+	values, ok = entries.GetValues("singledose")
+	require.True(t, ok)
+	assert.Equal(t, []float64{4, 0}, values)
+
+	values, ok = entries.GetValues("booster")
+	require.True(t, ok)
+	assert.Equal(t, []float64{5, 5}, values)
 
 	mock.AssertExpectationsForObjects(t, cache)
+}
+
+type vaccinationsTestCase struct {
+	mode       reporter.VaccinationType
+	timestamps []time.Time
+	values     map[string][]float64
 }
 
 func TestClient_GetVaccinationsByAgeGroup(t *testing.T) {
@@ -95,39 +111,30 @@ func TestClient_GetVaccinationsByAgeGroup(t *testing.T) {
 	client := reporter.New(time.Hour)
 	client.APICache = cache
 
-	testCases := []struct {
-		mode   reporter.VaccinationType
-		output *datasets.Dataset
-	}{
+	testCases := []vaccinationsTestCase{
 		{
-			mode: reporter.VaccinationTypePartial,
-			output: &datasets.Dataset{
-				Timestamps: []time.Time{time.Date(2021, time.March, 10, 0, 0, 0, 0, time.UTC)},
-				Groups: []datasets.DatasetGroup{
-					{Name: "25-34", Values: []float64{1}},
-					{Name: "35-44", Values: []float64{1}},
-				},
+			mode:       reporter.VaccinationTypePartial,
+			timestamps: []time.Time{time.Date(2021, time.March, 10, 0, 0, 0, 0, time.UTC)},
+			values: map[string][]float64{
+				"25-34": {1},
+				"35-44": {1},
 			},
 		},
 		{
-			mode: reporter.VaccinationTypeFull,
-			output: &datasets.Dataset{
-				Timestamps: []time.Time{time.Date(2021, time.March, 10, 0, 0, 0, 0, time.UTC)},
-				Groups: []datasets.DatasetGroup{
-					{Name: "35-44", Values: []float64{5}},
-				},
+			mode:       reporter.VaccinationTypeFull,
+			timestamps: []time.Time{time.Date(2021, time.March, 10, 0, 0, 0, 0, time.UTC)},
+			values: map[string][]float64{
+				"35-44": {5},
 			},
 		},
 		{
 			mode: reporter.VaccinationTypeBooster,
-			output: &datasets.Dataset{
-				Timestamps: []time.Time{
-					time.Date(2021, time.March, 10, 0, 0, 0, 0, time.UTC),
-					time.Date(2021, time.March, 11, 0, 0, 0, 0, time.UTC),
-				},
-				Groups: []datasets.DatasetGroup{
-					{Name: "35-44", Values: []float64{5, 5}},
-				},
+			timestamps: []time.Time{
+				time.Date(2021, time.March, 10, 0, 0, 0, 0, time.UTC),
+				time.Date(2021, time.March, 11, 0, 0, 0, 0, time.UTC),
+			},
+			values: map[string][]float64{
+				"35-44": {5, 5},
 			},
 		},
 	}
@@ -135,8 +142,13 @@ func TestClient_GetVaccinationsByAgeGroup(t *testing.T) {
 	for index, testCase := range testCases {
 		result, err := client.GetVaccinationsByAgeGroup(testCase.mode)
 		require.NoError(t, err, index)
-
-		assert.Equal(t, testCase.output, result, index)
+		assert.Equal(t, testCase.timestamps, result.GetTimestamps())
+		assert.Len(t, result.GetColumns(), len(testCase.values))
+		for column, expected := range testCase.values {
+			values, ok := result.GetValues(column)
+			require.True(t, ok)
+			assert.Equal(t, expected, values)
+		}
 	}
 	mock.AssertExpectationsForObjects(t, cache)
 }
@@ -148,39 +160,30 @@ func TestClient_GetVaccinationsByRegion(t *testing.T) {
 	client := reporter.New(time.Hour)
 	client.APICache = cache
 
-	testCases := []struct {
-		mode   reporter.VaccinationType
-		output *datasets.Dataset
-	}{
+	testCases := []vaccinationsTestCase{
 		{
-			mode: reporter.VaccinationTypePartial,
-			output: &datasets.Dataset{
-				Timestamps: []time.Time{time.Date(2021, time.March, 10, 0, 0, 0, 0, time.UTC)},
-				Groups: []datasets.DatasetGroup{
-					{Name: "Flanders", Values: []float64{2}},
-				},
+			mode:       reporter.VaccinationTypePartial,
+			timestamps: []time.Time{time.Date(2021, time.March, 10, 0, 0, 0, 0, time.UTC)},
+			values: map[string][]float64{
+				"Flanders": {2},
 			},
 		},
 		{
-			mode: reporter.VaccinationTypeFull,
-			output: &datasets.Dataset{
-				Timestamps: []time.Time{time.Date(2021, time.March, 10, 0, 0, 0, 0, time.UTC)},
-				Groups: []datasets.DatasetGroup{
-					{Name: "Brussels", Values: []float64{1}},
-					{Name: "Flanders", Values: []float64{4}},
-				},
+			mode:       reporter.VaccinationTypeFull,
+			timestamps: []time.Time{time.Date(2021, time.March, 10, 0, 0, 0, 0, time.UTC)},
+			values: map[string][]float64{
+				"Brussels": {1},
+				"Flanders": {4},
 			},
 		},
 		{
 			mode: reporter.VaccinationTypeBooster,
-			output: &datasets.Dataset{
-				Timestamps: []time.Time{
-					time.Date(2021, time.March, 10, 0, 0, 0, 0, time.UTC),
-					time.Date(2021, time.March, 11, 0, 0, 0, 0, time.UTC),
-				},
-				Groups: []datasets.DatasetGroup{
-					{Name: "Brussels", Values: []float64{5, 5}},
-				},
+			timestamps: []time.Time{
+				time.Date(2021, time.March, 10, 0, 0, 0, 0, time.UTC),
+				time.Date(2021, time.March, 11, 0, 0, 0, 0, time.UTC),
+			},
+			values: map[string][]float64{
+				"Brussels": {5, 5},
 			},
 		},
 	}
@@ -188,8 +191,14 @@ func TestClient_GetVaccinationsByRegion(t *testing.T) {
 	for index, testCase := range testCases {
 		result, err := client.GetVaccinationsByRegion(testCase.mode)
 		require.NoError(t, err, index)
-
-		assert.Equal(t, testCase.output, result, index)
+		require.NoError(t, err, index)
+		assert.Equal(t, testCase.timestamps, result.GetTimestamps())
+		assert.Len(t, result.GetColumns(), len(testCase.values))
+		for column, expected := range testCase.values {
+			values, ok := result.GetValues(column)
+			require.True(t, ok)
+			assert.Equal(t, expected, values)
+		}
 	}
 	mock.AssertExpectationsForObjects(t, cache)
 }
@@ -213,45 +222,24 @@ func TestClient_GetVaccinations_Failure(t *testing.T) {
 	mock.AssertExpectationsForObjects(t, cache)
 }
 
-func TestClient_Vaccinations_ApplyRegions(t *testing.T) {
-	cache := &mocks.Holder{}
-	client := reporter.New(time.Hour)
-	client.APICache = cache
-
-	cache.
-		On("Get", "Vaccinations").
-		Return(testVaccinationsResponse, true)
-
-	cases, err := client.GetVaccinationsByAgeGroup(reporter.VaccinationTypeBooster)
-	require.NoError(t, err)
-	require.Len(t, cases.Timestamps, 2)
-	require.Equal(t, []datasets.DatasetGroup{{Name: "35-44", Values: []float64{5, 5}}}, cases.Groups)
-
-	cases.ApplyRange(time.Time{}, timestamp)
-	require.Len(t, cases.Timestamps, 1)
-	require.Equal(t, []datasets.DatasetGroup{{Name: "35-44", Values: []float64{5}}}, cases.Groups)
-
-	mock.AssertExpectationsForObjects(t, cache)
-}
-
-var bigVaccinationResponse []measurement.Measurement
+var bigVaccinationResponse []apiclient.APIResponse
 
 func buildBigVaccinationResponse() {
-	bigVaccinationResponse = []measurement.Measurement{}
+	bigVaccinationResponse = []apiclient.APIResponse{}
 
 	startDate := time.Now().Add(-365 * 24 * time.Hour)
 	for i := 0; i < 365; i++ {
 		for _, region := range []string{"Flanders", "Brussels", "Wallonia"} {
 			for _, ageGroup := range []string{"0-17", "18-34", "35-44", "45-54", "55-64", "65-74", "75-84", "85+"} {
 				bigVaccinationResponse = append(bigVaccinationResponse,
-					&sciensano.APIVaccinationsResponseEntry{
+					&sciensano.APIVaccinationsResponse{
 						TimeStamp: sciensano.TimeStamp{Time: startDate},
 						Region:    region,
 						AgeGroup:  ageGroup,
 						Dose:      "A",
 						Count:     i * 2,
 					},
-					&sciensano.APIVaccinationsResponseEntry{
+					&sciensano.APIVaccinationsResponse{
 						TimeStamp: sciensano.TimeStamp{Time: startDate},
 						Region:    region,
 						AgeGroup:  ageGroup,
@@ -262,7 +250,7 @@ func buildBigVaccinationResponse() {
 		}
 		startDate = startDate.Add(24 * time.Hour)
 	}
-	fmt.Printf("responder had %d entries\n", len(bigVaccinationResponse))
+	// fmt.Printf("responder had %d entries\n", len(bigVaccinationResponse))
 }
 
 func BenchmarkClient_GetVaccination(b *testing.B) {
@@ -278,7 +266,8 @@ func BenchmarkClient_GetVaccination(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		_, err := client.GetVaccinations()
 		if err != nil {
-			b.Fatal(err)
+			b.Log(err)
+			b.FailNow()
 		}
 	}
 }
@@ -296,7 +285,8 @@ func BenchmarkClient_GetVaccinationsByAgeGroup(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		_, err := client.GetVaccinationsByAgeGroup(reporter.VaccinationTypeFull)
 		if err != nil {
-			b.Fatal(err)
+			b.Log(err)
+			b.FailNow()
 		}
 	}
 }
@@ -314,7 +304,8 @@ func BenchmarkClient_GetVaccinationsByRegion(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		_, err := client.GetVaccinationsByRegion(reporter.VaccinationTypeFull)
 		if err != nil {
-			b.Fatal(err)
+			b.Log(err)
+			b.FailNow()
 		}
 	}
 }

@@ -1,11 +1,10 @@
 package reporter_test
 
 import (
+	"github.com/clambin/sciensano/apiclient"
+	"github.com/clambin/sciensano/apiclient/cache/mocks"
 	"github.com/clambin/sciensano/apiclient/sciensano"
-	"github.com/clambin/sciensano/measurement"
-	"github.com/clambin/sciensano/measurement/mocks"
 	"github.com/clambin/sciensano/reporter"
-	"github.com/clambin/sciensano/reporter/datasets"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -14,27 +13,27 @@ import (
 )
 
 var (
-	testResultsResponse = []measurement.Measurement{
-		&sciensano.APITestResultsResponseEntry{
-			TimeStamp: sciensano.TimeStamp{Time: timestamp},
+	testResultsResponse = []apiclient.APIResponse{
+		&sciensano.APITestResultsResponse{
+			TimeStamp: sciensano.TimeStamp{Time: time.Date(2021, time.March, 10, 0, 0, 0, 0, time.UTC)},
 			Region:    "Flanders",
 			Total:     100,
 			Positive:  10,
 		},
-		&sciensano.APITestResultsResponseEntry{
-			TimeStamp: sciensano.TimeStamp{Time: timestamp},
+		&sciensano.APITestResultsResponse{
+			TimeStamp: sciensano.TimeStamp{Time: time.Date(2021, time.March, 10, 0, 0, 0, 0, time.UTC)},
 			Region:    "Brussels",
 			Total:     100,
 			Positive:  10,
 		},
-		&sciensano.APITestResultsResponseEntry{
-			TimeStamp: sciensano.TimeStamp{Time: timestamp.Add(24 * time.Hour)},
+		&sciensano.APITestResultsResponse{
+			TimeStamp: sciensano.TimeStamp{Time: time.Date(2021, time.March, 11, 0, 0, 0, 0, time.UTC)},
 			Region:    "Flanders",
 			Total:     100,
 			Positive:  20,
 		},
-		&sciensano.APITestResultsResponseEntry{
-			TimeStamp: sciensano.TimeStamp{Time: timestamp.Add(48 * time.Hour)},
+		&sciensano.APITestResultsResponse{
+			TimeStamp: sciensano.TimeStamp{Time: time.Date(2021, time.March, 12, 0, 0, 0, 0, time.UTC)},
 			Region:    "Flanders",
 			Total:     0,
 			Positive:  0,
@@ -49,21 +48,28 @@ func TestGetTests(t *testing.T) {
 
 	cache.On("Get", "TestResults").Return(testResultsResponse, true)
 
-	result, err := client.GetTestResults()
+	entries, err := client.GetTestResults()
 	require.NoError(t, err)
 
-	assert.Equal(t, &datasets.Dataset{
-		Timestamps: []time.Time{
-			time.Date(2021, time.March, 10, 0, 0, 0, 0, time.UTC),
-			time.Date(2021, time.March, 11, 0, 0, 0, 0, time.UTC),
-			time.Date(2021, time.March, 12, 0, 0, 0, 0, time.UTC),
-		},
-		Groups: []datasets.DatasetGroup{
-			{Name: "total", Values: []float64{200, 100, 0}},
-			{Name: "positive", Values: []float64{20, 20, 0}},
-			{Name: "rate", Values: []float64{0.1, 0.2, 0}},
-		},
-	}, result)
+	assert.Equal(t, []time.Time{
+		time.Date(2021, time.March, 10, 0, 0, 0, 0, time.UTC),
+		time.Date(2021, time.March, 11, 0, 0, 0, 0, time.UTC),
+		time.Date(2021, time.March, 12, 0, 0, 0, 0, time.UTC),
+	}, entries.GetTimestamps())
+
+	assert.Equal(t, []string{"positive", "rate", "total"}, entries.GetColumns())
+
+	values, ok := entries.GetValues("total")
+	require.True(t, ok)
+	assert.Equal(t, []float64{200, 100, 0}, values)
+
+	values, ok = entries.GetValues("positive")
+	require.True(t, ok)
+	assert.Equal(t, []float64{20, 20, 0}, values)
+
+	values, ok = entries.GetValues("rate")
+	require.True(t, ok)
+	assert.Equal(t, []float64{0.1, 0.2, 0}, values)
 
 	mock.AssertExpectationsForObjects(t, cache)
 }

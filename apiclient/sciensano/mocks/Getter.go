@@ -5,7 +5,8 @@ package mocks
 import (
 	context "context"
 
-	measurement "github.com/clambin/sciensano/measurement"
+	apiclient "github.com/clambin/sciensano/apiclient"
+
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -15,15 +16,15 @@ type Getter struct {
 }
 
 // GetCases provides a mock function with given fields: ctx
-func (_m *Getter) GetCases(ctx context.Context) ([]measurement.Measurement, error) {
+func (_m *Getter) GetCases(ctx context.Context) ([]apiclient.APIResponse, error) {
 	ret := _m.Called(ctx)
 
-	var r0 []measurement.Measurement
-	if rf, ok := ret.Get(0).(func(context.Context) []measurement.Measurement); ok {
+	var r0 []apiclient.APIResponse
+	if rf, ok := ret.Get(0).(func(context.Context) []apiclient.APIResponse); ok {
 		r0 = rf(ctx)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]measurement.Measurement)
+			r0 = ret.Get(0).([]apiclient.APIResponse)
 		}
 	}
 
@@ -38,15 +39,15 @@ func (_m *Getter) GetCases(ctx context.Context) ([]measurement.Measurement, erro
 }
 
 // GetHospitalisations provides a mock function with given fields: ctx
-func (_m *Getter) GetHospitalisations(ctx context.Context) ([]measurement.Measurement, error) {
+func (_m *Getter) GetHospitalisations(ctx context.Context) ([]apiclient.APIResponse, error) {
 	ret := _m.Called(ctx)
 
-	var r0 []measurement.Measurement
-	if rf, ok := ret.Get(0).(func(context.Context) []measurement.Measurement); ok {
+	var r0 []apiclient.APIResponse
+	if rf, ok := ret.Get(0).(func(context.Context) []apiclient.APIResponse); ok {
 		r0 = rf(ctx)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]measurement.Measurement)
+			r0 = ret.Get(0).([]apiclient.APIResponse)
 		}
 	}
 
@@ -61,15 +62,15 @@ func (_m *Getter) GetHospitalisations(ctx context.Context) ([]measurement.Measur
 }
 
 // GetMortality provides a mock function with given fields: ctx
-func (_m *Getter) GetMortality(ctx context.Context) ([]measurement.Measurement, error) {
+func (_m *Getter) GetMortality(ctx context.Context) ([]apiclient.APIResponse, error) {
 	ret := _m.Called(ctx)
 
-	var r0 []measurement.Measurement
-	if rf, ok := ret.Get(0).(func(context.Context) []measurement.Measurement); ok {
+	var r0 []apiclient.APIResponse
+	if rf, ok := ret.Get(0).(func(context.Context) []apiclient.APIResponse); ok {
 		r0 = rf(ctx)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]measurement.Measurement)
+			r0 = ret.Get(0).([]apiclient.APIResponse)
 		}
 	}
 
@@ -84,15 +85,15 @@ func (_m *Getter) GetMortality(ctx context.Context) ([]measurement.Measurement, 
 }
 
 // GetTestResults provides a mock function with given fields: ctx
-func (_m *Getter) GetTestResults(ctx context.Context) ([]measurement.Measurement, error) {
+func (_m *Getter) GetTestResults(ctx context.Context) ([]apiclient.APIResponse, error) {
 	ret := _m.Called(ctx)
 
-	var r0 []measurement.Measurement
-	if rf, ok := ret.Get(0).(func(context.Context) []measurement.Measurement); ok {
+	var r0 []apiclient.APIResponse
+	if rf, ok := ret.Get(0).(func(context.Context) []apiclient.APIResponse); ok {
 		r0 = rf(ctx)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]measurement.Measurement)
+			r0 = ret.Get(0).([]apiclient.APIResponse)
 		}
 	}
 
@@ -107,15 +108,15 @@ func (_m *Getter) GetTestResults(ctx context.Context) ([]measurement.Measurement
 }
 
 // GetVaccinations provides a mock function with given fields: ctx
-func (_m *Getter) GetVaccinations(ctx context.Context) ([]measurement.Measurement, error) {
+func (_m *Getter) GetVaccinations(ctx context.Context) ([]apiclient.APIResponse, error) {
 	ret := _m.Called(ctx)
 
-	var r0 []measurement.Measurement
-	if rf, ok := ret.Get(0).(func(context.Context) []measurement.Measurement); ok {
+	var r0 []apiclient.APIResponse
+	if rf, ok := ret.Get(0).(func(context.Context) []apiclient.APIResponse); ok {
 		r0 = rf(ctx)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]measurement.Measurement)
+			r0 = ret.Get(0).([]apiclient.APIResponse)
 		}
 	}
 

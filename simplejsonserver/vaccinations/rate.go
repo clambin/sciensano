@@ -41,23 +41,23 @@ func (r *RateHandler) tableQuery(ctx context.Context, req query.Request) (respon
 	resp := response.(*query.TableResponse)
 	resp.Columns = filterUnknownColumns(resp.Columns)
 
+	var figures map[string]int
 	switch r.Scope {
 	case ScopeAge:
-		ageGroupFigures := r.Demographics.GetAgeGroupFigures()
-		prorateFigures(resp, ageGroupFigures)
+		figures = r.Demographics.GetAgeGroupFigures()
 	case ScopeRegion:
-		regionFigures := r.Demographics.GetRegionFigures()
+		figures = r.Demographics.GetRegionFigures()
 		// demographics counts figures for Ostbelgien as part of Wallonia. Hardcode the split here.
 		// yes, it's ugly. :-)
-		_, ok := regionFigures["Ostbelgien"]
+		_, ok := figures["Ostbelgien"]
 		if !ok {
-			population, _ := regionFigures["Wallonia"]
+			population, _ := figures["Wallonia"]
 			population -= 78000
-			regionFigures["Wallonia"] = population
-			regionFigures["Ostbelgien"] = 78000
+			figures["Wallonia"] = population
+			figures["Ostbelgien"] = 78000
 		}
-		prorateFigures(resp, regionFigures)
 	}
+	prorateFigures(resp, figures)
 	return
 }
 

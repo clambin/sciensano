@@ -2,7 +2,7 @@ package vaccinations_test
 
 import (
 	"context"
-	mockCache "github.com/clambin/sciensano/measurement/mocks"
+	mockCache "github.com/clambin/sciensano/apiclient/cache/mocks"
 	"github.com/clambin/sciensano/reporter"
 	"github.com/clambin/sciensano/simplejsonserver/vaccinations"
 	"github.com/clambin/simplejson/v3/common"
@@ -128,7 +128,7 @@ func TestGroupedHandler_Failure(t *testing.T) {
 	require.Error(t, err)
 }
 
-func BenchmarkGroupedHandler(b *testing.B) {
+func BenchmarkVaccinationsGroupedHandler(b *testing.B) {
 	cache := &mockCache.Holder{}
 	client := reporter.New(time.Hour)
 	client.APICache = cache

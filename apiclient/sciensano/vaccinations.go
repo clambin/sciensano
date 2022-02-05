@@ -2,19 +2,13 @@ package sciensano
 
 import (
 	"context"
-	"github.com/clambin/sciensano/measurement"
+	"github.com/clambin/sciensano/apiclient"
 	"github.com/mailru/easyjson"
-	"io"
 	"time"
 )
 
-// APIVaccinationsResponse is the responder of the Reporter vaccinations API
-//easyjson:json
-type APIVaccinationsResponse []*APIVaccinationsResponseEntry
-
-// APIVaccinationsResponseEntry is a single entry in APIVaccinationResponse
-//easyjson:json
-type APIVaccinationsResponseEntry struct {
+// APIVaccinationsResponse is a single entry in APIVaccinationResponse
+type APIVaccinationsResponse struct {
 	TimeStamp TimeStamp `json:"DATE"`
 	Region    string    `json:"REGION"`
 	AgeGroup  string    `json:"AGEGROUP"`
@@ -23,34 +17,40 @@ type APIVaccinationsResponseEntry struct {
 	Count     int       `json:"COUNT"`
 }
 
+// APIVaccinationsResponses is a slice of APIVaccinationResponse structures
+//easyjson:json
+type APIVaccinationsResponses []*APIVaccinationsResponse
+
+var _ apiclient.APIResponse = &APIVaccinationsResponse{}
+
 // GetTimestamp returns the entry's timestamp
-func (v *APIVaccinationsResponseEntry) GetTimestamp() time.Time {
+func (v *APIVaccinationsResponse) GetTimestamp() time.Time {
 	return v.TimeStamp.Time
 }
 
 // GetGroupFieldValue returns the value of the specified entry's field
-func (v *APIVaccinationsResponseEntry) GetGroupFieldValue(groupField int) (value string) {
+func (v *APIVaccinationsResponse) GetGroupFieldValue(groupField int) (value string) {
 	switch groupField {
-	case measurement.GroupByRegion:
+	case apiclient.GroupByRegion:
 		value = v.Region
-	case measurement.GroupByAgeGroup:
+	case apiclient.GroupByAgeGroup:
 		value = v.AgeGroup
 	}
 	return
 }
 
 // GetTotalValue returns the entry's total number of vaccinations
-func (v APIVaccinationsResponseEntry) GetTotalValue() float64 {
+func (v APIVaccinationsResponse) GetTotalValue() float64 {
 	return float64(v.Count)
 }
 
 // GetAttributeNames returns the names of the types of vaccinations
-func (v APIVaccinationsResponseEntry) GetAttributeNames() []string {
+func (v APIVaccinationsResponse) GetAttributeNames() []string {
 	return []string{"partial", "full", "singledose", "booster"}
 }
 
 // GetAttributeValues gets the value for each supported type of vaccination
-func (v APIVaccinationsResponseEntry) GetAttributeValues() (values []float64) {
+func (v APIVaccinationsResponse) GetAttributeValues() (values []float64) {
 	values = []float64{0, 0, 0, 0}
 	switch v.Dose {
 	case "A":
@@ -65,22 +65,23 @@ func (v APIVaccinationsResponseEntry) GetAttributeValues() (values []float64) {
 	return
 }
 
-var _ measurement.Measurement = &APIVaccinationsResponseEntry{}
-
 // GetVaccinations retrieves all COVID-19 vaccinations.
-func (client *Client) GetVaccinations(ctx context.Context) (results []measurement.Measurement, err error) {
-	var body io.ReadCloser
+func (client *Client) GetVaccinations(ctx context.Context) (results []apiclient.APIResponse, err error) {
+	var body []byte
 	body, err = client.call(ctx, "vaccinations")
+	if err != nil {
+		return
+	}
 
-	if err == nil {
-		var cvt APIVaccinationsResponse
-		if err = easyjson.UnmarshalFromReader(body, &cvt); err == nil {
-			results = make([]measurement.Measurement, 0, len(cvt))
-			for _, entry := range cvt {
-				results = append(results, entry)
-			}
-		}
-		_ = body.Close()
+	var response APIVaccinationsResponses
+	err = easyjson.Unmarshal(body, &response)
+	if err != nil {
+		return
+	}
+
+	results = make([]apiclient.APIResponse, len(response))
+	for index, entry := range response {
+		results[index] = entry
 	}
 	return
 }

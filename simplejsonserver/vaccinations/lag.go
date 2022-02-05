@@ -18,17 +18,13 @@ func (handler LagHandler) Endpoints() simplejson.Endpoints {
 	return simplejson.Endpoints{Query: handler.tableQuery}
 }
 
-func (handler *LagHandler) tableQuery(_ context.Context, _ query.Request) (response query.Response, err error) {
+func (handler *LagHandler) tableQuery(_ context.Context, req query.Request) (response query.Response, err error) {
 	var vaccinationsData *datasets.Dataset
-
-	vaccinationsData, err = handler.Reporter.GetVaccinations()
-
-	if err != nil {
+	if vaccinationsData, err = handler.Reporter.GetVaccinations(); err != nil {
 		return nil, fmt.Errorf("failed to determine vaccination lag: %w", err)
 	}
-
 	vaccinationsData.Accumulate()
-	// vaccinationsData.ApplyRange(args.Range.From, args.Range.To)
+	vaccinationsData.FilterByRange(req.Args.Range.From, req.Args.Range.To)
 	timestamps, lag := buildLag(vaccinationsData)
 
 	response = &query.TableResponse{
@@ -42,36 +38,35 @@ func (handler *LagHandler) tableQuery(_ context.Context, _ query.Request) (respo
 }
 
 func buildLag(vaccinationsData *datasets.Dataset) (timestamps query.TimeColumn, lag query.NumberColumn) {
-	var firstDoseIndex, lastSecondDose int
+	vaccinationTimestamps := vaccinationsData.GetTimestamps()
+	partial, _ := vaccinationsData.GetValues("partial")
+	full, _ := vaccinationsData.GetValues("full")
 
-	/*
-		if len(vaccinationsData.Groups) == 0 {
-			log.Warning("no vaccination data to calculate lag")
-			return
-		}
-	*/
+	timestamps = make(query.TimeColumn, 0, len(vaccinationTimestamps))
+	lag = make(query.NumberColumn, 0, len(vaccinationTimestamps))
 
-	// run through all vaccinations
-	for index := range vaccinationsData.Timestamps {
+	var firstDoseIndex int
+	var lastSecondDose float64
+
+	for index, value := range full {
 		// we only measure lag when there is actually a second dose
 		// we don't report when the 2nd dose doesn't change
-		full := int(vaccinationsData.Groups[1].Values[index])
-		if full == 0 || full == lastSecondDose {
+		if value == 0 || value == lastSecondDose {
 			continue
 		}
 
 		// find the time when we reached the number of first Doses that equals (or higher) the current Second Dose number
-		for firstDoseIndex <= index && int(vaccinationsData.Groups[0].Values[firstDoseIndex]) < full {
+		for firstDoseIndex <= index && partial[firstDoseIndex] < value {
 			firstDoseIndex++
 		}
 
 		// if we found it, add it to the columns
 		if firstDoseIndex <= index {
-			timestamps = append(timestamps, vaccinationsData.Timestamps[index])
-			lag = append(lag, vaccinationsData.Timestamps[index].Sub(vaccinationsData.Timestamps[firstDoseIndex]).Hours()/24)
+			timestamps = append(timestamps, vaccinationTimestamps[index])
+			lag = append(lag, vaccinationTimestamps[index].Sub(vaccinationTimestamps[firstDoseIndex]).Hours()/24)
 		}
 
-		lastSecondDose = full
+		lastSecondDose = value
 	}
 
 	return

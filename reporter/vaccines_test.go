@@ -1,11 +1,10 @@
 package reporter_test
 
 import (
+	"github.com/clambin/sciensano/apiclient"
+	"github.com/clambin/sciensano/apiclient/cache/mocks"
 	"github.com/clambin/sciensano/apiclient/vaccines"
-	"github.com/clambin/sciensano/measurement"
-	"github.com/clambin/sciensano/measurement/mocks"
 	"github.com/clambin/sciensano/reporter"
-	"github.com/clambin/sciensano/reporter/datasets"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -14,19 +13,19 @@ import (
 )
 
 var (
-	testVaccinesResponse = []measurement.Measurement{
-		&vaccines.Batch{
-			Date:         vaccines.Timestamp{Time: timestamp},
+	testVaccinesResponse = []apiclient.APIResponse{
+		&vaccines.APIBatchResponse{
+			Date:         vaccines.Timestamp{Time: time.Date(2021, time.October, 21, 0, 0, 0, 0, time.UTC)},
 			Manufacturer: "A",
 			Amount:       10,
 		},
-		&vaccines.Batch{
-			Date:         vaccines.Timestamp{Time: timestamp},
+		&vaccines.APIBatchResponse{
+			Date:         vaccines.Timestamp{Time: time.Date(2021, time.October, 21, 0, 0, 0, 0, time.UTC)},
 			Manufacturer: "B",
 			Amount:       20,
 		},
-		&vaccines.Batch{
-			Date:         vaccines.Timestamp{Time: timestamp.Add(24 * time.Hour)},
+		&vaccines.APIBatchResponse{
+			Date:         vaccines.Timestamp{Time: time.Date(2021, time.October, 22, 0, 0, 0, 0, time.UTC)},
 			Manufacturer: "A",
 			Amount:       40,
 		},
@@ -40,18 +39,19 @@ func TestClient_GetVaccines(t *testing.T) {
 	client := reporter.New(time.Hour)
 	client.APICache = cache
 
-	result, err := client.GetVaccines()
+	entries, err := client.GetVaccines()
 	require.NoError(t, err)
 
-	assert.Equal(t, &datasets.Dataset{
-		Timestamps: []time.Time{
-			timestamp,
-			timestamp.Add(24 * time.Hour),
-		},
-		Groups: []datasets.DatasetGroup{
-			{Name: "total", Values: []float64{30, 40}},
-		},
-	}, result)
+	assert.Equal(t, []time.Time{
+		time.Date(2021, time.October, 21, 0, 0, 0, 0, time.UTC),
+		time.Date(2021, time.October, 22, 0, 0, 0, 0, time.UTC),
+	}, entries.GetTimestamps())
+
+	assert.Equal(t, []string{"total"}, entries.GetColumns())
+
+	values, ok := entries.GetValues("total")
+	require.True(t, ok)
+	assert.Equal(t, []float64{30, 40}, values)
 }
 
 func TestClient_GetVaccinesByManufacturer(t *testing.T) {
@@ -61,19 +61,23 @@ func TestClient_GetVaccinesByManufacturer(t *testing.T) {
 	client := reporter.New(time.Hour)
 	client.APICache = cache
 
-	result, err := client.GetVaccinesByManufacturer()
+	entries, err := client.GetVaccinesByManufacturer()
 	require.NoError(t, err)
 
-	assert.Equal(t, &datasets.Dataset{
-		Timestamps: []time.Time{
-			timestamp,
-			timestamp.Add(24 * time.Hour),
-		},
-		Groups: []datasets.DatasetGroup{
-			{Name: "A", Values: []float64{10, 40}},
-			{Name: "B", Values: []float64{20, 0}},
-		},
-	}, result)
+	assert.Equal(t, []time.Time{
+		time.Date(2021, time.October, 21, 0, 0, 0, 0, time.UTC),
+		time.Date(2021, time.October, 22, 0, 0, 0, 0, time.UTC),
+	}, entries.GetTimestamps())
+
+	assert.Equal(t, []string{"A", "B"}, entries.GetColumns())
+
+	values, ok := entries.GetValues("A")
+	require.True(t, ok)
+	assert.Equal(t, []float64{10, 40}, values)
+
+	values, ok = entries.GetValues("B")
+	require.True(t, ok)
+	assert.Equal(t, []float64{20, 0}, values)
 }
 
 func TestClient_GetVaccines_Failure(t *testing.T) {

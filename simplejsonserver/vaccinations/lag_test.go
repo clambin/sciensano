@@ -2,7 +2,7 @@ package vaccinations_test
 
 import (
 	"context"
-	mockCache "github.com/clambin/sciensano/measurement/mocks"
+	mockCache "github.com/clambin/sciensano/apiclient/cache/mocks"
 	"github.com/clambin/sciensano/reporter"
 	"github.com/clambin/sciensano/simplejsonserver/vaccinations"
 	"github.com/clambin/simplejson/v3/common"
@@ -24,12 +24,12 @@ func TestLagHandler(t *testing.T) {
 	h := vaccinations.LagHandler{Reporter: client}
 
 	cache.On("Get", "Vaccinations").Return(nil, false).Once()
-	_, err := h.Endpoints().Query(ctx, req)
+	response, err := h.Endpoints().Query(ctx, req)
 	assert.Error(t, err)
 
 	cache.On("Get", "Vaccinations").Return(vaccinationTestData, true).Once()
 
-	response, err := h.Endpoints().Query(ctx, req)
+	response, err = h.Endpoints().Query(ctx, req)
 	require.NoError(t, err)
 	assert.Equal(t, &query.TableResponse{
 		Columns: []query.Column{

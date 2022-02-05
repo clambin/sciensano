@@ -110,7 +110,7 @@ func (cache *Cache) Stats() (stats map[string]int) {
 	for name, entries := range cache.entries {
 		count := 0
 		if entries.Data != nil && !time.Now().After(entries.expiry) {
-			count = len(entries.Data.Timestamps)
+			count = entries.Data.Size()
 		}
 		stats[name] = count
 	}

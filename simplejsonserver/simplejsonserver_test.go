@@ -58,7 +58,7 @@ func TestRun(t *testing.T) {
 
 	go func() {
 		err := h.Run(8080)
-		require.True(t, errors.Is(err, http.ErrServerClosed))
+		require.True(t, errors.Is(err, http.ErrServerClosed), err.Error())
 	}()
 
 	require.Eventually(t, func() bool {

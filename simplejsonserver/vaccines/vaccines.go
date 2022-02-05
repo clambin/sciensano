@@ -26,6 +26,7 @@ func (o *OverviewHandler) tableQuery(_ context.Context, req query.Request) (resp
 	if err != nil {
 		return nil, fmt.Errorf("vaccine call failed: %w", err)
 	}
+	batches = batches.Copy()
 	batches.Accumulate()
 	return responder.GenerateTableQueryResponse(batches, req.Args), nil
 }
@@ -62,70 +63,54 @@ func (s StatsHandler) Endpoints() simplejson.Endpoints {
 
 func (s *StatsHandler) tableQuery(_ context.Context, req query.Request) (response query.Response, err error) {
 	var batches *datasets.Dataset
-	batches, err = s.Reporter.GetVaccines()
-
-	if err != nil {
+	if batches, err = s.Reporter.GetVaccines(); err != nil {
 		return nil, fmt.Errorf("vaccine call failed: %w", err)
 	}
 
-	batches.Accumulate()
-
 	var vaccinations *datasets.Dataset
-	vaccinations, err = s.Reporter.GetVaccinations()
-
-	if err != nil {
+	if vaccinations, err = s.Reporter.GetVaccinations(); err != nil {
 		return nil, fmt.Errorf("vaccinations call failed: %w", err)
 	}
 
-	summarizeVaccinations(vaccinations)
-	vaccinations.Accumulate()
+	calculateVaccineReserve(vaccinations, batches)
+	vaccinations.FilterByRange(req.Range.From, req.Range.To)
 
-	vaccinations.Groups = append(vaccinations.Groups, datasets.DatasetGroup{
-		Name:   "reserve",
-		Values: calculateVaccineReserve(vaccinations, batches),
-	})
-
-	batches.ApplyRange(req.Range.From, req.Range.To)
-	vaccinations.ApplyRange(req.Range.From, req.Range.To)
+	vaccinationValues, _ := vaccinations.GetValues("sum")
+	reserveValues, _ := vaccinations.GetValues("reserve")
 
 	response = &query.TableResponse{
 		Columns: []query.Column{
-			{Text: "timestamp", Data: query.TimeColumn(vaccinations.Timestamps)},
-			{Text: "vaccinations", Data: query.NumberColumn(vaccinations.Groups[0].Values)},
-			{Text: "reserve", Data: query.NumberColumn(vaccinations.Groups[1].Values)},
+			{Text: "timestamp", Data: query.TimeColumn(vaccinations.GetTimestamps())},
+			{Text: "vaccinations", Data: query.NumberColumn(vaccinationValues)},
+			{Text: "reserve", Data: query.NumberColumn(reserveValues)},
 		},
 	}
 	return
 }
 
-func summarizeVaccinations(vaccinationsData *datasets.Dataset) {
-	for index := range vaccinationsData.Timestamps {
-		total := 0.0
-		for _, group := range vaccinationsData.Groups {
-			total += group.Values[index]
+func calculateVaccineReserve(vaccinationsData *datasets.Dataset, batches *datasets.Dataset) {
+	// summarize all vaccinations
+	vaccinationsData.AddColumn("sum", func(values map[string]float64) (sum float64) {
+		for _, value := range values {
+			sum += value
 		}
-		vaccinationsData.Groups[0].Values[index] = total
-	}
-	vaccinationsData.Groups = vaccinationsData.Groups[:1]
-}
+		return
+	})
 
-func calculateVaccineReserve(vaccinationsData *datasets.Dataset, batches *datasets.Dataset) (reserve []float64) {
-	batchIndex := 0
-	lastBatch := 0.0
-
-	for index, timestamp := range vaccinationsData.Timestamps {
-		// find the last time we received vaccines
-		for batchIndex < len(batches.Timestamps) && batches.Timestamps[batchIndex].After(timestamp) == false {
-			// how many vaccines have we received so far?
-			lastBatch = batches.Groups[0].Values[batchIndex]
-			batchIndex++
-		}
-
-		// add it to the list
-		reserve = append(reserve, lastBatch-vaccinationsData.Groups[0].Values[index])
+	// Add the batches to the vaccination dataset
+	receivedTimestamps := batches.GetTimestamps()
+	received, _ := batches.GetValues("total")
+	for index, entry := range received {
+		vaccinationsData.Add(receivedTimestamps[index], "batch", entry)
 	}
 
-	return
+	// accumulate the numbers
+	vaccinationsData.Accumulate()
+
+	// calculate reserve
+	vaccinationsData.AddColumn("reserve", func(values map[string]float64) float64 {
+		return values["batch"] - values["sum"]
+	})
 }
 
 type DelayHandler struct {
@@ -147,7 +132,6 @@ func (d *DelayHandler) tableQuery(_ context.Context, req query.Request) (respons
 	}
 
 	batches.Accumulate()
-	batches.ApplyRange(req.Range.From, req.Range.To)
 
 	var vaccinations *datasets.Dataset
 	vaccinations, err = d.Reporter.GetVaccinations()
@@ -157,7 +141,7 @@ func (d *DelayHandler) tableQuery(_ context.Context, req query.Request) (respons
 	}
 
 	vaccinations.Accumulate()
-	vaccinations.ApplyRange(req.Range.From, req.Range.To)
+	vaccinations.FilterByRange(req.Range.From, req.Range.To)
 
 	timestampColumn, timeColumn := calculateVaccineDelay(vaccinations, batches)
 
@@ -171,22 +155,31 @@ func (d *DelayHandler) tableQuery(_ context.Context, req query.Request) (respons
 }
 
 func calculateVaccineDelay(vaccinationsData *datasets.Dataset, batches *datasets.Dataset) (timestamps query.TimeColumn, delays query.NumberColumn) {
+	vaccinationsData.AddColumn("sum", func(values map[string]float64) (sum float64) {
+		for _, value := range values {
+			sum += value
+		}
+		return
+	})
+
+	batchCount := batches.Size()
+	batchTimestamps := batches.GetTimestamps()
+	batchData, _ := batches.GetValues("total")
 	batchIndex := 0
-	batchCount := len(batches.Timestamps)
 
-	for index, timestamp := range vaccinationsData.Timestamps {
-		// how many vaccines did we need to perform this many vaccinations?
-		vaccinesNeeded := vaccinationsData.Groups[0].Values[index] + vaccinationsData.Groups[1].Values[index]
+	vaccinationTimestamps := vaccinationsData.GetTimestamps()
+	vaccinations, _ := vaccinationsData.GetValues("sum")
 
+	for index, sum := range vaccinations {
 		// find when we reached that number of vaccines
-		for batchIndex < batchCount && batches.Groups[0].Values[batchIndex] < vaccinesNeeded {
+		for batchIndex < batchCount && batchData[batchIndex] < sum {
 			batchIndex++
 		}
 
 		// we depleted the *previous* batch. report the time difference between now and when we received that batch
 		if batchIndex > 0 {
-			timestamps = append(timestamps, timestamp)
-			delays = append(delays, timestamp.Sub(batches.Timestamps[batchIndex-1]).Hours()/24)
+			timestamps = append(timestamps, vaccinationTimestamps[index])
+			delays = append(delays, vaccinationTimestamps[index].Sub(batchTimestamps[batchIndex-1]).Hours()/24)
 		}
 	}
 	return

@@ -2,7 +2,7 @@ package reporter
 
 import (
 	"fmt"
-	"github.com/clambin/sciensano/measurement"
+	"github.com/clambin/sciensano/apiclient"
 	"github.com/clambin/sciensano/reporter/datasets"
 )
 
@@ -23,7 +23,7 @@ type GroupedMortalityEntry struct {
 func (client *Client) GetMortality() (results *datasets.Dataset, err error) {
 	return client.ReportCache.MaybeGenerate("Mortality", func() (output *datasets.Dataset, err2 error) {
 		if apiResult, found := client.APICache.Get("Mortality"); found {
-			output = datasets.GroupMeasurements(apiResult)
+			output = datasets.NewFromAPIResponse(apiResult)
 		} else {
 			err2 = fmt.Errorf("cache does not contain Mortality entries")
 		}
@@ -35,7 +35,7 @@ func (client *Client) GetMortality() (results *datasets.Dataset, err error) {
 func (client *Client) GetMortalityByRegion() (results *datasets.Dataset, err error) {
 	return client.ReportCache.MaybeGenerate("MortalityByRegion", func() (output *datasets.Dataset, err2 error) {
 		if apiResult, found := client.APICache.Get("Mortality"); found {
-			output = datasets.GroupMeasurementsByType(apiResult, measurement.GroupByRegion)
+			output = datasets.NewGroupedFromAPIResponse(apiResult, apiclient.GroupByRegion)
 		} else {
 			err2 = fmt.Errorf("cache does not contain Mortality entries")
 		}
@@ -47,7 +47,7 @@ func (client *Client) GetMortalityByRegion() (results *datasets.Dataset, err err
 func (client *Client) GetMortalityByAgeGroup() (results *datasets.Dataset, err error) {
 	return client.ReportCache.MaybeGenerate("MortalityByAgeGroup", func() (output *datasets.Dataset, err2 error) {
 		if apiResult, found := client.APICache.Get("Mortality"); found {
-			output = datasets.GroupMeasurementsByType(apiResult, measurement.GroupByAgeGroup)
+			output = datasets.NewGroupedFromAPIResponse(apiResult, apiclient.GroupByAgeGroup)
 		} else {
 			err2 = fmt.Errorf("cache does not contain Mortality entries")
 		}

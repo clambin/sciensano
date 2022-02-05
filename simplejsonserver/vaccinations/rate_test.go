@@ -2,8 +2,8 @@ package vaccinations_test
 
 import (
 	"context"
+	mockCache "github.com/clambin/sciensano/apiclient/cache/mocks"
 	"github.com/clambin/sciensano/demographics/mocks"
-	mockCache "github.com/clambin/sciensano/measurement/mocks"
 	"github.com/clambin/sciensano/reporter"
 	"github.com/clambin/sciensano/simplejsonserver/vaccinations"
 	"github.com/clambin/simplejson/v3/common"
@@ -151,7 +151,7 @@ func TestRateHandler_Failure(t *testing.T) {
 	mock.AssertExpectationsForObjects(t, cache, demographics)
 }
 
-func BenchmarkRateHandler(b *testing.B) {
+func BenchmarkVaccinationsRateHandler(b *testing.B) {
 	cache := &mockCache.Holder{}
 	client := reporter.New(time.Hour)
 	client.APICache = cache

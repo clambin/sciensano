@@ -105,10 +105,13 @@ func BenchmarkStore(b *testing.B) {
 	testServer := fake.New("../data/big_demographics.zip")
 	defer testServer.Close()
 
+	b.ResetTimer()
 	store := demographics.Store{
 		AgeBrackets: demographics.DefaultAgeBrackets,
 		URL:         testServer.URL(),
 	}
-	store.Update()
-	_ = store.GetRegions()
+	for i := 0; i < b.N; i++ {
+		store.Update()
+		_ = store.GetRegions()
+	}
 }

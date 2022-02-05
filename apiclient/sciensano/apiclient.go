@@ -5,7 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/clambin/go-metrics"
-	"github.com/clambin/sciensano/measurement"
+	"github.com/clambin/sciensano/apiclient"
+	"github.com/clambin/sciensano/apiclient/cache"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/sync/semaphore"
 	"io"
@@ -17,15 +18,15 @@ import (
 // Getter interface exposes the different supported Reporter APIs
 //go:generate mockery --name Getter
 type Getter interface {
-	GetTestResults(ctx context.Context) (results []measurement.Measurement, err error)
-	GetVaccinations(ctx context.Context) (results []measurement.Measurement, err error)
-	GetCases(ctx context.Context) (results []measurement.Measurement, err error)
-	GetMortality(ctx context.Context) (results []measurement.Measurement, err error)
-	GetHospitalisations(ctx context.Context) (results []measurement.Measurement, err error)
+	GetTestResults(ctx context.Context) (results []apiclient.APIResponse, err error)
+	GetVaccinations(ctx context.Context) (results []apiclient.APIResponse, err error)
+	GetCases(ctx context.Context) (results []apiclient.APIResponse, err error)
+	GetMortality(ctx context.Context) (results []apiclient.APIResponse, err error)
+	GetHospitalisations(ctx context.Context) (results []apiclient.APIResponse, err error)
 }
 
-var _ measurement.Fetcher = &Client{}
 var _ Getter = &Client{}
+var _ cache.Fetcher = &Client{}
 
 // Client calls the different Reporter APIs
 type Client struct {
@@ -35,11 +36,11 @@ type Client struct {
 }
 
 // Update calls all endpoints and returns this to the caller. This is used by a cache to refresh its content
-func (client *Client) Update(ctx context.Context) (entries map[string][]measurement.Measurement, err error) {
+func (client *Client) Update(ctx context.Context) (entries map[string][]apiclient.APIResponse, err error) {
 	before := time.Now()
 	log.Debug("refreshing Reporter API cache")
 
-	getters := map[string]func(context.Context) ([]measurement.Measurement, error){
+	getters := map[string]func(context.Context) ([]apiclient.APIResponse, error){
 		"Vaccinations":     client.GetVaccinations,
 		"TestResults":      client.GetTestResults,
 		"Hospitalisations": client.GetHospitalisations,
@@ -50,17 +51,17 @@ func (client *Client) Update(ctx context.Context) (entries map[string][]measurem
 	const maxParallel = 3
 	s := semaphore.NewWeighted(maxParallel)
 
-	type response struct {
+	type r struct {
 		name    string
-		results []measurement.Measurement
+		results []apiclient.APIResponse
 		err     error
 	}
-	output := make(chan response, len(getters))
+	output := make(chan r, len(getters))
 	for name, getter := range getters {
 		_ = s.Acquire(ctx, 1)
-		go func(name string, g func(context.Context) ([]measurement.Measurement, error)) {
+		go func(name string, g func(context.Context) ([]apiclient.APIResponse, error)) {
 			results, err2 := g(ctx)
-			output <- response{name: name, results: results, err: err2}
+			output <- r{name: name, results: results, err: err2}
 			s.Release(1)
 		}(name, getter)
 	}
@@ -68,7 +69,7 @@ func (client *Client) Update(ctx context.Context) (entries map[string][]measurem
 	_ = s.Acquire(ctx, maxParallel)
 	close(output)
 
-	entries = make(map[string][]measurement.Measurement)
+	entries = make(map[string][]apiclient.APIResponse)
 	for resp := range output {
 		if resp.err == nil {
 			entries[resp.name] = resp.results
@@ -100,7 +101,7 @@ var endpoints = map[string]string{
 }
 
 // call is a generic function to call the Reporter API endpoints
-func (client *Client) call(ctx context.Context, category string) (response io.ReadCloser, err error) {
+func (client *Client) call(ctx context.Context, category string) (body []byte, err error) {
 	defer func() {
 		client.Metrics.ReportErrors(err, category)
 	}()
@@ -127,14 +128,16 @@ func (client *Client) call(ctx context.Context, category string) (response io.Re
 		return
 	}
 
-	if resp.StatusCode != http.StatusOK {
+	defer func() {
 		_ = resp.Body.Close()
+	}()
+
+	if resp.StatusCode != http.StatusOK {
 		err = errors.New(resp.Status)
 		return
 	}
 
-	response = resp.Body
-	return
+	return io.ReadAll(resp.Body)
 }
 
 // TimeStamp represents a timestamp in the API responder. Needed for parsing purposes

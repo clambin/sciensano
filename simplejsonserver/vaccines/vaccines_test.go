@@ -2,12 +2,10 @@ package vaccines_test
 
 import (
 	"context"
+	"github.com/clambin/sciensano/apiclient"
+	mockCache "github.com/clambin/sciensano/apiclient/cache/mocks"
 	"github.com/clambin/sciensano/apiclient/sciensano"
-
-	// "github.com/clambin/sciensano/apiclient/sciensano"
 	"github.com/clambin/sciensano/apiclient/vaccines"
-	"github.com/clambin/sciensano/measurement"
-	mockCache "github.com/clambin/sciensano/measurement/mocks"
 	"github.com/clambin/sciensano/reporter"
 	vaccinesHandler "github.com/clambin/sciensano/simplejsonserver/vaccines"
 	"github.com/clambin/simplejson/v3/common"
@@ -28,16 +26,16 @@ func TestHandler_TableQuery_Vaccines(t *testing.T) {
 	timestamp := time.Now()
 	cache.
 		On("Get", "Vaccines").
-		Return([]measurement.Measurement{
-			&vaccines.Batch{
+		Return([]apiclient.APIResponse{
+			&vaccines.APIBatchResponse{
 				Date:   vaccines.Timestamp{Time: timestamp.Add(-24 * time.Hour)},
 				Amount: 100,
 			},
-			&vaccines.Batch{
+			&vaccines.APIBatchResponse{
 				Date:   vaccines.Timestamp{Time: timestamp},
 				Amount: 200,
 			},
-			&vaccines.Batch{
+			&vaccines.APIBatchResponse{
 				Date:   vaccines.Timestamp{Time: timestamp.Add(24 * time.Hour)},
 				Amount: 200,
 			},
@@ -64,18 +62,18 @@ func TestHandler_TableQuery_VaccinesByManufacturer(t *testing.T) {
 	timestamp := time.Date(2021, time.September, 2, 0, 0, 0, 0, time.UTC)
 	cache.
 		On("Get", "Vaccines").
-		Return([]measurement.Measurement{
-			&vaccines.Batch{
+		Return([]apiclient.APIResponse{
+			&vaccines.APIBatchResponse{
 				Date:         vaccines.Timestamp{Time: timestamp.Add(-24 * time.Hour)},
 				Manufacturer: "A",
 				Amount:       100,
 			},
-			&vaccines.Batch{
+			&vaccines.APIBatchResponse{
 				Date:         vaccines.Timestamp{Time: timestamp},
 				Manufacturer: "B",
 				Amount:       200,
 			},
-			&vaccines.Batch{
+			&vaccines.APIBatchResponse{
 				Date:         vaccines.Timestamp{Time: timestamp.Add(24 * time.Hour)},
 				Manufacturer: "C",
 				Amount:       200,
@@ -103,45 +101,55 @@ func TestHandler_TableQuery_VaccinesByManufacturer(t *testing.T) {
 }
 
 func TestHandler_TableQuery_VaccinesStats(t *testing.T) {
-	cache := &mockCache.Holder{}
+	c := &mockCache.Holder{}
 	r := reporter.New(time.Hour)
-	r.APICache = cache
+	r.APICache = c
 	h := vaccinesHandler.StatsHandler{Reporter: r}
 
 	timestamp := time.Now()
 
-	cache.
+	c.
 		On("Get", "Vaccines").
 		Return(
-			[]measurement.Measurement{
-				&vaccines.Batch{
+			[]apiclient.APIResponse{
+				&vaccines.APIBatchResponse{
 					Date:   vaccines.Timestamp{Time: timestamp.Add(-48 * time.Hour)},
 					Amount: 50,
 				},
-				&vaccines.Batch{
+				&vaccines.APIBatchResponse{
 					Date:   vaccines.Timestamp{Time: timestamp.Add(-24 * time.Hour)},
 					Amount: 100,
 				},
-				&vaccines.Batch{
+				&vaccines.APIBatchResponse{
 					Date:   vaccines.Timestamp{Time: timestamp},
 					Amount: 200,
 				},
 			}, true)
 
-	cache.
+	c.
 		On("Get", "Vaccinations").
-		Return([]measurement.Measurement{
-			&sciensano.APIVaccinationsResponseEntry{
+		Return([]apiclient.APIResponse{
+			&sciensano.APIVaccinationsResponse{
+				TimeStamp: sciensano.TimeStamp{Time: timestamp.Add(-72 * time.Hour)},
+				Dose:      "A",
+				Count:     0,
+			},
+			&sciensano.APIVaccinationsResponse{
+				TimeStamp: sciensano.TimeStamp{Time: timestamp.Add(-48 * time.Hour)},
+				Dose:      "A",
+				Count:     0,
+			},
+			&sciensano.APIVaccinationsResponse{
 				TimeStamp: sciensano.TimeStamp{Time: timestamp.Add(-24 * time.Hour)},
 				Dose:      "A",
 				Count:     10,
 			},
-			&sciensano.APIVaccinationsResponseEntry{
+			&sciensano.APIVaccinationsResponse{
 				TimeStamp: sciensano.TimeStamp{Time: timestamp.Add(-24 * time.Hour)},
 				Dose:      "B",
 				Count:     10,
 			},
-			&sciensano.APIVaccinationsResponseEntry{
+			&sciensano.APIVaccinationsResponse{
 				TimeStamp: sciensano.TimeStamp{Time: timestamp},
 				Dose:      "C",
 				Count:     10,
@@ -170,7 +178,7 @@ func TestHandler_TableQuery_VaccinesStats(t *testing.T) {
 		{Text: "reserve", Data: query.NumberColumn{320.0}},
 	}}, response)
 
-	mock.AssertExpectationsForObjects(t, cache, cache)
+	mock.AssertExpectationsForObjects(t, c, c)
 }
 
 func TestHandler_TableQuery_VaccinesTime(t *testing.T) {
@@ -182,12 +190,12 @@ func TestHandler_TableQuery_VaccinesTime(t *testing.T) {
 
 	cache.
 		On("Get", "Vaccines").
-		Return([]measurement.Measurement{
-			&vaccines.Batch{
+		Return([]apiclient.APIResponse{
+			&vaccines.APIBatchResponse{
 				Date:   vaccines.Timestamp{Time: timestamp.Add(-7 * 24 * time.Hour)},
 				Amount: 100,
 			},
-			&vaccines.Batch{
+			&vaccines.APIBatchResponse{
 				Date:   vaccines.Timestamp{Time: timestamp.Add(-2 * 24 * time.Hour)},
 				Amount: 50,
 			},
@@ -195,33 +203,33 @@ func TestHandler_TableQuery_VaccinesTime(t *testing.T) {
 
 	cache.
 		On("Get", "Vaccinations").
-		Return([]measurement.Measurement{
-			&sciensano.APIVaccinationsResponseEntry{
+		Return([]apiclient.APIResponse{
+			&sciensano.APIVaccinationsResponse{
 				TimeStamp: sciensano.TimeStamp{Time: timestamp.Add(-6 * 24 * time.Hour)},
 				Dose:      "A",
 				Count:     50,
 			},
-			&sciensano.APIVaccinationsResponseEntry{
+			&sciensano.APIVaccinationsResponse{
 				TimeStamp: sciensano.TimeStamp{Time: timestamp.Add(-5 * 24 * time.Hour)},
 				Dose:      "A",
 				Count:     25,
 			},
-			&sciensano.APIVaccinationsResponseEntry{
+			&sciensano.APIVaccinationsResponse{
 				TimeStamp: sciensano.TimeStamp{Time: timestamp.Add(-4 * 24 * time.Hour)},
 				Dose:      "A",
 				Count:     15,
 			},
-			&sciensano.APIVaccinationsResponseEntry{
+			&sciensano.APIVaccinationsResponse{
 				TimeStamp: sciensano.TimeStamp{Time: timestamp.Add(-3 * 24 * time.Hour)},
 				Dose:      "A",
 				Count:     15,
 			},
-			&sciensano.APIVaccinationsResponseEntry{
+			&sciensano.APIVaccinationsResponse{
 				TimeStamp: sciensano.TimeStamp{Time: timestamp.Add(-2 * 24 * time.Hour)},
 				Dose:      "A",
 				Count:     40,
 			},
-			&sciensano.APIVaccinationsResponseEntry{
+			&sciensano.APIVaccinationsResponse{
 				TimeStamp: sciensano.TimeStamp{Time: timestamp.Add(-1 * 24 * time.Hour)},
 				Dose:      "A",
 				Count:     15,
@@ -274,11 +282,11 @@ func TestHandler_Failures(t *testing.T) {
 	_, err = d.Endpoints().Query(ctx, req)
 	assert.Error(t, err)
 
-	cache.On("Get", "Vaccines").Return([]measurement.Measurement{}, true).Once()
+	cache.On("Get", "Vaccines").Return([]apiclient.APIResponse{}, true).Once()
 	_, err = d.Endpoints().Query(ctx, req)
 	assert.Error(t, err)
 
-	cache.On("Get", "Vaccines").Return([]measurement.Measurement{}, true).Once()
+	cache.On("Get", "Vaccines").Return([]apiclient.APIResponse{}, true).Once()
 	s = vaccinesHandler.StatsHandler{Reporter: r}
 	_, err = s.Endpoints().Query(ctx, req)
 	assert.Error(t, err)

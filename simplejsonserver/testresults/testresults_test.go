@@ -2,9 +2,9 @@ package testresults_test
 
 import (
 	"context"
+	"github.com/clambin/sciensano/apiclient"
+	mockCache "github.com/clambin/sciensano/apiclient/cache/mocks"
 	"github.com/clambin/sciensano/apiclient/sciensano"
-	"github.com/clambin/sciensano/measurement"
-	mockCache "github.com/clambin/sciensano/measurement/mocks"
 	"github.com/clambin/sciensano/reporter"
 	"github.com/clambin/sciensano/simplejsonserver/testresults"
 	"github.com/clambin/simplejson/v3/common"
@@ -23,8 +23,8 @@ func TestHandler_TableQuery(t *testing.T) {
 
 	getter.
 		On("Get", "TestResults").
-		Return([]measurement.Measurement{
-			&sciensano.APITestResultsResponseEntry{
+		Return([]apiclient.APIResponse{
+			&sciensano.APITestResultsResponse{
 				TimeStamp: sciensano.TimeStamp{Time: time.Date(2022, 1, 26, 0, 0, 0, 0, time.UTC)},
 				Positive:  10,
 				Total:     20,
@@ -41,9 +41,9 @@ func TestHandler_TableQuery(t *testing.T) {
 	assert.Equal(t, &query.TableResponse{
 		Columns: []query.Column{
 			{Text: "timestamp", Data: query.TimeColumn{time.Date(2022, 1, 26, 0, 0, 0, 0, time.UTC)}},
-			{Text: "total", Data: query.NumberColumn{20.0}},
 			{Text: "positive", Data: query.NumberColumn{10.0}},
 			{Text: "rate", Data: query.NumberColumn{0.5}},
+			{Text: "total", Data: query.NumberColumn{20.0}},
 		},
 	}, response)
 

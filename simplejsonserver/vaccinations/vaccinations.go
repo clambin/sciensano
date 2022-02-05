@@ -22,17 +22,23 @@ func (handler Handler) Endpoints() simplejson.Endpoints {
 
 func (handler *Handler) tableQuery(_ context.Context, req query.Request) (output query.Response, err error) {
 	var vaccinationData *datasets.Dataset
-	vaccinationData, err = handler.Reporter.GetVaccinations()
-
-	if err != nil {
+	if vaccinationData, err = handler.Reporter.GetVaccinations(); err != nil {
 		return nil, fmt.Errorf("vaccinations failed: %w", err)
 	}
 
-	vaccinationData.Accumulate()
-	for index := range vaccinationData.Groups[1].Values {
-		vaccinationData.Groups[1].Values[index] += vaccinationData.Groups[2].Values[index]
-	}
-	vaccinationData.Groups = append(vaccinationData.Groups[0:2], vaccinationData.Groups[3])
+	timestamps := vaccinationData.GetTimestamps()
+	partial, _ := vaccinationData.GetValues("partial")
+	full, _ := vaccinationData.GetValues("full")
+	singledose, _ := vaccinationData.GetValues("singledose")
+	booster, _ := vaccinationData.GetValues("booster")
 
-	return responder.GenerateTableQueryResponse(vaccinationData, req.Args), nil
+	d := datasets.New()
+	for index, timestamp := range timestamps {
+		d.Add(timestamp, "partial", partial[index])
+		d.Add(timestamp, "full", full[index]+singledose[index])
+		d.Add(timestamp, "booster", booster[index])
+	}
+	d.Accumulate()
+
+	return responder.GenerateTableQueryResponse(d, req.Args), nil
 }

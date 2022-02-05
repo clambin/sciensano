@@ -2,9 +2,9 @@ package sciensano_test
 
 import (
 	"context"
+	"github.com/clambin/sciensano/apiclient"
 	"github.com/clambin/sciensano/apiclient/sciensano"
 	"github.com/clambin/sciensano/apiclient/sciensano/fake"
-	"github.com/clambin/sciensano/measurement"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"net/http"
@@ -29,7 +29,7 @@ func TestClient_GetVaccinations(t *testing.T) {
 
 	require.NoError(t, err)
 	require.Len(t, result, 7)
-	assert.Equal(t, &sciensano.APIVaccinationsResponseEntry{
+	assert.Equal(t, &sciensano.APIVaccinationsResponse{
 		TimeStamp: sciensano.TimeStamp{Time: time.Date(2021, time.March, 11, 0, 0, 0, 0, time.UTC)},
 		Region:    "Flanders",
 		AgeGroup:  "45-54",
@@ -49,7 +49,7 @@ func TestClient_GetVaccinations(t *testing.T) {
 
 func TestAPIVaccinationsResponseEntry_GetTimestamp(t *testing.T) {
 	timestamp := time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)
-	entry := sciensano.APIVaccinationsResponseEntry{
+	entry := sciensano.APIVaccinationsResponse{
 		TimeStamp: sciensano.TimeStamp{Time: timestamp},
 	}
 
@@ -57,13 +57,13 @@ func TestAPIVaccinationsResponseEntry_GetTimestamp(t *testing.T) {
 }
 
 func TestAPIVaccinationsResponseEntry_GetGroupFieldValue(t *testing.T) {
-	entry := sciensano.APIVaccinationsResponseEntry{
+	entry := sciensano.APIVaccinationsResponse{
 		Region:   "Flanders",
 		AgeGroup: "85+",
 	}
 
-	assert.Equal(t, "Flanders", entry.GetGroupFieldValue(measurement.GroupByRegion))
-	assert.Equal(t, "85+", entry.GetGroupFieldValue(measurement.GroupByAgeGroup))
+	assert.Equal(t, "Flanders", entry.GetGroupFieldValue(apiclient.GroupByRegion))
+	assert.Equal(t, "85+", entry.GetGroupFieldValue(apiclient.GroupByAgeGroup))
 }
 
 func BenchmarkClient_GetVaccinations(b *testing.B) {
@@ -74,6 +74,7 @@ func BenchmarkClient_GetVaccinations(b *testing.B) {
 		HTTPClient: &http.Client{},
 		URL:        testServer.URL,
 	}
+
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_, err := client.GetVaccinations(context.Background())
@@ -83,22 +84,22 @@ func BenchmarkClient_GetVaccinations(b *testing.B) {
 	}
 }
 
-var bigFile []byte
+var bigVaccinationsFile []byte
 
 func handleVaccinationResponse(w http.ResponseWriter, _ *http.Request) {
 	var err error
-	if bigFile == nil {
-		bigFile, err = os.ReadFile("../../data/vaccinations.json")
+	if bigVaccinationsFile == nil {
+		bigVaccinationsFile, err = os.ReadFile("../../data/vaccinations.json")
 	}
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	_, _ = w.Write(bigFile)
+	_, _ = w.Write(bigVaccinationsFile)
 }
 
 func TestClient_Vaccination_Measurement(t *testing.T) {
-	entry := sciensano.APIVaccinationsResponseEntry{
+	entry := sciensano.APIVaccinationsResponse{
 		TimeStamp: sciensano.TimeStamp{Time: time.Now()},
 		Region:    "Flanders",
 		AgeGroup:  "85+",
@@ -107,9 +108,9 @@ func TestClient_Vaccination_Measurement(t *testing.T) {
 	}
 
 	assert.NotZero(t, entry.GetTimestamp())
-	assert.Equal(t, "Flanders", entry.GetGroupFieldValue(measurement.GroupByRegion))
-	assert.Empty(t, entry.GetGroupFieldValue(measurement.GroupByProvince))
-	assert.Equal(t, "85+", entry.GetGroupFieldValue(measurement.GroupByAgeGroup))
+	assert.Equal(t, "Flanders", entry.GetGroupFieldValue(apiclient.GroupByRegion))
+	assert.Empty(t, entry.GetGroupFieldValue(apiclient.GroupByProvince))
+	assert.Equal(t, "85+", entry.GetGroupFieldValue(apiclient.GroupByAgeGroup))
 	assert.Equal(t, 10.0, entry.GetTotalValue())
 	assert.Equal(t, []string{"partial", "full", "singledose", "booster"}, entry.GetAttributeNames())
 	assert.Equal(t, []float64{10, 0, 0, 0}, entry.GetAttributeValues())

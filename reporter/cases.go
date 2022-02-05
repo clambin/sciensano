@@ -2,7 +2,7 @@ package reporter
 
 import (
 	"fmt"
-	"github.com/clambin/sciensano/measurement"
+	"github.com/clambin/sciensano/apiclient"
 	"github.com/clambin/sciensano/reporter/datasets"
 )
 
@@ -18,7 +18,7 @@ type CasesGetter interface {
 func (client *Client) GetCases() (results *datasets.Dataset, err error) {
 	return client.ReportCache.MaybeGenerate("Cases", func() (output *datasets.Dataset, err2 error) {
 		if apiResult, found := client.APICache.Get("Cases"); found {
-			output = datasets.GroupMeasurements(apiResult)
+			output = datasets.NewFromAPIResponse(apiResult)
 		} else {
 			err2 = fmt.Errorf("cache does not contain Cases entries")
 		}
@@ -30,7 +30,7 @@ func (client *Client) GetCases() (results *datasets.Dataset, err error) {
 func (client *Client) GetCasesByRegion() (results *datasets.Dataset, err error) {
 	return client.ReportCache.MaybeGenerate("CasesByRegion", func() (output *datasets.Dataset, err2 error) {
 		if apiResult, found := client.APICache.Get("Cases"); found {
-			output = datasets.GroupMeasurementsByType(apiResult, measurement.GroupByRegion)
+			output = datasets.NewGroupedFromAPIResponse(apiResult, apiclient.GroupByRegion)
 		} else {
 			err2 = fmt.Errorf("cache does not contain Cases entries")
 		}
@@ -42,7 +42,7 @@ func (client *Client) GetCasesByRegion() (results *datasets.Dataset, err error) 
 func (client *Client) GetCasesByProvince() (results *datasets.Dataset, err error) {
 	return client.ReportCache.MaybeGenerate("CasesByProvince", func() (output *datasets.Dataset, err2 error) {
 		if apiResult, found := client.APICache.Get("Cases"); found {
-			output = datasets.GroupMeasurementsByType(apiResult, measurement.GroupByProvince)
+			output = datasets.NewGroupedFromAPIResponse(apiResult, apiclient.GroupByProvince)
 		} else {
 			err2 = fmt.Errorf("cache does not contain Cases entries")
 		}
@@ -54,7 +54,7 @@ func (client *Client) GetCasesByProvince() (results *datasets.Dataset, err error
 func (client *Client) GetCasesByAgeGroup() (results *datasets.Dataset, err error) {
 	return client.ReportCache.MaybeGenerate("CasesByAgeGroup", func() (output *datasets.Dataset, err2 error) {
 		if apiResult, found := client.APICache.Get("Cases"); found {
-			output = datasets.GroupMeasurementsByType(apiResult, measurement.GroupByAgeGroup)
+			output = datasets.NewGroupedFromAPIResponse(apiResult, apiclient.GroupByAgeGroup)
 		} else {
 			err2 = fmt.Errorf("cache does not contain Cases entries")
 		}

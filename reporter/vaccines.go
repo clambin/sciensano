@@ -2,7 +2,7 @@ package reporter
 
 import (
 	"errors"
-	"github.com/clambin/sciensano/measurement"
+	"github.com/clambin/sciensano/apiclient"
 	"github.com/clambin/sciensano/reporter/datasets"
 )
 
@@ -20,7 +20,7 @@ func (client *Client) GetVaccines() (results *datasets.Dataset, err error) {
 		if ok == false {
 			return nil, errors.New("cache does not contain Vaccines entries")
 		}
-		return datasets.GroupMeasurements(apiResult), nil
+		return datasets.NewFromAPIResponse(apiResult), nil
 
 	})
 }
@@ -33,6 +33,6 @@ func (client *Client) GetVaccinesByManufacturer() (results *datasets.Dataset, er
 		if ok == false {
 			return nil, errors.New("cache does not contain Vaccines entries")
 		}
-		return datasets.GroupMeasurementsByType(apiResult, measurement.GroupByManufacturer), nil
+		return datasets.NewGroupedFromAPIResponse(apiResult, apiclient.GroupByManufacturer), nil
 	})
 }

@@ -7,34 +7,23 @@ import (
 
 // GenerateTableQueryResponse generates a TableQueryResponse from a Dataset
 func GenerateTableQueryResponse(input *datasets.Dataset, args query.Args) (response *query.TableResponse) {
-	input.ApplyRange(args.Range.From, args.Range.To)
-
-	timestampColumn := make(query.TimeColumn, len(input.Timestamps))
-	for index, timestamp := range input.Timestamps {
-		timestampColumn[index] = timestamp
-	}
+	input.FilterByRange(args.Range.From, args.Range.To)
 
 	response = &query.TableResponse{
 		Columns: []query.Column{{
 			Text: "timestamp",
-			Data: timestampColumn,
+			Data: query.TimeColumn(input.GetTimestamps()),
 		}},
 	}
 
-	for _, group := range input.Groups {
-		dataColumn := make(query.NumberColumn, len(group.Values))
-		for index, value := range group.Values {
-			dataColumn[index] = value
+	for _, column := range input.GetColumns() {
+		values, _ := input.GetValues(column)
+		if column == "" {
+			column = "(unknown)"
 		}
-
-		name := group.Name
-		if name == "" {
-			name = "(unknown)"
-		}
-
 		response.Columns = append(response.Columns, query.Column{
-			Text: name,
-			Data: dataColumn,
+			Text: column,
+			Data: query.NumberColumn(values),
 		})
 	}
 	return
