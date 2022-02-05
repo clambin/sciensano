@@ -111,7 +111,9 @@ func BenchmarkHandlers_Run(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		for _, handler := range h.Handlers {
 			_, err := handler.Endpoints().Query(ctx, req)
-			assert.NoError(b, err)
+			if err != nil {
+				b.Fatal(err)
+			}
 		}
 	}
 }

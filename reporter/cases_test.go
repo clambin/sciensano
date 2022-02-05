@@ -215,8 +215,10 @@ func BenchmarkClient_GetCasesByRegion(b *testing.B) {
 		Return(bigResponse, nil)
 
 	b.ResetTimer()
-	for i := 0; i < 100; i++ {
+	for i := 0; i < b.N; i++ {
 		_, err := client.GetCasesByRegion()
-		require.NoError(b, err)
+		if err != nil {
+			b.Fatal(err)
+		}
 	}
 }

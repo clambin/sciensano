@@ -74,8 +74,13 @@ func BenchmarkClient_GetVaccinations(b *testing.B) {
 		HTTPClient: &http.Client{},
 		URL:        testServer.URL,
 	}
-	_, err := client.GetVaccinations(context.Background())
-	require.NoError(b, err)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_, err := client.GetVaccinations(context.Background())
+		if err != nil {
+			b.Fatal(err)
+		}
+	}
 }
 
 var bigFile []byte
@@ -83,7 +88,7 @@ var bigFile []byte
 func handleVaccinationResponse(w http.ResponseWriter, _ *http.Request) {
 	var err error
 	if bigFile == nil {
-		bigFile, err = os.ReadFile("../data/vaccinations.json")
+		bigFile, err = os.ReadFile("../../data/vaccinations.json")
 	}
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

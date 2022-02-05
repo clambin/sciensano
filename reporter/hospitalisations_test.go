@@ -195,10 +195,11 @@ func BenchmarkClient_GetHospitalisationsByRegion(b *testing.B) {
 		Return(bigResponse, true)
 
 	b.ResetTimer()
-	for i := 0; i < 100; i++ {
+	for i := 0; i < b.N; i++ {
 		_, err := client.GetHospitalisationsByRegion()
-		require.NoError(b, err)
+		if err != nil {
+			b.Fatal(err)
+		}
 	}
-
 	cache.AssertExpectations(b)
 }

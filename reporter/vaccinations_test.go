@@ -275,12 +275,12 @@ func BenchmarkClient_GetVaccination(b *testing.B) {
 
 	b.ResetTimer()
 
-	for i := 0; i < 100; i++ {
+	for i := 0; i < b.N; i++ {
 		_, err := client.GetVaccinations()
-		require.NoError(b, err)
+		if err != nil {
+			b.Fatal(err)
+		}
 	}
-
-	mock.AssertExpectationsForObjects(b, cache)
 }
 
 func BenchmarkClient_GetVaccinationsByAgeGroup(b *testing.B) {
@@ -293,12 +293,12 @@ func BenchmarkClient_GetVaccinationsByAgeGroup(b *testing.B) {
 
 	b.ResetTimer()
 
-	for i := 0; i < 100; i++ {
+	for i := 0; i < b.N; i++ {
 		_, err := client.GetVaccinationsByAgeGroup(reporter.VaccinationTypeFull)
-		require.NoError(b, err)
+		if err != nil {
+			b.Fatal(err)
+		}
 	}
-
-	mock.AssertExpectationsForObjects(b, cache)
 }
 
 func BenchmarkClient_GetVaccinationsByRegion(b *testing.B) {
@@ -311,10 +311,10 @@ func BenchmarkClient_GetVaccinationsByRegion(b *testing.B) {
 
 	b.ResetTimer()
 
-	for i := 0; i < 100; i++ {
+	for i := 0; i < b.N; i++ {
 		_, err := client.GetVaccinationsByRegion(reporter.VaccinationTypeFull)
-		require.NoError(b, err)
+		if err != nil {
+			b.Fatal(err)
+		}
 	}
-
-	mock.AssertExpectationsForObjects(b, cache)
 }

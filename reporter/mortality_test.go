@@ -163,8 +163,11 @@ func BenchmarkClient_GetMortalityByRegion(b *testing.B) {
 		On("Get", "Mortality").
 		Return(bigResponse, true)
 
-	for i := 0; i < 100; i++ {
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
 		_, err := client.GetMortalityByRegion()
-		require.NoError(b, err)
+		if err != nil {
+			b.Fatal(err)
+		}
 	}
 }

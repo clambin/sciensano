@@ -47,7 +47,7 @@ func BenchmarkClient_GetBatches(b *testing.B) {
 		HTTPClient: &http.Client{},
 	}
 
-	for i := 0; i < 5000; i++ {
+	for i := 0; i < b.N; i++ {
 		_, err := client.GetBatches(context.Background())
 		require.NoError(b, err)
 	}

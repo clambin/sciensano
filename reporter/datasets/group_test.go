@@ -110,7 +110,7 @@ func BenchmarkGroupMeasurements(b *testing.B) {
 	input := bigResponse()
 	b.ResetTimer()
 
-	for i := 0; i < 20; i++ {
+	for i := 0; i < b.N; i++ {
 		_ = datasets.GroupMeasurements(input)
 	}
 }
@@ -119,7 +119,7 @@ func BenchmarkGroupMeasurementsByType(b *testing.B) {
 	input := bigResponse()
 	b.ResetTimer()
 
-	for i := 0; i < 20; i++ {
+	for i := 0; i < b.N; i++ {
 		_ = datasets.GroupMeasurementsByType(input, measurement.GroupByAgeGroup)
 	}
 }

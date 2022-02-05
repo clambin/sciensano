@@ -68,7 +68,7 @@ func TestTimeStamp_UnmarshalJSON(t *testing.T) {
 func BenchmarkTimeStamp_UnmarshalJSON(b *testing.B) {
 	ts := &sciensano.TimeStamp{}
 
-	for i := 0; i < 1000000; i++ {
+	for i := 0; i < b.N; i++ {
 		_ = ts.UnmarshalJSON([]byte("\"2021-03-02\""))
 	}
 }
