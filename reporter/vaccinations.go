@@ -11,11 +11,13 @@ import (
 type VaccinationType int
 
 const (
-	// VaccinationTypePartial tells GetValue to return the partial vaccination count
-	VaccinationTypePartial = iota
-	// VaccinationTypeFull tells GetValue to return the full vaccination count. It counts 2nd vaccinations and single dose vaccinations
+	// VaccinationTypeAll tells realGetVaccinationByType not to filter by type of vaccination
+	VaccinationTypeAll = iota
+	// VaccinationTypePartial filters partial vaccinations
+	VaccinationTypePartial
+	// VaccinationTypeFull filters full vaccinations. It counts 2nd vaccinations and single dose vaccinations
 	VaccinationTypeFull
-	// VaccinationTypeBooster tells GetValue to return the booster vaccination count
+	// VaccinationTypeBooster filters booster vaccinations
 	VaccinationTypeBooster
 )
 
@@ -24,6 +26,7 @@ type VaccinationGetter interface {
 	GetVaccinations() (results *datasets.Dataset, err error)
 	GetVaccinationsByAgeGroup(vaccinationType VaccinationType) (results *datasets.Dataset, err error)
 	GetVaccinationsByRegion(vaccinationType VaccinationType) (results *datasets.Dataset, err error)
+	GetVaccinationsByManufacturer() (results *datasets.Dataset, err error)
 }
 
 // GetVaccinations returns all vaccinations
@@ -54,9 +57,19 @@ func (client *Client) GetVaccinationsByRegion(vaccinationType VaccinationType) (
 	})
 }
 
+// GetVaccinationsByManufacturer returns all vaccinations, grouped by manufacturer
+func (client *Client) GetVaccinationsByManufacturer() (results *datasets.Dataset, err error) {
+	name := "VaccinationsByManufacturer"
+	return client.ReportCache.MaybeGenerate(name, func() (*datasets.Dataset, error) {
+		return client.realGetVaccinationByType(apiclient.GroupByManufacturer, VaccinationTypeAll)
+	})
+}
+
 func (client *Client) realGetVaccinationByType(mode int, vaccinationType VaccinationType) (results *datasets.Dataset, err error) {
 	if apiResult, found := client.APICache.Get("Vaccinations"); found {
-		apiResult = filterVaccinations(apiResult, vaccinationType)
+		if vaccinationType != VaccinationTypeAll {
+			apiResult = filterVaccinations(apiResult, vaccinationType)
+		}
 		results = datasets.NewGroupedFromAPIResponse(apiResult, mode)
 	} else {
 		err = fmt.Errorf("cache does not contain Vaccinations entries")

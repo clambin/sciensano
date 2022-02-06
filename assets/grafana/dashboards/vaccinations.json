@@ -20,15 +20,13 @@
   },
   "editable": true,
   "fiscalYearStartMonth": 0,
-  "gnetId": null,
   "graphTooltip": 0,
-  "id": 480,
+  "id": 508,
   "links": [],
   "liveNow": false,
   "panels": [
     {
       "collapsed": false,
-      "datasource": null,
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -41,7 +39,10 @@
       "type": "row"
     },
     {
-      "datasource": "sciensano",
+      "datasource": {
+        "type": "grafana-simple-json-datasource",
+        "uid": "PBB404699A8B1E379"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -95,7 +96,7 @@
       },
       "gridPos": {
         "h": 9,
-        "w": 24,
+        "w": 19,
         "x": 0,
         "y": 1
       },
@@ -119,8 +120,6 @@
           "type": "table"
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
       "title": "Vaccinations",
       "transformations": [
         {
@@ -131,7 +130,97 @@
       "type": "timeseries"
     },
     {
-      "datasource": "sciensano",
+      "datasource": {
+        "type": "grafana-simple-json-datasource",
+        "uid": "PBB404699A8B1E379"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 32,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 5,
+        "x": 19,
+        "y": 1
+      },
+      "id": 42,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-simple-json-datasource",
+            "uid": "PBB404699A8B1E379"
+          },
+          "refId": "A",
+          "target": "vacc-manufacturer",
+          "type": "table"
+        }
+      ],
+      "title": "Vaccinations by Manufacturer",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "grafana-simple-json-datasource",
+        "uid": "PBB404699A8B1E379"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -209,14 +298,15 @@
           "type": "table"
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
       "title": "Time to get 2nd vaccination",
       "transformations": [],
       "type": "timeseries"
     },
     {
-      "datasource": "sciensano",
+      "datasource": {
+        "type": "grafana-simple-json-datasource",
+        "uid": "PBB404699A8B1E379"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -289,14 +379,16 @@
       "pluginVersion": "8.0.6",
       "targets": [
         {
+          "datasource": {
+            "type": "grafana-simple-json-datasource",
+            "uid": "PBB404699A8B1E379"
+          },
           "hide": false,
           "refId": "B",
           "target": "vaccines-time",
           "type": "table"
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
       "title": "Time to administer received vaccines",
       "transformations": [],
       "type": "timeseries"
@@ -306,7 +398,10 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "sciensano",
+      "datasource": {
+        "type": "grafana-simple-json-datasource",
+        "uid": "PBB404699A8B1E379"
+      },
       "fill": 1,
       "fillGradient": 0,
       "gridPos": {
@@ -333,7 +428,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "8.2.2",
+      "pluginVersion": "8.3.4",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -374,9 +469,7 @@
         }
       ],
       "thresholds": [],
-      "timeFrom": null,
       "timeRegions": [],
-      "timeShift": null,
       "title": "Vaccines",
       "tooltip": {
         "shared": true,
@@ -386,9 +479,7 @@
       "transformations": [],
       "type": "graph",
       "xaxis": {
-        "buckets": null,
         "mode": "time",
-        "name": null,
         "show": true,
         "values": []
       },
@@ -396,19 +487,13 @@
         {
           "$$hashKey": "object:65",
           "format": "short",
-          "label": null,
           "logBase": 1,
-          "max": null,
-          "min": null,
           "show": true
         },
         {
           "$$hashKey": "object:66",
           "format": "short",
-          "label": null,
           "logBase": 1,
-          "max": null,
-          "min": null,
           "show": false
         }
       ],
@@ -418,7 +503,10 @@
       }
     },
     {
-      "datasource": "sciensano",
+      "datasource": {
+        "type": "grafana-simple-json-datasource",
+        "uid": "PBB404699A8B1E379"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -473,7 +561,6 @@
       "type": "piechart"
     },
     {
-      "datasource": null,
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -485,7 +572,10 @@
       "type": "row"
     },
     {
-      "datasource": "sciensano",
+      "datasource": {
+        "type": "grafana-simple-json-datasource",
+        "uid": "PBB404699A8B1E379"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -563,8 +653,6 @@
           "type": "table"
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
       "title": "Partial",
       "transformations": [
         {
@@ -575,7 +663,10 @@
       "type": "timeseries"
     },
     {
-      "datasource": "sciensano",
+      "datasource": {
+        "type": "grafana-simple-json-datasource",
+        "uid": "PBB404699A8B1E379"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -653,8 +744,6 @@
           "type": "table"
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
       "title": "Full",
       "transformations": [
         {
@@ -665,7 +754,10 @@
       "type": "timeseries"
     },
     {
-      "datasource": "sciensano",
+      "datasource": {
+        "type": "grafana-simple-json-datasource",
+        "uid": "PBB404699A8B1E379"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -743,8 +835,6 @@
           "type": "table"
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
       "title": "Booster",
       "transformations": [
         {
@@ -755,7 +845,10 @@
       "type": "timeseries"
     },
     {
-      "datasource": "sciensano",
+      "datasource": {
+        "type": "grafana-simple-json-datasource",
+        "uid": "PBB404699A8B1E379"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -798,7 +891,7 @@
         "showUnfilled": true,
         "text": {}
       },
-      "pluginVersion": "8.2.2",
+      "pluginVersion": "8.3.4",
       "targets": [
         {
           "hide": false,
@@ -807,8 +900,6 @@
           "type": "table"
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
       "title": "Partial",
       "transformations": [
         {
@@ -819,7 +910,10 @@
       "type": "bargauge"
     },
     {
-      "datasource": "sciensano",
+      "datasource": {
+        "type": "grafana-simple-json-datasource",
+        "uid": "PBB404699A8B1E379"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -866,7 +960,7 @@
         "showUnfilled": true,
         "text": {}
       },
-      "pluginVersion": "8.2.2",
+      "pluginVersion": "8.3.4",
       "targets": [
         {
           "hide": false,
@@ -875,8 +969,6 @@
           "type": "table"
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
       "title": "Full",
       "transformations": [
         {
@@ -887,7 +979,10 @@
       "type": "bargauge"
     },
     {
-      "datasource": "sciensano",
+      "datasource": {
+        "type": "grafana-simple-json-datasource",
+        "uid": "PBB404699A8B1E379"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -934,7 +1029,7 @@
         "showUnfilled": true,
         "text": {}
       },
-      "pluginVersion": "8.2.2",
+      "pluginVersion": "8.3.4",
       "targets": [
         {
           "hide": false,
@@ -943,8 +1038,6 @@
           "type": "table"
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
       "title": "Booster",
       "transformations": [
         {
@@ -955,7 +1048,6 @@
       "type": "bargauge"
     },
     {
-      "datasource": null,
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -967,7 +1059,10 @@
       "type": "row"
     },
     {
-      "datasource": "sciensano",
+      "datasource": {
+        "type": "grafana-simple-json-datasource",
+        "uid": "PBB404699A8B1E379"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1046,13 +1141,14 @@
           "type": "table"
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
       "title": "Partial",
       "type": "timeseries"
     },
     {
-      "datasource": "sciensano",
+      "datasource": {
+        "type": "grafana-simple-json-datasource",
+        "uid": "PBB404699A8B1E379"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1131,13 +1227,14 @@
           "type": "table"
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
       "title": "Full",
       "type": "timeseries"
     },
     {
-      "datasource": "sciensano",
+      "datasource": {
+        "type": "grafana-simple-json-datasource",
+        "uid": "PBB404699A8B1E379"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1216,13 +1313,14 @@
           "type": "table"
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
       "title": "Booster",
       "type": "timeseries"
     },
     {
-      "datasource": "sciensano",
+      "datasource": {
+        "type": "grafana-simple-json-datasource",
+        "uid": "PBB404699A8B1E379"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1269,7 +1367,7 @@
         "showUnfilled": true,
         "text": {}
       },
-      "pluginVersion": "8.2.2",
+      "pluginVersion": "8.3.4",
       "targets": [
         {
           "hide": false,
@@ -1278,8 +1376,6 @@
           "type": "table"
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
       "title": "Partial",
       "transformations": [
         {
@@ -1290,7 +1386,10 @@
       "type": "bargauge"
     },
     {
-      "datasource": "sciensano",
+      "datasource": {
+        "type": "grafana-simple-json-datasource",
+        "uid": "PBB404699A8B1E379"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1337,7 +1436,7 @@
         "showUnfilled": true,
         "text": {}
       },
-      "pluginVersion": "8.2.2",
+      "pluginVersion": "8.3.4",
       "targets": [
         {
           "hide": false,
@@ -1346,8 +1445,6 @@
           "type": "table"
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
       "title": "Full",
       "transformations": [
         {
@@ -1358,7 +1455,10 @@
       "type": "bargauge"
     },
     {
-      "datasource": "sciensano",
+      "datasource": {
+        "type": "grafana-simple-json-datasource",
+        "uid": "PBB404699A8B1E379"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1405,7 +1505,7 @@
         "showUnfilled": true,
         "text": {}
       },
-      "pluginVersion": "8.2.2",
+      "pluginVersion": "8.3.4",
       "targets": [
         {
           "hide": false,
@@ -1414,8 +1514,6 @@
           "type": "table"
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
       "title": "Booster",
       "transformations": [
         {
@@ -1427,7 +1525,7 @@
     }
   ],
   "refresh": "5m",
-  "schemaVersion": 31,
+  "schemaVersion": 34,
   "style": "dark",
   "tags": [],
   "templating": {
@@ -1441,5 +1539,6 @@
   "timezone": "",
   "title": "Sciensano - Vaccinations",
   "uid": "KU9aRfgRz",
-  "version": 24
+  "version": 7,
+  "weekStart": ""
 }

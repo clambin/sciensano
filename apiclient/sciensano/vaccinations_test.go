@@ -58,12 +58,14 @@ func TestAPIVaccinationsResponseEntry_GetTimestamp(t *testing.T) {
 
 func TestAPIVaccinationsResponseEntry_GetGroupFieldValue(t *testing.T) {
 	entry := sciensano.APIVaccinationsResponse{
-		Region:   "Flanders",
-		AgeGroup: "85+",
+		Manufacturer: "Moderna",
+		Region:       "Flanders",
+		AgeGroup:     "85+",
 	}
 
 	assert.Equal(t, "Flanders", entry.GetGroupFieldValue(apiclient.GroupByRegion))
 	assert.Equal(t, "85+", entry.GetGroupFieldValue(apiclient.GroupByAgeGroup))
+	assert.Equal(t, "Moderna", entry.GetGroupFieldValue(apiclient.GroupByManufacturer))
 }
 
 func BenchmarkClient_GetVaccinations(b *testing.B) {

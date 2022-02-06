@@ -9,12 +9,13 @@ import (
 
 // APIVaccinationsResponse is a single entry in APIVaccinationResponse
 type APIVaccinationsResponse struct {
-	TimeStamp TimeStamp `json:"DATE"`
-	Region    string    `json:"REGION"`
-	AgeGroup  string    `json:"AGEGROUP"`
-	Gender    string    `json:"SEX"`
-	Dose      string    `json:"DOSE"`
-	Count     int       `json:"COUNT"`
+	TimeStamp    TimeStamp `json:"DATE"`
+	Manufacturer string    `json:"BRAND"`
+	Region       string    `json:"REGION"`
+	AgeGroup     string    `json:"AGEGROUP"`
+	Gender       string    `json:"SEX"`
+	Dose         string    `json:"DOSE"`
+	Count        int       `json:"COUNT"`
 }
 
 // APIVaccinationsResponses is a slice of APIVaccinationResponse structures
@@ -35,6 +36,8 @@ func (v *APIVaccinationsResponse) GetGroupFieldValue(groupField int) (value stri
 		value = v.Region
 	case apiclient.GroupByAgeGroup:
 		value = v.AgeGroup
+	case apiclient.GroupByManufacturer:
+		value = v.Manufacturer
 	}
 	return
 }

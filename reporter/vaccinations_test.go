@@ -2,6 +2,7 @@ package reporter_test
 
 import (
 	"github.com/clambin/sciensano/apiclient"
+	"strconv"
 	"time"
 )
 
@@ -18,46 +19,52 @@ import (
 var (
 	testVaccinationsResponse = []apiclient.APIResponse{
 		&sciensano.APIVaccinationsResponse{
-			TimeStamp: sciensano.TimeStamp{Time: time.Date(2021, 3, 11, 0, 0, 0, 0, time.UTC)},
-			Region:    "Brussels",
-			AgeGroup:  "35-44",
-			Dose:      "E",
-			Count:     5,
+			TimeStamp:    sciensano.TimeStamp{Time: time.Date(2021, 3, 11, 0, 0, 0, 0, time.UTC)},
+			Manufacturer: "Moderna",
+			Region:       "Brussels",
+			AgeGroup:     "35-44",
+			Dose:         "E",
+			Count:        5,
 		},
 		&sciensano.APIVaccinationsResponse{
-			TimeStamp: sciensano.TimeStamp{Time: time.Date(2021, 3, 10, 0, 0, 0, 0, time.UTC)},
-			Region:    "Flanders",
-			AgeGroup:  "25-34",
-			Dose:      "A",
-			Count:     1,
+			TimeStamp:    sciensano.TimeStamp{Time: time.Date(2021, 3, 10, 0, 0, 0, 0, time.UTC)},
+			Manufacturer: "Pfizer-BioNTech",
+			Region:       "Flanders",
+			AgeGroup:     "25-34",
+			Dose:         "A",
+			Count:        1,
 		},
 		&sciensano.APIVaccinationsResponse{
-			TimeStamp: sciensano.TimeStamp{Time: time.Date(2021, 3, 10, 0, 0, 0, 0, time.UTC)},
-			Region:    "Flanders",
-			AgeGroup:  "35-44",
-			Dose:      "A",
-			Count:     1,
+			TimeStamp:    sciensano.TimeStamp{Time: time.Date(2021, 3, 10, 0, 0, 0, 0, time.UTC)},
+			Manufacturer: "AstraZeneca-Oxford",
+			Region:       "Flanders",
+			AgeGroup:     "35-44",
+			Dose:         "A",
+			Count:        1,
 		},
 		&sciensano.APIVaccinationsResponse{
-			TimeStamp: sciensano.TimeStamp{Time: time.Date(2021, 3, 10, 0, 0, 0, 0, time.UTC)},
-			Region:    "Flanders",
-			AgeGroup:  "35-44",
-			Dose:      "C",
-			Count:     4,
+			TimeStamp:    sciensano.TimeStamp{Time: time.Date(2021, 3, 10, 0, 0, 0, 0, time.UTC)},
+			Manufacturer: "Johnson&Johnson",
+			Region:       "Flanders",
+			AgeGroup:     "35-44",
+			Dose:         "C",
+			Count:        4,
 		},
 		&sciensano.APIVaccinationsResponse{
-			TimeStamp: sciensano.TimeStamp{Time: time.Date(2021, 3, 10, 0, 0, 0, 0, time.UTC)},
-			Region:    "Brussels",
-			AgeGroup:  "35-44",
-			Dose:      "B",
-			Count:     1,
+			TimeStamp:    sciensano.TimeStamp{Time: time.Date(2021, 3, 10, 0, 0, 0, 0, time.UTC)},
+			Manufacturer: "Moderna",
+			Region:       "Brussels",
+			AgeGroup:     "35-44",
+			Dose:         "B",
+			Count:        1,
 		},
 		&sciensano.APIVaccinationsResponse{
-			TimeStamp: sciensano.TimeStamp{Time: time.Date(2021, 3, 10, 0, 0, 0, 0, time.UTC)},
-			Region:    "Brussels",
-			AgeGroup:  "35-44",
-			Dose:      "E",
-			Count:     5,
+			TimeStamp:    sciensano.TimeStamp{Time: time.Date(2021, 3, 10, 0, 0, 0, 0, time.UTC)},
+			Manufacturer: "Moderna",
+			Region:       "Brussels",
+			AgeGroup:     "35-44",
+			Dose:         "E",
+			Count:        5,
 		},
 	}
 )
@@ -203,6 +210,43 @@ func TestClient_GetVaccinationsByRegion(t *testing.T) {
 	mock.AssertExpectationsForObjects(t, cache)
 }
 
+func TestClient_GetVaccinationsByManufacturer(t *testing.T) {
+	cache := &mocks.Holder{}
+	cache.On("Get", "Vaccinations").Return(testVaccinationsResponse, true)
+
+	client := reporter.New(time.Hour)
+	client.APICache = cache
+
+	testCases := []vaccinationsTestCase{
+		{
+			timestamps: []time.Time{
+				time.Date(2021, time.March, 10, 0, 0, 0, 0, time.UTC),
+				time.Date(2021, time.March, 11, 0, 0, 0, 0, time.UTC),
+			},
+			values: map[string][]float64{
+				"AstraZeneca-Oxford": {1, 0},
+				"Pfizer-BioNTech":    {1, 0},
+				"Moderna":            {6, 5},
+				"Johnson&Johnson":    {4, 0},
+			},
+		},
+	}
+
+	for index, testCase := range testCases {
+		result, err := client.GetVaccinationsByManufacturer()
+		require.NoError(t, err, index)
+		require.NoError(t, err, index)
+		assert.Equal(t, testCase.timestamps, result.GetTimestamps(), index)
+		assert.Len(t, result.GetColumns(), len(testCase.values), index)
+		for column, expected := range testCase.values {
+			values, ok := result.GetValues(column)
+			require.True(t, ok, column+"-"+strconv.Itoa(index))
+			assert.Equal(t, expected, values, column+"-"+strconv.Itoa(index))
+		}
+	}
+	mock.AssertExpectationsForObjects(t, cache)
+}
+
 func TestClient_GetVaccinations_Failure(t *testing.T) {
 	cache := &mocks.Holder{}
 	cache.On("Get", "Vaccinations").Return(nil, false)
@@ -211,13 +255,16 @@ func TestClient_GetVaccinations_Failure(t *testing.T) {
 	client.APICache = cache
 
 	_, err := client.GetVaccinations()
-	require.Error(t, err)
+	assert.Error(t, err)
 
 	_, err = client.GetVaccinationsByRegion(reporter.VaccinationTypePartial)
-	require.Error(t, err)
+	assert.Error(t, err)
 
 	_, err = client.GetVaccinationsByAgeGroup(reporter.VaccinationTypePartial)
-	require.Error(t, err)
+	assert.Error(t, err)
+
+	_, err = client.GetVaccinationsByManufacturer()
+	assert.Error(t, err)
 
 	mock.AssertExpectationsForObjects(t, cache)
 }

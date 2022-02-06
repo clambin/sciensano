@@ -62,6 +62,7 @@ func NewServer() (server *Server) {
 		"vacc-region-rate-partial":  &vaccinations.RateHandler{Reporter: server.Reporter, Scope: vaccinations.ScopeRegion, VaccinationType: reporter.VaccinationTypePartial, Demographics: server.Demographics},
 		"vacc-region-rate-full":     &vaccinations.RateHandler{Reporter: server.Reporter, Scope: vaccinations.ScopeRegion, VaccinationType: reporter.VaccinationTypeFull, Demographics: server.Demographics},
 		"vacc-region-rate-booster":  &vaccinations.RateHandler{Reporter: server.Reporter, Scope: vaccinations.ScopeRegion, VaccinationType: reporter.VaccinationTypeBooster, Demographics: server.Demographics},
+		"vacc-manufacturer":         &vaccinations.ManufacturerHandler{Reporter: server.Reporter},
 		"vaccines":                  &vaccinesHandler.OverviewHandler{Reporter: server.Reporter},
 		"vaccines-manufacturer":     &vaccinesHandler.ManufacturerHandler{Reporter: server.Reporter},
 		"vaccines-stats":            &vaccinesHandler.StatsHandler{Reporter: server.Reporter},

@@ -38,6 +38,7 @@ func TestTargets(t *testing.T) {
 		"vacc-age-rate-booster",
 		"vacc-age-rate-full",
 		"vacc-age-rate-partial",
+		"vacc-manufacturer",
 		"vacc-region-booster",
 		"vacc-region-full",
 		"vacc-region-partial",

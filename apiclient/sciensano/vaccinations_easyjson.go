@@ -118,6 +118,8 @@ func easyjson320b91e2DecodeGithubComClambinSciensanoApiclientSciensano1(in *jlex
 			if data := in.Raw(); in.Ok() {
 				in.AddError((out.TimeStamp).UnmarshalJSON(data))
 			}
+		case "BRAND":
+			out.Manufacturer = string(in.String())
 		case "REGION":
 			out.Region = string(in.String())
 		case "AGEGROUP":
@@ -146,6 +148,11 @@ func easyjson320b91e2EncodeGithubComClambinSciensanoApiclientSciensano1(out *jwr
 		const prefix string = ",\"DATE\":"
 		out.RawString(prefix[1:])
 		out.Raw((in.TimeStamp).MarshalJSON())
+	}
+	{
+		const prefix string = ",\"BRAND\":"
+		out.RawString(prefix)
+		out.String(string(in.Manufacturer))
 	}
 	{
 		const prefix string = ",\"REGION\":"
