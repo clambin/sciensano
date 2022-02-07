@@ -2,23 +2,21 @@ package simplejsonserver_test
 
 import (
 	"context"
-	"encoding/json"
-	"errors"
+	mockDemographics "github.com/clambin/sciensano/demographics/mocks"
 	"github.com/clambin/sciensano/simplejsonserver"
 	"github.com/clambin/simplejson/v3"
 	"github.com/clambin/simplejson/v3/common"
 	"github.com/clambin/simplejson/v3/query"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"io"
-	"net/http"
 	"sync"
 	"testing"
 	"time"
 )
 
 func TestTargets(t *testing.T) {
-	h := simplejsonserver.NewServer()
+	h := simplejsonserver.NewServer("")
 
 	assert.Equal(t, []string{
 		"cases",
@@ -55,20 +53,20 @@ func TestTargets(t *testing.T) {
 }
 
 func TestRun(t *testing.T) {
-	h := simplejsonserver.NewServer()
+	demographicsClient := &mockDemographics.Fetcher{}
+	h := simplejsonserver.NewServerWithDemographicsClient(demographicsClient)
 
-	go func() {
-		err := h.Run(8080)
-		require.True(t, errors.Is(err, http.ErrServerClosed), err.Error())
-	}()
-
-	require.Eventually(t, func() bool {
-		response, err := http.Get("http://127.0.0.1:8080/health")
-		return err == nil && response.StatusCode == http.StatusOK
-	}, 30*time.Second, 10*time.Millisecond)
+	demographicsClient.On("GetByRegion").Return(map[string]int{})
+	demographicsClient.On("GetByAgeBracket", mock.AnythingOfType("bracket.Bracket")).Return(0)
+	demographicsClient.On("Run", mock.AnythingOfType("*context.emptyCtx")).Return()
 
 	ctx := context.Background()
-	h.Reporter.APICache.Refresh(ctx)
+	h.RunBackgroundTasks(ctx)
+
+	require.Eventually(t, func() bool {
+		h := h.Reporter.APICache.Stats()
+		return len(h) == 6
+	}, time.Minute, time.Second)
 
 	req := query.Request{Args: query.Args{Args: common.Args{Range: common.Range{To: time.Now()}}}}
 
@@ -83,30 +81,27 @@ func TestRun(t *testing.T) {
 	}
 	wg.Wait()
 
-	response, err := http.Get("http://127.0.0.1:8080/health")
-	require.NoError(t, err)
-	require.Equal(t, http.StatusOK, response.StatusCode)
-
-	body, _ := io.ReadAll(response.Body)
-	_ = response.Body.Close()
-	var result interface{}
-	err = json.Unmarshal(body, &result)
-
-	require.NoError(t, err)
-	assert.Contains(t, result, "Handlers")
-	assert.Contains(t, result, "APICache")
-	assert.Contains(t, result, "ReporterCache")
-	assert.Contains(t, result, "Demographics")
+	for name, count := range h.Reporter.APICache.Stats() {
+		assert.NotZero(t, count, name)
+	}
 }
 
 func BenchmarkHandlers_Run(b *testing.B) {
-	h := simplejsonserver.NewServer()
+	demographicsClient := &mockDemographics.Fetcher{}
+	h := simplejsonserver.NewServerWithDemographicsClient(demographicsClient)
+
+	demographicsClient.On("GetByRegion").Return(map[string]int{})
+	demographicsClient.On("GetByAgeBracket", mock.AnythingOfType("bracket.Bracket")).Return(0)
 
 	ctx := context.Background()
 	req := query.Request{Args: query.Args{Args: common.Args{Range: common.Range{To: time.Now()}}}}
 
-	h.Reporter.APICache.Refresh(context.Background())
-	_ = h.Demographics.GetRegionFigures()
+	go h.Reporter.APICache.Run(context.Background(), time.Minute)
+	require.Eventually(b, func() bool {
+		health := h.Reporter.APICache.Stats()
+		//b.Logf("health: %v", health)
+		return len(health) == 6
+	}, 10*time.Second, 100*time.Millisecond)
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {

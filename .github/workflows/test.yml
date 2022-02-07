@@ -4,7 +4,7 @@ on:
   push:
     branches-ignore:
       - master
-      - vaccines
+      - population
     paths-ignore:
       - '**.md'
       - 'assets/grafana/dashboards/**'
@@ -20,6 +20,7 @@ jobs:
           go-version: 1.17
       - name: test
         run: |
+          unzip data/small_demographics.zip -d data
           go test ./... -race -coverprofile=coverage.txt.tmp -covermode=atomic
           grep -v "_easyjson.go" coverage.txt.tmp > coverage.txt
       - uses: codecov/codecov-action@v2.1.0

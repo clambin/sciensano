@@ -2,6 +2,8 @@ package apiclient
 
 import "time"
 
+// APIResponse is the interface that each apiclient response needs to adhere to.
+// These allow datasets to process API responses in a generic way
 type APIResponse interface {
 	GetTimestamp() time.Time
 	GetGroupFieldValue(groupField int) (value string)

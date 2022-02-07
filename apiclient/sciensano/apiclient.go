@@ -36,8 +36,8 @@ type Client struct {
 }
 
 // Update calls all endpoints and returns this to the caller. This is used by a cache to refresh its content
-func (client *Client) Update(ctx context.Context) (entries map[string][]apiclient.APIResponse, err error) {
-	before := time.Now()
+func (client *Client) Update(ctx context.Context, ch chan<- cache.FetcherResponse) {
+	start := time.Now()
 	log.Debug("refreshing Reporter API cache")
 
 	getters := map[string]func(context.Context) ([]apiclient.APIResponse, error){
@@ -51,34 +51,17 @@ func (client *Client) Update(ctx context.Context) (entries map[string][]apiclien
 	const maxParallel = 3
 	s := semaphore.NewWeighted(maxParallel)
 
-	type r struct {
-		name    string
-		results []apiclient.APIResponse
-		err     error
-	}
-	output := make(chan r, len(getters))
 	for name, getter := range getters {
 		_ = s.Acquire(ctx, 1)
-		go func(name string, g func(context.Context) ([]apiclient.APIResponse, error)) {
-			results, err2 := g(ctx)
-			output <- r{name: name, results: results, err: err2}
+		go func(name string, getter func(context.Context) ([]apiclient.APIResponse, error)) {
+			cache.Fetch(ctx, ch, name, getter)
 			s.Release(1)
 		}(name, getter)
 	}
 
 	_ = s.Acquire(ctx, maxParallel)
-	close(output)
 
-	entries = make(map[string][]apiclient.APIResponse)
-	for resp := range output {
-		if resp.err == nil {
-			entries[resp.name] = resp.results
-		} else {
-			err = resp.err
-		}
-	}
-
-	log.WithField("duration", time.Now().Sub(before)).Debugf("refreshed Reporter API cache")
+	log.WithField("duration", time.Since(start)).Debugf("refreshed Reporter API cache")
 	return
 }
 

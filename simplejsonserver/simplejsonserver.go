@@ -21,19 +21,25 @@ import (
 type Server struct {
 	simplejson.Server
 	Reporter     *reporter.Client
-	Demographics demographics.Demographics
+	Demographics demographics.Fetcher
 }
 
 const refreshInterval = 1 * time.Hour
 
-// NewServer a Server object
-func NewServer() (server *Server) {
+// NewServer creates a Server object
+func NewServer(demographicsPath string) (server *Server) {
+	return NewServerWithDemographicsClient(&demographics.Server{
+		Path:     demographicsPath,
+		Interval: 24 * time.Hour,
+	})
+}
+
+// NewServerWithDemographicsClient a Server object
+func NewServerWithDemographicsClient(demographicsClient demographics.Fetcher) (server *Server) {
 	server = &Server{
-		Server:   simplejson.Server{Name: "sciensano"},
-		Reporter: reporter.New(refreshInterval),
-		Demographics: &demographics.Store{
-			AgeBrackets: demographics.DefaultAgeBrackets,
-		},
+		Server:       simplejson.Server{Name: "sciensano"},
+		Reporter:     reporter.New(refreshInterval),
+		Demographics: demographicsClient,
 	}
 
 	server.Handlers = map[string]simplejson.Handler{
@@ -56,12 +62,12 @@ func NewServer() (server *Server) {
 		"vacc-region-partial":       &vaccinations.GroupedHandler{Reporter: server.Reporter, Scope: vaccinations.ScopeRegion, VaccinationType: reporter.VaccinationTypePartial},
 		"vacc-region-full":          &vaccinations.GroupedHandler{Reporter: server.Reporter, Scope: vaccinations.ScopeRegion, VaccinationType: reporter.VaccinationTypeFull},
 		"vacc-region-booster":       &vaccinations.GroupedHandler{Reporter: server.Reporter, Scope: vaccinations.ScopeRegion, VaccinationType: reporter.VaccinationTypeBooster},
-		"vacc-age-rate-partial":     &vaccinations.RateHandler{Reporter: server.Reporter, Scope: vaccinations.ScopeAge, VaccinationType: reporter.VaccinationTypePartial, Demographics: server.Demographics},
-		"vacc-age-rate-full":        &vaccinations.RateHandler{Reporter: server.Reporter, Scope: vaccinations.ScopeAge, VaccinationType: reporter.VaccinationTypeFull, Demographics: server.Demographics},
-		"vacc-age-rate-booster":     &vaccinations.RateHandler{Reporter: server.Reporter, Scope: vaccinations.ScopeAge, VaccinationType: reporter.VaccinationTypeBooster, Demographics: server.Demographics},
-		"vacc-region-rate-partial":  &vaccinations.RateHandler{Reporter: server.Reporter, Scope: vaccinations.ScopeRegion, VaccinationType: reporter.VaccinationTypePartial, Demographics: server.Demographics},
-		"vacc-region-rate-full":     &vaccinations.RateHandler{Reporter: server.Reporter, Scope: vaccinations.ScopeRegion, VaccinationType: reporter.VaccinationTypeFull, Demographics: server.Demographics},
-		"vacc-region-rate-booster":  &vaccinations.RateHandler{Reporter: server.Reporter, Scope: vaccinations.ScopeRegion, VaccinationType: reporter.VaccinationTypeBooster, Demographics: server.Demographics},
+		"vacc-age-rate-partial":     &vaccinations.RateHandler{Reporter: server.Reporter, Scope: vaccinations.ScopeAge, VaccinationType: reporter.VaccinationTypePartial, Fetcher: server.Demographics},
+		"vacc-age-rate-full":        &vaccinations.RateHandler{Reporter: server.Reporter, Scope: vaccinations.ScopeAge, VaccinationType: reporter.VaccinationTypeFull, Fetcher: server.Demographics},
+		"vacc-age-rate-booster":     &vaccinations.RateHandler{Reporter: server.Reporter, Scope: vaccinations.ScopeAge, VaccinationType: reporter.VaccinationTypeBooster, Fetcher: server.Demographics},
+		"vacc-region-rate-partial":  &vaccinations.RateHandler{Reporter: server.Reporter, Scope: vaccinations.ScopeRegion, VaccinationType: reporter.VaccinationTypePartial, Fetcher: server.Demographics},
+		"vacc-region-rate-full":     &vaccinations.RateHandler{Reporter: server.Reporter, Scope: vaccinations.ScopeRegion, VaccinationType: reporter.VaccinationTypeFull, Fetcher: server.Demographics},
+		"vacc-region-rate-booster":  &vaccinations.RateHandler{Reporter: server.Reporter, Scope: vaccinations.ScopeRegion, VaccinationType: reporter.VaccinationTypeBooster, Fetcher: server.Demographics},
 		"vacc-manufacturer":         &vaccinations.ManufacturerHandler{Reporter: server.Reporter},
 		"vaccines":                  &vaccinesHandler.OverviewHandler{Reporter: server.Reporter},
 		"vaccines-manufacturer":     &vaccinesHandler.ManufacturerHandler{Reporter: server.Reporter},
@@ -74,10 +80,10 @@ func NewServer() (server *Server) {
 
 // RunBackgroundTasks starts background tasks to support Server
 func (server *Server) RunBackgroundTasks(ctx context.Context) {
-	// force load of demographics data on startup
-	go server.Demographics.AutoRefresh(ctx, 24*time.Hour)
+	// set up auto-refresh of demographics
+	go server.Demographics.Run(ctx)
 	// set up auto-refresh of reports
-	go server.Reporter.APICache.AutoRefresh(ctx, time.Hour)
+	go server.Reporter.APICache.Run(ctx, time.Hour)
 }
 
 // Run runs the API handler server
@@ -94,12 +100,10 @@ func (server *Server) health(w http.ResponseWriter, _ *http.Request) {
 		Handlers      int
 		APICache      map[string]int
 		ReporterCache map[string]int
-		Demographics  map[string]int
 	}{
 		Handlers:      len(server.Handlers),
 		APICache:      server.Reporter.APICache.Stats(),
 		ReporterCache: server.Reporter.ReportCache.Stats(),
-		Demographics:  server.Demographics.Stats(),
 	}
 
 	encoder := json.NewEncoder(w)

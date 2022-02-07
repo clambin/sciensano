@@ -3,21 +3,16 @@ package cache
 import (
 	"context"
 	"github.com/clambin/sciensano/apiclient"
+	log "github.com/sirupsen/logrus"
 	"sync"
 	"time"
 )
-
-// Fetcher interface contains all functions an API interface needs to implement to be used by Cache
-type Fetcher interface {
-	Update(ctx context.Context) (entries map[string][]apiclient.APIResponse, err error)
-}
 
 // Holder interface contains all functions required to mock a Cache
 //go:generate mockery --name Holder
 type Holder interface {
 	Get(name string) (entries []apiclient.APIResponse, found bool)
-	AutoRefresh(ctx context.Context, interval time.Duration)
-	Refresh(ctx context.Context)
+	Run(ctx context.Context, interval time.Duration)
 	Stats() (stats map[string]int)
 }
 
@@ -28,6 +23,8 @@ type Cache struct {
 	Fetchers []Fetcher
 }
 
+var _ Holder = &Cache{}
+
 // Get retrieves a cached item
 func (c *Cache) Get(name string) (entries []apiclient.APIResponse, found bool) {
 	c.lock.RLock()
@@ -36,36 +33,42 @@ func (c *Cache) Get(name string) (entries []apiclient.APIResponse, found bool) {
 	return
 }
 
-// AutoRefresh periodically updates the cache
-func (c *Cache) AutoRefresh(ctx context.Context, interval time.Duration) {
-	c.Refresh(ctx)
+// Run starts the cache and periodically pulls in new data
+func (c *Cache) Run(ctx context.Context, interval time.Duration) {
+	c.lock.Lock()
+	c.entries = make(map[string][]apiclient.APIResponse)
+	c.lock.Unlock()
 
-	ticker := time.NewTicker(interval)
+	ch := make(chan FetcherResponse)
+
+	for _, fetcher := range c.Fetchers {
+		go startFetcher(ctx, interval, fetcher, ch)
+	}
+
+	for running := true; running; {
+		select {
+		case <-ctx.Done():
+			running = false
+		case response := <-ch:
+			c.lock.Lock()
+			c.entries[response.Name] = response.Response
+			c.lock.Unlock()
+			log.WithField("name", response.Name).Info("API response cached")
+		}
+	}
+}
+
+func startFetcher(ctx context.Context, interval time.Duration, fetcher Fetcher, ch chan<- FetcherResponse) {
+	fetcher.Update(ctx, ch)
+
+	ticker := time.NewTimer(interval)
 	for running := true; running; {
 		select {
 		case <-ctx.Done():
 			running = false
 		case <-ticker.C:
-			c.Refresh(ctx)
+			fetcher.Update(ctx, ch)
 		}
-	}
-}
-
-// Refresh updates the cache
-func (c *Cache) Refresh(ctx context.Context) {
-	newEntries := make(map[string][]apiclient.APIResponse)
-	for _, fetcher := range c.Fetchers {
-		// TODO: run these in parallel?
-		if entries, err := fetcher.Update(ctx); err == nil {
-			for key, value := range entries {
-				newEntries[key] = value
-			}
-		}
-	}
-	if len(newEntries) > 0 {
-		c.lock.Lock()
-		c.entries = newEntries
-		c.lock.Unlock()
 	}
 }
 

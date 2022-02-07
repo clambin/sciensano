@@ -1,44 +1,69 @@
 package demographics
 
 import (
-	sciensanoMetrics "github.com/clambin/sciensano/metrics"
 	log "github.com/sirupsen/logrus"
+	"os"
 	"time"
 )
 
-// Update refreshes the demographics cache
-func (store *Store) Update() {
-	start := time.Now()
-	if byAge, byRegion, err := store.refresh(); err == nil {
-		// only lock when we have retrieved the data (as this can take over a minute on RPI)
-		// so that handlers that need demographics data are never blocked while we refresh
-		store.lock.Lock()
-		store.byAge = byAge
-		store.byRegion = byRegion
-		store.lock.Unlock()
-		log.Infof("loaded demographics in %s", time.Now().Sub(start))
-	} else {
-		log.WithError(err).Warning("failed to retrieve demographics")
+func (s *Server) update() (err error) {
+	var mtime time.Time
+	var updated bool
+	mtime, updated, err = s.isUpdated()
+	if err != nil || updated == false {
+		return
 	}
+
+	err = s.process()
+	if err != nil {
+		return
+	}
+
+	s.mtime = mtime
 	return
 }
 
-func (store *Store) refresh() (byAge map[Bracket]int, byRegion map[string]int, err error) {
-	datafile := DataFile{
-		TempDirectory: store.TempDirectory,
-		URL:           store.URL,
-		Metrics:       sciensanoMetrics.Metrics,
+func (s *Server) isUpdated() (mtime time.Time, updated bool, err error) {
+	var stats os.FileInfo
+	stats, err = os.Stat(s.Path)
+	if err != nil {
+		return
 	}
-	defer datafile.Remove()
 
-	if err = datafile.Download(); err == nil {
-		var byRegionRaw, byAgeRaw map[string]int
-		byRegionRaw, byAgeRaw, err = groupPopulation(datafile.filename)
+	mtime = stats.ModTime()
+	updated = mtime.After(s.mtime)
+	return
+}
 
-		if err == nil {
-			byAge = groupPopulationByAge(byAgeRaw, store.AgeBrackets)
-			byRegion = groupPopulationByRegion(byRegionRaw)
-		}
+const ostbelgienPopulation = 78000
+
+func (s *Server) process() (err error) {
+	log.Info("loading demographics")
+	var (
+		byRegion map[string]int
+		byAge    map[int]int
+	)
+
+	byRegion, byAge, err = groupPopulation(s.Path)
+	if err != nil {
+		return err
 	}
+
+	// demographic figures counts Ostbelgien as part of Wallonia. Hardcode the split here.
+	// yes, it's ugly. :-)
+	_, found := byRegion["Ostbelgien"]
+	if !found {
+		byRegion["Ostbelgien"] = ostbelgienPopulation
+		population, _ := byRegion["Wallonia"]
+		population -= ostbelgienPopulation
+		byRegion["Wallonia"] = population
+	}
+
+	s.lock.Lock()
+	defer s.lock.Unlock()
+	s.byRegion = byRegion
+	s.byAge = byAge
+
+	log.Info("loaded demographics")
 	return
 }

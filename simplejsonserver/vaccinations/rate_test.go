@@ -3,7 +3,8 @@ package vaccinations_test
 import (
 	"context"
 	mockCache "github.com/clambin/sciensano/apiclient/cache/mocks"
-	"github.com/clambin/sciensano/demographics/mocks"
+	"github.com/clambin/sciensano/demographics/bracket"
+	mockDemographics "github.com/clambin/sciensano/demographics/mocks"
 	"github.com/clambin/sciensano/reporter"
 	"github.com/clambin/sciensano/simplejsonserver/vaccinations"
 	"github.com/clambin/simplejson/v3/common"
@@ -94,20 +95,21 @@ func TestRateHandler(t *testing.T) {
 	client.APICache = cache
 	cache.On("Get", "Vaccinations").Return(vaccinationTestData, true)
 
-	demographics := &mocks.Demographics{}
-	demographics.
-		On("GetRegionFigures").
+	demographicsClient := &mockDemographics.Fetcher{}
+	demographicsClient.
+		On("GetByRegion").
 		Return(map[string]int{
 			"Flanders": 100,
 			//"Brussels": 10,
 		})
 
-	demographics.
-		On("GetAgeGroupFigures").
-		Return(map[string]int{
-			"25-34": 100,
-			"35-44": 10,
-		})
+	demographicsClient.
+		On("GetByAgeBracket", bracket.Bracket{Low: 25, High: 34}).
+		Return(100)
+
+	demographicsClient.
+		On("GetByAgeBracket", bracket.Bracket{Low: 35, High: 44}).
+		Return(10)
 
 	ctx := context.Background()
 	req := query.Request{Args: query.Args{Args: common.Args{Range: common.Range{To: timestamp.Add(24 * time.Hour)}}}}
@@ -117,7 +119,7 @@ func TestRateHandler(t *testing.T) {
 			Reporter:        client,
 			VaccinationType: testCase.VaccinationType,
 			Scope:           testCase.Scope,
-			Demographics:    demographics,
+			Fetcher:         demographicsClient,
 		}
 
 		response, err := h.Endpoints().Query(ctx, req)
@@ -125,7 +127,7 @@ func TestRateHandler(t *testing.T) {
 		assert.Equal(t, testCase.expected, response, index)
 	}
 
-	mock.AssertExpectationsForObjects(t, cache, demographics)
+	mock.AssertExpectationsForObjects(t, cache, demographicsClient)
 }
 
 func TestRateHandler_Failure(t *testing.T) {
@@ -133,7 +135,7 @@ func TestRateHandler_Failure(t *testing.T) {
 	client := reporter.New(time.Hour)
 	client.APICache = cache
 
-	demographics := &mocks.Demographics{}
+	demographicsClient := &mockDemographics.Fetcher{}
 
 	ctx := context.Background()
 	req := query.Request{Args: query.Args{Args: common.Args{Range: common.Range{To: timestamp.Add(24 * time.Hour)}}}}
@@ -141,14 +143,14 @@ func TestRateHandler_Failure(t *testing.T) {
 		Reporter:        client,
 		VaccinationType: reporter.VaccinationTypeBooster,
 		Scope:           vaccinations.ScopeAge,
-		Demographics:    demographics,
+		Fetcher:         demographicsClient,
 	}
 
 	cache.On("Get", "Vaccinations").Return(nil, false).Once()
 	_, err := h.Endpoints().Query(ctx, req)
 	assert.Error(t, err)
 
-	mock.AssertExpectationsForObjects(t, cache, demographics)
+	mock.AssertExpectationsForObjects(t, cache, demographicsClient)
 }
 
 func BenchmarkVaccinationsRateHandler(b *testing.B) {
@@ -156,8 +158,8 @@ func BenchmarkVaccinationsRateHandler(b *testing.B) {
 	client := reporter.New(time.Hour)
 	client.APICache = cache
 
-	demographics := &mocks.Demographics{}
-	demographics.On("GetRegionFigures").Return(map[string]int{"Brussels": 1, "Flanders": 6, "Wallonia": 4})
+	demographicsClient := &mockDemographics.Fetcher{}
+	demographicsClient.On("GetByRegion").Return(map[string]int{"Brussels": 1, "Flanders": 6, "Wallonia": 4})
 
 	content := buildBigResponse()
 	cache.On("Get", "Vaccinations").Return(content, true)
@@ -166,9 +168,10 @@ func BenchmarkVaccinationsRateHandler(b *testing.B) {
 		Reporter:        client,
 		VaccinationType: reporter.VaccinationTypeBooster,
 		Scope:           vaccinations.ScopeRegion,
-		Demographics:    demographics,
+		Fetcher:         demographicsClient,
 	}
 
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_, err := h.Endpoints().Query(context.Background(), query.Request{})
 		if err != nil {

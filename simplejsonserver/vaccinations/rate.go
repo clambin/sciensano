@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/clambin/sciensano/demographics"
+	"github.com/clambin/sciensano/demographics/bracket"
 	"github.com/clambin/sciensano/reporter"
 	"github.com/clambin/simplejson/v3"
 	"github.com/clambin/simplejson/v3/query"
@@ -13,7 +14,7 @@ type RateHandler struct {
 	reporter.Reporter
 	reporter.VaccinationType
 	Scope
-	demographics.Demographics
+	demographics.Fetcher
 	helper *GroupedHandler
 }
 
@@ -43,21 +44,25 @@ func (r *RateHandler) tableQuery(ctx context.Context, req query.Request) (respon
 
 	var figures map[string]int
 	switch r.Scope {
-	case ScopeAge:
-		figures = r.Demographics.GetAgeGroupFigures()
 	case ScopeRegion:
-		figures = r.Demographics.GetRegionFigures()
-		// demographics counts figures for Ostbelgien as part of Wallonia. Hardcode the split here.
-		// yes, it's ugly. :-)
-		_, ok := figures["Ostbelgien"]
-		if !ok {
-			population, _ := figures["Wallonia"]
-			population -= 78000
-			figures["Wallonia"] = population
-			figures["Ostbelgien"] = 78000
+		figures = r.Fetcher.GetByRegion()
+	case ScopeAge:
+		figures = make(map[string]int)
+		for _, column := range resp.Columns {
+			if column.Text == "timestamp" {
+				continue
+			}
+			var b bracket.Bracket
+			b, err = bracket.FromString(column.Text)
+			if err != nil {
+				return nil, fmt.Errorf("invalid age bracket: '%s' : %w", column.Text, err)
+			}
+			figures[column.Text] = r.Fetcher.GetByAgeBracket(b)
 		}
 	}
-	prorateFigures(resp, figures)
+	if err == nil {
+		prorateFigures(resp, figures)
+	}
 	return
 }
 

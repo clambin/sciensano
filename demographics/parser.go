@@ -1,9 +1,8 @@
 package demographics
 
 import (
+	"fmt"
 	csv "github.com/rovaughn/fastcsv"
-	log "github.com/sirupsen/logrus"
-	"math"
 	"strconv"
 )
 
@@ -13,7 +12,7 @@ type populationRecord struct {
 	Count  []byte `csv:"MS_POPULATION\r"`
 }
 
-func groupPopulation(filename string) (byRegion map[string]int, byAge map[string]int, err error) {
+func groupPopulation(filename string) (byRegion map[string]int, byAge map[int]int, err error) {
 	var record populationRecord
 	var reader *csv.FileReader
 	reader, err = csv.NewFileReader(filename, '|', &record)
@@ -27,18 +26,27 @@ func groupPopulation(filename string) (byRegion map[string]int, byAge map[string
 	}()
 
 	byRegion = make(map[string]int)
-	byAge = make(map[string]int)
+	byAge = make(map[int]int)
 
-	var count int
+	var line int
 	for reader.Scan() {
 		if len(record.Count) > 0 && record.Count[len(record.Count)-1] == '\r' {
 			record.Count = record.Count[:len(record.Count)-1]
 		}
-		count, err = strconv.Atoi(string(record.Count))
-		region := string(record.Region)
-		age := string(record.Age)
 
+		var count int
+		count, err = strconv.Atoi(string(record.Count))
 		if err != nil {
+			err = fmt.Errorf("invalid number for Count on line %d: %w", line, err)
+			return
+		}
+
+		region := translateRegion(string(record.Region))
+
+		var age int
+		age, err = strconv.Atoi(string(record.Age))
+		if err != nil {
+			err = fmt.Errorf("invalid number for Age on line %d: %w", line, err)
 			return
 		}
 
@@ -52,54 +60,17 @@ func groupPopulation(filename string) (byRegion map[string]int, byAge map[string
 	return
 }
 
-func groupPopulationByAge(input map[string]int, ranges []float64) (output map[Bracket]int) {
-	output = make(map[Bracket]int)
-
-	for _, bracket := range buildAgeBrackets(ranges) {
-		output[bracket] = 0
+func translateRegion(input string) (output string) {
+	translation := map[string]string{
+		"Vlaams Gewest":                  "Flanders",
+		"Waals Gewest":                   "Wallonia",
+		"Brussels Hoofdstedelijk Gewest": "Brussels",
 	}
 
-	for ageString, count := range input {
-		age, err := strconv.ParseFloat(ageString, 64)
-
-		if err != nil {
-			log.WithError(err).Warning("could not parse age: " + ageString)
-			continue
-		}
-		for bracket, total := range output {
-			if age >= bracket.Low && age <= bracket.High {
-				output[bracket] = total + count
-			}
-		}
-
+	var ok bool
+	output, ok = translation[input]
+	if ok == false {
+		output = input
 	}
-	return
-}
-
-func buildAgeBrackets(ranges []float64) (brackets []Bracket) {
-	low := 0.0
-	for _, high := range ranges {
-		brackets = append(brackets, Bracket{Low: low, High: high - 1})
-		low = high
-	}
-	brackets = append(brackets, Bracket{Low: low, High: math.Inf(+1)})
-	return
-}
-
-func groupPopulationByRegion(input map[string]int) (output map[string]int) {
-	translation := []struct {
-		from string
-		to   string
-	}{
-		{from: "Vlaams Gewest", to: "Flanders"},
-		{from: "Waals Gewest", to: "Wallonia"},
-		{from: "Brussels Hoofdstedelijk Gewest", to: "Brussels"},
-	}
-
-	output = make(map[string]int)
-	for _, entry := range translation {
-		output[entry.to] = input[entry.from]
-	}
-
 	return
 }

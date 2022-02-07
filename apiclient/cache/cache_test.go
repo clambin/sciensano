@@ -3,7 +3,7 @@ package cache_test
 import (
 	"context"
 	"github.com/clambin/sciensano/apiclient"
-	measurement2 "github.com/clambin/sciensano/apiclient/cache"
+	"github.com/clambin/sciensano/apiclient/cache"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"sync"
@@ -15,10 +15,14 @@ type fetcher struct {
 	called int
 }
 
+var _ cache.Fetcher = &fetcher{}
+
 type value struct {
 	Timestamp time.Time
 	Value     float64
 }
+
+var _ apiclient.APIResponse = &value{}
 
 func (v value) GetTimestamp() time.Time {
 	panic("implement me")
@@ -40,20 +44,18 @@ func (v value) GetAttributeValues() []float64 {
 	panic("implement me")
 }
 
-func (f *fetcher) Update(_ context.Context) (entries map[string][]apiclient.APIResponse, err error) {
+func (f *fetcher) Update(_ context.Context, ch chan<- cache.FetcherResponse) {
 	f.called++
-	entries = map[string][]apiclient.APIResponse{
-		"foo": {
-			&value{},
-		},
+	ch <- cache.FetcherResponse{
+		Name:     "foo",
+		Response: []apiclient.APIResponse{&value{}},
 	}
-	return
 }
 
 func TestCache(t *testing.T) {
 	f := &fetcher{}
-	ct := &measurement2.Cache{
-		Fetchers: []measurement2.Fetcher{f},
+	ct := &cache.Cache{
+		Fetchers: []cache.Fetcher{f},
 	}
 
 	wg := sync.WaitGroup{}
@@ -61,7 +63,7 @@ func TestCache(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	go func() {
-		ct.AutoRefresh(ctx, 20*time.Millisecond)
+		ct.Run(ctx, 20*time.Millisecond)
 		wg.Done()
 	}()
 

@@ -2,10 +2,10 @@ package sciensano_test
 
 import (
 	"context"
+	"github.com/clambin/sciensano/apiclient/cache"
 	"github.com/clambin/sciensano/apiclient/sciensano"
 	"github.com/clambin/sciensano/apiclient/sciensano/fake"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -22,19 +22,22 @@ func TestClient_Update(t *testing.T) {
 		HTTPClient: &http.Client{},
 	}
 	ctx := context.Background()
-	results, err := client.Update(ctx)
-	require.NoError(t, err)
-	assert.Len(t, results, 5)
-	assert.Contains(t, results, "TestResults")
-	assert.Contains(t, results, "Vaccinations")
-	assert.Contains(t, results, "Hospitalisations")
-	assert.Contains(t, results, "Cases")
-	assert.Contains(t, results, "Mortality")
 
-	testServer.Close()
+	ch := make(chan cache.FetcherResponse)
+	go client.Update(ctx, ch)
 
-	_, err = client.Update(ctx)
-	assert.Error(t, err)
+	expected := []string{
+		"TestResults",
+		"Vaccinations",
+		"Hospitalisations",
+		"Cases",
+		"Mortality",
+	}
+
+	for i := 0; i < len(expected); i++ {
+		response := <-ch
+		assert.Contains(t, expected, response.Name)
+	}
 }
 
 func TestTimeStamp_UnmarshalJSON(t *testing.T) {

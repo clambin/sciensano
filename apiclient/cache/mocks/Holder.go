@@ -17,11 +17,6 @@ type Holder struct {
 	mock.Mock
 }
 
-// AutoRefresh provides a mock function with given fields: ctx, interval
-func (_m *Holder) AutoRefresh(ctx context.Context, interval time.Duration) {
-	_m.Called(ctx, interval)
-}
-
 // Get provides a mock function with given fields: name
 func (_m *Holder) Get(name string) ([]apiclient.APIResponse, bool) {
 	ret := _m.Called(name)
@@ -45,9 +40,9 @@ func (_m *Holder) Get(name string) ([]apiclient.APIResponse, bool) {
 	return r0, r1
 }
 
-// Refresh provides a mock function with given fields: ctx
-func (_m *Holder) Refresh(ctx context.Context) {
-	_m.Called(ctx)
+// Run provides a mock function with given fields: ctx, interval
+func (_m *Holder) Run(ctx context.Context, interval time.Duration) {
+	_m.Called(ctx, interval)
 }
 
 // Stats provides a mock function with given fields:

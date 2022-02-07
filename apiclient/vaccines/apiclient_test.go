@@ -3,6 +3,7 @@ package vaccines_test
 import (
 	"context"
 	"github.com/clambin/sciensano/apiclient"
+	"github.com/clambin/sciensano/apiclient/cache"
 	"github.com/clambin/sciensano/apiclient/vaccines"
 	"github.com/clambin/sciensano/apiclient/vaccines/fake"
 	"github.com/stretchr/testify/assert"
@@ -73,20 +74,16 @@ func TestBatch_Measurement(t *testing.T) {
 func TestClient_Refresh(t *testing.T) {
 	server := fake.Server{}
 	apiServer := httptest.NewServer(http.HandlerFunc(server.Handler))
+	defer apiServer.Close()
 
 	client := vaccines.Client{
 		URL:        apiServer.URL,
 		HTTPClient: &http.Client{},
 	}
 
-	response, err := client.Update(context.Background())
-	require.NoError(t, err)
-	assert.Len(t, response, 1)
-	require.Contains(t, response, "Vaccines")
-	assert.NotNil(t, response["Vaccines"])
+	ch := make(chan cache.FetcherResponse)
+	go client.Update(context.Background(), ch)
 
-	apiServer.Close()
-
-	_, err = client.Update(context.Background())
-	assert.Error(t, err)
+	response := <-ch
+	assert.Equal(t, "Vaccines", response.Name)
 }

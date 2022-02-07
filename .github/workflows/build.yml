@@ -4,7 +4,7 @@ on:
   push:
     branches:
     - master
-    - vaccines
+    - population
     paths-ignore:
       - '**.md'
       - 'assets/grafana/dashboards/**'
@@ -19,6 +19,7 @@ jobs:
           go-version: 1.17
       - name: test
         run: |
+          unzip data/small_demographics.zip -d data
           go test ./... -race -coverprofile=coverage.txt.tmp -covermode=atomic
           grep -v "_easyjson.go" coverage.txt.tmp > coverage.txt
       - uses: codecov/codecov-action@v2.1.0
@@ -52,7 +53,7 @@ jobs:
             go build \
               -ldflags "-X github.com/clambin/sciensano/version.BuildVersion=$RELEASE_VERSION" \
               -o bld/$TARGET-$PLATFORM-$ARCH \
-              $TARGET.go
+              cmd/$TARGET/$TARGET.go
       - uses: actions/upload-artifact@v2
         with:
           name: ${{ matrix.target }}-${{ matrix.platform }}-${{ matrix.arch }}
@@ -60,19 +61,22 @@ jobs:
   docker:
     needs: build
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target: [ sciensano ]
     steps:
       - uses: actions/checkout@v2.4.0
       - uses: actions/download-artifact@v2
         with:
-          name: sciensano-linux-arm
+          name: ${{ matrix.target }}-linux-arm
           path: ./bld
       - uses: actions/download-artifact@v2
         with:
-          name: sciensano-linux-arm64
+          name: ${{ matrix.target }}-linux-arm64
           path: ./bld
       - uses: actions/download-artifact@v2
         with:
-          name: sciensano-linux-amd64
+          name: ${{ matrix.target }}-linux-amd64
           path: ./bld
       - name: Fix permissions
         run: chmod +x bld/*
@@ -87,7 +91,7 @@ jobs:
         id: docker_meta
         uses: docker/metadata-action@v3.6.2
         with:
-          images: ghcr.io/clambin/sciensano
+          images: ghcr.io/clambin/${{ matrix.target }}
           flavor: |
             latest=true
           tags: |
@@ -97,7 +101,7 @@ jobs:
         uses: docker/build-push-action@v2.9.0
         with:
           context: .
-          file: ./build/Dockerfile
+          file: ./build/Dockerfile-${{ matrix.target }}
           platforms: linux/amd64,linux/arm,linux/arm64
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.docker_meta.outputs.tags }}

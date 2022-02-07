@@ -14,8 +14,9 @@ import (
 
 func main() {
 	var (
-		debug bool
-		port  int
+		debug            bool
+		port             int
+		demographicsPath string
 	)
 
 	log.WithField("version", version.BuildVersion).Info("Reporter API starting")
@@ -25,6 +26,7 @@ func main() {
 	a.VersionFlag.Short('v')
 	a.Flag("debug", "Log debug messages").Short('d').BoolVar(&debug)
 	a.Flag("port", "Server port").Short('p').Default("8080").IntVar(&port)
+	a.Flag("demographics", "Path of the demographics server").Default("/data/population/TF_SOC_POP_STRUCT_2021.txt").StringVar(&demographicsPath)
 
 	if _, err := a.Parse(os.Args[1:]); err != nil {
 		a.Usage(os.Args[1:])
@@ -35,7 +37,7 @@ func main() {
 		log.SetLevel(log.DebugLevel)
 	}
 
-	handler := simplejsonserver.NewServer()
+	handler := simplejsonserver.NewServer(demographicsPath)
 
 	if err := handler.Run(port); errors.Is(err, http.ErrServerClosed) == false {
 		log.WithError(err).Fatal("failed to start HTTP server")
