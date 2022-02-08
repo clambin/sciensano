@@ -41,9 +41,7 @@ func (c *Cache) Run(ctx context.Context, interval time.Duration) {
 
 	ch := make(chan FetcherResponse)
 
-	for _, fetcher := range c.Fetchers {
-		go startFetcher(ctx, interval, fetcher, ch)
-	}
+	c.startFetchers(ctx, interval, ch)
 
 	for running := true; running; {
 		select {
@@ -58,17 +56,22 @@ func (c *Cache) Run(ctx context.Context, interval time.Duration) {
 	}
 }
 
-func startFetcher(ctx context.Context, interval time.Duration, fetcher Fetcher, ch chan<- FetcherResponse) {
-	fetcher.Update(ctx, ch)
+func (c *Cache) startFetchers(ctx context.Context, interval time.Duration, ch chan<- FetcherResponse) {
+	for _, fetcher := range c.Fetchers {
+		go func(f Fetcher) {
+			f.Update(ctx, ch)
 
-	ticker := time.NewTimer(interval)
-	for running := true; running; {
-		select {
-		case <-ctx.Done():
-			running = false
-		case <-ticker.C:
-			fetcher.Update(ctx, ch)
-		}
+			ticker := time.NewTicker(interval)
+			for running := true; running; {
+				select {
+				case <-ctx.Done():
+					running = false
+				case <-ticker.C:
+					f.Update(ctx, ch)
+				}
+			}
+			ticker.Stop()
+		}(fetcher)
 	}
 }
 
