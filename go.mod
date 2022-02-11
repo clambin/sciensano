@@ -10,13 +10,13 @@ require (
 	github.com/prometheus/procfs v0.7.3 // indirect
 	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.7.0
-	golang.org/x/sys v0.0.0-20220114195835-da31bd327af9 // indirect
+	golang.org/x/sys v0.0.0-20220209214540-3681064d5158 // indirect
 	google.golang.org/protobuf v1.27.1 // indirect
 )
 
 require (
 	github.com/clambin/go-metrics v0.2.1
-	github.com/clambin/simplejson/v3 v3.0.0
+	github.com/clambin/simplejson/v3 v3.0.1
 	github.com/mailru/easyjson v0.7.7
 	github.com/rovaughn/fastcsv v0.0.0-20170331030356-1090019547fb
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c

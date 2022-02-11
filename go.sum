@@ -56,6 +56,8 @@ github.com/clambin/go-metrics v0.2.1 h1:TlnrXbZ4lEv6KLYdtdFKCZYre8Mf9sBlWlItcdn1
 github.com/clambin/go-metrics v0.2.1/go.mod h1:oEEJTGR660AzsIlFsEP2qRVJMYrSUAFvhcrhrRk5Vdk=
 github.com/clambin/simplejson/v3 v3.0.0 h1:qPnRwyJM3JCsxS7aHHA5INFTxWMBKgQqn4PBfybAws0=
 github.com/clambin/simplejson/v3 v3.0.0/go.mod h1:AO4rrRWMMHEYfhDndTz0u3MH+p0kxASjDbShzvP1T6k=
+github.com/clambin/simplejson/v3 v3.0.1 h1:Zcm0hIB5iKBQSyXldrtpOtfPZzHLGMLP0S9WtK5tpCk=
+github.com/clambin/simplejson/v3 v3.0.1/go.mod h1:AA0ghH05jUGn+Nzy6i3pmI07HM1jZ8om8l0zTpqPQ8I=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
 github.com/cncf/udpa/go v0.0.0-20191209042840-269d4d468f6f/go.mod h1:M8M6+tZqaGXZJjfX53e64911xZQV5JYwmTeXPW+k8Sc=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
@@ -337,6 +339,8 @@ golang.org/x/sys v0.0.0-20210423082822-04245dca01da/go.mod h1:h1NjWce9XRLGQEsW7w
 golang.org/x/sys v0.0.0-20210603081109-ebe580a85c40/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 golang.org/x/sys v0.0.0-20220114195835-da31bd327af9 h1:XfKQ4OlFl8okEOr5UvAqFRVj8pY/4yfcXrddB8qAbU0=
 golang.org/x/sys v0.0.0-20220114195835-da31bd327af9/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
+golang.org/x/sys v0.0.0-20220209214540-3681064d5158 h1:rm+CHSpPEEW2IsXUib1ThaHIjuBVZjxNgSKmBLFfD4c=
+golang.org/x/sys v0.0.0-20220209214540-3681064d5158/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 golang.org/x/term v0.0.0-20201126162022-7de9c90e9dd1/go.mod h1:bj7SfCRtBDWHUb9snDiAeCFNEtKQo2Wmx5Cou7ajbmo=
 golang.org/x/text v0.0.0-20170915032832-14c0d48ead0c/go.mod h1:NqM8EUOU14njkJ3fqMW+pc6Ldnwhi/IjpwHt7yyuwOQ=
 golang.org/x/text v0.3.0/go.mod h1:NqM8EUOU14njkJ3fqMW+pc6Ldnwhi/IjpwHt7yyuwOQ=
