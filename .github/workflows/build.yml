@@ -4,7 +4,7 @@ on:
   push:
     branches:
     - master
-    - workflows
+    - docker
     paths-ignore:
       - '**.md'
       - 'assets/grafana/dashboards/**'
