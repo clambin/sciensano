@@ -3,31 +3,10 @@ name: Release
 on:
   push:
     tags:
-      - '*'
+      - 'v*'
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2.4.0
-      - uses: actions/setup-go@v2
-        with:
-          go-version: 1.17
-      - name: test
-        run: |
-          unzip data/small_demographics.zip -d data
-          go test ./... -race -coverprofile=coverage.txt.tmp -covermode=atomic
-          grep -v "_easyjson.go" coverage.txt.tmp > coverage.txt
-      - uses: codecov/codecov-action@v2.1.0
-        with:
-          file: coverage.txt
-          token: ${{ secrets.CODECOV_TOKEN }}
-  build:
-    needs: test
-    uses: clambin/workflows/.github/workflows/build.yaml@main
+  release:
+    uses: clambin/workflows/.github/workflows/release.yaml@main
     with:
-      go-version: 1.17
       target: sciensano
-  publish:
-    needs: build
-    uses:  clambin/workflows/.github/workflows/publish.yaml@main
