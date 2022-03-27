@@ -1,6 +1,6 @@
 module github.com/clambin/sciensano
 
-go 1.17
+go 1.18
 
 require (
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
@@ -16,7 +16,7 @@ require (
 
 require (
 	github.com/clambin/go-metrics v0.2.1
-	github.com/clambin/simplejson/v3 v3.0.1
+	github.com/clambin/simplejson/v3 v3.1.0-rc2
 	github.com/mailru/easyjson v0.7.7
 	github.com/rovaughn/fastcsv v0.0.0-20170331030356-1090019547fb
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
