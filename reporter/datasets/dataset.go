@@ -154,7 +154,7 @@ func (d *Dataset) Accumulate() {
 	}
 }
 
-func (d *Dataset) Copy() (clone *Dataset) {
+func (d Dataset) Copy() (clone *Dataset) {
 	clone = &Dataset{
 		data:       make([][]float64, len(d.data)),
 		timestamps: d.timestamps.Copy(),

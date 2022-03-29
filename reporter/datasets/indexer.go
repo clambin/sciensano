@@ -71,15 +71,15 @@ func (idx Indexer[T]) Copy() (clone *Indexer[T]) {
 	return
 }
 
-func isLessThan[T ordered](a, b T) bool {
+func isLessThan[T ordered](a, b T) (isLess bool) {
 	// this works around the fact that we can't type switch on T
 	var x interface{} = a
 	var y interface{} = b
 	switch (x).(type) {
 	case string:
-		return x.(string) < y.(string)
+		isLess = x.(string) < y.(string)
 	case time.Time:
-		return x.(time.Time).Before(y.(time.Time))
+		isLess = x.(time.Time).Before(y.(time.Time))
 	}
-	return false
+	return
 }
