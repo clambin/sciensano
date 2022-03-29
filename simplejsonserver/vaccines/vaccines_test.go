@@ -23,7 +23,7 @@ func TestHandler_TableQuery_Vaccines(t *testing.T) {
 	r.APICache = cache
 	h := vaccinesHandler.OverviewHandler{Reporter: r}
 
-	timestamp := time.Now()
+	timestamp := time.Now().UTC()
 	cache.
 		On("Get", "Vaccines").
 		Return([]apiclient.APIResponse{
@@ -106,7 +106,7 @@ func TestHandler_TableQuery_VaccinesStats(t *testing.T) {
 	r.APICache = c
 	h := vaccinesHandler.StatsHandler{Reporter: r}
 
-	timestamp := time.Now()
+	timestamp := time.Now().UTC()
 
 	c.
 		On("Get", "Vaccines").

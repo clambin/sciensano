@@ -287,7 +287,8 @@ func TestDataset_Copy(t *testing.T) {
 	assert.NotNil(t, d)
 
 	for day := 1; day < 5; day++ {
-		d.Add(time.Date(2022, time.January, day, 0, 0, 0, 0, time.UTC), "A", 1.0)
+		ts := time.Date(2022, time.January, day, 0, 0, 0, 0, time.UTC)
+		d.Add(ts, "A", 1.0)
 	}
 
 	clone := d.Copy()

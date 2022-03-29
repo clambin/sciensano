@@ -2,32 +2,32 @@ package datasets
 
 import (
 	"github.com/clambin/sciensano/apiclient"
-	"sort"
 	"time"
 )
 
 type Dataset struct {
-	data        [][]float64
-	timestamps  *Timestamps
-	columns     []string
-	columnIndex map[string]int
+	data       [][]float64
+	timestamps *Indexer[time.Time]
+	columns    *Indexer[string]
 }
 
 func New() *Dataset {
 	return &Dataset{
-		timestamps:  MakeTimestamps(),
-		columnIndex: make(map[string]int),
+		timestamps: MakeIndexer[time.Time](),
+		columns:    MakeIndexer[string](),
 	}
 }
 
 func NewFromAPIResponse(response []apiclient.APIResponse) (d *Dataset) {
 	d = New()
 	for _, entry := range response {
+		ts := entry.GetTimestamp()
 		attribs := entry.GetAttributeNames()
 		values := entry.GetAttributeValues()
 
 		for index, attrib := range attribs {
-			d.Add(entry.GetTimestamp(), attrib, values[index])
+			value := values[index]
+			d.Add(ts, attrib, value)
 		}
 	}
 	return
@@ -42,27 +42,21 @@ func NewGroupedFromAPIResponse(response []apiclient.APIResponse, groupField int)
 }
 
 func (d *Dataset) Add(timestamp time.Time, column string, value float64) {
-	_, added := d.timestamps.Add(timestamp)
-	if added {
-		d.data = append(d.data, make([]float64, len(d.columns)))
-	}
 	d.ensureColumnExists(column)
 
-	row := d.timestamps.GetIndex(timestamp)
-	col := d.columnIndex[column]
+	row, tsAdded := d.timestamps.Add(timestamp)
+	if tsAdded {
+		d.data = append(d.data, make([]float64, d.columns.Count()))
+	}
+	col, _ := d.columns.GetIndex(column)
 	d.data[row][col] += value
 }
 
 func (d *Dataset) ensureColumnExists(column string) {
-	// TODO: having a dedicated map would be faster
-	_, ok := d.columnIndex[column]
-	if ok == true {
+	_, ok := d.columns.Add(column)
+	if ok == false {
 		return
 	}
-
-	d.columnIndex[column] = len(d.columns)
-	d.columns = append(d.columns, column)
-	sort.Strings(d.columns)
 
 	for key, entry := range d.data {
 		entry = append(entry, 0)
@@ -77,16 +71,15 @@ func (d Dataset) Size() int {
 func (d *Dataset) AddColumn(column string, processor func(values map[string]float64) float64) {
 	for index, row := range d.data {
 		values := make(map[string]float64)
-		for _, c := range d.columns {
-			values[c] = row[d.columnIndex[c]]
+		for _, c := range d.columns.List() {
+			idx, _ := d.columns.GetIndex(c)
+			values[c] = row[idx]
 		}
 
 		newVal := processor(values)
 		d.data[index] = append(row, newVal)
 	}
-	d.columnIndex[column] = len(d.columns)
-	d.columns = append(d.columns, column)
-	sort.Strings(d.columns)
+	d.columns.Add(column)
 }
 
 func (d Dataset) GetTimestamps() (timestamps []time.Time) {
@@ -96,14 +89,14 @@ func (d Dataset) GetTimestamps() (timestamps []time.Time) {
 }
 
 func (d Dataset) GetColumns() (columns []string) {
-	columns = make([]string, len(d.columns))
-	copy(columns, d.columns)
+	columns = make([]string, d.columns.Count())
+	copy(columns, d.columns.List())
 	return
 }
 
 func (d Dataset) GetValues(column string) (values []float64, ok bool) {
 	var index int
-	index, ok = d.columnIndex[column]
+	index, ok = d.columns.GetIndex(column)
 
 	if ok == false {
 		return
@@ -111,7 +104,7 @@ func (d Dataset) GetValues(column string) (values []float64, ok bool) {
 
 	values = make([]float64, len(d.data))
 	for i, timestamp := range d.timestamps.List() {
-		rowIndex := d.timestamps.GetIndex(timestamp)
+		rowIndex, _ := d.timestamps.GetIndex(timestamp)
 		values[i] = d.data[rowIndex][index]
 	}
 	return
@@ -139,9 +132,10 @@ func (d *Dataset) FilterByRange(from, to time.Time) {
 
 	// create a new data list from the timestamps we want to keep
 	data := make([][]float64, len(timestamps))
-	ts := MakeTimestamps()
+	ts := MakeIndexer[time.Time]()
 	for index, timestamp := range timestamps {
-		data[index] = d.data[d.timestamps.GetIndex(timestamp)]
+		i, _ := d.timestamps.GetIndex(timestamp)
+		data[index] = d.data[i]
 		ts.Add(timestamp)
 	}
 	d.data = data
@@ -149,10 +143,10 @@ func (d *Dataset) FilterByRange(from, to time.Time) {
 }
 
 func (d *Dataset) Accumulate() {
-	accumulated := make([]float64, len(d.columns))
+	accumulated := make([]float64, d.columns.Count())
 
 	for _, timestamp := range d.timestamps.List() {
-		row := d.timestamps.GetIndex(timestamp)
+		row, _ := d.timestamps.GetIndex(timestamp)
 		for index, value := range d.data[row] {
 			accumulated[index] += value
 		}
@@ -162,18 +156,13 @@ func (d *Dataset) Accumulate() {
 
 func (d *Dataset) Copy() (clone *Dataset) {
 	clone = &Dataset{
-		data:        make([][]float64, len(d.data)),
-		timestamps:  d.timestamps.Copy(),
-		columns:     make([]string, len(d.columns)),
-		columnIndex: make(map[string]int),
+		data:       make([][]float64, len(d.data)),
+		timestamps: d.timestamps.Copy(),
+		columns:    d.columns.Copy(),
 	}
 	for index, row := range d.data {
 		clone.data[index] = make([]float64, len(row))
 		copy(clone.data[index], row)
-	}
-	copy(clone.columns, d.columns)
-	for key, value := range d.columnIndex {
-		clone.columnIndex[key] = value
 	}
 	return
 }
