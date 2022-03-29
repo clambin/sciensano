@@ -35,6 +35,7 @@ func (idx Indexer[T]) Count() int {
 func (idx Indexer[T]) List() (values []T) {
 	if idx.inOrder == false {
 		sort.Slice(idx.values, func(i, j int) bool { return isLessThan(idx.values[i], idx.values[j]) })
+		idx.inOrder = true
 	}
 	return idx.values
 }
