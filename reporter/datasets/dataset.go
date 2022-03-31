@@ -20,14 +20,17 @@ func New() *Dataset {
 
 func NewFromAPIResponse(response []apiclient.APIResponse) (d *Dataset) {
 	d = New()
+	if len(response) == 0 {
+		return
+	}
+	// optimization: all responses will be of same type, so will have same attribute names
+	attribs := response[0].GetAttributeNames()
 	for _, entry := range response {
 		ts := entry.GetTimestamp()
-		attribs := entry.GetAttributeNames()
 		values := entry.GetAttributeValues()
 
 		for index, attrib := range attribs {
-			value := values[index]
-			d.Add(ts, attrib, value)
+			d.Add(ts, attrib, values[index])
 		}
 	}
 	return
@@ -69,9 +72,10 @@ func (d Dataset) Size() int {
 }
 
 func (d *Dataset) AddColumn(column string, processor func(values map[string]float64) float64) {
+	columns := d.columns.List()
 	for index, row := range d.data {
 		values := make(map[string]float64)
-		for _, c := range d.columns.List() {
+		for _, c := range columns {
 			idx, _ := d.columns.GetIndex(c)
 			values[c] = row[idx]
 		}
