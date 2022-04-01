@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 	"github.com/clambin/sciensano/reporter"
-	"github.com/clambin/sciensano/reporter/datasets"
 	"github.com/clambin/sciensano/simplejsonserver/responder"
 	"github.com/clambin/simplejson/v3"
+	"github.com/clambin/simplejson/v3/dataset"
 	"github.com/clambin/simplejson/v3/query"
 )
 
@@ -32,7 +32,7 @@ func (handler GroupedHandler) Endpoints() simplejson.Endpoints {
 }
 
 func (handler *GroupedHandler) tableQuery(_ context.Context, req query.Request) (response query.Response, err error) {
-	var vaccinationData *datasets.Dataset
+	var vaccinationData *dataset.Dataset
 	switch handler.Scope {
 	case ScopeAge:
 		vaccinationData, err = handler.Reporter.GetVaccinationsByAgeGroup(handler.VaccinationType)

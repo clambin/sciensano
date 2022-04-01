@@ -2,7 +2,7 @@ package vaccines
 
 import (
 	"fmt"
-	"github.com/clambin/sciensano/reporter/datasets"
+	"github.com/clambin/sciensano/reporter"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"testing"
@@ -23,13 +23,13 @@ func TestVaccineDelay(t *testing.T) {
 		{timestamp: time.Date(2021, 3, 15, 0, 0, 0, 0, time.UTC), partial: 35, full: 15},
 	}
 
-	vaccinations := datasets.NewFromAPIResponse(nil)
+	vaccinations := reporter.NewFromAPIResponse(nil)
 	for _, entry := range vaccineData {
 		vaccinations.Add(entry.timestamp, "partial", entry.partial)
 		vaccinations.Add(entry.timestamp, "full", entry.full)
 	}
 
-	batches := datasets.NewFromAPIResponse(nil)
+	batches := reporter.NewFromAPIResponse(nil)
 	batches.Add(time.Date(2021, 01, 01, 0, 0, 0, 0, time.UTC), "total", 20)
 	batches.Add(time.Date(2021, 02, 01, 0, 0, 0, 0, time.UTC), "total", 40)
 	batches.Add(time.Date(2021, 03, 01, 0, 0, 0, 0, time.UTC), "total", 50)

@@ -3,22 +3,22 @@ package reporter
 import (
 	"fmt"
 	"github.com/clambin/sciensano/apiclient"
-	"github.com/clambin/sciensano/reporter/datasets"
+	"github.com/clambin/simplejson/v3/dataset"
 )
 
 // CasesGetter contains all methods providing COVID-19 cases
 type CasesGetter interface {
-	GetCases() (results *datasets.Dataset, err error)
-	GetCasesByRegion() (results *datasets.Dataset, err error)
-	GetCasesByProvince() (results *datasets.Dataset, err error)
-	GetCasesByAgeGroup() (results *datasets.Dataset, err error)
+	GetCases() (results *dataset.Dataset, err error)
+	GetCasesByRegion() (results *dataset.Dataset, err error)
+	GetCasesByProvince() (results *dataset.Dataset, err error)
+	GetCasesByAgeGroup() (results *dataset.Dataset, err error)
 }
 
 // GetCases returns all cases
-func (client *Client) GetCases() (results *datasets.Dataset, err error) {
-	return client.ReportCache.MaybeGenerate("Cases", func() (output *datasets.Dataset, err2 error) {
+func (client *Client) GetCases() (results *dataset.Dataset, err error) {
+	return client.ReportCache.MaybeGenerate("Cases", func() (output *dataset.Dataset, err2 error) {
 		if apiResult, found := client.APICache.Get("Cases"); found {
-			output = datasets.NewFromAPIResponse(apiResult)
+			output = NewFromAPIResponse(apiResult)
 		} else {
 			err2 = fmt.Errorf("cache does not contain Cases entries")
 		}
@@ -27,10 +27,10 @@ func (client *Client) GetCases() (results *datasets.Dataset, err error) {
 }
 
 // GetCasesByRegion returns all cases, grouped by region
-func (client *Client) GetCasesByRegion() (results *datasets.Dataset, err error) {
-	return client.ReportCache.MaybeGenerate("CasesByRegion", func() (output *datasets.Dataset, err2 error) {
+func (client *Client) GetCasesByRegion() (results *dataset.Dataset, err error) {
+	return client.ReportCache.MaybeGenerate("CasesByRegion", func() (output *dataset.Dataset, err2 error) {
 		if apiResult, found := client.APICache.Get("Cases"); found {
-			output = datasets.NewGroupedFromAPIResponse(apiResult, apiclient.GroupByRegion)
+			output = NewGroupedFromAPIResponse(apiResult, apiclient.GroupByRegion)
 		} else {
 			err2 = fmt.Errorf("cache does not contain Cases entries")
 		}
@@ -39,10 +39,10 @@ func (client *Client) GetCasesByRegion() (results *datasets.Dataset, err error) 
 }
 
 // GetCasesByProvince returns all cases, grouped by province
-func (client *Client) GetCasesByProvince() (results *datasets.Dataset, err error) {
-	return client.ReportCache.MaybeGenerate("CasesByProvince", func() (output *datasets.Dataset, err2 error) {
+func (client *Client) GetCasesByProvince() (results *dataset.Dataset, err error) {
+	return client.ReportCache.MaybeGenerate("CasesByProvince", func() (output *dataset.Dataset, err2 error) {
 		if apiResult, found := client.APICache.Get("Cases"); found {
-			output = datasets.NewGroupedFromAPIResponse(apiResult, apiclient.GroupByProvince)
+			output = NewGroupedFromAPIResponse(apiResult, apiclient.GroupByProvince)
 		} else {
 			err2 = fmt.Errorf("cache does not contain Cases entries")
 		}
@@ -51,10 +51,10 @@ func (client *Client) GetCasesByProvince() (results *datasets.Dataset, err error
 }
 
 // GetCasesByAgeGroup returns all cases, grouped by province
-func (client *Client) GetCasesByAgeGroup() (results *datasets.Dataset, err error) {
-	return client.ReportCache.MaybeGenerate("CasesByAgeGroup", func() (output *datasets.Dataset, err2 error) {
+func (client *Client) GetCasesByAgeGroup() (results *dataset.Dataset, err error) {
+	return client.ReportCache.MaybeGenerate("CasesByAgeGroup", func() (output *dataset.Dataset, err2 error) {
 		if apiResult, found := client.APICache.Get("Cases"); found {
-			output = datasets.NewGroupedFromAPIResponse(apiResult, apiclient.GroupByAgeGroup)
+			output = NewGroupedFromAPIResponse(apiResult, apiclient.GroupByAgeGroup)
 		} else {
 			err2 = fmt.Errorf("cache does not contain Cases entries")
 		}

@@ -1,7 +1,7 @@
 package reporter
 
 import (
-	"github.com/clambin/sciensano/reporter/datasets"
+	"github.com/clambin/simplejson/v3/dataset"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	log "github.com/sirupsen/logrus"
@@ -19,7 +19,7 @@ type Cache struct {
 // CacheEntry represents one report in the cache
 type CacheEntry struct {
 	Once   sync.Once
-	Data   *datasets.Dataset
+	Data   *dataset.Dataset
 	expiry time.Time
 }
 
@@ -81,7 +81,7 @@ func (cache *Cache) Clear(name string) {
 }
 
 // MaybeGenerate loads a report from Cache, or generates it if the report does not exist or is expired
-func (cache *Cache) MaybeGenerate(name string, generate func() (*datasets.Dataset, error)) (report *datasets.Dataset, err error) {
+func (cache *Cache) MaybeGenerate(name string, generate func() (*dataset.Dataset, error)) (report *dataset.Dataset, err error) {
 	start := time.Now()
 	defer func() { log.WithField("time", time.Since(start)).Debug(name + " done") }()
 

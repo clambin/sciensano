@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 	"github.com/clambin/sciensano/reporter"
-	"github.com/clambin/sciensano/reporter/datasets"
 	"github.com/clambin/sciensano/simplejsonserver/responder"
 	"github.com/clambin/simplejson/v3"
+	"github.com/clambin/simplejson/v3/dataset"
 	"github.com/clambin/simplejson/v3/query"
 )
 
@@ -21,7 +21,7 @@ func (handler Handler) Endpoints() simplejson.Endpoints {
 }
 
 func (handler *Handler) tableQuery(_ context.Context, req query.Request) (output query.Response, err error) {
-	var vaccinationData *datasets.Dataset
+	var vaccinationData *dataset.Dataset
 	if vaccinationData, err = handler.Reporter.GetVaccinations(); err != nil {
 		return nil, fmt.Errorf("vaccinations failed: %w", err)
 	}
@@ -32,7 +32,7 @@ func (handler *Handler) tableQuery(_ context.Context, req query.Request) (output
 	singledose, _ := vaccinationData.GetValues("singledose")
 	booster, _ := vaccinationData.GetValues("booster")
 
-	d := datasets.New()
+	d := dataset.New()
 	for index, timestamp := range timestamps {
 		d.Add(timestamp, "partial", partial[index])
 		d.Add(timestamp, "full", full[index]+singledose[index])

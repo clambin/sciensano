@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 	"github.com/clambin/sciensano/reporter"
-	"github.com/clambin/sciensano/reporter/datasets"
 	"github.com/clambin/sciensano/simplejsonserver/responder"
 	"github.com/clambin/simplejson/v3"
+	"github.com/clambin/simplejson/v3/dataset"
 	"github.com/clambin/simplejson/v3/query"
 )
 
@@ -21,7 +21,7 @@ func (o OverviewHandler) Endpoints() simplejson.Endpoints {
 }
 
 func (o *OverviewHandler) tableQuery(_ context.Context, req query.Request) (response query.Response, err error) {
-	var batches *datasets.Dataset
+	var batches *dataset.Dataset
 	batches, err = o.Reporter.GetVaccines()
 	if err != nil {
 		return nil, fmt.Errorf("vaccine call failed: %w", err)
@@ -42,7 +42,7 @@ func (m ManufacturerHandler) Endpoints() simplejson.Endpoints {
 }
 
 func (m *ManufacturerHandler) tableQuery(_ context.Context, req query.Request) (response query.Response, err error) {
-	var batches *datasets.Dataset
+	var batches *dataset.Dataset
 	batches, err = m.Reporter.GetVaccinesByManufacturer()
 	if err != nil {
 		return nil, fmt.Errorf("vaccine manufacturer call failed: %w", err)
@@ -62,12 +62,12 @@ func (s StatsHandler) Endpoints() simplejson.Endpoints {
 }
 
 func (s *StatsHandler) tableQuery(_ context.Context, req query.Request) (response query.Response, err error) {
-	var batches *datasets.Dataset
+	var batches *dataset.Dataset
 	if batches, err = s.Reporter.GetVaccines(); err != nil {
 		return nil, fmt.Errorf("vaccine call failed: %w", err)
 	}
 
-	var vaccinations *datasets.Dataset
+	var vaccinations *dataset.Dataset
 	if vaccinations, err = s.Reporter.GetVaccinations(); err != nil {
 		return nil, fmt.Errorf("vaccinations call failed: %w", err)
 	}
@@ -88,7 +88,7 @@ func (s *StatsHandler) tableQuery(_ context.Context, req query.Request) (respons
 	return
 }
 
-func calculateVaccineReserve(vaccinationsData *datasets.Dataset, batches *datasets.Dataset) {
+func calculateVaccineReserve(vaccinationsData *dataset.Dataset, batches *dataset.Dataset) {
 	// summarize all vaccinations
 	vaccinationsData.AddColumn("sum", func(values map[string]float64) (sum float64) {
 		for _, value := range values {
@@ -124,7 +124,7 @@ func (d DelayHandler) Endpoints() simplejson.Endpoints {
 }
 
 func (d *DelayHandler) tableQuery(_ context.Context, req query.Request) (response query.Response, err error) {
-	var batches *datasets.Dataset
+	var batches *dataset.Dataset
 	batches, err = d.Reporter.GetVaccines()
 
 	if err != nil {
@@ -133,7 +133,7 @@ func (d *DelayHandler) tableQuery(_ context.Context, req query.Request) (respons
 
 	batches.Accumulate()
 
-	var vaccinations *datasets.Dataset
+	var vaccinations *dataset.Dataset
 	vaccinations, err = d.Reporter.GetVaccinations()
 
 	if err != nil {
@@ -154,7 +154,7 @@ func (d *DelayHandler) tableQuery(_ context.Context, req query.Request) (respons
 	return
 }
 
-func calculateVaccineDelay(vaccinationsData *datasets.Dataset, batches *datasets.Dataset) (timestamps query.TimeColumn, delays query.NumberColumn) {
+func calculateVaccineDelay(vaccinationsData *dataset.Dataset, batches *dataset.Dataset) (timestamps query.TimeColumn, delays query.NumberColumn) {
 	vaccinationsData.AddColumn("sum", func(values map[string]float64) (sum float64) {
 		for _, value := range values {
 			sum += value

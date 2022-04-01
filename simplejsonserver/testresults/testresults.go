@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 	"github.com/clambin/sciensano/reporter"
-	"github.com/clambin/sciensano/reporter/datasets"
 	"github.com/clambin/sciensano/simplejsonserver/responder"
 	"github.com/clambin/simplejson/v3"
+	"github.com/clambin/simplejson/v3/dataset"
 	"github.com/clambin/simplejson/v3/query"
 )
 
@@ -22,7 +22,7 @@ func (handler *Handler) Endpoints() simplejson.Endpoints {
 }
 
 func (handler *Handler) tableQuery(_ context.Context, req query.Request) (response query.Response, err error) {
-	var tests *datasets.Dataset
+	var tests *dataset.Dataset
 	tests, err = handler.Reporter.GetTestResults()
 
 	if err != nil {

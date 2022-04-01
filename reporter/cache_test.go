@@ -2,7 +2,7 @@ package reporter_test
 
 import (
 	"github.com/clambin/sciensano/reporter"
-	"github.com/clambin/sciensano/reporter/datasets"
+	"github.com/clambin/simplejson/v3/dataset"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"strconv"
@@ -17,7 +17,7 @@ func TestCache(t *testing.T) {
 		e := c.Load("foo")
 		e.Once.Do(func() {
 			if e.Data == nil {
-				e.Data = datasets.New()
+				e.Data = dataset.New()
 				e.Data.Add(time.Now(), "A", 1)
 			}
 			c.Save("foo", e)
@@ -36,7 +36,7 @@ func TestCache_Stats(t *testing.T) {
 	e := c.Load("foo")
 	e.Once.Do(func() {
 		if e.Data == nil {
-			e.Data = datasets.New()
+			e.Data = dataset.New()
 		}
 		e.Data.Add(time.Now(), "A", 1)
 	})
@@ -55,8 +55,8 @@ func TestCache_Stats(t *testing.T) {
 func TestCache_MaybeGenerate(t *testing.T) {
 	called := 0
 	c := reporter.NewCache(time.Second)
-	result, err := c.MaybeGenerate("foo", func() (*datasets.Dataset, error) {
-		d := datasets.New()
+	result, err := c.MaybeGenerate("foo", func() (*dataset.Dataset, error) {
+		d := dataset.New()
 		d.Add(time.Now(), "A", 1)
 		called++
 		return d, nil
@@ -64,8 +64,8 @@ func TestCache_MaybeGenerate(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, 1, called)
 
-	result, err = c.MaybeGenerate("foo", func() (*datasets.Dataset, error) {
-		d := datasets.New()
+	result, err = c.MaybeGenerate("foo", func() (*dataset.Dataset, error) {
+		d := dataset.New()
 		d.Add(time.Now(), "A", 1)
 		called++
 		return d, nil
@@ -94,8 +94,8 @@ func BenchmarkCache_MaybeGenerate(b *testing.B) {
 	}
 }
 
-func createBigDataSet() (d *datasets.Dataset, err error) {
-	d = datasets.New()
+func createBigDataSet() (d *dataset.Dataset, err error) {
+	d = dataset.New()
 	for r := 0; r < 500; r++ {
 		for c := 0; c < 10; c++ {
 			d.Add(time.Now(), strconv.Itoa(c), 1)

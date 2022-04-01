@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 	"github.com/clambin/sciensano/reporter"
-	"github.com/clambin/sciensano/reporter/datasets"
 	"github.com/clambin/simplejson/v3"
+	"github.com/clambin/simplejson/v3/dataset"
 	"github.com/clambin/simplejson/v3/query"
 )
 
@@ -19,7 +19,7 @@ func (handler LagHandler) Endpoints() simplejson.Endpoints {
 }
 
 func (handler *LagHandler) tableQuery(_ context.Context, req query.Request) (response query.Response, err error) {
-	var vaccinationsData *datasets.Dataset
+	var vaccinationsData *dataset.Dataset
 	if vaccinationsData, err = handler.Reporter.GetVaccinations(); err != nil {
 		return nil, fmt.Errorf("failed to determine vaccination lag: %w", err)
 	}
@@ -37,7 +37,7 @@ func (handler *LagHandler) tableQuery(_ context.Context, req query.Request) (res
 	return
 }
 
-func buildLag(vaccinationsData *datasets.Dataset) (timestamps query.TimeColumn, lag query.NumberColumn) {
+func buildLag(vaccinationsData *dataset.Dataset) (timestamps query.TimeColumn, lag query.NumberColumn) {
 	vaccinationTimestamps := vaccinationsData.GetTimestamps()
 	partial, _ := vaccinationsData.GetValues("partial")
 	full, _ := vaccinationsData.GetValues("full")

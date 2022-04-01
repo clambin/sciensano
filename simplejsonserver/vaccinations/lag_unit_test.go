@@ -1,7 +1,7 @@
 package vaccinations
 
 import (
-	"github.com/clambin/sciensano/reporter/datasets"
+	"github.com/clambin/simplejson/v3/dataset"
 	"github.com/clambin/simplejson/v3/query"
 	"github.com/stretchr/testify/assert"
 	"testing"
@@ -9,7 +9,7 @@ import (
 )
 
 func TestUnitVaccinationLag(t *testing.T) {
-	vaccinations := datasets.New()
+	vaccinations := dataset.New()
 
 	for _, inputData := range []struct {
 		timestamp     time.Time
@@ -30,7 +30,7 @@ func TestUnitVaccinationLag(t *testing.T) {
 	_, lag := buildLag(vaccinations)
 	assert.Equal(t, query.NumberColumn{1.0, 1.0, 1.0, 1.0, 1.0}, lag)
 
-	vaccinations = datasets.New()
+	vaccinations = dataset.New()
 	for _, inputData := range []struct {
 		timestamp     time.Time
 		partial, full float64

@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 	"github.com/clambin/sciensano/reporter"
-	"github.com/clambin/sciensano/reporter/datasets"
 	"github.com/clambin/sciensano/simplejsonserver/responder"
 	"github.com/clambin/simplejson/v3"
+	"github.com/clambin/simplejson/v3/dataset"
 	"github.com/clambin/simplejson/v3/query"
 )
 
@@ -23,7 +23,7 @@ func (handler ManufacturerHandler) Endpoints() simplejson.Endpoints {
 }
 
 func (handler *ManufacturerHandler) tableQuery(_ context.Context, req query.Request) (response query.Response, err error) {
-	var vaccinationData *datasets.Dataset
+	var vaccinationData *dataset.Dataset
 	vaccinationData, err = handler.Reporter.GetVaccinationsByManufacturer()
 
 	if err != nil {
