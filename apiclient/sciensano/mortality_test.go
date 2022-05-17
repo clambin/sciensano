@@ -2,6 +2,7 @@ package sciensano_test
 
 import (
 	"context"
+	"github.com/clambin/go-metrics/caller"
 	"github.com/clambin/sciensano/apiclient"
 	"github.com/clambin/sciensano/apiclient/sciensano"
 	"github.com/clambin/sciensano/apiclient/sciensano/fake"
@@ -18,8 +19,8 @@ func TestClient_GetMortality(t *testing.T) {
 	apiServer := httptest.NewServer(http.HandlerFunc(testServer.Handle))
 
 	client := &sciensano.Client{
-		URL:        apiServer.URL,
-		HTTPClient: &http.Client{},
+		URL:    apiServer.URL,
+		Caller: &caller.BaseClient{HTTPClient: http.DefaultClient},
 	}
 
 	ctx := context.Background()

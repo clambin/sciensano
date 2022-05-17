@@ -49,10 +49,10 @@ func (cache *Cache) Load(name string) (entry *CacheEntry) {
 	defer cache.lock.Unlock()
 
 	var ok bool
-	if entry, ok = cache.entries[name]; ok == false {
+	if entry, ok = cache.entries[name]; !ok {
 		entry = &CacheEntry{}
 	}
-	if ok == false || time.Now().After(entry.expiry) {
+	if !ok || time.Now().After(entry.expiry) {
 		entry.Once = sync.Once{}
 		entry.expiry = time.Now().Add(cache.Duration)
 		// register it so only one call to Load will set up a new Once

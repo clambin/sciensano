@@ -1,11 +1,11 @@
 package reporter
 
 import (
+	"github.com/clambin/go-metrics/caller"
 	"github.com/clambin/sciensano/apiclient/cache"
 	"github.com/clambin/sciensano/apiclient/sciensano"
 	"github.com/clambin/sciensano/apiclient/vaccines"
-	sciensanoMetrics "github.com/clambin/sciensano/metrics"
-	"net/http"
+	"github.com/clambin/sciensano/metrics"
 	"time"
 )
 
@@ -33,10 +33,17 @@ func New(duration time.Duration) *Client {
 		APICache: &cache.Cache{
 			Fetchers: []cache.Fetcher{
 				&sciensano.Client{
-					HTTPClient: &http.Client{},
-					Metrics:    sciensanoMetrics.Metrics,
+					Caller: &caller.InstrumentedClient{
+						Options:     caller.Options{PrometheusMetrics: metrics.Metrics},
+						Application: "sciensano",
+					},
 				},
-				&vaccines.Client{HTTPClient: &http.Client{}},
+				&vaccines.Client{
+					Caller: &caller.InstrumentedClient{
+						Options:     caller.Options{PrometheusMetrics: metrics.Metrics},
+						Application: "vaccines",
+					},
+				},
 			},
 		},
 		ReportCache: NewCache(duration),

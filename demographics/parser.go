@@ -50,10 +50,10 @@ func groupPopulation(filename string) (byRegion map[string]int, byAge map[int]in
 			return
 		}
 
-		byRegionCount, _ := byRegion[region]
+		byRegionCount := byRegion[region]
 		byRegion[region] = byRegionCount + count
 
-		byAgeCount, _ := byAge[age]
+		byAgeCount := byAge[age]
 		byAge[age] = byAgeCount + count
 	}
 
@@ -69,7 +69,7 @@ func translateRegion(input string) (output string) {
 
 	var ok bool
 	output, ok = translation[input]
-	if ok == false {
+	if !ok {
 		output = input
 	}
 	return

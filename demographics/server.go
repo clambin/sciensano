@@ -46,7 +46,6 @@ func (s *Server) Run(ctx context.Context) {
 	for running := true; running; {
 		select {
 		case <-ctx.Done():
-			err = ctx.Err()
 			running = false
 		case <-ticker.C:
 			err = s.update()

@@ -2,6 +2,7 @@ package vaccines_test
 
 import (
 	"context"
+	"github.com/clambin/go-metrics/caller"
 	"github.com/clambin/sciensano/apiclient"
 	"github.com/clambin/sciensano/apiclient/cache"
 	"github.com/clambin/sciensano/apiclient/vaccines"
@@ -19,8 +20,8 @@ func TestClient_GetBatches(t *testing.T) {
 	apiServer := httptest.NewServer(http.HandlerFunc(server.Handler))
 
 	client := vaccines.Client{
-		URL:        apiServer.URL,
-		HTTPClient: &http.Client{},
+		Caller: &caller.BaseClient{HTTPClient: http.DefaultClient},
+		URL:    apiServer.URL,
 	}
 
 	batches, err := client.GetBatches(context.Background())
@@ -44,8 +45,8 @@ func BenchmarkClient_GetBatches(b *testing.B) {
 	apiServer := httptest.NewServer(http.HandlerFunc(server.Handler))
 
 	client := vaccines.Client{
-		URL:        apiServer.URL,
-		HTTPClient: &http.Client{},
+		Caller: &caller.BaseClient{HTTPClient: http.DefaultClient},
+		URL:    apiServer.URL,
 	}
 
 	for i := 0; i < b.N; i++ {
@@ -77,8 +78,8 @@ func TestClient_Refresh(t *testing.T) {
 	defer apiServer.Close()
 
 	client := vaccines.Client{
-		URL:        apiServer.URL,
-		HTTPClient: &http.Client{},
+		Caller: &caller.BaseClient{HTTPClient: http.DefaultClient},
+		URL:    apiServer.URL,
 	}
 
 	ch := make(chan cache.FetcherResponse)

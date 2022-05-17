@@ -21,6 +21,7 @@ func TestMain(m *testing.M) {
 	m.Run()
 
 	_ = os.RemoveAll(tmpDir)
+	os.Exit(0)
 }
 
 func unzipTestFiles() (err error) {

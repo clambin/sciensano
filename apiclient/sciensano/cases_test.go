@@ -2,6 +2,7 @@ package sciensano_test
 
 import (
 	"context"
+	"github.com/clambin/go-metrics/caller"
 	"github.com/clambin/sciensano/apiclient"
 	"github.com/clambin/sciensano/apiclient/sciensano"
 	"github.com/clambin/sciensano/apiclient/sciensano/fake"
@@ -19,8 +20,8 @@ func TestClient_GetCases(t *testing.T) {
 	apiServer := httptest.NewServer(http.HandlerFunc(testServer.Handle))
 
 	client := sciensano.Client{
-		URL:        apiServer.URL,
-		HTTPClient: &http.Client{},
+		URL:    apiServer.URL,
+		Caller: &caller.BaseClient{HTTPClient: http.DefaultClient},
 	}
 
 	ctx := context.Background()
@@ -73,15 +74,38 @@ func TestClient_Case_Measurement(t *testing.T) {
 }
 
 func BenchmarkClient_GetCases(b *testing.B) {
+	b.StopTimer()
 	testServer := httptest.NewServer(http.HandlerFunc(handleCasesResponse))
 	defer testServer.Close()
 
 	client := sciensano.Client{
-		HTTPClient: &http.Client{},
-		URL:        testServer.URL,
+		Caller: &caller.BaseClient{HTTPClient: http.DefaultClient},
+		URL:    testServer.URL,
 	}
 
-	b.ResetTimer()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		_, err := client.GetCases(context.Background())
+		if err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+func BenchmarkClient_GetCases_Cached(b *testing.B) {
+	b.StopTimer()
+	testServer := httptest.NewServer(http.HandlerFunc(handleCasesResponse))
+	defer testServer.Close()
+
+	// using caller's Cacher has little added value: main processing time goes to json unmarshal. So, apiclient.Cache is more effective here.
+	client := sciensano.Client{
+		Caller: caller.NewCacher(http.DefaultClient, "sciensano", caller.Options{}, []caller.CacheTableEntry{
+			{Endpoint: "/.*", IsRegExp: true, Expiry: time.Hour},
+		}, time.Minute, time.Hour),
+		URL: testServer.URL,
+	}
+
+	b.StartTimer()
 	for i := 0; i < b.N; i++ {
 		_, err := client.GetCases(context.Background())
 		if err != nil {

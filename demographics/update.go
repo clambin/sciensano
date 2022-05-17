@@ -10,7 +10,7 @@ func (s *Server) update() (err error) {
 	var mtime time.Time
 	var updated bool
 	mtime, updated, err = s.isUpdated()
-	if err != nil || updated == false {
+	if err != nil || !updated {
 		return
 	}
 
@@ -54,7 +54,7 @@ func (s *Server) process() (err error) {
 	_, found := byRegion["Ostbelgien"]
 	if !found {
 		byRegion["Ostbelgien"] = ostbelgienPopulation
-		population, _ := byRegion["Wallonia"]
+		population := byRegion["Wallonia"]
 		population -= ostbelgienPopulation
 		byRegion["Wallonia"] = population
 	}

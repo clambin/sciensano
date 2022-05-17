@@ -2,6 +2,7 @@ package sciensano_test
 
 import (
 	"context"
+	"github.com/clambin/go-metrics/caller"
 	"github.com/clambin/sciensano/apiclient"
 	"github.com/clambin/sciensano/apiclient/sciensano"
 	"github.com/clambin/sciensano/apiclient/sciensano/fake"
@@ -20,8 +21,8 @@ func TestClient_GetVaccinations(t *testing.T) {
 	defer apiServer.Close()
 
 	client := sciensano.Client{
-		URL:        apiServer.URL,
-		HTTPClient: &http.Client{},
+		URL:    apiServer.URL,
+		Caller: &caller.BaseClient{HTTPClient: http.DefaultClient},
 	}
 
 	ctx := context.Background()
@@ -73,8 +74,8 @@ func BenchmarkClient_GetVaccinations(b *testing.B) {
 	defer testServer.Close()
 
 	client := sciensano.Client{
-		HTTPClient: &http.Client{},
-		URL:        testServer.URL,
+		Caller: &caller.BaseClient{HTTPClient: http.DefaultClient},
+		URL:    testServer.URL,
 	}
 
 	b.ResetTimer()

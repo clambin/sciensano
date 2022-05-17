@@ -2,6 +2,7 @@ package sciensano_test
 
 import (
 	"context"
+	"github.com/clambin/go-metrics/caller"
 	"github.com/clambin/sciensano/apiclient/cache"
 	"github.com/clambin/sciensano/apiclient/sciensano"
 	"github.com/clambin/sciensano/apiclient/sciensano/fake"
@@ -18,8 +19,8 @@ func TestClient_Update(t *testing.T) {
 	defer testServer.Close()
 
 	client := sciensano.Client{
-		URL:        testServer.URL,
-		HTTPClient: &http.Client{},
+		URL:    testServer.URL,
+		Caller: &caller.BaseClient{HTTPClient: http.DefaultClient},
 	}
 	ctx := context.Background()
 

@@ -17,7 +17,7 @@ func (client *Client) GetVaccines() (results *dataset.Dataset, err error) {
 	return client.ReportCache.MaybeGenerate("Vaccines", func() (*dataset.Dataset, error) {
 		apiResult, ok := client.APICache.Get("Vaccines")
 
-		if ok == false {
+		if !ok {
 			return nil, errors.New("cache does not contain Vaccines entries")
 		}
 		return NewFromAPIResponse(apiResult), nil
@@ -30,7 +30,7 @@ func (client *Client) GetVaccinesByManufacturer() (results *dataset.Dataset, err
 	return client.ReportCache.MaybeGenerate("VaccinesByManufacturer", func() (*dataset.Dataset, error) {
 		apiResult, ok := client.APICache.Get("Vaccines")
 
-		if ok == false {
+		if !ok {
 			return nil, errors.New("cache does not contain Vaccines entries")
 		}
 		return NewGroupedFromAPIResponse(apiResult, apiclient.GroupByManufacturer), nil

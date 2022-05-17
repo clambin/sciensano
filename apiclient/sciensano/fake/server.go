@@ -26,7 +26,7 @@ func (handler *Handler) Handle(w http.ResponseWriter, req *http.Request) {
 
 	handler.Count++
 
-	if handler.Slow && wait(req.Context(), 1*time.Second) == false {
+	if handler.Slow && !wait(req.Context(), 1*time.Second) {
 		http.Error(w, "context exceeded", http.StatusRequestTimeout)
 		return
 	}

@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"github.com/clambin/go-metrics"
+	"github.com/clambin/go-metrics/caller"
 	"github.com/clambin/sciensano/apiclient"
 	"github.com/clambin/sciensano/apiclient/cache"
 	log "github.com/sirupsen/logrus"
@@ -25,10 +25,9 @@ var _ Getter = &Client{}
 
 // Client calls the API to retrieve vaccine batches
 type Client struct {
-	URL        string
-	HTTPClient *http.Client
+	caller.Caller
+	URL string
 	cache.Cache
-	Metrics metrics.APIClientMetrics
 }
 
 const baseURL = "https://covid-vaccinatie.be"
@@ -98,7 +97,6 @@ func (client *Client) Update(ctx context.Context, ch chan<- cache.FetcherRespons
 	start := time.Now()
 	cache.Fetch(ctx, ch, "Vaccines", client.GetBatches)
 	log.WithField("duration", time.Since(start)).Debugf("refreshed Vaccine API cache")
-	return
 }
 
 type apiBatchesResponse struct {
@@ -109,27 +107,18 @@ type apiBatchesResponse struct {
 
 // GetBatches returns all vaccine batches
 func (client *Client) GetBatches(ctx context.Context) (batches []apiclient.APIResponse, err error) {
-	defer func() {
-		client.Metrics.ReportErrors(err, "vaccines")
-	}()
-
-	timer := client.Metrics.MakeLatencyTimer("vaccines")
-
 	var stats apiBatchesResponse
 	stats, err = client.call(ctx)
-
-	if timer != nil {
-		timer.ObserveDuration()
+	if err != nil {
+		return
 	}
 
-	if err == nil {
-		batches = make([]apiclient.APIResponse, 0, len(stats.Result.Delivered))
-		for _, entry := range stats.Result.Delivered {
-			batches = append(batches, entry)
-		}
-
-		sort.Slice(batches, func(i, j int) bool { return batches[i].GetTimestamp().Before(batches[j].GetTimestamp()) })
+	batches = make([]apiclient.APIResponse, 0, len(stats.Result.Delivered))
+	for _, entry := range stats.Result.Delivered {
+		batches = append(batches, entry)
 	}
+
+	sort.Slice(batches, func(i, j int) bool { return batches[i].GetTimestamp().Before(batches[j].GetTimestamp()) })
 	return
 }
 
@@ -137,7 +126,7 @@ func (client *Client) call(ctx context.Context) (stats apiBatchesResponse, err e
 	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, client.getURL()+"/api/v1/delivered.json", nil)
 
 	var resp *http.Response
-	resp, err = client.HTTPClient.Do(req)
+	resp, err = client.Caller.Do(req)
 
 	if err != nil {
 		return

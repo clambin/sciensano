@@ -39,7 +39,7 @@ func main() {
 
 	handler := simplejsonserver.NewServer(demographicsPath)
 
-	if err := handler.Run(port); errors.Is(err, http.ErrServerClosed) == false {
+	if err := handler.Run(port); !errors.Is(err, http.ErrServerClosed) {
 		log.WithError(err).Fatal("failed to start HTTP server")
 	}
 }

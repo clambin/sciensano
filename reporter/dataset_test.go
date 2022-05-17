@@ -42,8 +42,7 @@ func (t testResponse) GetAttributeValues() []float64 {
 }
 
 func TestNewGroupedFromAPIResponse(t *testing.T) {
-	var input []apiclient.APIResponse
-	input = []apiclient.APIResponse{
+	input := []apiclient.APIResponse{
 		&testResponse{
 			timestamp: time.Date(2022, 2, 2, 0, 0, 0, 0, time.UTC),
 			group:     "A",
@@ -139,8 +138,7 @@ func (t testMultiValueResponse) GetAttributeValues() []float64 {
 }
 
 func TestNewFromAPIResponse(t *testing.T) {
-	var input []apiclient.APIResponse
-	input = []apiclient.APIResponse{
+	input := []apiclient.APIResponse{
 		&testMultiValueResponse{
 			timestamp: time.Date(2022, 2, 2, 0, 0, 0, 0, time.UTC),
 			value1:    1,

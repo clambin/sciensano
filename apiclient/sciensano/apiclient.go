@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/clambin/go-metrics"
+	"github.com/clambin/go-metrics/caller"
 	"github.com/clambin/sciensano/apiclient"
 	"github.com/clambin/sciensano/apiclient/cache"
 	log "github.com/sirupsen/logrus"
@@ -30,9 +30,8 @@ var _ cache.Fetcher = &Client{}
 
 // Client calls the different Reporter APIs
 type Client struct {
-	URL        string
-	HTTPClient *http.Client
-	Metrics    metrics.APIClientMetrics
+	Caller caller.Caller
+	URL    string
 }
 
 // Update calls all endpoints and returns this to the caller. This is used by a cache to refresh its content
@@ -62,7 +61,6 @@ func (client *Client) Update(ctx context.Context, ch chan<- cache.FetcherRespons
 	_ = s.Acquire(ctx, maxParallel)
 
 	log.WithField("duration", time.Since(start)).Debugf("refreshed Reporter API cache")
-	return
 }
 
 const baseURL = "https://epistat.sciensano.be"
@@ -85,27 +83,18 @@ var endpoints = map[string]string{
 
 // call is a generic function to call the Reporter API endpoints
 func (client *Client) call(ctx context.Context, category string) (body []byte, err error) {
-	defer func() {
-		client.Metrics.ReportErrors(err, category)
-	}()
-
 	endpoint, ok := endpoints[category]
-	if ok == false {
+	if !ok {
 		err = fmt.Errorf("unsupporter category: %s", category)
 		return
 	}
 
-	timer := client.Metrics.MakeLatencyTimer(category)
 	target := client.getURL() + "/Data/" + endpoint
 
 	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, target, nil)
 
 	var resp *http.Response
-	resp, err = client.HTTPClient.Do(req)
-
-	if timer != nil {
-		timer.ObserveDuration()
-	}
+	resp, err = client.Caller.Do(req)
 
 	if err != nil {
 		return

@@ -55,7 +55,7 @@ func TestCache_Stats(t *testing.T) {
 func TestCache_MaybeGenerate(t *testing.T) {
 	called := 0
 	c := reporter.NewCache(time.Second)
-	result, err := c.MaybeGenerate("foo", func() (*dataset.Dataset, error) {
+	_, err := c.MaybeGenerate("foo", func() (*dataset.Dataset, error) {
 		d := dataset.New()
 		d.Add(time.Now(), "A", 1)
 		called++
@@ -64,6 +64,7 @@ func TestCache_MaybeGenerate(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, 1, called)
 
+	var result *dataset.Dataset
 	result, err = c.MaybeGenerate("foo", func() (*dataset.Dataset, error) {
 		d := dataset.New()
 		d.Add(time.Now(), "A", 1)
