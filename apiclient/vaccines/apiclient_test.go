@@ -2,7 +2,7 @@ package vaccines_test
 
 import (
 	"context"
-	"github.com/clambin/go-metrics/caller"
+	"github.com/clambin/go-metrics/client"
 	"github.com/clambin/sciensano/apiclient"
 	"github.com/clambin/sciensano/apiclient/cache"
 	"github.com/clambin/sciensano/apiclient/vaccines"
@@ -19,12 +19,12 @@ func TestClient_GetBatches(t *testing.T) {
 	server := fake.Server{}
 	apiServer := httptest.NewServer(http.HandlerFunc(server.Handler))
 
-	client := vaccines.Client{
-		Caller: &caller.BaseClient{HTTPClient: http.DefaultClient},
+	c := vaccines.Client{
+		Caller: &client.BaseClient{HTTPClient: http.DefaultClient},
 		URL:    apiServer.URL,
 	}
 
-	batches, err := client.GetBatches(context.Background())
+	batches, err := c.GetBatches(context.Background())
 	require.NoError(t, err)
 	require.Len(t, batches, 3)
 	assert.Equal(t, 300, batches[0].(*vaccines.APIBatchResponse).Amount)
@@ -32,11 +32,11 @@ func TestClient_GetBatches(t *testing.T) {
 	assert.Equal(t, 100, batches[2].(*vaccines.APIBatchResponse).Amount)
 
 	server.Fail = true
-	_, err = client.GetBatches(context.Background())
+	_, err = c.GetBatches(context.Background())
 	require.Error(t, err)
 
 	apiServer.Close()
-	_, err = client.GetBatches(context.Background())
+	_, err = c.GetBatches(context.Background())
 	require.Error(t, err)
 }
 
@@ -44,13 +44,13 @@ func BenchmarkClient_GetBatches(b *testing.B) {
 	server := fake.Server{}
 	apiServer := httptest.NewServer(http.HandlerFunc(server.Handler))
 
-	client := vaccines.Client{
-		Caller: &caller.BaseClient{HTTPClient: http.DefaultClient},
+	c := vaccines.Client{
+		Caller: &client.BaseClient{HTTPClient: http.DefaultClient},
 		URL:    apiServer.URL,
 	}
 
 	for i := 0; i < b.N; i++ {
-		_, err := client.GetBatches(context.Background())
+		_, err := c.GetBatches(context.Background())
 		if err != nil {
 			b.Fatal(err)
 		}
@@ -77,13 +77,13 @@ func TestClient_Refresh(t *testing.T) {
 	apiServer := httptest.NewServer(http.HandlerFunc(server.Handler))
 	defer apiServer.Close()
 
-	client := vaccines.Client{
-		Caller: &caller.BaseClient{HTTPClient: http.DefaultClient},
+	c := vaccines.Client{
+		Caller: &client.BaseClient{HTTPClient: http.DefaultClient},
 		URL:    apiServer.URL,
 	}
 
 	ch := make(chan cache.FetcherResponse)
-	go client.Update(context.Background(), ch)
+	go c.Update(context.Background(), ch)
 
 	response := <-ch
 	assert.Equal(t, "Vaccines", response.Name)

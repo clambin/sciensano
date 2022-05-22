@@ -2,6 +2,7 @@ package vaccines_test
 
 import (
 	"context"
+	"github.com/clambin/go-metrics/client"
 	"github.com/clambin/sciensano/apiclient"
 	mockCache "github.com/clambin/sciensano/apiclient/cache/mocks"
 	"github.com/clambin/sciensano/apiclient/sciensano"
@@ -19,10 +20,6 @@ import (
 
 func TestHandler_TableQuery_Vaccines(t *testing.T) {
 	cache := &mockCache.Holder{}
-	r := reporter.New(time.Hour)
-	r.APICache = cache
-	h := vaccinesHandler.OverviewHandler{Reporter: r}
-
 	timestamp := time.Now().UTC()
 	cache.
 		On("Get", "Vaccines").
@@ -41,6 +38,10 @@ func TestHandler_TableQuery_Vaccines(t *testing.T) {
 			},
 		}, true)
 
+	r := reporter.NewWithOptions(time.Hour, client.Options{})
+	r.APICache = cache
+	h := vaccinesHandler.OverviewHandler{Reporter: r}
+
 	req := query.Request{Args: query.Args{Args: common.Args{Range: common.Range{To: timestamp}}}}
 
 	response, err := h.Endpoints().Query(context.Background(), req)
@@ -55,10 +56,6 @@ func TestHandler_TableQuery_Vaccines(t *testing.T) {
 
 func TestHandler_TableQuery_VaccinesByManufacturer(t *testing.T) {
 	cache := &mockCache.Holder{}
-	r := reporter.New(time.Hour)
-	r.APICache = cache
-	h := vaccinesHandler.ManufacturerHandler{Reporter: r}
-
 	timestamp := time.Date(2021, time.September, 2, 0, 0, 0, 0, time.UTC)
 	cache.
 		On("Get", "Vaccines").
@@ -79,6 +76,10 @@ func TestHandler_TableQuery_VaccinesByManufacturer(t *testing.T) {
 				Amount:       200,
 			},
 		}, true)
+
+	r := reporter.NewWithOptions(time.Hour, client.Options{})
+	r.APICache = cache
+	h := vaccinesHandler.ManufacturerHandler{Reporter: r}
 
 	req := query.Request{Args: query.Args{Args: common.Args{Range: common.Range{To: timestamp}}}}
 
@@ -102,12 +103,7 @@ func TestHandler_TableQuery_VaccinesByManufacturer(t *testing.T) {
 
 func TestHandler_TableQuery_VaccinesStats(t *testing.T) {
 	c := &mockCache.Holder{}
-	r := reporter.New(time.Hour)
-	r.APICache = c
-	h := vaccinesHandler.StatsHandler{Reporter: r}
-
 	timestamp := time.Now().UTC()
-
 	c.
 		On("Get", "Vaccines").
 		Return(
@@ -125,7 +121,6 @@ func TestHandler_TableQuery_VaccinesStats(t *testing.T) {
 					Amount: 200,
 				},
 			}, true)
-
 	c.
 		On("Get", "Vaccinations").
 		Return([]apiclient.APIResponse{
@@ -156,6 +151,10 @@ func TestHandler_TableQuery_VaccinesStats(t *testing.T) {
 			},
 		}, true)
 
+	r := reporter.NewWithOptions(time.Hour, client.Options{})
+	r.APICache = c
+	h := vaccinesHandler.StatsHandler{Reporter: r}
+
 	request := query.Request{Args: query.Args{Args: common.Args{
 		Range: common.Range{From: timestamp.Add(-24 * time.Hour)},
 	}}}
@@ -183,11 +182,7 @@ func TestHandler_TableQuery_VaccinesStats(t *testing.T) {
 
 func TestHandler_TableQuery_VaccinesTime(t *testing.T) {
 	cache := &mockCache.Holder{}
-	r := reporter.New(time.Hour)
-	r.APICache = cache
-	h := vaccinesHandler.DelayHandler{Reporter: r}
 	timestamp := time.Date(2022, 1, 26, 0, 0, 0, 0, time.UTC)
-
 	cache.
 		On("Get", "Vaccines").
 		Return([]apiclient.APIResponse{
@@ -236,6 +231,10 @@ func TestHandler_TableQuery_VaccinesTime(t *testing.T) {
 			},
 		}, true)
 
+	r := reporter.New(time.Hour)
+	r.APICache = cache
+	h := vaccinesHandler.DelayHandler{Reporter: r}
+
 	request := query.Request{Args: query.Args{Args: common.Args{Range: common.Range{
 		To: timestamp,
 	}}}}
@@ -252,15 +251,16 @@ func TestHandler_TableQuery_VaccinesTime(t *testing.T) {
 
 func TestHandler_Failures(t *testing.T) {
 	cache := &mockCache.Holder{}
-	r := reporter.New(time.Hour)
-	r.APICache = cache
+
+	cache.On("Get", "Vaccinations").Return(nil, false)
 
 	ctx := context.Background()
+	r := reporter.NewWithOptions(time.Hour, client.Options{})
+	r.APICache = cache
+
 	req := query.Request{Args: query.Args{Args: common.Args{Range: common.Range{
 		To: time.Now(),
 	}}}}
-
-	cache.On("Get", "Vaccinations").Return(nil, false)
 
 	cache.On("Get", "Vaccines").Return(nil, false).Once()
 	o := vaccinesHandler.OverviewHandler{Reporter: r}
@@ -287,6 +287,7 @@ func TestHandler_Failures(t *testing.T) {
 	assert.Error(t, err)
 
 	cache.On("Get", "Vaccines").Return([]apiclient.APIResponse{}, true).Once()
+
 	s = vaccinesHandler.StatsHandler{Reporter: r}
 	_, err = s.Endpoints().Query(ctx, req)
 	assert.Error(t, err)

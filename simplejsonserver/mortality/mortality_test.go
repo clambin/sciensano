@@ -2,6 +2,7 @@ package mortality_test
 
 import (
 	"context"
+	"github.com/clambin/go-metrics/client"
 	"github.com/clambin/sciensano/apiclient"
 	mockCache "github.com/clambin/sciensano/apiclient/cache/mocks"
 	"github.com/clambin/sciensano/apiclient/sciensano"
@@ -93,21 +94,21 @@ var (
 
 func TestHandler_TableQuery(t *testing.T) {
 	getter := &mockCache.Holder{}
-	client := reporter.New(time.Hour)
-	client.APICache = getter
+	getter.
+		On("Get", "Mortality").
+		Return(testResponse, true)
+
+	r := reporter.NewWithOptions(time.Hour, client.Options{})
+	r.APICache = getter
 
 	req := query.Request{Args: query.Args{Args: common.Args{Range: common.Range{
 		From: time.Time{},
 		To:   time.Date(2021, 10, 22, 0, 0, 0, 0, time.UTC),
 	}}}}
 
-	getter.
-		On("Get", "Mortality").
-		Return(testResponse, true)
-
 	for index, testCase := range testCases {
 		h := mortality.Handler{
-			Reporter: client,
+			Reporter: r,
 			Scope:    testCase.Scope,
 		}
 		response, err := h.Endpoints().Query(context.Background(), req)
@@ -120,17 +121,17 @@ func TestHandler_TableQuery(t *testing.T) {
 
 func TestHandler_Failure(t *testing.T) {
 	getter := &mockCache.Holder{}
-	client := reporter.New(time.Hour)
-	client.APICache = getter
-
-	req := query.Request{}
-
 	getter.
 		On("Get", "Mortality").
 		Return(nil, false)
 
+	r := reporter.NewWithOptions(time.Hour, client.Options{})
+	r.APICache = getter
+
+	req := query.Request{}
+
 	h := mortality.Handler{
-		Reporter: client,
+		Reporter: r,
 		Scope:    cases.ScopeAll,
 	}
 	_, err := h.Endpoints().Query(context.Background(), req)
@@ -140,6 +141,7 @@ func TestHandler_Failure(t *testing.T) {
 }
 
 func BenchmarkMortalityHandler(b *testing.B) {
+	b.StopTimer()
 	var bigResponse []apiclient.APIResponse
 	timestamp := time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)
 
@@ -156,10 +158,14 @@ func BenchmarkMortalityHandler(b *testing.B) {
 	}
 
 	getter := &mockCache.Holder{}
-	client := reporter.New(time.Hour)
-	client.APICache = getter
+	getter.
+		On("Get", "Mortality").
+		Return(bigResponse, true)
+
+	r := reporter.NewWithOptions(time.Hour, client.Options{})
+	r.APICache = getter
 	h := mortality.Handler{
-		Reporter: client,
+		Reporter: r,
 		Scope:    mortality.ScopeRegion,
 	}
 
@@ -167,12 +173,7 @@ func BenchmarkMortalityHandler(b *testing.B) {
 		To: time.Date(2021, 10, 22, 0, 0, 0, 0, time.UTC),
 	}}}}
 
-	getter.
-		On("Get", "Mortality").
-		Return(bigResponse, true)
-
-	b.ResetTimer()
-
+	b.StartTimer()
 	for i := 0; i < b.N; i++ {
 		_, err := h.Endpoints().Query(context.Background(), req)
 		if err != nil {

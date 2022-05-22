@@ -2,7 +2,7 @@ package sciensano_test
 
 import (
 	"context"
-	"github.com/clambin/go-metrics/caller"
+	"github.com/clambin/go-metrics/client"
 	"github.com/clambin/sciensano/apiclient"
 	"github.com/clambin/sciensano/apiclient/sciensano"
 	"github.com/clambin/sciensano/apiclient/sciensano/fake"
@@ -19,13 +19,13 @@ func TestClient_GetCases(t *testing.T) {
 	testServer := fake.Handler{}
 	apiServer := httptest.NewServer(http.HandlerFunc(testServer.Handle))
 
-	client := sciensano.Client{
+	c := sciensano.Client{
 		URL:    apiServer.URL,
-		Caller: &caller.BaseClient{HTTPClient: http.DefaultClient},
+		Caller: &client.BaseClient{HTTPClient: http.DefaultClient},
 	}
 
 	ctx := context.Background()
-	result, err := client.GetCases(ctx)
+	result, err := c.GetCases(ctx)
 
 	require.NoError(t, err)
 	require.Len(t, result, 2)
@@ -47,11 +47,11 @@ func TestClient_GetCases(t *testing.T) {
 	}, result[1])
 
 	testServer.Fail = true
-	_, err = client.GetCases(ctx)
+	_, err = c.GetCases(ctx)
 	require.Error(t, err)
 
 	apiServer.Close()
-	_, err = client.GetCases(ctx)
+	_, err = c.GetCases(ctx)
 	require.Error(t, err)
 }
 
@@ -78,14 +78,14 @@ func BenchmarkClient_GetCases(b *testing.B) {
 	testServer := httptest.NewServer(http.HandlerFunc(handleCasesResponse))
 	defer testServer.Close()
 
-	client := sciensano.Client{
-		Caller: &caller.BaseClient{HTTPClient: http.DefaultClient},
+	c := sciensano.Client{
+		Caller: &client.BaseClient{HTTPClient: http.DefaultClient},
 		URL:    testServer.URL,
 	}
 
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		_, err := client.GetCases(context.Background())
+		_, err := c.GetCases(context.Background())
 		if err != nil {
 			b.Fatal(err)
 		}
@@ -98,8 +98,8 @@ func BenchmarkClient_GetCases_Cached(b *testing.B) {
 	defer testServer.Close()
 
 	// using caller's Cacher has little added value: main processing time goes to json unmarshal. So, apiclient.Cache is more effective here.
-	client := sciensano.Client{
-		Caller: caller.NewCacher(http.DefaultClient, "sciensano", caller.Options{}, []caller.CacheTableEntry{
+	c := sciensano.Client{
+		Caller: client.NewCacher(http.DefaultClient, "sciensano", client.Options{}, []client.CacheTableEntry{
 			{Endpoint: "/.*", IsRegExp: true, Expiry: time.Hour},
 		}, time.Minute, time.Hour),
 		URL: testServer.URL,
@@ -107,7 +107,7 @@ func BenchmarkClient_GetCases_Cached(b *testing.B) {
 
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		_, err := client.GetCases(context.Background())
+		_, err := c.GetCases(context.Background())
 		if err != nil {
 			b.Fatal(err)
 		}

@@ -2,7 +2,7 @@ package sciensano_test
 
 import (
 	"context"
-	"github.com/clambin/go-metrics/caller"
+	"github.com/clambin/go-metrics/client"
 	"github.com/clambin/sciensano/apiclient"
 	"github.com/clambin/sciensano/apiclient/sciensano"
 	"github.com/clambin/sciensano/apiclient/sciensano/fake"
@@ -18,13 +18,13 @@ func TestClient_GetHospitalisations(t *testing.T) {
 	testServer := fake.Handler{}
 	apiServer := httptest.NewServer(http.HandlerFunc(testServer.Handle))
 
-	client := sciensano.Client{
+	c := sciensano.Client{
 		URL:    apiServer.URL,
-		Caller: &caller.BaseClient{HTTPClient: http.DefaultClient},
+		Caller: &client.BaseClient{HTTPClient: http.DefaultClient},
 	}
 
 	ctx := context.Background()
-	result, err := client.GetHospitalisations(ctx)
+	result, err := c.GetHospitalisations(ctx)
 
 	require.NoError(t, err)
 	require.Len(t, result, 2)
@@ -49,11 +49,11 @@ func TestClient_GetHospitalisations(t *testing.T) {
 	}, result[1])
 
 	testServer.Fail = true
-	_, err = client.GetHospitalisations(ctx)
+	_, err = c.GetHospitalisations(ctx)
 	require.Error(t, err)
 
 	apiServer.Close()
-	_, err = client.GetHospitalisations(ctx)
+	_, err = c.GetHospitalisations(ctx)
 	require.Error(t, err)
 }
 

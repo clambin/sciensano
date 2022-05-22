@@ -2,6 +2,7 @@ package vaccinations_test
 
 import (
 	"context"
+	"github.com/clambin/go-metrics/client"
 	"github.com/clambin/sciensano/apiclient"
 	mockCache "github.com/clambin/sciensano/apiclient/cache/mocks"
 	"github.com/clambin/sciensano/apiclient/sciensano"
@@ -17,12 +18,11 @@ import (
 
 func TestHandler(t *testing.T) {
 	cache := &mockCache.Holder{}
-	client := reporter.New(time.Hour)
-	client.APICache = cache
-
-	h := vaccinations.Handler{Reporter: client}
-
 	cache.On("Get", "Vaccinations").Return(nil, false).Once()
+
+	r := reporter.NewWithOptions(time.Hour, client.Options{})
+	r.APICache = cache
+	h := vaccinations.Handler{Reporter: r}
 
 	ctx := context.Background()
 	req := query.Request{Args: query.Args{Args: common.Args{Range: common.Range{To: timestamp.Add(24 * time.Hour)}}}}

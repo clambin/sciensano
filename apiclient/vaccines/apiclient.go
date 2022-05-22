@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"github.com/clambin/go-metrics/caller"
+	"github.com/clambin/go-metrics/client"
 	"github.com/clambin/sciensano/apiclient"
 	"github.com/clambin/sciensano/apiclient/cache"
 	log "github.com/sirupsen/logrus"
@@ -25,7 +25,7 @@ var _ Getter = &Client{}
 
 // Client calls the API to retrieve vaccine batches
 type Client struct {
-	caller.Caller
+	client.Caller
 	URL string
 	cache.Cache
 }

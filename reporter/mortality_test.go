@@ -1,6 +1,7 @@
 package reporter_test
 
 import (
+	"github.com/clambin/go-metrics/client"
 	"github.com/clambin/sciensano/apiclient"
 	"github.com/clambin/sciensano/apiclient/cache/mocks"
 	"github.com/clambin/sciensano/apiclient/sciensano"
@@ -43,14 +44,14 @@ var (
 
 func TestClient_GetMortality(t *testing.T) {
 	cache := &mocks.Holder{}
-	client := reporter.New(time.Hour)
-	client.APICache = cache
-
 	cache.
 		On("Get", "Mortality").
 		Return(testMortalityResponse, true)
 
-	entries, err := client.GetMortality()
+	r := reporter.NewWithOptions(time.Hour, client.Options{})
+	r.APICache = cache
+
+	entries, err := r.GetMortality()
 	require.NoError(t, err)
 
 	assert.Equal(t, []time.Time{
@@ -70,14 +71,14 @@ func TestClient_GetMortality(t *testing.T) {
 
 func TestClient_GetMortalityByRegion(t *testing.T) {
 	cache := &mocks.Holder{}
-	client := reporter.New(time.Hour)
-	client.APICache = cache
-
 	cache.
 		On("Get", "Mortality").
 		Return(testMortalityResponse, true)
 
-	entries, err := client.GetMortalityByRegion()
+	r := reporter.NewWithOptions(time.Hour, client.Options{})
+	r.APICache = cache
+
+	entries, err := r.GetMortalityByRegion()
 	require.NoError(t, err)
 
 	assert.Equal(t, []time.Time{
@@ -101,14 +102,14 @@ func TestClient_GetMortalityByRegion(t *testing.T) {
 
 func TestClient_GetMortalityByAgeGroup(t *testing.T) {
 	cache := &mocks.Holder{}
-	client := reporter.New(time.Hour)
-	client.APICache = cache
-
 	cache.
 		On("Get", "Mortality").
 		Return(testMortalityResponse, true)
 
-	entries, err := client.GetMortalityByAgeGroup()
+	r := reporter.NewWithOptions(time.Hour, client.Options{})
+	r.APICache = cache
+
+	entries, err := r.GetMortalityByAgeGroup()
 	require.NoError(t, err)
 
 	assert.Equal(t, []time.Time{
@@ -138,22 +139,23 @@ func TestClient_GetMortality_Failure(t *testing.T) {
 	cache := &mocks.Holder{}
 	cache.On("Get", "Mortality").Return(nil, false)
 
-	client := reporter.New(time.Hour)
-	client.APICache = cache
+	r := reporter.NewWithOptions(time.Hour, client.Options{})
+	r.APICache = cache
 
-	_, err := client.GetMortality()
+	_, err := r.GetMortality()
 	require.Error(t, err)
 
-	_, err = client.GetMortalityByRegion()
+	_, err = r.GetMortalityByRegion()
 	require.Error(t, err)
 
-	_, err = client.GetMortalityByAgeGroup()
+	_, err = r.GetMortalityByAgeGroup()
 	require.Error(t, err)
 
 	mock.AssertExpectationsForObjects(t, cache)
 }
 
 func BenchmarkClient_GetMortalityByRegion(b *testing.B) {
+	b.StopTimer()
 	var bigResponse []apiclient.APIResponse
 	ts := time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)
 
@@ -168,15 +170,16 @@ func BenchmarkClient_GetMortalityByRegion(b *testing.B) {
 		ts = ts.Add(24 * time.Hour)
 	}
 	cache := &mocks.Holder{}
-	client := reporter.New(time.Hour)
-	client.APICache = cache
-
 	cache.
 		On("Get", "Mortality").
 		Return(bigResponse, true)
 
+	r := reporter.NewWithOptions(time.Hour, client.Options{})
+	r.APICache = cache
+
+	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		_, err := client.GetMortalityByRegion()
+		_, err := r.GetMortalityByRegion()
 		if err != nil {
 			b.Log(err)
 			b.FailNow()

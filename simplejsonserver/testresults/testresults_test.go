@@ -2,6 +2,7 @@ package testresults_test
 
 import (
 	"context"
+	"github.com/clambin/go-metrics/client"
 	"github.com/clambin/sciensano/apiclient"
 	mockCache "github.com/clambin/sciensano/apiclient/cache/mocks"
 	"github.com/clambin/sciensano/apiclient/sciensano"
@@ -17,10 +18,6 @@ import (
 
 func TestHandler_TableQuery(t *testing.T) {
 	getter := &mockCache.Holder{}
-	client := reporter.New(time.Hour)
-	client.APICache = getter
-	h := testresults.Handler{Reporter: client}
-
 	getter.
 		On("Get", "TestResults").
 		Return([]apiclient.APIResponse{
@@ -30,6 +27,10 @@ func TestHandler_TableQuery(t *testing.T) {
 				Total:     20,
 			},
 		}, true)
+
+	r := reporter.NewWithOptions(time.Hour, client.Options{})
+	r.APICache = getter
+	h := testresults.Handler{Reporter: r}
 
 	req := query.Request{Args: query.Args{Args: common.Args{Range: common.Range{
 		From: time.Time{},
@@ -52,18 +53,18 @@ func TestHandler_TableQuery(t *testing.T) {
 
 func TestHandler_Failure(t *testing.T) {
 	getter := &mockCache.Holder{}
-	client := reporter.New(time.Hour)
-	client.APICache = getter
-
-	req := query.Request{}
-
 	getter.
 		On("Get", "TestResults").
 		Return(nil, false)
 
+	r := reporter.NewWithOptions(time.Hour, client.Options{})
+	r.APICache = getter
 	h := testresults.Handler{
-		Reporter: client,
+		Reporter: r,
 	}
+
+	req := query.Request{}
+
 	_, err := h.Endpoints().Query(context.Background(), req)
 	assert.Error(t, err)
 

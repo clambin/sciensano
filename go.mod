@@ -15,7 +15,7 @@ require (
 )
 
 require (
-	github.com/clambin/go-metrics v0.4.1
+	github.com/clambin/go-metrics v0.5.0
 	github.com/clambin/simplejson/v3 v3.3.0
 	github.com/mailru/easyjson v0.7.7
 	github.com/rovaughn/fastcsv v0.0.0-20170331030356-1090019547fb

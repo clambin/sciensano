@@ -1,6 +1,7 @@
 package reporter_test
 
 import (
+	"github.com/clambin/go-metrics/client"
 	"github.com/clambin/sciensano/apiclient"
 	"github.com/clambin/sciensano/apiclient/cache/mocks"
 	"github.com/clambin/sciensano/apiclient/sciensano"
@@ -46,14 +47,14 @@ var (
 
 func TestClient_GetHospitalisations(t *testing.T) {
 	cache := &mocks.Holder{}
-	client := reporter.New(time.Hour)
-	client.APICache = cache
-
 	cache.
 		On("Get", "Hospitalisations").
 		Return(testHospitalisationsResponse, true)
 
-	entries, err := client.GetHospitalisations()
+	r := reporter.NewWithOptions(time.Hour, client.Options{})
+	r.APICache = cache
+
+	entries, err := r.GetHospitalisations()
 	require.NoError(t, err)
 
 	assert.Equal(t, []time.Time{
@@ -82,14 +83,14 @@ func TestClient_GetHospitalisations(t *testing.T) {
 
 func TestClient_GetHospitalisationsByProvince(t *testing.T) {
 	cache := &mocks.Holder{}
-	client := reporter.New(time.Hour)
-	client.APICache = cache
-
 	cache.
 		On("Get", "Hospitalisations").
 		Return(testHospitalisationsResponse, true)
 
-	entries, err := client.GetHospitalisationsByProvince()
+	r := reporter.NewWithOptions(time.Hour, client.Options{})
+	r.APICache = cache
+
+	entries, err := r.GetHospitalisationsByProvince()
 	require.NoError(t, err)
 
 	assert.Equal(t, []time.Time{
@@ -112,14 +113,14 @@ func TestClient_GetHospitalisationsByProvince(t *testing.T) {
 
 func TestClient_GetHospitalisationsByRegion(t *testing.T) {
 	cache := &mocks.Holder{}
-	client := reporter.New(time.Hour)
-	client.APICache = cache
-
 	cache.
 		On("Get", "Hospitalisations").
 		Return(testHospitalisationsResponse, true)
 
-	entries, err := client.GetHospitalisationsByRegion()
+	r := reporter.NewWithOptions(time.Hour, client.Options{})
+	r.APICache = cache
+
+	entries, err := r.GetHospitalisationsByRegion()
 	require.NoError(t, err)
 
 	assert.Equal(t, []time.Time{
@@ -142,24 +143,25 @@ func TestClient_GetHospitalisationsByRegion(t *testing.T) {
 
 func TestClient_GetHospitalisations_Failure(t *testing.T) {
 	cache := &mocks.Holder{}
-	client := reporter.New(time.Hour)
-	client.APICache = cache
-
 	cache.On("Get", "Hospitalisations").Return(nil, false)
 
-	_, err := client.GetHospitalisations()
+	r := reporter.NewWithOptions(time.Hour, client.Options{})
+	r.APICache = cache
+
+	_, err := r.GetHospitalisations()
 	require.Error(t, err)
 
-	_, err = client.GetHospitalisationsByRegion()
+	_, err = r.GetHospitalisationsByRegion()
 	require.Error(t, err)
 
-	_, err = client.GetHospitalisationsByProvince()
+	_, err = r.GetHospitalisationsByProvince()
 	require.Error(t, err)
 
 	cache.AssertExpectations(t)
 }
 
 func BenchmarkClient_GetHospitalisationsByRegion(b *testing.B) {
+	b.StopTimer()
 	var bigResponse []apiclient.APIResponse
 	ts := time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)
 
@@ -175,16 +177,16 @@ func BenchmarkClient_GetHospitalisationsByRegion(b *testing.B) {
 		ts = ts.Add(24 * time.Hour)
 	}
 	cache := &mocks.Holder{}
-	client := reporter.New(time.Hour)
-	client.APICache = cache
-
 	cache.
 		On("Get", "Hospitalisations").
 		Return(bigResponse, true)
 
-	b.ResetTimer()
+	r := reporter.NewWithOptions(time.Hour, client.Options{})
+	r.APICache = cache
+
+	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		_, err := client.GetHospitalisationsByRegion()
+		_, err := r.GetHospitalisationsByRegion()
 		if err != nil {
 			b.Fatal(err)
 		}

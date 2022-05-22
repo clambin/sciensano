@@ -15,8 +15,9 @@ import (
 	"time"
 )
 
-func TestTargets(t *testing.T) {
-	h := simplejsonserver.NewServer("")
+func TestRun(t *testing.T) {
+	demographicsClient := &mockDemographics.Fetcher{}
+	h := simplejsonserver.NewServerWithDemographicsClient(demographicsClient)
 
 	assert.Equal(t, []string{
 		"cases",
@@ -50,11 +51,6 @@ func TestTargets(t *testing.T) {
 		"vaccines-stats",
 		"vaccines-time",
 	}, h.Targets())
-}
-
-func TestRun(t *testing.T) {
-	demographicsClient := &mockDemographics.Fetcher{}
-	h := simplejsonserver.NewServerWithDemographicsClient(demographicsClient)
 
 	demographicsClient.On("GetByRegion").Return(map[string]int{})
 	demographicsClient.On("GetByAgeBracket", mock.AnythingOfType("bracket.Bracket")).Return(0)

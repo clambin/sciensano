@@ -1,6 +1,7 @@
 package reporter_test
 
 import (
+	"github.com/clambin/go-metrics/client"
 	"github.com/clambin/sciensano/apiclient"
 	"github.com/clambin/sciensano/apiclient/cache/mocks"
 	"github.com/clambin/sciensano/apiclient/vaccines"
@@ -36,10 +37,10 @@ func TestClient_GetVaccines(t *testing.T) {
 	cache := &mocks.Holder{}
 	cache.On("Get", "Vaccines").Return(testVaccinesResponse, true)
 
-	client := reporter.New(time.Hour)
-	client.APICache = cache
+	r := reporter.NewWithOptions(time.Hour, client.Options{})
+	r.APICache = cache
 
-	entries, err := client.GetVaccines()
+	entries, err := r.GetVaccines()
 	require.NoError(t, err)
 
 	assert.Equal(t, []time.Time{
@@ -58,10 +59,10 @@ func TestClient_GetVaccinesByManufacturer(t *testing.T) {
 	cache := &mocks.Holder{}
 	cache.On("Get", "Vaccines").Return(testVaccinesResponse, true)
 
-	client := reporter.New(time.Hour)
-	client.APICache = cache
+	r := reporter.NewWithOptions(time.Hour, client.Options{})
+	r.APICache = cache
 
-	entries, err := client.GetVaccinesByManufacturer()
+	entries, err := r.GetVaccinesByManufacturer()
 	require.NoError(t, err)
 
 	assert.Equal(t, []time.Time{
@@ -84,13 +85,13 @@ func TestClient_GetVaccines_Failure(t *testing.T) {
 	cache := &mocks.Holder{}
 	cache.On("Get", "Vaccines").Return(nil, false)
 
-	client := reporter.New(time.Hour)
-	client.APICache = cache
+	r := reporter.NewWithOptions(time.Hour, client.Options{})
+	r.APICache = cache
 
-	_, err := client.GetVaccines()
+	_, err := r.GetVaccines()
 	require.Error(t, err)
 
-	_, err = client.GetVaccinesByManufacturer()
+	_, err = r.GetVaccinesByManufacturer()
 	require.Error(t, err)
 
 	mock.AssertExpectationsForObjects(t, cache)

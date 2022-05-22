@@ -2,6 +2,7 @@ package vaccinations_test
 
 import (
 	"context"
+	"github.com/clambin/go-metrics/client"
 	mockCache "github.com/clambin/sciensano/apiclient/cache/mocks"
 	"github.com/clambin/sciensano/reporter"
 	"github.com/clambin/sciensano/simplejsonserver/vaccinations"
@@ -93,14 +94,14 @@ func TestGroupedHandler(t *testing.T) {
 	req := query.Request{Args: query.Args{Args: common.Args{Range: common.Range{To: timestamp.Add(24 * time.Hour)}}}}
 
 	cache := &mockCache.Holder{}
-	client := reporter.New(time.Hour)
-	client.APICache = cache
-
 	cache.On("Get", "Vaccinations").Return(vaccinationTestData, true)
+
+	r := reporter.NewWithOptions(time.Hour, client.Options{})
+	r.APICache = cache
 
 	for index, testCase := range testCases {
 		h := vaccinations.GroupedHandler{
-			Reporter:        client,
+			Reporter:        r,
 			VaccinationType: testCase.VaccinationType,
 			Scope:           testCase.Scope,
 		}
@@ -113,13 +114,13 @@ func TestGroupedHandler(t *testing.T) {
 
 func TestGroupedHandler_Failure(t *testing.T) {
 	cache := &mockCache.Holder{}
-	client := reporter.New(time.Hour)
-	client.APICache = cache
-
 	cache.On("Get", "Vaccinations").Return(nil, false)
 
+	r := reporter.NewWithOptions(time.Hour, client.Options{})
+	r.APICache = cache
+
 	h := vaccinations.GroupedHandler{
-		Reporter:        client,
+		Reporter:        r,
 		VaccinationType: reporter.VaccinationTypeBooster,
 		Scope:           vaccinations.ScopeAge,
 	}
@@ -130,14 +131,14 @@ func TestGroupedHandler_Failure(t *testing.T) {
 
 func BenchmarkVaccinationsGroupedHandler(b *testing.B) {
 	cache := &mockCache.Holder{}
-	client := reporter.New(time.Hour)
-	client.APICache = cache
-
 	content := buildBigResponse()
 	cache.On("Get", "Vaccinations").Return(content, true)
 
+	r := reporter.NewWithOptions(time.Hour, client.Options{})
+	r.APICache = cache
+
 	h := vaccinations.GroupedHandler{
-		Reporter:        client,
+		Reporter:        r,
 		VaccinationType: reporter.VaccinationTypeBooster,
 		Scope:           vaccinations.ScopeAge,
 	}

@@ -2,6 +2,7 @@ package vaccinations_test
 
 import (
 	"context"
+	"github.com/clambin/go-metrics/client"
 	mockCache "github.com/clambin/sciensano/apiclient/cache/mocks"
 	"github.com/clambin/sciensano/reporter"
 	"github.com/clambin/sciensano/simplejsonserver/vaccinations"
@@ -18,12 +19,11 @@ func TestManufacturerHandler(t *testing.T) {
 	req := query.Request{Args: query.Args{Args: common.Args{Range: common.Range{To: timestamp.Add(24 * time.Hour)}}}}
 
 	cache := &mockCache.Holder{}
-	client := reporter.New(time.Hour)
-	client.APICache = cache
-
 	cache.On("Get", "Vaccinations").Return(vaccinationTestData, true)
 
-	h := vaccinations.ManufacturerHandler{Reporter: client}
+	r := reporter.NewWithOptions(time.Hour, client.Options{})
+	r.APICache = cache
+	h := vaccinations.ManufacturerHandler{Reporter: r}
 
 	response, err := h.Endpoints().Query(ctx, req)
 	require.NoError(t, err)
@@ -45,13 +45,12 @@ func TestManufacturerHandler(t *testing.T) {
 
 func TestManufacturerHandler_Failure(t *testing.T) {
 	cache := &mockCache.Holder{}
-	client := reporter.New(time.Hour)
-	client.APICache = cache
-
 	cache.On("Get", "Vaccinations").Return(nil, false)
 
+	r := reporter.NewWithOptions(time.Hour, client.Options{})
+	r.APICache = cache
 	h := vaccinations.ManufacturerHandler{
-		Reporter: client,
+		Reporter: r,
 	}
 
 	_, err := h.Endpoints().Query(context.Background(), query.Request{})

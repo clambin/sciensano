@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/clambin/go-metrics/caller"
+	"github.com/clambin/go-metrics/client"
 	"github.com/clambin/sciensano/apiclient"
 	"github.com/clambin/sciensano/apiclient/cache"
 	log "github.com/sirupsen/logrus"
@@ -30,8 +30,8 @@ var _ cache.Fetcher = &Client{}
 
 // Client calls the different Reporter APIs
 type Client struct {
-	Caller caller.Caller
-	URL    string
+	client.Caller
+	URL string
 }
 
 // Update calls all endpoints and returns this to the caller. This is used by a cache to refresh its content

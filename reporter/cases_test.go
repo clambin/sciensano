@@ -1,6 +1,7 @@
 package reporter_test
 
 import (
+	"github.com/clambin/go-metrics/client"
 	"github.com/clambin/sciensano/apiclient"
 	"github.com/clambin/sciensano/apiclient/cache/mocks"
 	"github.com/clambin/sciensano/apiclient/sciensano"
@@ -40,14 +41,14 @@ var (
 
 func TestClient_GetCases(t *testing.T) {
 	cache := &mocks.Holder{}
-	client := reporter.New(time.Hour)
-	client.APICache = cache
+	c := reporter.New(time.Hour)
+	c.APICache = cache
 
 	cache.
 		On("Get", "Cases").
 		Return(testCasesResponse, true)
 
-	cases, err := client.GetCases()
+	cases, err := c.GetCases()
 	require.NoError(t, err)
 
 	assert.Equal(t, []time.Time{
@@ -66,14 +67,15 @@ func TestClient_GetCases(t *testing.T) {
 
 func TestClient_GetCasesByProvince(t *testing.T) {
 	cache := &mocks.Holder{}
-	client := reporter.New(time.Hour)
-	client.APICache = cache
 
 	cache.
 		On("Get", "Cases").
 		Return(testCasesResponse, true)
 
-	cases, err := client.GetCasesByProvince()
+	r := reporter.NewWithOptions(time.Hour, client.Options{})
+	r.APICache = cache
+
+	cases, err := r.GetCasesByProvince()
 	require.NoError(t, err)
 
 	assert.Equal(t, []time.Time{
@@ -96,14 +98,15 @@ func TestClient_GetCasesByProvince(t *testing.T) {
 
 func TestClient_GetCasesByRegion(t *testing.T) {
 	cache := &mocks.Holder{}
-	client := reporter.New(time.Hour)
-	client.APICache = cache
 
 	cache.
 		On("Get", "Cases").
 		Return(testCasesResponse, true)
 
-	cases, err := client.GetCasesByRegion()
+	r := reporter.NewWithOptions(time.Hour, client.Options{})
+	r.APICache = cache
+
+	cases, err := r.GetCasesByRegion()
 	require.NoError(t, err)
 
 	assert.Equal(t, []time.Time{
@@ -126,14 +129,15 @@ func TestClient_GetCasesByRegion(t *testing.T) {
 
 func TestClient_GetCasesByAgeGroup(t *testing.T) {
 	cache := &mocks.Holder{}
-	client := reporter.New(time.Hour)
-	client.APICache = cache
 
 	cache.
 		On("Get", "Cases").
 		Return(testCasesResponse, true)
 
-	cases, err := client.GetCasesByAgeGroup()
+	r := reporter.NewWithOptions(time.Hour, client.Options{})
+	r.APICache = cache
+
+	cases, err := r.GetCasesByAgeGroup()
 	require.NoError(t, err)
 
 	assert.Equal(t, []time.Time{
@@ -156,21 +160,21 @@ func TestClient_GetCasesByAgeGroup(t *testing.T) {
 
 func TestClient_GetCases_Failure(t *testing.T) {
 	cache := &mocks.Holder{}
-	client := reporter.New(time.Hour)
-	client.APICache = cache
-
 	cache.On("Get", "Cases").Return(nil, false)
 
-	_, err := client.GetCases()
+	r := reporter.NewWithOptions(time.Hour, client.Options{})
+	r.APICache = cache
+
+	_, err := r.GetCases()
 	require.Error(t, err)
 
-	_, err = client.GetCasesByRegion()
+	_, err = r.GetCasesByRegion()
 	require.Error(t, err)
 
-	_, err = client.GetCasesByProvince()
+	_, err = r.GetCasesByProvince()
 	require.Error(t, err)
 
-	_, err = client.GetCasesByAgeGroup()
+	_, err = r.GetCasesByAgeGroup()
 	require.Error(t, err)
 
 	mock.AssertExpectationsForObjects(t, cache)
@@ -192,16 +196,16 @@ func BenchmarkClient_GetCasesByRegion(b *testing.B) {
 		ts = ts.Add(24 * time.Hour)
 	}
 	cache := &mocks.Holder{}
-	client := reporter.New(time.Hour)
-	client.APICache = cache
-
 	cache.
 		On("Get", "Cases").
 		Return(bigResponse, true)
 
+	r := reporter.NewWithOptions(time.Hour, client.Options{})
+	r.APICache = cache
+
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, err := client.GetCasesByRegion()
+		_, err := r.GetCasesByRegion()
 		if err != nil {
 			b.Log(err)
 			b.FailNow()

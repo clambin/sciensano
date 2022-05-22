@@ -1,6 +1,7 @@
 package reporter_test
 
 import (
+	"github.com/clambin/go-metrics/client"
 	"github.com/clambin/sciensano/apiclient"
 	"github.com/clambin/sciensano/apiclient/cache/mocks"
 	"github.com/clambin/sciensano/apiclient/sciensano"
@@ -43,12 +44,12 @@ var (
 
 func TestGetTests(t *testing.T) {
 	cache := &mocks.Holder{}
-	client := reporter.New(time.Hour)
-	client.APICache = cache
+	cache.On("Get", "TestResults").Return(testResultsResponse, true).Once()
 
-	cache.On("Get", "TestResults").Return(testResultsResponse, true)
+	c := reporter.NewWithOptions(time.Hour, client.Options{})
+	c.APICache = cache
 
-	entries, err := client.GetTestResults()
+	entries, err := c.GetTestResults()
 	require.NoError(t, err)
 
 	assert.Equal(t, []time.Time{
@@ -76,12 +77,12 @@ func TestGetTests(t *testing.T) {
 
 func TestClient_GetTestResults_Failure(t *testing.T) {
 	cache := &mocks.Holder{}
-	cache.On("Get", "TestResults").Return(nil, false)
+	cache.On("Get", "TestResults").Return(nil, false).Once()
 
-	client := reporter.New(time.Hour)
-	client.APICache = cache
+	c := reporter.NewWithOptions(time.Hour, client.Options{})
+	c.APICache = cache
 
-	_, err := client.GetTestResults()
+	_, err := c.GetTestResults()
 	require.Error(t, err)
 
 	mock.AssertExpectationsForObjects(t, cache)

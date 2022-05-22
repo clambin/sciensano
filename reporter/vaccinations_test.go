@@ -1,6 +1,7 @@
 package reporter_test
 
 import (
+	"github.com/clambin/go-metrics/client"
 	"github.com/clambin/sciensano/apiclient"
 	"strconv"
 	"time"
@@ -73,7 +74,7 @@ func TestClient_GetVaccinations(t *testing.T) {
 	cache := &mocks.Holder{}
 	cache.On("Get", "Vaccinations").Return(testVaccinationsResponse, true)
 
-	r := reporter.New(time.Hour)
+	r := reporter.NewWithOptions(time.Hour, client.Options{})
 	r.APICache = cache
 
 	entries, err := r.GetVaccinations()
@@ -115,8 +116,8 @@ func TestClient_GetVaccinationsByAgeGroup(t *testing.T) {
 	cache := &mocks.Holder{}
 	cache.On("Get", "Vaccinations").Return(testVaccinationsResponse, true)
 
-	client := reporter.New(time.Hour)
-	client.APICache = cache
+	r := reporter.NewWithOptions(time.Hour, client.Options{})
+	r.APICache = cache
 
 	testCases := []vaccinationsTestCase{
 		{
@@ -147,7 +148,7 @@ func TestClient_GetVaccinationsByAgeGroup(t *testing.T) {
 	}
 
 	for index, testCase := range testCases {
-		result, err := client.GetVaccinationsByAgeGroup(testCase.mode)
+		result, err := r.GetVaccinationsByAgeGroup(testCase.mode)
 		require.NoError(t, err, index)
 		assert.Equal(t, testCase.timestamps, result.GetTimestamps())
 		assert.Len(t, result.GetColumns(), len(testCase.values))
@@ -164,8 +165,8 @@ func TestClient_GetVaccinationsByRegion(t *testing.T) {
 	cache := &mocks.Holder{}
 	cache.On("Get", "Vaccinations").Return(testVaccinationsResponse, true)
 
-	client := reporter.New(time.Hour)
-	client.APICache = cache
+	r := reporter.NewWithOptions(time.Hour, client.Options{})
+	r.APICache = cache
 
 	testCases := []vaccinationsTestCase{
 		{
@@ -196,7 +197,7 @@ func TestClient_GetVaccinationsByRegion(t *testing.T) {
 	}
 
 	for index, testCase := range testCases {
-		result, err := client.GetVaccinationsByRegion(testCase.mode)
+		result, err := r.GetVaccinationsByRegion(testCase.mode)
 		require.NoError(t, err, index)
 		require.NoError(t, err, index)
 		assert.Equal(t, testCase.timestamps, result.GetTimestamps())
@@ -214,8 +215,8 @@ func TestClient_GetVaccinationsByManufacturer(t *testing.T) {
 	cache := &mocks.Holder{}
 	cache.On("Get", "Vaccinations").Return(testVaccinationsResponse, true)
 
-	client := reporter.New(time.Hour)
-	client.APICache = cache
+	r := reporter.NewWithOptions(time.Hour, client.Options{})
+	r.APICache = cache
 
 	testCases := []vaccinationsTestCase{
 		{
@@ -233,7 +234,7 @@ func TestClient_GetVaccinationsByManufacturer(t *testing.T) {
 	}
 
 	for index, testCase := range testCases {
-		result, err := client.GetVaccinationsByManufacturer()
+		result, err := r.GetVaccinationsByManufacturer()
 		require.NoError(t, err, index)
 		require.NoError(t, err, index)
 		assert.Equal(t, testCase.timestamps, result.GetTimestamps(), index)
@@ -251,19 +252,19 @@ func TestClient_GetVaccinations_Failure(t *testing.T) {
 	cache := &mocks.Holder{}
 	cache.On("Get", "Vaccinations").Return(nil, false)
 
-	client := reporter.New(time.Hour)
-	client.APICache = cache
+	r := reporter.NewWithOptions(time.Hour, client.Options{})
+	r.APICache = cache
 
-	_, err := client.GetVaccinations()
+	_, err := r.GetVaccinations()
 	assert.Error(t, err)
 
-	_, err = client.GetVaccinationsByRegion(reporter.VaccinationTypePartial)
+	_, err = r.GetVaccinationsByRegion(reporter.VaccinationTypePartial)
 	assert.Error(t, err)
 
-	_, err = client.GetVaccinationsByAgeGroup(reporter.VaccinationTypePartial)
+	_, err = r.GetVaccinationsByAgeGroup(reporter.VaccinationTypePartial)
 	assert.Error(t, err)
 
-	_, err = client.GetVaccinationsByManufacturer()
+	_, err = r.GetVaccinationsByManufacturer()
 	assert.Error(t, err)
 
 	mock.AssertExpectationsForObjects(t, cache)
@@ -305,13 +306,13 @@ func BenchmarkClient_GetVaccination(b *testing.B) {
 	cache := &mocks.Holder{}
 	cache.On("Get", "Vaccinations").Return(bigVaccinationResponse, true)
 
-	client := reporter.New(0)
-	client.APICache = cache
+	r := reporter.NewWithOptions(time.Hour, client.Options{})
+	r.APICache = cache
 
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		_, err := client.GetVaccinations()
+		_, err := r.GetVaccinations()
 		if err != nil {
 			b.Log(err)
 			b.FailNow()
@@ -324,13 +325,13 @@ func BenchmarkClient_GetVaccinationsByAgeGroup(b *testing.B) {
 	cache := &mocks.Holder{}
 	cache.On("Get", "Vaccinations").Return(bigVaccinationResponse, true)
 
-	client := reporter.New(0)
-	client.APICache = cache
+	r := reporter.NewWithOptions(time.Hour, client.Options{})
+	r.APICache = cache
 
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		_, err := client.GetVaccinationsByAgeGroup(reporter.VaccinationTypeFull)
+		_, err := r.GetVaccinationsByAgeGroup(reporter.VaccinationTypeFull)
 		if err != nil {
 			b.Log(err)
 			b.FailNow()
@@ -343,13 +344,13 @@ func BenchmarkClient_GetVaccinationsByRegion(b *testing.B) {
 	cache := &mocks.Holder{}
 	cache.On("Get", "Vaccinations").Return(bigVaccinationResponse, true)
 
-	client := reporter.New(0)
-	client.APICache = cache
+	r := reporter.NewWithOptions(time.Hour, client.Options{})
+	r.APICache = cache
 
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		_, err := client.GetVaccinationsByRegion(reporter.VaccinationTypeFull)
+		_, err := r.GetVaccinationsByRegion(reporter.VaccinationTypeFull)
 		if err != nil {
 			b.Log(err)
 			b.FailNow()

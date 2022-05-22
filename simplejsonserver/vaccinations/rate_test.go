@@ -2,6 +2,7 @@ package vaccinations_test
 
 import (
 	"context"
+	"github.com/clambin/go-metrics/client"
 	mockCache "github.com/clambin/sciensano/apiclient/cache/mocks"
 	"github.com/clambin/sciensano/demographics/bracket"
 	mockDemographics "github.com/clambin/sciensano/demographics/mocks"
@@ -91,9 +92,10 @@ func TestRateHandler(t *testing.T) {
 	}
 
 	cache := &mockCache.Holder{}
-	client := reporter.New(time.Hour)
-	client.APICache = cache
 	cache.On("Get", "Vaccinations").Return(vaccinationTestData, true)
+
+	r := reporter.NewWithOptions(time.Hour, client.Options{})
+	r.APICache = cache
 
 	demographicsClient := &mockDemographics.Fetcher{}
 	demographicsClient.
@@ -116,7 +118,7 @@ func TestRateHandler(t *testing.T) {
 
 	for index, testCase := range testCases {
 		h := vaccinations.RateHandler{
-			Reporter:        client,
+			Reporter:        r,
 			VaccinationType: testCase.VaccinationType,
 			Scope:           testCase.Scope,
 			Fetcher:         demographicsClient,
@@ -132,21 +134,22 @@ func TestRateHandler(t *testing.T) {
 
 func TestRateHandler_Failure(t *testing.T) {
 	cache := &mockCache.Holder{}
-	client := reporter.New(time.Hour)
-	client.APICache = cache
+	cache.On("Get", "Vaccinations").Return(nil, false).Once()
+
+	r := reporter.NewWithOptions(time.Hour, client.Options{})
+	r.APICache = cache
 
 	demographicsClient := &mockDemographics.Fetcher{}
 
 	ctx := context.Background()
 	req := query.Request{Args: query.Args{Args: common.Args{Range: common.Range{To: timestamp.Add(24 * time.Hour)}}}}
 	h := vaccinations.RateHandler{
-		Reporter:        client,
+		Reporter:        r,
 		VaccinationType: reporter.VaccinationTypeBooster,
 		Scope:           vaccinations.ScopeAge,
 		Fetcher:         demographicsClient,
 	}
 
-	cache.On("Get", "Vaccinations").Return(nil, false).Once()
 	_, err := h.Endpoints().Query(ctx, req)
 	assert.Error(t, err)
 
@@ -154,24 +157,25 @@ func TestRateHandler_Failure(t *testing.T) {
 }
 
 func BenchmarkVaccinationsRateHandler(b *testing.B) {
+	b.StopTimer()
 	cache := &mockCache.Holder{}
-	client := reporter.New(time.Hour)
-	client.APICache = cache
+	content := buildBigResponse()
+	cache.On("Get", "Vaccinations").Return(content, true)
+
+	r := reporter.NewWithOptions(time.Hour, client.Options{})
+	r.APICache = cache
 
 	demographicsClient := &mockDemographics.Fetcher{}
 	demographicsClient.On("GetByRegion").Return(map[string]int{"Brussels": 1, "Flanders": 6, "Wallonia": 4})
 
-	content := buildBigResponse()
-	cache.On("Get", "Vaccinations").Return(content, true)
-
 	h := vaccinations.RateHandler{
-		Reporter:        client,
+		Reporter:        r,
 		VaccinationType: reporter.VaccinationTypeBooster,
 		Scope:           vaccinations.ScopeRegion,
 		Fetcher:         demographicsClient,
 	}
 
-	b.ResetTimer()
+	b.StartTimer()
 	for i := 0; i < b.N; i++ {
 		_, err := h.Endpoints().Query(context.Background(), query.Request{})
 		if err != nil {
