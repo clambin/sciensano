@@ -81,11 +81,11 @@ func TestCache_MaybeGenerate(t *testing.T) {
 }
 
 func BenchmarkCache_MaybeGenerate(b *testing.B) {
+	b.StopTimer()
 	c := reporter.NewCache(time.Second)
 	_, err := c.MaybeGenerate("foo", createBigDataSet)
 	require.NoError(b, err)
-
-	b.ResetTimer()
+	b.StartTimer()
 
 	for i := 0; i < b.N; i++ {
 		_, err = c.MaybeGenerate("foo", createBigDataSet)

@@ -54,6 +54,8 @@ github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e/go.mod h1:nSuG5e5P
 github.com/chzyer/test v0.0.0-20180213035817-a1ea475d72b1/go.mod h1:Q3SI9o4m/ZMnBNeIyt5eFwwo7qiLfzFZmjNmxjkiQlU=
 github.com/clambin/cache v0.0.4 h1:XIMvIVZ02yUSqYYWzJH4Dnvh/b7imiCsFwpPrD1OYjA=
 github.com/clambin/cache v0.0.4/go.mod h1:+BKmGZ4iIz30+yxq9gOD9ZLCBNPzu8dLyejefdkQQes=
+github.com/clambin/cache v0.0.5 h1:VqfQIEsuUFlk6n1NLUm5uSS1OIBgO8XXNQQjKSBwiFY=
+github.com/clambin/cache v0.0.5/go.mod h1:+BKmGZ4iIz30+yxq9gOD9ZLCBNPzu8dLyejefdkQQes=
 github.com/clambin/go-metrics v0.4.0 h1:ETBGNJh5y7yR74ojDma/uIEia2oSIvgMXJA3zTl2/ao=
 github.com/clambin/go-metrics v0.4.0/go.mod h1:MxABHHW4cOOLOG55GouoMSJQLRZf19xAnM+KJkLvdq0=
 github.com/clambin/go-metrics v0.4.1 h1:+VHxOgxuQCDVK1phWijqxePEnJFNNe+mrhdNfnJZ1j8=
