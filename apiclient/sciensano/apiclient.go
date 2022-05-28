@@ -15,7 +15,7 @@ import (
 	"time"
 )
 
-// Getter interface exposes the different supported Reporter APIs
+// Getter interface exposes the different supported Sciensano APIs
 //go:generate mockery --name Getter
 type Getter interface {
 	GetTestResults(ctx context.Context) (results []apiclient.APIResponse, err error)
