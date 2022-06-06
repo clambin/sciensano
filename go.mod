@@ -9,7 +9,7 @@ require (
 	github.com/prometheus/common v0.34.0 // indirect
 	github.com/prometheus/procfs v0.7.3 // indirect
 	github.com/sirupsen/logrus v1.8.1
-	github.com/stretchr/testify v1.7.1
+	github.com/stretchr/testify v1.7.2
 	golang.org/x/sys v0.0.0-20220513210249-45d2b4557a2a // indirect
 	google.golang.org/protobuf v1.28.0 // indirect
 )
