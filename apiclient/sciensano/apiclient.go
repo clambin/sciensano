@@ -11,6 +11,7 @@ import (
 	"golang.org/x/sync/semaphore"
 	"io"
 	"net/http"
+	"sort"
 	"strconv"
 	"time"
 )
@@ -35,7 +36,7 @@ type Client struct {
 }
 
 // Update calls all endpoints and returns this to the caller. This is used by a cache to refresh its content
-func (client *Client) Update(ctx context.Context, ch chan<- cache.FetcherResponse) {
+func (client *Client) Fetch(ctx context.Context, ch chan<- cache.FetcherResponse) {
 	start := time.Now()
 	log.Debug("refreshing Reporter API cache")
 
@@ -132,5 +133,24 @@ func (ts *TimeStamp) UnmarshalJSON(b []byte) (err error) {
 		return fmt.Errorf("invalid timestamp: %s", s)
 	}
 	ts.Time = time.Date(year, time.Month(month), day, 0, 0, 0, 0, time.UTC)
+	return
+}
+
+// copyMaybeSort accomplishes two goals: it recasts the individual API response type to the generic apiclient.APIResponse.
+// Secondly, it checks if the data is in order. If not, it sorts it.
+func copyMaybeSort[T apiclient.APIResponse](input []T) (output []apiclient.APIResponse) {
+	output = make([]apiclient.APIResponse, len(input))
+	var timestamp time.Time
+	var mustSort bool
+	for idx, entry := range input {
+		output[idx] = entry
+		if entry.GetTimestamp().Before(timestamp) {
+			mustSort = true
+		}
+		timestamp = entry.GetTimestamp()
+	}
+	if mustSort {
+		sort.Slice(output, func(i, j int) bool { return output[i].GetTimestamp().Before(output[j].GetTimestamp()) })
+	}
 	return
 }

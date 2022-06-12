@@ -5,45 +5,39 @@ import (
 	"fmt"
 	"github.com/clambin/sciensano/reporter"
 	"github.com/clambin/simplejson/v3"
-	"github.com/clambin/simplejson/v3/dataset"
+	"github.com/clambin/simplejson/v3/data"
 	"github.com/clambin/simplejson/v3/query"
+	"time"
 )
 
 // LagHandler returns the time difference between partial and full COVID-19 vaccination
 type LagHandler struct {
-	reporter.Reporter
+	Reporter *reporter.Client
 }
 
 func (handler LagHandler) Endpoints() simplejson.Endpoints {
 	return simplejson.Endpoints{Query: handler.tableQuery}
 }
 
-func (handler *LagHandler) tableQuery(_ context.Context, req query.Request) (response query.Response, err error) {
-	var vaccinationsData *dataset.Dataset
-	if vaccinationsData, err = handler.Reporter.GetVaccinations(); err != nil {
+func (handler *LagHandler) tableQuery(_ context.Context, req query.Request) (query.Response, error) {
+	vaccinationsData, err := handler.Reporter.Vaccinations.Get()
+	if err != nil {
 		return nil, fmt.Errorf("failed to determine vaccination lag: %w", err)
 	}
-	vaccinationsData.Accumulate()
-	vaccinationsData.FilterByRange(req.Args.Range.From, req.Args.Range.To)
-	timestamps, lag := buildLag(vaccinationsData)
 
-	response = &query.TableResponse{
-		Columns: []query.Column{
-			{Text: "timestamp", Data: timestamps},
-			{Text: "lag", Data: lag},
-		},
-	}
+	vaccinationsData = vaccinationsData.Accumulate()
+	lag := buildLag(vaccinationsData)
 
-	return
+	return lag.Filter(req.Args).CreateTableResponse(), nil
 }
 
-func buildLag(vaccinationsData *dataset.Dataset) (timestamps query.TimeColumn, lag query.NumberColumn) {
-	vaccinationTimestamps := vaccinationsData.GetTimestamps()
-	partial, _ := vaccinationsData.GetValues("partial")
-	full, _ := vaccinationsData.GetValues("full")
+func buildLag(input *data.Table) (output *data.Table) {
+	vaccinationTimestamps := input.GetTimestamps()
+	partial, _ := input.GetFloatValues("partial")
+	full, _ := input.GetFloatValues("full")
 
-	timestamps = make(query.TimeColumn, 0, len(vaccinationTimestamps))
-	lag = make(query.NumberColumn, 0, len(vaccinationTimestamps))
+	timestamps := make([]time.Time, 0, len(vaccinationTimestamps))
+	lag := make([]float64, 0, len(vaccinationTimestamps))
 
 	var firstDoseIndex int
 	var lastSecondDose float64
@@ -69,5 +63,5 @@ func buildLag(vaccinationsData *dataset.Dataset) (timestamps query.TimeColumn, l
 		lastSecondDose = value
 	}
 
-	return
+	return data.New(data.Column{Name: "time", Values: timestamps}, data.Column{Name: "lag", Values: lag})
 }

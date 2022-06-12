@@ -59,7 +59,7 @@ func (c *Cache) Run(ctx context.Context, interval time.Duration) {
 func (c *Cache) startFetchers(ctx context.Context, interval time.Duration, ch chan<- FetcherResponse) {
 	for _, fetcher := range c.Fetchers {
 		go func(f Fetcher) {
-			f.Update(ctx, ch)
+			f.Fetch(ctx, ch)
 
 			ticker := time.NewTicker(interval)
 			for running := true; running; {
@@ -67,7 +67,7 @@ func (c *Cache) startFetchers(ctx context.Context, interval time.Duration, ch ch
 				case <-ctx.Done():
 					running = false
 				case <-ticker.C:
-					f.Update(ctx, ch)
+					f.Fetch(ctx, ch)
 				}
 			}
 			ticker.Stop()

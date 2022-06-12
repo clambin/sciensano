@@ -7,6 +7,7 @@ import (
 	"github.com/clambin/sciensano/demographics/bracket"
 	mockDemographics "github.com/clambin/sciensano/demographics/mocks"
 	"github.com/clambin/sciensano/reporter"
+	vaccinations2 "github.com/clambin/sciensano/reporter/vaccinations"
 	"github.com/clambin/sciensano/simplejsonserver/vaccinations"
 	"github.com/clambin/simplejson/v3/common"
 	"github.com/clambin/simplejson/v3/query"
@@ -20,70 +21,70 @@ import (
 func TestRateHandler(t *testing.T) {
 	var testCases = []struct {
 		vaccinations.Scope
-		reporter.VaccinationType
+		Type     int
 		expected *query.TableResponse
 	}{
 		{
-			Scope:           vaccinations.ScopeRegion,
-			VaccinationType: reporter.VaccinationTypePartial,
+			Scope: vaccinations.ScopeRegion,
+			Type:  vaccinations2.TypePartial,
 			expected: &query.TableResponse{
 				Columns: []query.Column{
-					{Text: "timestamp", Data: query.TimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
+					{Text: "time", Data: query.TimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
 					{Text: "Brussels", Data: query.NumberColumn{0, 0}},
 					{Text: "Flanders", Data: query.NumberColumn{0, 0}},
 				},
 			},
 		},
 		{
-			Scope:           vaccinations.ScopeRegion,
-			VaccinationType: reporter.VaccinationTypeFull,
+			Scope: vaccinations.ScopeRegion,
+			Type:  vaccinations2.TypeFull,
 			expected: &query.TableResponse{
 				Columns: []query.Column{
-					{Text: "timestamp", Data: query.TimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
+					{Text: "time", Data: query.TimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
 					{Text: "Brussels", Data: query.NumberColumn{0, 0}},
 					{Text: "Flanders", Data: query.NumberColumn{0.01, 0.04}},
 				},
 			},
 		},
 		{
-			Scope:           vaccinations.ScopeRegion,
-			VaccinationType: reporter.VaccinationTypeBooster,
+			Scope: vaccinations.ScopeRegion,
+			Type:  vaccinations2.TypeBooster,
 			expected: &query.TableResponse{
 				Columns: []query.Column{
-					{Text: "timestamp", Data: query.TimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
+					{Text: "time", Data: query.TimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
 					{Text: "Brussels", Data: query.NumberColumn{0, 0}},
 					{Text: "Flanders", Data: query.NumberColumn{0.01, 0.01}},
 				},
 			},
 		},
 		{
-			Scope:           vaccinations.ScopeAge,
-			VaccinationType: reporter.VaccinationTypePartial,
+			Scope: vaccinations.ScopeAge,
+			Type:  vaccinations2.TypePartial,
 			expected: &query.TableResponse{
 				Columns: []query.Column{
-					{Text: "timestamp", Data: query.TimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
+					{Text: "time", Data: query.TimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
 					{Text: "25-34", Data: query.NumberColumn{0.02, 0.02}},
 					{Text: "35-44", Data: query.NumberColumn{0, 0.5}},
 				},
 			},
 		},
 		{
-			Scope:           vaccinations.ScopeAge,
-			VaccinationType: reporter.VaccinationTypeFull,
+			Scope: vaccinations.ScopeAge,
+			Type:  vaccinations2.TypeFull,
 			expected: &query.TableResponse{
 				Columns: []query.Column{
-					{Text: "timestamp", Data: query.TimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
+					{Text: "time", Data: query.TimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
 					{Text: "25-34", Data: query.NumberColumn{0.01, 0.04}},
 					{Text: "35-44", Data: query.NumberColumn{0.2, 0.6}},
 				},
 			},
 		},
 		{
-			Scope:           vaccinations.ScopeAge,
-			VaccinationType: reporter.VaccinationTypeBooster,
+			Scope: vaccinations.ScopeAge,
+			Type:  vaccinations2.TypeBooster,
 			expected: &query.TableResponse{
 				Columns: []query.Column{
-					{Text: "timestamp", Data: query.TimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
+					{Text: "time", Data: query.TimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
 					{Text: "25-34", Data: query.NumberColumn{0, 0.05}},
 					{Text: "35-44", Data: query.NumberColumn{0.1, 0.1}},
 				},
@@ -95,7 +96,7 @@ func TestRateHandler(t *testing.T) {
 	cache.On("Get", "Vaccinations").Return(vaccinationTestData, true)
 
 	r := reporter.NewWithOptions(time.Hour, client.Options{})
-	r.APICache = cache
+	r.Vaccinations.APICache = cache
 
 	demographicsClient := &mockDemographics.Fetcher{}
 	demographicsClient.
@@ -118,10 +119,10 @@ func TestRateHandler(t *testing.T) {
 
 	for index, testCase := range testCases {
 		h := vaccinations.RateHandler{
-			Reporter:        r,
-			VaccinationType: testCase.VaccinationType,
-			Scope:           testCase.Scope,
-			Fetcher:         demographicsClient,
+			Reporter: r,
+			Type:     testCase.Type,
+			Scope:    testCase.Scope,
+			Fetcher:  demographicsClient,
 		}
 
 		response, err := h.Endpoints().Query(ctx, req)
@@ -137,17 +138,17 @@ func TestRateHandler_Failure(t *testing.T) {
 	cache.On("Get", "Vaccinations").Return(nil, false).Once()
 
 	r := reporter.NewWithOptions(time.Hour, client.Options{})
-	r.APICache = cache
+	r.Vaccinations.APICache = cache
 
 	demographicsClient := &mockDemographics.Fetcher{}
 
 	ctx := context.Background()
 	req := query.Request{Args: query.Args{Args: common.Args{Range: common.Range{To: timestamp.Add(24 * time.Hour)}}}}
 	h := vaccinations.RateHandler{
-		Reporter:        r,
-		VaccinationType: reporter.VaccinationTypeBooster,
-		Scope:           vaccinations.ScopeAge,
-		Fetcher:         demographicsClient,
+		Reporter: r,
+		Type:     vaccinations2.TypeBooster,
+		Scope:    vaccinations.ScopeAge,
+		Fetcher:  demographicsClient,
 	}
 
 	_, err := h.Endpoints().Query(ctx, req)
@@ -163,16 +164,16 @@ func BenchmarkVaccinationsRateHandler(b *testing.B) {
 	cache.On("Get", "Vaccinations").Return(content, true)
 
 	r := reporter.NewWithOptions(time.Hour, client.Options{})
-	r.APICache = cache
+	r.Vaccinations.APICache = cache
 
 	demographicsClient := &mockDemographics.Fetcher{}
 	demographicsClient.On("GetByRegion").Return(map[string]int{"Brussels": 1, "Flanders": 6, "Wallonia": 4})
 
 	h := vaccinations.RateHandler{
-		Reporter:        r,
-		VaccinationType: reporter.VaccinationTypeBooster,
-		Scope:           vaccinations.ScopeRegion,
-		Fetcher:         demographicsClient,
+		Reporter: r,
+		Type:     vaccinations2.TypeBooster,
+		Scope:    vaccinations.ScopeRegion,
+		Fetcher:  demographicsClient,
 	}
 
 	b.StartTimer()

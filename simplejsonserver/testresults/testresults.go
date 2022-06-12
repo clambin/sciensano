@@ -4,15 +4,13 @@ import (
 	"context"
 	"fmt"
 	"github.com/clambin/sciensano/reporter"
-	"github.com/clambin/sciensano/simplejsonserver/responder"
 	"github.com/clambin/simplejson/v3"
-	"github.com/clambin/simplejson/v3/dataset"
 	"github.com/clambin/simplejson/v3/query"
 )
 
 // Handler returns the COVID-19 test results
 type Handler struct {
-	reporter.Reporter
+	Reporter *reporter.Client
 }
 
 func (handler *Handler) Endpoints() simplejson.Endpoints {
@@ -21,13 +19,12 @@ func (handler *Handler) Endpoints() simplejson.Endpoints {
 	}
 }
 
-func (handler *Handler) tableQuery(_ context.Context, req query.Request) (response query.Response, err error) {
-	var tests *dataset.Dataset
-	tests, err = handler.Reporter.GetTestResults()
+func (handler *Handler) tableQuery(_ context.Context, req query.Request) (query.Response, error) {
+	tests, err := handler.Reporter.TestResults.Get()
 
 	if err != nil {
 		return nil, fmt.Errorf("testresults failed: %w", err)
 	}
 
-	return responder.GenerateTableQueryResponse(tests, req.Args), nil
+	return tests.Filter(req.Args).CreateTableResponse(), nil
 }

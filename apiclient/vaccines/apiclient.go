@@ -92,7 +92,7 @@ func (date *Timestamp) UnmarshalJSON(b []byte) (err error) {
 }
 
 // Update calls all endpoints and returns this to the caller. This is used by a cache to refresh its content
-func (client *Client) Update(ctx context.Context, ch chan<- cache.FetcherResponse) {
+func (client *Client) Fetch(ctx context.Context, ch chan<- cache.FetcherResponse) {
 	log.Debug("refreshing Vaccine API cache")
 	start := time.Now()
 	cache.Fetch(ctx, ch, "Vaccines", client.GetBatches)

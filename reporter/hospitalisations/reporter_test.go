@@ -1,11 +1,11 @@
-package reporter_test
+package hospitalisations_test
 
 import (
-	"github.com/clambin/go-metrics/client"
 	"github.com/clambin/sciensano/apiclient"
 	"github.com/clambin/sciensano/apiclient/cache/mocks"
 	"github.com/clambin/sciensano/apiclient/sciensano"
-	"github.com/clambin/sciensano/reporter"
+	"github.com/clambin/sciensano/reporter/cache"
+	"github.com/clambin/sciensano/reporter/hospitalisations"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -45,16 +45,18 @@ var (
 	}
 )
 
-func TestClient_GetHospitalisations(t *testing.T) {
-	cache := &mocks.Holder{}
-	cache.
+func TestClient_Get(t *testing.T) {
+	h := &mocks.Holder{}
+	h.
 		On("Get", "Hospitalisations").
 		Return(testHospitalisationsResponse, true)
 
-	r := reporter.NewWithOptions(time.Hour, client.Options{})
-	r.APICache = cache
+	r := hospitalisations.Reporter{
+		ReportCache: cache.NewCache(time.Hour),
+		APICache:    h,
+	}
 
-	entries, err := r.GetHospitalisations()
+	entries, err := r.Get()
 	require.NoError(t, err)
 
 	assert.Equal(t, []time.Time{
@@ -62,7 +64,7 @@ func TestClient_GetHospitalisations(t *testing.T) {
 		time.Date(2021, time.October, 22, 0, 0, 0, 0, time.UTC),
 	}, entries.GetTimestamps())
 
-	assert.Equal(t, []string{"in", "inECMO", "inICU", "inResp"}, entries.GetColumns())
+	assert.Equal(t, []string{"time", "in", "inICU", "inResp", "inECMO"}, entries.GetColumns())
 
 	for _, testCase := range []struct {
 		column   string
@@ -73,24 +75,26 @@ func TestClient_GetHospitalisations(t *testing.T) {
 		{column: "inResp", expected: []float64{28, 12}},
 		{column: "inECMO", expected: []float64{11, 5}},
 	} {
-		values, ok := entries.GetValues(testCase.column)
+		values, ok := entries.GetFloatValues(testCase.column)
 		require.True(t, ok, testCase.column)
 		assert.Equal(t, testCase.expected, values, testCase.column)
 	}
 
-	mock.AssertExpectationsForObjects(t, cache)
+	mock.AssertExpectationsForObjects(t, h)
 }
 
 func TestClient_GetHospitalisationsByProvince(t *testing.T) {
-	cache := &mocks.Holder{}
-	cache.
+	h := &mocks.Holder{}
+	h.
 		On("Get", "Hospitalisations").
 		Return(testHospitalisationsResponse, true)
 
-	r := reporter.NewWithOptions(time.Hour, client.Options{})
-	r.APICache = cache
+	r := hospitalisations.Reporter{
+		ReportCache: cache.NewCache(time.Hour),
+		APICache:    h,
+	}
 
-	entries, err := r.GetHospitalisationsByProvince()
+	entries, err := r.GetByProvince()
 	require.NoError(t, err)
 
 	assert.Equal(t, []time.Time{
@@ -98,29 +102,31 @@ func TestClient_GetHospitalisationsByProvince(t *testing.T) {
 		time.Date(2021, time.October, 22, 0, 0, 0, 0, time.UTC),
 	}, entries.GetTimestamps())
 
-	assert.Equal(t, []string{"Brussels", "VlaamsBrabant"}, entries.GetColumns())
+	assert.Equal(t, []string{"time", "Brussels", "VlaamsBrabant"}, entries.GetColumns())
 
-	values, ok := entries.GetValues("Brussels")
+	values, ok := entries.GetFloatValues("Brussels")
 	require.True(t, ok)
 	assert.Equal(t, []float64{10, 0}, values)
 
-	values, ok = entries.GetValues("VlaamsBrabant")
+	values, ok = entries.GetFloatValues("VlaamsBrabant")
 	require.True(t, ok)
 	assert.Equal(t, []float64{100, 50}, values)
 
-	cache.AssertExpectations(t)
+	h.AssertExpectations(t)
 }
 
 func TestClient_GetHospitalisationsByRegion(t *testing.T) {
-	cache := &mocks.Holder{}
-	cache.
+	h := &mocks.Holder{}
+	h.
 		On("Get", "Hospitalisations").
 		Return(testHospitalisationsResponse, true)
 
-	r := reporter.NewWithOptions(time.Hour, client.Options{})
-	r.APICache = cache
+	r := hospitalisations.Reporter{
+		ReportCache: cache.NewCache(time.Hour),
+		APICache:    h,
+	}
 
-	entries, err := r.GetHospitalisationsByRegion()
+	entries, err := r.GetByRegion()
 	require.NoError(t, err)
 
 	assert.Equal(t, []time.Time{
@@ -128,40 +134,41 @@ func TestClient_GetHospitalisationsByRegion(t *testing.T) {
 		time.Date(2021, time.October, 22, 0, 0, 0, 0, time.UTC),
 	}, entries.GetTimestamps())
 
-	assert.Equal(t, []string{"Brussels", "Flanders"}, entries.GetColumns())
+	assert.Equal(t, []string{"time", "Brussels", "Flanders"}, entries.GetColumns())
 
-	values, ok := entries.GetValues("Brussels")
+	values, ok := entries.GetFloatValues("Brussels")
 	require.True(t, ok)
 	assert.Equal(t, []float64{10, 0}, values)
 
-	values, ok = entries.GetValues("Flanders")
+	values, ok = entries.GetFloatValues("Flanders")
 	require.True(t, ok)
 	assert.Equal(t, []float64{100, 50}, values)
 
-	cache.AssertExpectations(t)
+	h.AssertExpectations(t)
 }
 
 func TestClient_GetHospitalisations_Failure(t *testing.T) {
-	cache := &mocks.Holder{}
-	cache.On("Get", "Hospitalisations").Return(nil, false)
+	h := &mocks.Holder{}
+	h.On("Get", "Hospitalisations").Return(nil, false)
 
-	r := reporter.NewWithOptions(time.Hour, client.Options{})
-	r.APICache = cache
+	r := hospitalisations.Reporter{
+		ReportCache: cache.NewCache(time.Hour),
+		APICache:    h,
+	}
 
-	_, err := r.GetHospitalisations()
+	_, err := r.Get()
 	require.Error(t, err)
 
-	_, err = r.GetHospitalisationsByRegion()
+	_, err = r.GetByRegion()
 	require.Error(t, err)
 
-	_, err = r.GetHospitalisationsByProvince()
+	_, err = r.GetByProvince()
 	require.Error(t, err)
 
-	cache.AssertExpectations(t)
+	h.AssertExpectations(t)
 }
 
 func BenchmarkClient_GetHospitalisationsByRegion(b *testing.B) {
-	b.StopTimer()
 	var bigResponse []apiclient.APIResponse
 	ts := time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)
 
@@ -176,17 +183,19 @@ func BenchmarkClient_GetHospitalisationsByRegion(b *testing.B) {
 		}
 		ts = ts.Add(24 * time.Hour)
 	}
-	cache := &mocks.Holder{}
-	cache.
+	h := &mocks.Holder{}
+	h.
 		On("Get", "Hospitalisations").
 		Return(bigResponse, true)
 
-	r := reporter.NewWithOptions(time.Hour, client.Options{})
-	r.APICache = cache
+	r := hospitalisations.Reporter{
+		ReportCache: cache.NewCache(time.Hour),
+		APICache:    h,
+	}
 
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, err := r.GetHospitalisationsByRegion()
+		_, err := r.GetByRegion()
 		if err != nil {
 			b.Fatal(err)
 		}

@@ -1,11 +1,11 @@
-package reporter_test
+package cases_test
 
 import (
-	"github.com/clambin/go-metrics/client"
 	"github.com/clambin/sciensano/apiclient"
 	"github.com/clambin/sciensano/apiclient/cache/mocks"
 	"github.com/clambin/sciensano/apiclient/sciensano"
-	"github.com/clambin/sciensano/reporter"
+	"github.com/clambin/sciensano/reporter/cache"
+	"github.com/clambin/sciensano/reporter/cases"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -39,145 +39,154 @@ var (
 	}
 )
 
-func TestClient_GetCases(t *testing.T) {
-	cache := &mocks.Holder{}
-	c := reporter.New(time.Hour)
-	c.APICache = cache
+func TestClient_Get(t *testing.T) {
+	h := &mocks.Holder{}
+	r := cases.Reporter{
+		ReportCache: cache.NewCache(time.Hour),
+		APICache:    h,
+	}
 
-	cache.
+	h.
 		On("Get", "Cases").
 		Return(testCasesResponse, true)
 
-	cases, err := c.GetCases()
+	c, err := r.Get()
 	require.NoError(t, err)
 
 	assert.Equal(t, []time.Time{
 		time.Date(2021, time.October, 21, 0, 0, 0, 0, time.UTC),
 		time.Date(2021, time.October, 22, 0, 0, 0, 0, time.UTC),
-	}, cases.GetTimestamps())
+	}, c.GetTimestamps())
 
-	require.Equal(t, []string{"total"}, cases.GetColumns())
+	require.Equal(t, []string{"time", "total"}, c.GetColumns())
 
-	values, ok := cases.GetValues("total")
+	values, ok := c.GetFloatValues("total")
 	require.True(t, ok)
 	assert.Equal(t, []float64{250, 120}, values)
 
-	mock.AssertExpectationsForObjects(t, cache)
+	mock.AssertExpectationsForObjects(t, h)
 }
 
-func TestClient_GetCasesByProvince(t *testing.T) {
-	cache := &mocks.Holder{}
+func TestClient_GetByProvince(t *testing.T) {
+	h := &mocks.Holder{}
+	r := cases.Reporter{
+		ReportCache: cache.NewCache(time.Hour),
+		APICache:    h,
+	}
 
-	cache.
+	h.
 		On("Get", "Cases").
 		Return(testCasesResponse, true)
 
-	r := reporter.NewWithOptions(time.Hour, client.Options{})
-	r.APICache = cache
-
-	cases, err := r.GetCasesByProvince()
+	c, err := r.GetByProvince()
 	require.NoError(t, err)
 
 	assert.Equal(t, []time.Time{
 		time.Date(2021, time.October, 21, 0, 0, 0, 0, time.UTC),
 		time.Date(2021, time.October, 22, 0, 0, 0, 0, time.UTC),
-	}, cases.GetTimestamps())
+	}, c.GetTimestamps())
 
-	assert.Equal(t, []string{"Brussels", "VlaamsBrabant"}, cases.GetColumns())
+	assert.Equal(t, []string{"time", "Brussels", "VlaamsBrabant"}, c.GetColumns())
 
-	values, ok := cases.GetValues("Brussels")
+	values, ok := c.GetFloatValues("Brussels")
 	require.True(t, ok)
 	assert.Equal(t, []float64{150, 0}, values)
 
-	values, ok = cases.GetValues("VlaamsBrabant")
+	values, ok = c.GetFloatValues("VlaamsBrabant")
 	require.True(t, ok)
 	assert.Equal(t, []float64{100, 120}, values)
 
-	mock.AssertExpectationsForObjects(t, cache)
+	mock.AssertExpectationsForObjects(t, h)
 }
 
-func TestClient_GetCasesByRegion(t *testing.T) {
-	cache := &mocks.Holder{}
+func TestClient_GetByRegion(t *testing.T) {
+	h := &mocks.Holder{}
 
-	cache.
+	h.
 		On("Get", "Cases").
 		Return(testCasesResponse, true)
 
-	r := reporter.NewWithOptions(time.Hour, client.Options{})
-	r.APICache = cache
+	r := cases.Reporter{
+		ReportCache: cache.NewCache(time.Hour),
+		APICache:    h,
+	}
 
-	cases, err := r.GetCasesByRegion()
+	c, err := r.GetByRegion()
 	require.NoError(t, err)
 
 	assert.Equal(t, []time.Time{
 		time.Date(2021, time.October, 21, 0, 0, 0, 0, time.UTC),
 		time.Date(2021, time.October, 22, 0, 0, 0, 0, time.UTC),
-	}, cases.GetTimestamps())
+	}, c.GetTimestamps())
 
-	assert.Equal(t, []string{"Brussels", "Flanders"}, cases.GetColumns())
+	assert.Equal(t, []string{"time", "Brussels", "Flanders"}, c.GetColumns())
 
-	values, ok := cases.GetValues("Brussels")
+	values, ok := c.GetFloatValues("Brussels")
 	require.True(t, ok)
 	assert.Equal(t, []float64{150, 0}, values)
 
-	values, ok = cases.GetValues("Flanders")
+	values, ok = c.GetFloatValues("Flanders")
 	require.True(t, ok)
 	assert.Equal(t, []float64{100, 120}, values)
 
-	mock.AssertExpectationsForObjects(t, cache)
+	mock.AssertExpectationsForObjects(t, h)
 }
 
 func TestClient_GetCasesByAgeGroup(t *testing.T) {
-	cache := &mocks.Holder{}
+	h := &mocks.Holder{}
 
-	cache.
+	h.
 		On("Get", "Cases").
 		Return(testCasesResponse, true)
 
-	r := reporter.NewWithOptions(time.Hour, client.Options{})
-	r.APICache = cache
+	r := cases.Reporter{
+		ReportCache: cache.NewCache(time.Hour),
+		APICache:    h,
+	}
 
-	cases, err := r.GetCasesByAgeGroup()
+	c, err := r.GetByAgeGroup()
 	require.NoError(t, err)
 
 	assert.Equal(t, []time.Time{
 		time.Date(2021, time.October, 21, 0, 0, 0, 0, time.UTC),
 		time.Date(2021, time.October, 22, 0, 0, 0, 0, time.UTC),
-	}, cases.GetTimestamps())
+	}, c.GetTimestamps())
 
-	assert.Equal(t, []string{"25-34", "85+"}, cases.GetColumns())
+	assert.Equal(t, []string{"time", "25-34", "85+"}, c.GetColumns())
 
-	values, ok := cases.GetValues("25-34")
+	values, ok := c.GetFloatValues("25-34")
 	require.True(t, ok)
 	assert.Equal(t, []float64{150, 120}, values)
 
-	values, ok = cases.GetValues("85+")
+	values, ok = c.GetFloatValues("85+")
 	require.True(t, ok)
 	assert.Equal(t, []float64{100, 0}, values)
 
-	mock.AssertExpectationsForObjects(t, cache)
+	mock.AssertExpectationsForObjects(t, h)
 }
 
 func TestClient_GetCases_Failure(t *testing.T) {
-	cache := &mocks.Holder{}
-	cache.On("Get", "Cases").Return(nil, false)
+	h := &mocks.Holder{}
+	h.On("Get", "Cases").Return(nil, false)
 
-	r := reporter.NewWithOptions(time.Hour, client.Options{})
-	r.APICache = cache
+	r := cases.Reporter{
+		ReportCache: cache.NewCache(time.Hour),
+		APICache:    h,
+	}
 
-	_, err := r.GetCases()
+	_, err := r.Get()
 	require.Error(t, err)
 
-	_, err = r.GetCasesByRegion()
+	_, err = r.GetByRegion()
 	require.Error(t, err)
 
-	_, err = r.GetCasesByProvince()
+	_, err = r.GetByProvince()
 	require.Error(t, err)
 
-	_, err = r.GetCasesByAgeGroup()
+	_, err = r.GetByAgeGroup()
 	require.Error(t, err)
 
-	mock.AssertExpectationsForObjects(t, cache)
+	mock.AssertExpectationsForObjects(t, h)
 }
 
 func BenchmarkClient_GetCasesByRegion(b *testing.B) {
@@ -195,17 +204,19 @@ func BenchmarkClient_GetCasesByRegion(b *testing.B) {
 		}
 		ts = ts.Add(24 * time.Hour)
 	}
-	cache := &mocks.Holder{}
-	cache.
+	h := &mocks.Holder{}
+	h.
 		On("Get", "Cases").
 		Return(bigResponse, true)
 
-	r := reporter.NewWithOptions(time.Hour, client.Options{})
-	r.APICache = cache
+	r := cases.Reporter{
+		ReportCache: cache.NewCache(time.Hour),
+		APICache:    h,
+	}
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, err := r.GetCasesByRegion()
+		_, err := r.GetByRegion()
 		if err != nil {
 			b.Log(err)
 			b.FailNow()

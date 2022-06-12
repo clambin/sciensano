@@ -22,7 +22,7 @@ func TestManufacturerHandler(t *testing.T) {
 	cache.On("Get", "Vaccinations").Return(vaccinationTestData, true)
 
 	r := reporter.NewWithOptions(time.Hour, client.Options{})
-	r.APICache = cache
+	r.Vaccinations.APICache = cache
 	h := vaccinations.ManufacturerHandler{Reporter: r}
 
 	response, err := h.Endpoints().Query(ctx, req)
@@ -30,7 +30,7 @@ func TestManufacturerHandler(t *testing.T) {
 
 	assert.Equal(t, &query.TableResponse{Columns: []query.Column{
 		{
-			Text: "timestamp",
+			Text: "time",
 			Data: query.TimeColumn{
 				time.Date(2020, time.January, 1, 0, 0, 0, 0, time.UTC),
 				time.Date(2020, time.January, 2, 0, 0, 0, 0, time.UTC),

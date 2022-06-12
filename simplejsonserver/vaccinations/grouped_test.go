@@ -5,6 +5,7 @@ import (
 	"github.com/clambin/go-metrics/client"
 	mockCache "github.com/clambin/sciensano/apiclient/cache/mocks"
 	"github.com/clambin/sciensano/reporter"
+	vaccinations2 "github.com/clambin/sciensano/reporter/vaccinations"
 	"github.com/clambin/sciensano/simplejsonserver/vaccinations"
 	"github.com/clambin/simplejson/v3/common"
 	"github.com/clambin/simplejson/v3/query"
@@ -17,15 +18,15 @@ import (
 func TestGroupedHandler(t *testing.T) {
 	var testCases = []struct {
 		vaccinations.Scope
-		reporter.VaccinationType
+		Type     int
 		expected *query.TableResponse
 	}{
 		{
-			Scope:           vaccinations.ScopeRegion,
-			VaccinationType: reporter.VaccinationTypePartial,
+			Scope: vaccinations.ScopeRegion,
+			Type:  vaccinations2.TypePartial,
 			expected: &query.TableResponse{
 				Columns: []query.Column{
-					{Text: "timestamp", Data: query.TimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
+					{Text: "time", Data: query.TimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
 					{Text: "(unknown)", Data: query.NumberColumn{1, 1}},
 					{Text: "Brussels", Data: query.NumberColumn{2, 7}},
 					{Text: "Flanders", Data: query.NumberColumn{0, 0}},
@@ -33,33 +34,33 @@ func TestGroupedHandler(t *testing.T) {
 			},
 		},
 		{
-			Scope:           vaccinations.ScopeRegion,
-			VaccinationType: reporter.VaccinationTypeFull,
+			Scope: vaccinations.ScopeRegion,
+			Type:  vaccinations2.TypeFull,
 			expected: &query.TableResponse{
 				Columns: []query.Column{
-					{Text: "timestamp", Data: query.TimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
+					{Text: "time", Data: query.TimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
 					{Text: "Brussels", Data: query.NumberColumn{2, 6}},
 					{Text: "Flanders", Data: query.NumberColumn{1, 4}},
 				},
 			},
 		},
 		{
-			Scope:           vaccinations.ScopeRegion,
-			VaccinationType: reporter.VaccinationTypeBooster,
+			Scope: vaccinations.ScopeRegion,
+			Type:  vaccinations2.TypeBooster,
 			expected: &query.TableResponse{
 				Columns: []query.Column{
-					{Text: "timestamp", Data: query.TimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
+					{Text: "time", Data: query.TimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
 					{Text: "Brussels", Data: query.NumberColumn{0, 5}},
 					{Text: "Flanders", Data: query.NumberColumn{1, 1}},
 				},
 			},
 		},
 		{
-			Scope:           vaccinations.ScopeAge,
-			VaccinationType: reporter.VaccinationTypePartial,
+			Scope: vaccinations.ScopeAge,
+			Type:  vaccinations2.TypePartial,
 			expected: &query.TableResponse{
 				Columns: []query.Column{
-					{Text: "timestamp", Data: query.TimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
+					{Text: "time", Data: query.TimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
 					{Text: "(unknown)", Data: query.NumberColumn{1, 1}},
 					{Text: "25-34", Data: query.NumberColumn{2, 2}},
 					{Text: "35-44", Data: query.NumberColumn{0, 5}},
@@ -67,22 +68,22 @@ func TestGroupedHandler(t *testing.T) {
 			},
 		},
 		{
-			Scope:           vaccinations.ScopeAge,
-			VaccinationType: reporter.VaccinationTypeFull,
+			Scope: vaccinations.ScopeAge,
+			Type:  vaccinations2.TypeFull,
 			expected: &query.TableResponse{
 				Columns: []query.Column{
-					{Text: "timestamp", Data: query.TimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
+					{Text: "time", Data: query.TimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
 					{Text: "25-34", Data: query.NumberColumn{1, 4}},
 					{Text: "35-44", Data: query.NumberColumn{2, 6}},
 				},
 			},
 		},
 		{
-			Scope:           vaccinations.ScopeAge,
-			VaccinationType: reporter.VaccinationTypeBooster,
+			Scope: vaccinations.ScopeAge,
+			Type:  vaccinations2.TypeBooster,
 			expected: &query.TableResponse{
 				Columns: []query.Column{
-					{Text: "timestamp", Data: query.TimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
+					{Text: "time", Data: query.TimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
 					{Text: "25-34", Data: query.NumberColumn{0, 5}},
 					{Text: "35-44", Data: query.NumberColumn{1, 1}},
 				},
@@ -97,13 +98,13 @@ func TestGroupedHandler(t *testing.T) {
 	cache.On("Get", "Vaccinations").Return(vaccinationTestData, true)
 
 	r := reporter.NewWithOptions(time.Hour, client.Options{})
-	r.APICache = cache
+	r.Vaccinations.APICache = cache
 
 	for index, testCase := range testCases {
 		h := vaccinations.GroupedHandler{
-			Reporter:        r,
-			VaccinationType: testCase.VaccinationType,
-			Scope:           testCase.Scope,
+			Reporter: r,
+			Type:     testCase.Type,
+			Scope:    testCase.Scope,
 		}
 
 		response, err := h.Endpoints().Query(ctx, req)
@@ -117,12 +118,12 @@ func TestGroupedHandler_Failure(t *testing.T) {
 	cache.On("Get", "Vaccinations").Return(nil, false)
 
 	r := reporter.NewWithOptions(time.Hour, client.Options{})
-	r.APICache = cache
+	r.Vaccinations.APICache = cache
 
 	h := vaccinations.GroupedHandler{
-		Reporter:        r,
-		VaccinationType: reporter.VaccinationTypeBooster,
-		Scope:           vaccinations.ScopeAge,
+		Reporter: r,
+		Type:     vaccinations2.TypeBooster,
+		Scope:    vaccinations.ScopeAge,
 	}
 
 	_, err := h.Endpoints().Query(context.Background(), query.Request{})
@@ -135,12 +136,12 @@ func BenchmarkVaccinationsGroupedHandler(b *testing.B) {
 	cache.On("Get", "Vaccinations").Return(content, true)
 
 	r := reporter.NewWithOptions(time.Hour, client.Options{})
-	r.APICache = cache
+	r.Vaccinations.APICache = cache
 
 	h := vaccinations.GroupedHandler{
-		Reporter:        r,
-		VaccinationType: reporter.VaccinationTypeBooster,
-		Scope:           vaccinations.ScopeAge,
+		Reporter: r,
+		Type:     vaccinations2.TypeBooster,
+		Scope:    vaccinations.ScopeAge,
 	}
 
 	for i := 0; i < b.N; i++ {

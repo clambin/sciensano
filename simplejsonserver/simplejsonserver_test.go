@@ -81,31 +81,3 @@ func TestRun(t *testing.T) {
 		assert.NotZero(t, count, name)
 	}
 }
-
-func BenchmarkHandlers_Run(b *testing.B) {
-	demographicsClient := &mockDemographics.Fetcher{}
-	h := simplejsonserver.NewServerWithDemographicsClient(demographicsClient)
-
-	demographicsClient.On("GetByRegion").Return(map[string]int{})
-	demographicsClient.On("GetByAgeBracket", mock.AnythingOfType("bracket.Bracket")).Return(0)
-
-	ctx := context.Background()
-	req := query.Request{Args: query.Args{Args: common.Args{Range: common.Range{To: time.Now()}}}}
-
-	go h.Reporter.APICache.Run(context.Background(), time.Minute)
-	require.Eventually(b, func() bool {
-		health := h.Reporter.APICache.Stats()
-		//b.Logf("health: %v", health)
-		return len(health) == 6
-	}, 10*time.Second, 100*time.Millisecond)
-
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		for _, handler := range h.Handlers {
-			_, err := handler.Endpoints().Query(ctx, req)
-			if err != nil {
-				b.Fatal(err)
-			}
-		}
-	}
-}

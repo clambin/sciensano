@@ -19,7 +19,7 @@ func TestLagHandler(t *testing.T) {
 
 	cache := &mockCache.Holder{}
 	client := reporter.New(time.Hour)
-	client.APICache = cache
+	client.Vaccinations.APICache = cache
 
 	h := vaccinations.LagHandler{Reporter: client}
 
@@ -34,7 +34,7 @@ func TestLagHandler(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, &query.TableResponse{
 		Columns: []query.Column{
-			{Text: "timestamp", Data: query.TimeColumn{time.Date(2020, time.January, 1, 0, 0, 0, 0, time.UTC), time.Date(2020, time.January, 2, 0, 0, 0, 0, time.UTC)}},
+			{Text: "time", Data: query.TimeColumn{time.Date(2020, time.January, 1, 0, 0, 0, 0, time.UTC), time.Date(2020, time.January, 2, 0, 0, 0, 0, time.UTC)}},
 			{Text: "lag", Data: query.NumberColumn{0, 0}},
 		},
 	}, response)

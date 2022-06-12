@@ -63,8 +63,5 @@ func (client *Client) GetTestResults(ctx context.Context) (results []apiclient.A
 		return
 	}
 
-	for _, entry := range response {
-		results = append(results, entry)
-	}
-	return
+	return copyMaybeSort(response), nil
 }

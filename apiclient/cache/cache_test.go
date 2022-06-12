@@ -44,7 +44,7 @@ func (v value) GetAttributeValues() []float64 {
 	panic("implement me")
 }
 
-func (f *fetcher) Update(_ context.Context, ch chan<- cache.FetcherResponse) {
+func (f *fetcher) Fetch(_ context.Context, ch chan<- cache.FetcherResponse) {
 	f.called++
 	ch <- cache.FetcherResponse{
 		Name:     "foo",

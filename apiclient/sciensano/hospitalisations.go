@@ -65,8 +65,5 @@ func (client *Client) GetHospitalisations(ctx context.Context) (results []apicli
 		return
 	}
 
-	for _, entry := range response {
-		results = append(results, entry)
-	}
-	return
+	return copyMaybeSort(response), nil
 }

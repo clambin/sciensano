@@ -1,11 +1,11 @@
-package reporter_test
+package mortality_test
 
 import (
-	"github.com/clambin/go-metrics/client"
 	"github.com/clambin/sciensano/apiclient"
 	"github.com/clambin/sciensano/apiclient/cache/mocks"
 	"github.com/clambin/sciensano/apiclient/sciensano"
-	"github.com/clambin/sciensano/reporter"
+	"github.com/clambin/sciensano/reporter/cache"
+	"github.com/clambin/sciensano/reporter/mortality"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -43,15 +43,17 @@ var (
 )
 
 func TestClient_GetMortality(t *testing.T) {
-	cache := &mocks.Holder{}
-	cache.
+	h := &mocks.Holder{}
+	h.
 		On("Get", "Mortality").
 		Return(testMortalityResponse, true)
 
-	r := reporter.NewWithOptions(time.Hour, client.Options{})
-	r.APICache = cache
+	r := mortality.Reporter{
+		ReportCache: cache.NewCache(time.Hour),
+		APICache:    h,
+	}
 
-	entries, err := r.GetMortality()
+	entries, err := r.Get()
 	require.NoError(t, err)
 
 	assert.Equal(t, []time.Time{
@@ -60,25 +62,27 @@ func TestClient_GetMortality(t *testing.T) {
 		time.Date(2021, time.October, 23, 0, 0, 0, 0, time.UTC),
 	}, entries.GetTimestamps())
 
-	assert.Equal(t, []string{"total"}, entries.GetColumns())
+	assert.Equal(t, []string{"time", "total"}, entries.GetColumns())
 
-	values, ok := entries.GetValues("total")
+	values, ok := entries.GetFloatValues("total")
 	require.True(t, ok)
 	assert.Equal(t, []float64{250, 120, 100}, values)
 
-	mock.AssertExpectationsForObjects(t, cache)
+	mock.AssertExpectationsForObjects(t, h)
 }
 
 func TestClient_GetMortalityByRegion(t *testing.T) {
-	cache := &mocks.Holder{}
-	cache.
+	h := &mocks.Holder{}
+	h.
 		On("Get", "Mortality").
 		Return(testMortalityResponse, true)
 
-	r := reporter.NewWithOptions(time.Hour, client.Options{})
-	r.APICache = cache
+	r := mortality.Reporter{
+		ReportCache: cache.NewCache(time.Hour),
+		APICache:    h,
+	}
 
-	entries, err := r.GetMortalityByRegion()
+	entries, err := r.GetByRegion()
 	require.NoError(t, err)
 
 	assert.Equal(t, []time.Time{
@@ -87,29 +91,31 @@ func TestClient_GetMortalityByRegion(t *testing.T) {
 		time.Date(2021, time.October, 23, 0, 0, 0, 0, time.UTC),
 	}, entries.GetTimestamps())
 
-	assert.Equal(t, []string{"Brussels", "Flanders"}, entries.GetColumns())
+	assert.Equal(t, []string{"time", "Brussels", "Flanders"}, entries.GetColumns())
 
-	values, ok := entries.GetValues("Brussels")
+	values, ok := entries.GetFloatValues("Brussels")
 	require.True(t, ok)
 	assert.Equal(t, []float64{150, 0, 0}, values)
 
-	values, ok = entries.GetValues("Flanders")
+	values, ok = entries.GetFloatValues("Flanders")
 	require.True(t, ok)
 	assert.Equal(t, []float64{100, 120, 100}, values)
 
-	mock.AssertExpectationsForObjects(t, cache)
+	mock.AssertExpectationsForObjects(t, h)
 }
 
 func TestClient_GetMortalityByAgeGroup(t *testing.T) {
-	cache := &mocks.Holder{}
-	cache.
+	h := &mocks.Holder{}
+	h.
 		On("Get", "Mortality").
 		Return(testMortalityResponse, true)
 
-	r := reporter.NewWithOptions(time.Hour, client.Options{})
-	r.APICache = cache
+	r := mortality.Reporter{
+		ReportCache: cache.NewCache(time.Hour),
+		APICache:    h,
+	}
 
-	entries, err := r.GetMortalityByAgeGroup()
+	entries, err := r.GetByAgeGroup()
 	require.NoError(t, err)
 
 	assert.Equal(t, []time.Time{
@@ -118,40 +124,44 @@ func TestClient_GetMortalityByAgeGroup(t *testing.T) {
 		time.Date(2021, time.October, 23, 0, 0, 0, 0, time.UTC),
 	}, entries.GetTimestamps())
 
-	assert.Equal(t, []string{"25-34", "55-64", "85+"}, entries.GetColumns())
+	assert.Equal(t, []string{"time", "25-34", "55-64", "85+"}, entries.GetColumns())
 
-	values, ok := entries.GetValues("25-34")
+	values, ok := entries.GetFloatValues("25-34")
 	require.True(t, ok)
 	assert.Equal(t, []float64{150, 120, 0}, values)
 
-	values, ok = entries.GetValues("55-64")
+	values, ok = entries.GetFloatValues("55-64")
 	require.True(t, ok)
 	assert.Equal(t, []float64{0, 0, 100}, values)
 
-	values, ok = entries.GetValues("85+")
+	values, ok = entries.GetFloatValues("85+")
 	require.True(t, ok)
 	assert.Equal(t, []float64{100, 0, 0}, values)
 
-	mock.AssertExpectationsForObjects(t, cache)
+	mock.AssertExpectationsForObjects(t, h)
 }
 
 func TestClient_GetMortality_Failure(t *testing.T) {
-	cache := &mocks.Holder{}
-	cache.On("Get", "Mortality").Return(nil, false)
+	h := &mocks.Holder{}
+	h.
+		On("Get", "Mortality").
+		Return(nil, false)
 
-	r := reporter.NewWithOptions(time.Hour, client.Options{})
-	r.APICache = cache
+	r := mortality.Reporter{
+		ReportCache: cache.NewCache(time.Hour),
+		APICache:    h,
+	}
 
-	_, err := r.GetMortality()
+	_, err := r.Get()
 	require.Error(t, err)
 
-	_, err = r.GetMortalityByRegion()
+	_, err = r.GetByRegion()
 	require.Error(t, err)
 
-	_, err = r.GetMortalityByAgeGroup()
+	_, err = r.GetByAgeGroup()
 	require.Error(t, err)
 
-	mock.AssertExpectationsForObjects(t, cache)
+	mock.AssertExpectationsForObjects(t, h)
 }
 
 func BenchmarkClient_GetMortalityByRegion(b *testing.B) {
@@ -169,17 +179,19 @@ func BenchmarkClient_GetMortalityByRegion(b *testing.B) {
 		}
 		ts = ts.Add(24 * time.Hour)
 	}
-	cache := &mocks.Holder{}
-	cache.
+	h := &mocks.Holder{}
+	h.
 		On("Get", "Mortality").
 		Return(bigResponse, true)
 
-	r := reporter.NewWithOptions(time.Hour, client.Options{})
-	r.APICache = cache
+	r := mortality.Reporter{
+		ReportCache: cache.NewCache(time.Hour),
+		APICache:    h,
+	}
 
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		_, err := r.GetMortalityByRegion()
+		_, err := r.GetByRegion()
 		if err != nil {
 			b.Log(err)
 			b.FailNow()

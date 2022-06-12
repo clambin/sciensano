@@ -1,11 +1,11 @@
-package reporter_test
+package testresults_test
 
 import (
-	"github.com/clambin/go-metrics/client"
 	"github.com/clambin/sciensano/apiclient"
 	"github.com/clambin/sciensano/apiclient/cache/mocks"
 	"github.com/clambin/sciensano/apiclient/sciensano"
-	"github.com/clambin/sciensano/reporter"
+	"github.com/clambin/sciensano/reporter/cache"
+	"github.com/clambin/sciensano/reporter/testresults"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -43,13 +43,15 @@ var (
 )
 
 func TestGetTests(t *testing.T) {
-	cache := &mocks.Holder{}
-	cache.On("Get", "TestResults").Return(testResultsResponse, true).Once()
+	h := &mocks.Holder{}
+	h.On("Get", "TestResults").Return(testResultsResponse, true).Once()
 
-	c := reporter.NewWithOptions(time.Hour, client.Options{})
-	c.APICache = cache
+	r := testresults.Reporter{
+		ReportCache: cache.NewCache(time.Hour),
+		APICache:    h,
+	}
 
-	entries, err := c.GetTestResults()
+	entries, err := r.Get()
 	require.NoError(t, err)
 
 	assert.Equal(t, []time.Time{
@@ -58,32 +60,34 @@ func TestGetTests(t *testing.T) {
 		time.Date(2021, time.March, 12, 0, 0, 0, 0, time.UTC),
 	}, entries.GetTimestamps())
 
-	assert.Equal(t, []string{"positive", "rate", "total"}, entries.GetColumns())
+	assert.Equal(t, []string{"time", "total", "positive", "rate"}, entries.GetColumns())
 
-	values, ok := entries.GetValues("total")
+	values, ok := entries.GetFloatValues("total")
 	require.True(t, ok)
 	assert.Equal(t, []float64{200, 100, 0}, values)
 
-	values, ok = entries.GetValues("positive")
+	values, ok = entries.GetFloatValues("positive")
 	require.True(t, ok)
 	assert.Equal(t, []float64{20, 20, 0}, values)
 
-	values, ok = entries.GetValues("rate")
+	values, ok = entries.GetFloatValues("rate")
 	require.True(t, ok)
 	assert.Equal(t, []float64{0.1, 0.2, 0}, values)
 
-	mock.AssertExpectationsForObjects(t, cache)
+	mock.AssertExpectationsForObjects(t, h)
 }
 
 func TestClient_GetTestResults_Failure(t *testing.T) {
-	cache := &mocks.Holder{}
-	cache.On("Get", "TestResults").Return(nil, false).Once()
+	h := &mocks.Holder{}
+	h.On("Get", "TestResults").Return(nil, false).Once()
 
-	c := reporter.NewWithOptions(time.Hour, client.Options{})
-	c.APICache = cache
+	r := testresults.Reporter{
+		ReportCache: cache.NewCache(time.Hour),
+		APICache:    h,
+	}
 
-	_, err := c.GetTestResults()
+	_, err := r.Get()
 	require.Error(t, err)
 
-	mock.AssertExpectationsForObjects(t, cache)
+	mock.AssertExpectationsForObjects(t, h)
 }

@@ -83,7 +83,7 @@ func TestClient_Refresh(t *testing.T) {
 	}
 
 	ch := make(chan cache.FetcherResponse)
-	go c.Update(context.Background(), ch)
+	go c.Fetch(context.Background(), ch)
 
 	response := <-ch
 	assert.Equal(t, "Vaccines", response.Name)

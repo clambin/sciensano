@@ -29,7 +29,7 @@ func TestHandler_TableQuery(t *testing.T) {
 		}, true)
 
 	r := reporter.NewWithOptions(time.Hour, client.Options{})
-	r.APICache = getter
+	r.TestResults.APICache = getter
 	h := testresults.Handler{Reporter: r}
 
 	req := query.Request{Args: query.Args{Args: common.Args{Range: common.Range{
@@ -41,10 +41,10 @@ func TestHandler_TableQuery(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, &query.TableResponse{
 		Columns: []query.Column{
-			{Text: "timestamp", Data: query.TimeColumn{time.Date(2022, 1, 26, 0, 0, 0, 0, time.UTC)}},
+			{Text: "time", Data: query.TimeColumn{time.Date(2022, 1, 26, 0, 0, 0, 0, time.UTC)}},
+			{Text: "total", Data: query.NumberColumn{20.0}},
 			{Text: "positive", Data: query.NumberColumn{10.0}},
 			{Text: "rate", Data: query.NumberColumn{0.5}},
-			{Text: "total", Data: query.NumberColumn{20.0}},
 		},
 	}, response)
 
@@ -58,7 +58,7 @@ func TestHandler_Failure(t *testing.T) {
 		Return(nil, false)
 
 	r := reporter.NewWithOptions(time.Hour, client.Options{})
-	r.APICache = getter
+	r.TestResults.APICache = getter
 	h := testresults.Handler{
 		Reporter: r,
 	}

@@ -17,7 +17,7 @@ func TestReporterMetrics(t *testing.T) {
 	go r.APICache.Run(context.Background(), time.Minute)
 
 	assert.Eventually(t, func() bool {
-		_, err := r.GetTestResults()
+		_, err := r.TestResults.Get()
 		return err == nil
 	}, time.Minute, time.Second)
 

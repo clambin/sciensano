@@ -25,7 +25,7 @@ func TestClient_Update(t *testing.T) {
 	ctx := context.Background()
 
 	ch := make(chan cache.FetcherResponse)
-	go c.Update(ctx, ch)
+	go c.Fetch(ctx, ch)
 
 	expected := []string{
 		"TestResults",

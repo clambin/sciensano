@@ -1,32 +1,21 @@
-package reporter_test
+package vaccinations_test
 
 import (
-	"github.com/clambin/go-metrics/client"
 	"github.com/clambin/sciensano/apiclient"
-	"strconv"
-	"time"
-)
-
-import (
 	"github.com/clambin/sciensano/apiclient/cache/mocks"
 	"github.com/clambin/sciensano/apiclient/sciensano"
-	"github.com/clambin/sciensano/reporter"
+	"github.com/clambin/sciensano/reporter/cache"
+	"github.com/clambin/sciensano/reporter/vaccinations"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"strconv"
 	"testing"
+	"time"
 )
 
 var (
 	testVaccinationsResponse = []apiclient.APIResponse{
-		&sciensano.APIVaccinationsResponse{
-			TimeStamp:    sciensano.TimeStamp{Time: time.Date(2021, 3, 11, 0, 0, 0, 0, time.UTC)},
-			Manufacturer: "Moderna",
-			Region:       "Brussels",
-			AgeGroup:     "35-44",
-			Dose:         "E",
-			Count:        5,
-		},
 		&sciensano.APIVaccinationsResponse{
 			TimeStamp:    sciensano.TimeStamp{Time: time.Date(2021, 3, 10, 0, 0, 0, 0, time.UTC)},
 			Manufacturer: "Pfizer-BioNTech",
@@ -67,17 +56,27 @@ var (
 			Dose:         "E",
 			Count:        5,
 		},
+		&sciensano.APIVaccinationsResponse{
+			TimeStamp:    sciensano.TimeStamp{Time: time.Date(2021, 3, 11, 0, 0, 0, 0, time.UTC)},
+			Manufacturer: "Moderna",
+			Region:       "Brussels",
+			AgeGroup:     "35-44",
+			Dose:         "E",
+			Count:        5,
+		},
 	}
 )
 
 func TestClient_GetVaccinations(t *testing.T) {
-	cache := &mocks.Holder{}
-	cache.On("Get", "Vaccinations").Return(testVaccinationsResponse, true)
+	h := &mocks.Holder{}
+	h.On("Get", "Vaccinations").Return(testVaccinationsResponse, true)
 
-	r := reporter.NewWithOptions(time.Hour, client.Options{})
-	r.APICache = cache
+	r := vaccinations.Reporter{
+		ReportCache: cache.NewCache(time.Hour),
+		APICache:    h,
+	}
 
-	entries, err := r.GetVaccinations()
+	entries, err := r.Get()
 	require.NoError(t, err)
 
 	assert.Equal(t, []time.Time{
@@ -85,43 +84,37 @@ func TestClient_GetVaccinations(t *testing.T) {
 		time.Date(2021, time.March, 11, 0, 0, 0, 0, time.UTC),
 	}, entries.GetTimestamps())
 
-	assert.Equal(t, []string{"booster", "full", "partial", "singledose"}, entries.GetColumns())
+	assert.Equal(t, []string{"time", "partial", "full", "singledose", "booster"}, entries.GetColumns())
 
-	values, ok := entries.GetValues("partial")
+	values, ok := entries.GetFloatValues("partial")
 	require.True(t, ok)
 	assert.Equal(t, []float64{2, 0}, values)
 
-	values, ok = entries.GetValues("full")
+	values, ok = entries.GetFloatValues("full")
 	require.True(t, ok)
 	assert.Equal(t, []float64{1, 0}, values)
 
-	values, ok = entries.GetValues("singledose")
+	values, ok = entries.GetFloatValues("singledose")
 	require.True(t, ok)
 	assert.Equal(t, []float64{4, 0}, values)
 
-	values, ok = entries.GetValues("booster")
+	values, ok = entries.GetFloatValues("booster")
 	require.True(t, ok)
 	assert.Equal(t, []float64{5, 5}, values)
 
-	mock.AssertExpectationsForObjects(t, cache)
+	mock.AssertExpectationsForObjects(t, h)
 }
 
 type vaccinationsTestCase struct {
-	mode       reporter.VaccinationType
+	mode       int
 	timestamps []time.Time
 	values     map[string][]float64
 }
 
 func TestClient_GetVaccinationsByAgeGroup(t *testing.T) {
-	cache := &mocks.Holder{}
-	cache.On("Get", "Vaccinations").Return(testVaccinationsResponse, true)
-
-	r := reporter.NewWithOptions(time.Hour, client.Options{})
-	r.APICache = cache
-
 	testCases := []vaccinationsTestCase{
 		{
-			mode:       reporter.VaccinationTypePartial,
+			mode:       vaccinations.TypePartial,
 			timestamps: []time.Time{time.Date(2021, time.March, 10, 0, 0, 0, 0, time.UTC)},
 			values: map[string][]float64{
 				"25-34": {1},
@@ -129,14 +122,14 @@ func TestClient_GetVaccinationsByAgeGroup(t *testing.T) {
 			},
 		},
 		{
-			mode:       reporter.VaccinationTypeFull,
+			mode:       vaccinations.TypeFull,
 			timestamps: []time.Time{time.Date(2021, time.March, 10, 0, 0, 0, 0, time.UTC)},
 			values: map[string][]float64{
 				"35-44": {5},
 			},
 		},
 		{
-			mode: reporter.VaccinationTypeBooster,
+			mode: vaccinations.TypeBooster,
 			timestamps: []time.Time{
 				time.Date(2021, time.March, 10, 0, 0, 0, 0, time.UTC),
 				time.Date(2021, time.March, 11, 0, 0, 0, 0, time.UTC),
@@ -147,37 +140,39 @@ func TestClient_GetVaccinationsByAgeGroup(t *testing.T) {
 		},
 	}
 
+	h := &mocks.Holder{}
+	h.On("Get", "Vaccinations").Return(testVaccinationsResponse, true)
+
+	r := vaccinations.Reporter{
+		ReportCache: cache.NewCache(time.Hour),
+		APICache:    h,
+	}
+
 	for index, testCase := range testCases {
-		result, err := r.GetVaccinationsByAgeGroup(testCase.mode)
+		result, err := r.GetByAgeGroup(testCase.mode)
 		require.NoError(t, err, index)
 		assert.Equal(t, testCase.timestamps, result.GetTimestamps())
-		assert.Len(t, result.GetColumns(), len(testCase.values))
+		assert.Len(t, result.GetColumns(), 1+len(testCase.values))
 		for column, expected := range testCase.values {
-			values, ok := result.GetValues(column)
+			values, ok := result.GetFloatValues(column)
 			require.True(t, ok)
 			assert.Equal(t, expected, values)
 		}
 	}
-	mock.AssertExpectationsForObjects(t, cache)
+	mock.AssertExpectationsForObjects(t, h)
 }
 
 func TestClient_GetVaccinationsByRegion(t *testing.T) {
-	cache := &mocks.Holder{}
-	cache.On("Get", "Vaccinations").Return(testVaccinationsResponse, true)
-
-	r := reporter.NewWithOptions(time.Hour, client.Options{})
-	r.APICache = cache
-
 	testCases := []vaccinationsTestCase{
 		{
-			mode:       reporter.VaccinationTypePartial,
+			mode:       vaccinations.TypePartial,
 			timestamps: []time.Time{time.Date(2021, time.March, 10, 0, 0, 0, 0, time.UTC)},
 			values: map[string][]float64{
 				"Flanders": {2},
 			},
 		},
 		{
-			mode:       reporter.VaccinationTypeFull,
+			mode:       vaccinations.TypeFull,
 			timestamps: []time.Time{time.Date(2021, time.March, 10, 0, 0, 0, 0, time.UTC)},
 			values: map[string][]float64{
 				"Brussels": {1},
@@ -185,7 +180,7 @@ func TestClient_GetVaccinationsByRegion(t *testing.T) {
 			},
 		},
 		{
-			mode: reporter.VaccinationTypeBooster,
+			mode: vaccinations.TypeBooster,
 			timestamps: []time.Time{
 				time.Date(2021, time.March, 10, 0, 0, 0, 0, time.UTC),
 				time.Date(2021, time.March, 11, 0, 0, 0, 0, time.UTC),
@@ -196,28 +191,30 @@ func TestClient_GetVaccinationsByRegion(t *testing.T) {
 		},
 	}
 
+	h := &mocks.Holder{}
+	h.On("Get", "Vaccinations").Return(testVaccinationsResponse, true)
+
+	r := vaccinations.Reporter{
+		ReportCache: cache.NewCache(time.Hour),
+		APICache:    h,
+	}
+
 	for index, testCase := range testCases {
-		result, err := r.GetVaccinationsByRegion(testCase.mode)
+		result, err := r.GetByRegion(testCase.mode)
 		require.NoError(t, err, index)
 		require.NoError(t, err, index)
 		assert.Equal(t, testCase.timestamps, result.GetTimestamps())
-		assert.Len(t, result.GetColumns(), len(testCase.values))
+		assert.Len(t, result.GetColumns(), 1+len(testCase.values))
 		for column, expected := range testCase.values {
-			values, ok := result.GetValues(column)
+			values, ok := result.GetFloatValues(column)
 			require.True(t, ok)
 			assert.Equal(t, expected, values)
 		}
 	}
-	mock.AssertExpectationsForObjects(t, cache)
+	mock.AssertExpectationsForObjects(t, h)
 }
 
 func TestClient_GetVaccinationsByManufacturer(t *testing.T) {
-	cache := &mocks.Holder{}
-	cache.On("Get", "Vaccinations").Return(testVaccinationsResponse, true)
-
-	r := reporter.NewWithOptions(time.Hour, client.Options{})
-	r.APICache = cache
-
 	testCases := []vaccinationsTestCase{
 		{
 			timestamps: []time.Time{
@@ -233,41 +230,51 @@ func TestClient_GetVaccinationsByManufacturer(t *testing.T) {
 		},
 	}
 
+	h := &mocks.Holder{}
+	h.On("Get", "Vaccinations").Return(testVaccinationsResponse, true)
+
+	r := vaccinations.Reporter{
+		ReportCache: cache.NewCache(time.Hour),
+		APICache:    h,
+	}
+
 	for index, testCase := range testCases {
-		result, err := r.GetVaccinationsByManufacturer()
+		result, err := r.GetByManufacturer()
 		require.NoError(t, err, index)
 		require.NoError(t, err, index)
 		assert.Equal(t, testCase.timestamps, result.GetTimestamps(), index)
-		assert.Len(t, result.GetColumns(), len(testCase.values), index)
+		assert.Len(t, result.GetColumns(), 1+len(testCase.values), index)
 		for column, expected := range testCase.values {
-			values, ok := result.GetValues(column)
+			values, ok := result.GetFloatValues(column)
 			require.True(t, ok, column+"-"+strconv.Itoa(index))
 			assert.Equal(t, expected, values, column+"-"+strconv.Itoa(index))
 		}
 	}
-	mock.AssertExpectationsForObjects(t, cache)
+	mock.AssertExpectationsForObjects(t, h)
 }
 
 func TestClient_GetVaccinations_Failure(t *testing.T) {
-	cache := &mocks.Holder{}
-	cache.On("Get", "Vaccinations").Return(nil, false)
+	h := &mocks.Holder{}
+	h.On("Get", "Vaccinations").Return(nil, false)
 
-	r := reporter.NewWithOptions(time.Hour, client.Options{})
-	r.APICache = cache
+	r := vaccinations.Reporter{
+		ReportCache: cache.NewCache(time.Hour),
+		APICache:    h,
+	}
 
-	_, err := r.GetVaccinations()
+	_, err := r.Get()
 	assert.Error(t, err)
 
-	_, err = r.GetVaccinationsByRegion(reporter.VaccinationTypePartial)
+	_, err = r.GetByRegion(vaccinations.TypePartial)
 	assert.Error(t, err)
 
-	_, err = r.GetVaccinationsByAgeGroup(reporter.VaccinationTypePartial)
+	_, err = r.GetByAgeGroup(vaccinations.TypePartial)
 	assert.Error(t, err)
 
-	_, err = r.GetVaccinationsByManufacturer()
+	_, err = r.GetByManufacturer()
 	assert.Error(t, err)
 
-	mock.AssertExpectationsForObjects(t, cache)
+	mock.AssertExpectationsForObjects(t, h)
 }
 
 var bigVaccinationResponse []apiclient.APIResponse
@@ -303,16 +310,19 @@ func buildBigVaccinationResponse() {
 
 func BenchmarkClient_GetVaccination(b *testing.B) {
 	buildBigVaccinationResponse()
-	cache := &mocks.Holder{}
-	cache.On("Get", "Vaccinations").Return(bigVaccinationResponse, true)
 
-	r := reporter.NewWithOptions(time.Hour, client.Options{})
-	r.APICache = cache
+	h := &mocks.Holder{}
+	h.On("Get", "Vaccinations").Return(bigVaccinationResponse, true)
+
+	r := vaccinations.Reporter{
+		ReportCache: cache.NewCache(time.Hour),
+		APICache:    h,
+	}
 
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		_, err := r.GetVaccinations()
+		_, err := r.Get()
 		if err != nil {
 			b.Log(err)
 			b.FailNow()
@@ -322,16 +332,18 @@ func BenchmarkClient_GetVaccination(b *testing.B) {
 
 func BenchmarkClient_GetVaccinationsByAgeGroup(b *testing.B) {
 	buildBigVaccinationResponse()
-	cache := &mocks.Holder{}
-	cache.On("Get", "Vaccinations").Return(bigVaccinationResponse, true)
+	h := &mocks.Holder{}
+	h.On("Get", "Vaccinations").Return(bigVaccinationResponse, true)
 
-	r := reporter.NewWithOptions(time.Hour, client.Options{})
-	r.APICache = cache
+	r := vaccinations.Reporter{
+		ReportCache: cache.NewCache(time.Hour),
+		APICache:    h,
+	}
 
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		_, err := r.GetVaccinationsByAgeGroup(reporter.VaccinationTypeFull)
+		_, err := r.GetByAgeGroup(vaccinations.TypeFull)
 		if err != nil {
 			b.Log(err)
 			b.FailNow()
@@ -341,16 +353,19 @@ func BenchmarkClient_GetVaccinationsByAgeGroup(b *testing.B) {
 
 func BenchmarkClient_GetVaccinationsByRegion(b *testing.B) {
 	buildBigVaccinationResponse()
-	cache := &mocks.Holder{}
-	cache.On("Get", "Vaccinations").Return(bigVaccinationResponse, true)
 
-	r := reporter.NewWithOptions(time.Hour, client.Options{})
-	r.APICache = cache
+	h := &mocks.Holder{}
+	h.On("Get", "Vaccinations").Return(bigVaccinationResponse, true)
+
+	r := vaccinations.Reporter{
+		ReportCache: cache.NewCache(time.Hour),
+		APICache:    h,
+	}
 
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		_, err := r.GetVaccinationsByRegion(reporter.VaccinationTypeFull)
+		_, err := r.GetByRegion(vaccinations.TypeFull)
 		if err != nil {
 			b.Log(err)
 			b.FailNow()

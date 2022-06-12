@@ -20,10 +20,10 @@ func (t *testFetcher) call(_ context.Context) (response []apiclient.APIResponse,
 		t.count++
 		return nil, errors.New("not yet ...")
 	}
-	return response, nil
+	return
 }
 
-func (t *testFetcher) Update(ctx context.Context, ch chan<- cache.FetcherResponse) {
+func (t *testFetcher) Fetch(ctx context.Context, ch chan<- cache.FetcherResponse) {
 	cache.Fetch(ctx, ch, "test", t.call)
 }
 

@@ -69,8 +69,5 @@ func (client *Client) GetCases(ctx context.Context) (results []apiclient.APIResp
 		return
 	}
 
-	for _, entry := range response {
-		results = append(results, entry)
-	}
-	return
+	return copyMaybeSort(response), nil
 }

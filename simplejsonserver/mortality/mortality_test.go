@@ -61,7 +61,7 @@ var (
 			Scope: mortality.ScopeAll,
 			Response: &query.TableResponse{
 				Columns: []query.Column{
-					{Text: "timestamp", Data: query.TimeColumn{time.Date(2021, time.October, 21, 0, 0, 0, 0, time.UTC), time.Date(2021, time.October, 22, 0, 0, 0, 0, time.UTC)}},
+					{Text: "time", Data: query.TimeColumn{time.Date(2021, time.October, 21, 0, 0, 0, 0, time.UTC), time.Date(2021, time.October, 22, 0, 0, 0, 0, time.UTC)}},
 					{Text: "total", Data: query.NumberColumn{250.0, 125.0}},
 				},
 			},
@@ -70,7 +70,7 @@ var (
 			Scope: mortality.ScopeRegion,
 			Response: &query.TableResponse{
 				Columns: []query.Column{
-					{Text: "timestamp", Data: query.TimeColumn{time.Date(2021, time.October, 21, 0, 0, 0, 0, time.UTC), time.Date(2021, time.October, 22, 0, 0, 0, 0, time.UTC)}},
+					{Text: "time", Data: query.TimeColumn{time.Date(2021, time.October, 21, 0, 0, 0, 0, time.UTC), time.Date(2021, time.October, 22, 0, 0, 0, 0, time.UTC)}},
 					{Text: "(unknown)", Data: query.NumberColumn{0.0, 5.0}},
 					{Text: "Brussels", Data: query.NumberColumn{150.0, 0.0}},
 					{Text: "Flanders", Data: query.NumberColumn{100.0, 120.0}},
@@ -81,7 +81,7 @@ var (
 			Scope: mortality.ScopeAge,
 			Response: &query.TableResponse{
 				Columns: []query.Column{
-					{Text: "timestamp", Data: query.TimeColumn{time.Date(2021, time.October, 21, 0, 0, 0, 0, time.UTC), time.Date(2021, time.October, 22, 0, 0, 0, 0, time.UTC)}},
+					{Text: "time", Data: query.TimeColumn{time.Date(2021, time.October, 21, 0, 0, 0, 0, time.UTC), time.Date(2021, time.October, 22, 0, 0, 0, 0, time.UTC)}},
 					{Text: "(unknown)", Data: query.NumberColumn{0.0, 5.0}},
 					{Text: "25-34", Data: query.NumberColumn{150.0, 120.0}},
 					{Text: "65-74", Data: query.NumberColumn{0.0, 0.0}},
@@ -99,7 +99,7 @@ func TestHandler_TableQuery(t *testing.T) {
 		Return(testResponse, true)
 
 	r := reporter.NewWithOptions(time.Hour, client.Options{})
-	r.APICache = getter
+	r.Mortality.APICache = getter
 
 	req := query.Request{Args: query.Args{Args: common.Args{Range: common.Range{
 		From: time.Time{},
@@ -126,7 +126,7 @@ func TestHandler_Failure(t *testing.T) {
 		Return(nil, false)
 
 	r := reporter.NewWithOptions(time.Hour, client.Options{})
-	r.APICache = getter
+	r.Mortality.APICache = getter
 
 	req := query.Request{}
 
@@ -163,7 +163,7 @@ func BenchmarkMortalityHandler(b *testing.B) {
 		Return(bigResponse, true)
 
 	r := reporter.NewWithOptions(time.Hour, client.Options{})
-	r.APICache = getter
+	r.Mortality.APICache = getter
 	h := mortality.Handler{
 		Reporter: r,
 		Scope:    mortality.ScopeRegion,

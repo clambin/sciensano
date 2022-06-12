@@ -9,7 +9,7 @@ import (
 
 // Fetcher interface contains all functions an API interface needs to implement to be used by Cache
 type Fetcher interface {
-	Update(ctx context.Context, ch chan<- FetcherResponse)
+	Fetch(ctx context.Context, ch chan<- FetcherResponse)
 }
 
 // FetcherResponse contains one update from a Fetcher

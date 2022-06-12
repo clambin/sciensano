@@ -11,8 +11,8 @@ import (
 )
 
 type RateHandler struct {
-	reporter.Reporter
-	reporter.VaccinationType
+	Reporter *reporter.Client
+	Type     int
 	Scope
 	demographics.Fetcher
 	helper *GroupedHandler
@@ -27,9 +27,9 @@ func (r RateHandler) Endpoints() simplejson.Endpoints {
 func (r *RateHandler) tableQuery(ctx context.Context, req query.Request) (response query.Response, err error) {
 	if r.helper == nil {
 		r.helper = &GroupedHandler{
-			Reporter:        r.Reporter,
-			VaccinationType: r.VaccinationType,
-			Scope:           r.Scope,
+			Reporter: r.Reporter,
+			Type:     r.Type,
+			Scope:    r.Scope,
 		}
 	}
 
@@ -49,7 +49,7 @@ func (r *RateHandler) tableQuery(ctx context.Context, req query.Request) (respon
 	case ScopeAge:
 		figures = make(map[string]int)
 		for _, column := range resp.Columns {
-			if column.Text == "timestamp" {
+			if column.Text == "time" {
 				continue
 			}
 			var b bracket.Bracket
@@ -84,14 +84,14 @@ func filterUnknownColumns(columns []query.Column) []query.Column {
 
 func prorateFigures(result *query.TableResponse, groups map[string]int) {
 	for _, column := range result.Columns {
-		switch data := column.Data.(type) {
+		switch d := column.Data.(type) {
 		case query.NumberColumn:
 			figure, ok := groups[column.Text]
-			for index, entry := range data {
+			for index, entry := range d {
 				if ok && figure != 0 {
-					data[index] = entry / float64(figure)
+					d[index] = entry / float64(figure)
 				} else {
-					data[index] = 0
+					d[index] = 0
 				}
 			}
 		}

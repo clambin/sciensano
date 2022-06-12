@@ -4,15 +4,13 @@ import (
 	"context"
 	"fmt"
 	"github.com/clambin/sciensano/reporter"
-	"github.com/clambin/sciensano/simplejsonserver/responder"
 	"github.com/clambin/simplejson/v3"
-	"github.com/clambin/simplejson/v3/dataset"
 	"github.com/clambin/simplejson/v3/query"
 )
 
 // ManufacturerHandler returns COVID-19 vaccinations grouped by manufacturer
 type ManufacturerHandler struct {
-	reporter.Reporter
+	Reporter *reporter.Client
 }
 
 var _ simplejson.Handler = &ManufacturerHandler{}
@@ -22,14 +20,12 @@ func (handler ManufacturerHandler) Endpoints() simplejson.Endpoints {
 	return simplejson.Endpoints{Query: handler.tableQuery}
 }
 
-func (handler *ManufacturerHandler) tableQuery(_ context.Context, req query.Request) (response query.Response, err error) {
-	var vaccinationData *dataset.Dataset
-	vaccinationData, err = handler.Reporter.GetVaccinationsByManufacturer()
+func (handler *ManufacturerHandler) tableQuery(_ context.Context, req query.Request) (query.Response, error) {
+	vaccinationData, err := handler.Reporter.Vaccinations.GetByManufacturer()
 
 	if err != nil {
 		return nil, fmt.Errorf("vaccinations by manufacturer failed: %w", err)
 	}
 
-	vaccinationData.Accumulate()
-	return responder.GenerateTableQueryResponse(vaccinationData, req.Args), nil
+	return vaccinationData.Accumulate().Filter(req.Args).CreateTableResponse(), nil
 }

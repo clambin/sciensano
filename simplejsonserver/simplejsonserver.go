@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/clambin/sciensano/demographics"
 	"github.com/clambin/sciensano/reporter"
+	vaccinations2 "github.com/clambin/sciensano/reporter/vaccinations"
 	"github.com/clambin/sciensano/simplejsonserver/cases"
 	"github.com/clambin/sciensano/simplejsonserver/hospitalisations"
 	"github.com/clambin/sciensano/simplejsonserver/mortality"
@@ -56,18 +57,18 @@ func NewServerWithDemographicsClient(demographicsClient demographics.Fetcher) (s
 		"tests":                     &testresults.Handler{Reporter: server.Reporter},
 		"vaccinations":              &vaccinations.Handler{Reporter: server.Reporter},
 		"vaccination-lag":           &vaccinations.LagHandler{Reporter: server.Reporter},
-		"vacc-age-partial":          &vaccinations.GroupedHandler{Reporter: server.Reporter, Scope: vaccinations.ScopeAge, VaccinationType: reporter.VaccinationTypePartial},
-		"vacc-age-full":             &vaccinations.GroupedHandler{Reporter: server.Reporter, Scope: vaccinations.ScopeAge, VaccinationType: reporter.VaccinationTypeFull},
-		"vacc-age-booster":          &vaccinations.GroupedHandler{Reporter: server.Reporter, Scope: vaccinations.ScopeAge, VaccinationType: reporter.VaccinationTypeBooster},
-		"vacc-region-partial":       &vaccinations.GroupedHandler{Reporter: server.Reporter, Scope: vaccinations.ScopeRegion, VaccinationType: reporter.VaccinationTypePartial},
-		"vacc-region-full":          &vaccinations.GroupedHandler{Reporter: server.Reporter, Scope: vaccinations.ScopeRegion, VaccinationType: reporter.VaccinationTypeFull},
-		"vacc-region-booster":       &vaccinations.GroupedHandler{Reporter: server.Reporter, Scope: vaccinations.ScopeRegion, VaccinationType: reporter.VaccinationTypeBooster},
-		"vacc-age-rate-partial":     &vaccinations.RateHandler{Reporter: server.Reporter, Scope: vaccinations.ScopeAge, VaccinationType: reporter.VaccinationTypePartial, Fetcher: server.Demographics},
-		"vacc-age-rate-full":        &vaccinations.RateHandler{Reporter: server.Reporter, Scope: vaccinations.ScopeAge, VaccinationType: reporter.VaccinationTypeFull, Fetcher: server.Demographics},
-		"vacc-age-rate-booster":     &vaccinations.RateHandler{Reporter: server.Reporter, Scope: vaccinations.ScopeAge, VaccinationType: reporter.VaccinationTypeBooster, Fetcher: server.Demographics},
-		"vacc-region-rate-partial":  &vaccinations.RateHandler{Reporter: server.Reporter, Scope: vaccinations.ScopeRegion, VaccinationType: reporter.VaccinationTypePartial, Fetcher: server.Demographics},
-		"vacc-region-rate-full":     &vaccinations.RateHandler{Reporter: server.Reporter, Scope: vaccinations.ScopeRegion, VaccinationType: reporter.VaccinationTypeFull, Fetcher: server.Demographics},
-		"vacc-region-rate-booster":  &vaccinations.RateHandler{Reporter: server.Reporter, Scope: vaccinations.ScopeRegion, VaccinationType: reporter.VaccinationTypeBooster, Fetcher: server.Demographics},
+		"vacc-age-partial":          &vaccinations.GroupedHandler{Reporter: server.Reporter, Scope: vaccinations.ScopeAge, Type: vaccinations2.TypePartial},
+		"vacc-age-full":             &vaccinations.GroupedHandler{Reporter: server.Reporter, Scope: vaccinations.ScopeAge, Type: vaccinations2.TypeFull},
+		"vacc-age-booster":          &vaccinations.GroupedHandler{Reporter: server.Reporter, Scope: vaccinations.ScopeAge, Type: vaccinations2.TypeBooster},
+		"vacc-region-partial":       &vaccinations.GroupedHandler{Reporter: server.Reporter, Scope: vaccinations.ScopeRegion, Type: vaccinations2.TypePartial},
+		"vacc-region-full":          &vaccinations.GroupedHandler{Reporter: server.Reporter, Scope: vaccinations.ScopeRegion, Type: vaccinations2.TypeFull},
+		"vacc-region-booster":       &vaccinations.GroupedHandler{Reporter: server.Reporter, Scope: vaccinations.ScopeRegion, Type: vaccinations2.TypeBooster},
+		"vacc-age-rate-partial":     &vaccinations.RateHandler{Reporter: server.Reporter, Scope: vaccinations.ScopeAge, Type: vaccinations2.TypePartial, Fetcher: server.Demographics},
+		"vacc-age-rate-full":        &vaccinations.RateHandler{Reporter: server.Reporter, Scope: vaccinations.ScopeAge, Type: vaccinations2.TypeFull, Fetcher: server.Demographics},
+		"vacc-age-rate-booster":     &vaccinations.RateHandler{Reporter: server.Reporter, Scope: vaccinations.ScopeAge, Type: vaccinations2.TypeBooster, Fetcher: server.Demographics},
+		"vacc-region-rate-partial":  &vaccinations.RateHandler{Reporter: server.Reporter, Scope: vaccinations.ScopeRegion, Type: vaccinations2.TypePartial, Fetcher: server.Demographics},
+		"vacc-region-rate-full":     &vaccinations.RateHandler{Reporter: server.Reporter, Scope: vaccinations.ScopeRegion, Type: vaccinations2.TypeFull, Fetcher: server.Demographics},
+		"vacc-region-rate-booster":  &vaccinations.RateHandler{Reporter: server.Reporter, Scope: vaccinations.ScopeRegion, Type: vaccinations2.TypeBooster, Fetcher: server.Demographics},
 		"vacc-manufacturer":         &vaccinations.ManufacturerHandler{Reporter: server.Reporter},
 		"vaccines":                  &vaccinesHandler.OverviewHandler{Reporter: server.Reporter},
 		"vaccines-manufacturer":     &vaccinesHandler.ManufacturerHandler{Reporter: server.Reporter},

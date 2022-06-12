@@ -82,9 +82,5 @@ func (client *Client) GetVaccinations(ctx context.Context) (results []apiclient.
 		return
 	}
 
-	results = make([]apiclient.APIResponse, len(response))
-	for index, entry := range response {
-		results[index] = entry
-	}
-	return
+	return copyMaybeSort(response), nil
 }

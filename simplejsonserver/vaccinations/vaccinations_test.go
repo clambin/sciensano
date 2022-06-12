@@ -21,7 +21,7 @@ func TestHandler(t *testing.T) {
 	cache.On("Get", "Vaccinations").Return(nil, false).Once()
 
 	r := reporter.NewWithOptions(time.Hour, client.Options{})
-	r.APICache = cache
+	r.Vaccinations.APICache = cache
 	h := vaccinations.Handler{Reporter: r}
 
 	ctx := context.Background()
@@ -36,7 +36,7 @@ func TestHandler(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, &query.TableResponse{
 		Columns: []query.Column{
-			{Text: "timestamp", Data: query.TimeColumn{time.Date(2020, time.January, 1, 0, 0, 0, 0, time.UTC), time.Date(2020, time.January, 2, 0, 0, 0, 0, time.UTC)}},
+			{Text: "time", Data: query.TimeColumn{time.Date(2020, time.January, 1, 0, 0, 0, 0, time.UTC), time.Date(2020, time.January, 2, 0, 0, 0, 0, time.UTC)}},
 			{Text: "booster", Data: query.NumberColumn{1, 6}},
 			{Text: "full", Data: query.NumberColumn{3, 10}},
 			{Text: "partial", Data: query.NumberColumn{3, 8}},

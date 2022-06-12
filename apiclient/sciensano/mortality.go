@@ -62,8 +62,5 @@ func (client *Client) GetMortality(ctx context.Context) (results []apiclient.API
 		return
 	}
 
-	for _, entry := range response {
-		results = append(results, entry)
-	}
-	return
+	return copyMaybeSort(response), nil
 }
