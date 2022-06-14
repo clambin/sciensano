@@ -18,7 +18,7 @@ require (
 	github.com/clambin/cache v0.0.5
 	github.com/clambin/go-metrics v0.5.0
 	github.com/clambin/simplejson/v3 v3.4.1
-	github.com/grafana/grafana-plugin-sdk-go v0.137.0
+	github.com/grafana/grafana-plugin-sdk-go v0.138.0
 	github.com/mailru/easyjson v0.7.7
 	github.com/rovaughn/fastcsv v0.0.0-20170331030356-1090019547fb
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
