@@ -1,8 +1,9 @@
 package cases_test
 
 import (
+	"errors"
 	"github.com/clambin/sciensano/apiclient"
-	"github.com/clambin/sciensano/apiclient/cache/mocks"
+	"github.com/clambin/sciensano/apiclient/fetcher/mocks"
 	"github.com/clambin/sciensano/apiclient/sciensano"
 	"github.com/clambin/sciensano/reporter/cache"
 	"github.com/clambin/sciensano/reporter/cases"
@@ -40,138 +41,128 @@ var (
 )
 
 func TestClient_Get(t *testing.T) {
-	h := &mocks.Holder{}
+	f := &mocks.Fetcher{}
+	f.On("Fetch", mock.AnythingOfType("*context.emptyCtx"), sciensano.TypeCases).Return(testCasesResponse, nil)
+
 	r := cases.Reporter{
 		ReportCache: cache.NewCache(time.Hour),
-		APICache:    h,
+		APIClient:   f,
 	}
 
-	h.
-		On("Get", "Cases").
-		Return(testCasesResponse, true)
-
-	c, err := r.Get()
+	entries, err := r.Get()
 	require.NoError(t, err)
 
 	assert.Equal(t, []time.Time{
 		time.Date(2021, time.October, 21, 0, 0, 0, 0, time.UTC),
 		time.Date(2021, time.October, 22, 0, 0, 0, 0, time.UTC),
-	}, c.GetTimestamps())
+	}, entries.GetTimestamps())
 
-	require.Equal(t, []string{"time", "total"}, c.GetColumns())
+	require.Equal(t, []string{"time", "total"}, entries.GetColumns())
 
-	values, ok := c.GetFloatValues("total")
+	values, ok := entries.GetFloatValues("total")
 	require.True(t, ok)
 	assert.Equal(t, []float64{250, 120}, values)
 
-	mock.AssertExpectationsForObjects(t, h)
+	mock.AssertExpectationsForObjects(t, f)
 }
 
 func TestClient_GetByProvince(t *testing.T) {
-	h := &mocks.Holder{}
+	f := &mocks.Fetcher{}
+	f.On("Fetch", mock.AnythingOfType("*context.emptyCtx"), sciensano.TypeCases).Return(testCasesResponse, nil)
+
 	r := cases.Reporter{
 		ReportCache: cache.NewCache(time.Hour),
-		APICache:    h,
+		APIClient:   f,
 	}
 
-	h.
-		On("Get", "Cases").
-		Return(testCasesResponse, true)
-
-	c, err := r.GetByProvince()
+	entries, err := r.GetByProvince()
 	require.NoError(t, err)
 
 	assert.Equal(t, []time.Time{
 		time.Date(2021, time.October, 21, 0, 0, 0, 0, time.UTC),
 		time.Date(2021, time.October, 22, 0, 0, 0, 0, time.UTC),
-	}, c.GetTimestamps())
+	}, entries.GetTimestamps())
 
-	assert.Equal(t, []string{"time", "Brussels", "VlaamsBrabant"}, c.GetColumns())
+	assert.Equal(t, []string{"time", "Brussels", "VlaamsBrabant"}, entries.GetColumns())
 
-	values, ok := c.GetFloatValues("Brussels")
+	values, ok := entries.GetFloatValues("Brussels")
 	require.True(t, ok)
 	assert.Equal(t, []float64{150, 0}, values)
 
-	values, ok = c.GetFloatValues("VlaamsBrabant")
+	values, ok = entries.GetFloatValues("VlaamsBrabant")
 	require.True(t, ok)
 	assert.Equal(t, []float64{100, 120}, values)
 
-	mock.AssertExpectationsForObjects(t, h)
+	mock.AssertExpectationsForObjects(t, f)
 }
 
 func TestClient_GetByRegion(t *testing.T) {
-	h := &mocks.Holder{}
-
-	h.
-		On("Get", "Cases").
-		Return(testCasesResponse, true)
+	f := &mocks.Fetcher{}
+	f.On("Fetch", mock.AnythingOfType("*context.emptyCtx"), sciensano.TypeCases).Return(testCasesResponse, nil)
 
 	r := cases.Reporter{
 		ReportCache: cache.NewCache(time.Hour),
-		APICache:    h,
+		APIClient:   f,
 	}
 
-	c, err := r.GetByRegion()
+	entries, err := r.GetByRegion()
 	require.NoError(t, err)
 
 	assert.Equal(t, []time.Time{
 		time.Date(2021, time.October, 21, 0, 0, 0, 0, time.UTC),
 		time.Date(2021, time.October, 22, 0, 0, 0, 0, time.UTC),
-	}, c.GetTimestamps())
+	}, entries.GetTimestamps())
 
-	assert.Equal(t, []string{"time", "Brussels", "Flanders"}, c.GetColumns())
+	assert.Equal(t, []string{"time", "Brussels", "Flanders"}, entries.GetColumns())
 
-	values, ok := c.GetFloatValues("Brussels")
+	values, ok := entries.GetFloatValues("Brussels")
 	require.True(t, ok)
 	assert.Equal(t, []float64{150, 0}, values)
 
-	values, ok = c.GetFloatValues("Flanders")
+	values, ok = entries.GetFloatValues("Flanders")
 	require.True(t, ok)
 	assert.Equal(t, []float64{100, 120}, values)
 
-	mock.AssertExpectationsForObjects(t, h)
+	mock.AssertExpectationsForObjects(t, f)
 }
 
 func TestClient_GetCasesByAgeGroup(t *testing.T) {
-	h := &mocks.Holder{}
-
-	h.
-		On("Get", "Cases").
-		Return(testCasesResponse, true)
+	f := &mocks.Fetcher{}
+	f.On("Fetch", mock.AnythingOfType("*context.emptyCtx"), sciensano.TypeCases).Return(testCasesResponse, nil)
 
 	r := cases.Reporter{
 		ReportCache: cache.NewCache(time.Hour),
-		APICache:    h,
+		APIClient:   f,
 	}
 
-	c, err := r.GetByAgeGroup()
+	entries, err := r.GetByAgeGroup()
 	require.NoError(t, err)
 
 	assert.Equal(t, []time.Time{
 		time.Date(2021, time.October, 21, 0, 0, 0, 0, time.UTC),
 		time.Date(2021, time.October, 22, 0, 0, 0, 0, time.UTC),
-	}, c.GetTimestamps())
+	}, entries.GetTimestamps())
 
-	assert.Equal(t, []string{"time", "25-34", "85+"}, c.GetColumns())
+	assert.Equal(t, []string{"time", "25-34", "85+"}, entries.GetColumns())
 
-	values, ok := c.GetFloatValues("25-34")
+	values, ok := entries.GetFloatValues("25-34")
 	require.True(t, ok)
 	assert.Equal(t, []float64{150, 120}, values)
 
-	values, ok = c.GetFloatValues("85+")
+	values, ok = entries.GetFloatValues("85+")
 	require.True(t, ok)
 	assert.Equal(t, []float64{100, 0}, values)
 
-	mock.AssertExpectationsForObjects(t, h)
+	mock.AssertExpectationsForObjects(t, f)
 }
 
 func TestClient_GetCases_Failure(t *testing.T) {
-	h := &mocks.Holder{}
-	h.On("Get", "Cases").Return(nil, false)
+	f := &mocks.Fetcher{}
+	f.On("Fetch", mock.AnythingOfType("*context.emptyCtx"), sciensano.TypeCases).Return(nil, errors.New("fail"))
 
 	r := cases.Reporter{
 		ReportCache: cache.NewCache(time.Hour),
-		APICache:    h,
+		APIClient:   f,
 	}
 
 	_, err := r.Get()
@@ -186,7 +177,7 @@ func TestClient_GetCases_Failure(t *testing.T) {
 	_, err = r.GetByAgeGroup()
 	require.Error(t, err)
 
-	mock.AssertExpectationsForObjects(t, h)
+	mock.AssertExpectationsForObjects(t, f)
 }
 
 func BenchmarkClient_GetCasesByRegion(b *testing.B) {
@@ -204,14 +195,13 @@ func BenchmarkClient_GetCasesByRegion(b *testing.B) {
 		}
 		ts = ts.Add(24 * time.Hour)
 	}
-	h := &mocks.Holder{}
-	h.
-		On("Get", "Cases").
-		Return(bigResponse, true)
+
+	f := &mocks.Fetcher{}
+	f.On("Fetch", mock.AnythingOfType("*context.emptyCtx"), sciensano.TypeCases).Return(bigResponse, nil)
 
 	r := cases.Reporter{
 		ReportCache: cache.NewCache(time.Hour),
-		APICache:    h,
+		APIClient:   f,
 	}
 
 	b.ResetTimer()

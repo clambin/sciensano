@@ -1,11 +1,15 @@
 package cache_test
 
 import (
+	"context"
+	"errors"
 	"github.com/clambin/sciensano/reporter/cache"
 	"github.com/clambin/simplejson/v3/data"
 	grafanaData "github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/sync/semaphore"
+	"math/rand"
 	"strconv"
 	"testing"
 	"time"
@@ -14,6 +18,7 @@ import (
 func TestCache(t *testing.T) {
 	c := cache.NewCache(15 * time.Minute)
 
+	var updates int
 	for i := 0; i < 10; i++ {
 		e := c.Load("foo")
 		e.Once.Do(func() {
@@ -21,8 +26,11 @@ func TestCache(t *testing.T) {
 				e.Data, _ = createBigDataSet()
 			}
 			c.Save("foo", e)
+			updates++
 		})
 	}
+
+	assert.Equal(t, 1, updates)
 
 	e := c.Load("foo")
 	l := e.Data.Frame.Rows()
@@ -39,9 +47,12 @@ func TestCache_Stats(t *testing.T) {
 		if e.Data == nil {
 			e.Data, _ = createBigDataSet()
 		}
+		c.Save("foo", e)
 	})
-	c.Save("foo", e)
+
 	stats := c.Stats()
+	assert.Len(t, stats, 1)
+
 	count, ok := stats["foo"]
 	assert.True(t, ok)
 	assert.Equal(t, 500, count)
@@ -70,6 +81,36 @@ func TestCache_MaybeGenerate(t *testing.T) {
 	})
 	require.NoError(t, err)
 	assert.Equal(t, 1, called)
+}
+
+func TestCache_MaybeGenerate_Stress(t *testing.T) {
+	c := cache.NewCache(200 * time.Millisecond)
+
+	rand.Seed(time.Now().Unix())
+
+	const maxParallel = 1e2
+	s := semaphore.NewWeighted(maxParallel)
+	ctx := context.Background()
+
+	for i := 0; i < 1e4; i++ {
+		_ = s.Acquire(ctx, 1)
+		go func(i int) {
+			report, err := c.MaybeGenerate("foo", func() (*data.Table, error) {
+				if rand.Intn(10) < 1 {
+					return nil, errors.New("fail")
+				}
+				time.Sleep(time.Duration(rand.Intn(100)) * time.Millisecond)
+				return data.New(
+					data.Column{Name: "time", Values: []time.Time{time.Now()}},
+					data.Column{Name: "value", Values: []float64{float64(i)}},
+				), nil
+			})
+			assert.False(t, err == nil && report == nil)
+			s.Release(1)
+		}(i)
+	}
+
+	_ = s.Acquire(ctx, maxParallel)
 }
 
 func BenchmarkCache_MaybeGenerate(b *testing.B) {

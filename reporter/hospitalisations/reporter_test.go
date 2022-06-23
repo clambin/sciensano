@@ -1,8 +1,9 @@
 package hospitalisations_test
 
 import (
+	"errors"
 	"github.com/clambin/sciensano/apiclient"
-	"github.com/clambin/sciensano/apiclient/cache/mocks"
+	"github.com/clambin/sciensano/apiclient/fetcher/mocks"
 	"github.com/clambin/sciensano/apiclient/sciensano"
 	"github.com/clambin/sciensano/reporter/cache"
 	"github.com/clambin/sciensano/reporter/hospitalisations"
@@ -46,14 +47,12 @@ var (
 )
 
 func TestClient_Get(t *testing.T) {
-	h := &mocks.Holder{}
-	h.
-		On("Get", "Hospitalisations").
-		Return(testHospitalisationsResponse, true)
+	f := &mocks.Fetcher{}
+	f.On("Fetch", mock.AnythingOfType("*context.emptyCtx"), sciensano.TypeHospitalisations).Return(testHospitalisationsResponse, nil)
 
 	r := hospitalisations.Reporter{
 		ReportCache: cache.NewCache(time.Hour),
-		APICache:    h,
+		APIClient:   f,
 	}
 
 	entries, err := r.Get()
@@ -80,18 +79,16 @@ func TestClient_Get(t *testing.T) {
 		assert.Equal(t, testCase.expected, values, testCase.column)
 	}
 
-	mock.AssertExpectationsForObjects(t, h)
+	mock.AssertExpectationsForObjects(t, f)
 }
 
 func TestClient_GetHospitalisationsByProvince(t *testing.T) {
-	h := &mocks.Holder{}
-	h.
-		On("Get", "Hospitalisations").
-		Return(testHospitalisationsResponse, true)
+	f := &mocks.Fetcher{}
+	f.On("Fetch", mock.AnythingOfType("*context.emptyCtx"), sciensano.TypeHospitalisations).Return(testHospitalisationsResponse, nil)
 
 	r := hospitalisations.Reporter{
 		ReportCache: cache.NewCache(time.Hour),
-		APICache:    h,
+		APIClient:   f,
 	}
 
 	entries, err := r.GetByProvince()
@@ -112,18 +109,16 @@ func TestClient_GetHospitalisationsByProvince(t *testing.T) {
 	require.True(t, ok)
 	assert.Equal(t, []float64{100, 50}, values)
 
-	h.AssertExpectations(t)
+	mock.AssertExpectationsForObjects(t, f)
 }
 
 func TestClient_GetHospitalisationsByRegion(t *testing.T) {
-	h := &mocks.Holder{}
-	h.
-		On("Get", "Hospitalisations").
-		Return(testHospitalisationsResponse, true)
+	f := &mocks.Fetcher{}
+	f.On("Fetch", mock.AnythingOfType("*context.emptyCtx"), sciensano.TypeHospitalisations).Return(testHospitalisationsResponse, nil)
 
 	r := hospitalisations.Reporter{
 		ReportCache: cache.NewCache(time.Hour),
-		APICache:    h,
+		APIClient:   f,
 	}
 
 	entries, err := r.GetByRegion()
@@ -144,16 +139,16 @@ func TestClient_GetHospitalisationsByRegion(t *testing.T) {
 	require.True(t, ok)
 	assert.Equal(t, []float64{100, 50}, values)
 
-	h.AssertExpectations(t)
+	mock.AssertExpectationsForObjects(t, f)
 }
 
 func TestClient_GetHospitalisations_Failure(t *testing.T) {
-	h := &mocks.Holder{}
-	h.On("Get", "Hospitalisations").Return(nil, false)
+	f := &mocks.Fetcher{}
+	f.On("Fetch", mock.AnythingOfType("*context.emptyCtx"), sciensano.TypeHospitalisations).Return(nil, errors.New("fail"))
 
 	r := hospitalisations.Reporter{
 		ReportCache: cache.NewCache(time.Hour),
-		APICache:    h,
+		APIClient:   f,
 	}
 
 	_, err := r.Get()
@@ -165,7 +160,7 @@ func TestClient_GetHospitalisations_Failure(t *testing.T) {
 	_, err = r.GetByProvince()
 	require.Error(t, err)
 
-	h.AssertExpectations(t)
+	mock.AssertExpectationsForObjects(t, f)
 }
 
 func BenchmarkClient_GetHospitalisationsByRegion(b *testing.B) {
@@ -183,14 +178,13 @@ func BenchmarkClient_GetHospitalisationsByRegion(b *testing.B) {
 		}
 		ts = ts.Add(24 * time.Hour)
 	}
-	h := &mocks.Holder{}
-	h.
-		On("Get", "Hospitalisations").
-		Return(bigResponse, true)
+
+	f := &mocks.Fetcher{}
+	f.On("Fetch", mock.AnythingOfType("*context.emptyCtx"), sciensano.TypeHospitalisations).Return(bigResponse, nil)
 
 	r := hospitalisations.Reporter{
 		ReportCache: cache.NewCache(time.Hour),
-		APICache:    h,
+		APIClient:   f,
 	}
 
 	b.ResetTimer()

@@ -2,137 +2,132 @@ package sciensano
 
 import (
 	"context"
-	"errors"
+	"encoding/json"
 	"fmt"
 	"github.com/clambin/go-metrics/client"
 	"github.com/clambin/sciensano/apiclient"
-	"github.com/clambin/sciensano/apiclient/cache"
+	"github.com/clambin/sciensano/apiclient/fetcher"
+	"github.com/go-http-utils/headers"
+	"github.com/mailru/easyjson"
 	log "github.com/sirupsen/logrus"
-	"golang.org/x/sync/semaphore"
 	"io"
 	"net/http"
 	"sort"
-	"strconv"
 	"time"
 )
 
-// Getter interface exposes the different supported Sciensano APIs
-//go:generate mockery --name Getter
-type Getter interface {
-	GetTestResults(ctx context.Context) (results []apiclient.APIResponse, err error)
-	GetVaccinations(ctx context.Context) (results []apiclient.APIResponse, err error)
-	GetCases(ctx context.Context) (results []apiclient.APIResponse, err error)
-	GetMortality(ctx context.Context) (results []apiclient.APIResponse, err error)
-	GetHospitalisations(ctx context.Context) (results []apiclient.APIResponse, err error)
-}
+const (
+	TypeTestResults = iota
+	TypeVaccinations
+	TypeCases
+	TypeMortality
+	TypeHospitalisations
+)
 
-var _ Getter = &Client{}
-var _ cache.Fetcher = &Client{}
-
-// Client calls the different Reporter APIs
+// Client calls the different Sciensano APIs
 type Client struct {
 	client.Caller
 	URL string
 }
 
-// Update calls all endpoints and returns this to the caller. This is used by a cache to refresh its content
-func (client *Client) Fetch(ctx context.Context, ch chan<- cache.FetcherResponse) {
-	start := time.Now()
-	log.Debug("refreshing Reporter API cache")
+var _ fetcher.Fetcher = &Client{}
 
-	getters := map[string]func(context.Context) ([]apiclient.APIResponse, error){
-		"Vaccinations":     client.GetVaccinations,
-		"TestResults":      client.GetTestResults,
-		"Hospitalisations": client.GetHospitalisations,
-		"Mortality":        client.GetMortality,
-		"Cases":            client.GetCases,
+func (c Client) Fetch(ctx context.Context, dataType int) (results []apiclient.APIResponse, err error) {
+	var resp *http.Response
+	if resp, err = c.call(ctx, dataType, http.MethodGet); err != nil {
+		return
 	}
+	defer func() { _ = resp.Body.Close() }()
 
-	const maxParallel = 3
-	s := semaphore.NewWeighted(maxParallel)
-
-	for name, getter := range getters {
-		_ = s.Acquire(ctx, 1)
-		go func(name string, getter func(context.Context) ([]apiclient.APIResponse, error)) {
-			cache.Fetch(ctx, ch, name, getter)
-			s.Release(1)
-		}(name, getter)
-	}
-
-	_ = s.Acquire(ctx, maxParallel)
-
-	log.WithField("duration", time.Since(start)).Debugf("refreshed Reporter API cache")
+	return c.parseResponse(dataType, resp.Body)
 }
 
-const baseURL = "https://epistat.sciensano.be"
-
-func (client *Client) getURL() (url string) {
-	url = baseURL
-	if client.URL != "" {
-		url = client.URL
+func (c Client) GetLastUpdates(ctx context.Context, dataType int) (lastModified time.Time, err error) {
+	var resp *http.Response
+	if resp, err = c.call(ctx, dataType, http.MethodHead); err != nil {
+		return
+	}
+	_ = resp.Body.Close()
+	if lastModified, err = time.Parse(time.RFC1123, resp.Header.Get(headers.LastModified)); err != nil {
+		err = fmt.Errorf("call failed: invalid %s timestamp: %w", headers.LastModified, err)
 	}
 	return
 }
 
-var endpoints = map[string]string{
-	"cases":            "COVID19BE_CASES_AGESEX.json",
-	"hospitalisations": "COVID19BE_HOSP.json",
-	"mortality":        "COVID19BE_MORT.json",
-	"tests":            "COVID19BE_tests.json",
-	"vaccinations":     "COVID19BE_VACC.json",
+func (c Client) DataTypes() map[int]string {
+	return map[int]string{
+		TypeCases:            "Cases",
+		TypeHospitalisations: "Hospitalisations",
+		TypeMortality:        "Mortality",
+		TypeTestResults:      "TestResults",
+		TypeVaccinations:     "Vaccinations",
+	}
 }
 
-// call is a generic function to call the Reporter API endpoints
-func (client *Client) call(ctx context.Context, category string) (body []byte, err error) {
-	endpoint, ok := endpoints[category]
-	if !ok {
-		err = fmt.Errorf("unsupporter category: %s", category)
+var endpoints = map[int]string{
+	TypeCases:            "COVID19BE_CASES_AGESEX.json",
+	TypeHospitalisations: "COVID19BE_HOSP.json",
+	TypeMortality:        "COVID19BE_MORT.json",
+	TypeTestResults:      "COVID19BE_tests.json",
+	TypeVaccinations:     "COVID19BE_VACC.json",
+}
+
+func (c Client) getURL(dataType int) (string, error) {
+	endpoint, found := endpoints[dataType]
+	if !found {
+		return "", fmt.Errorf("invalid data type: %d", dataType)
+	}
+	target := "https://epistat.sciensano.be"
+	if c.URL != "" {
+		target = c.URL
+	}
+	return target + "/Data/" + endpoint, nil
+}
+
+func (c Client) call(ctx context.Context, dataType int, method string) (resp *http.Response, err error) {
+	var target string
+	if target, err = c.getURL(dataType); err != nil {
 		return
 	}
 
-	target := client.getURL() + "/Data/" + endpoint
+	req, _ := http.NewRequestWithContext(ctx, method, target, nil)
 
-	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, target, nil)
-
-	var resp *http.Response
-	resp, err = client.Caller.Do(req)
-
-	if err != nil {
-		return
-	}
-
-	defer func() {
+	if resp, err = c.Caller.Do(req); err == nil && resp.StatusCode != http.StatusOK {
 		_ = resp.Body.Close()
-	}()
-
-	if resp.StatusCode != http.StatusOK {
-		err = errors.New(resp.Status)
-		return
+		err = fmt.Errorf("call failed: %s", resp.Status)
 	}
-
-	return io.ReadAll(resp.Body)
+	return
 }
 
-// TimeStamp represents a timestamp in the API responder. Needed for parsing purposes
-type TimeStamp struct {
-	time.Time
+func (c Client) parseResponse(dataType int, body io.ReadCloser) (results []apiclient.APIResponse, err error) {
+	switch dataType {
+	case TypeHospitalisations:
+		var entries []*APIHospitalisationsResponse
+		results, err = jsonDecode(body, entries)
+	case TypeMortality:
+		var entries []*APIMortalityResponse
+		results, err = jsonDecode(body, entries)
+	case TypeTestResults:
+		var entries []*APITestResultsResponse
+		results, err = jsonDecode(body, entries)
+	case TypeCases:
+		var entries APICasesResponses
+		if err = easyjson.UnmarshalFromReader(body, &entries); err == nil {
+			results = copyMaybeSort(entries)
+		}
+	case TypeVaccinations:
+		var entries APIVaccinationsResponses
+		if err = easyjson.UnmarshalFromReader(body, &entries); err == nil {
+			results = copyMaybeSort(entries)
+		}
+	}
+	return
 }
 
-// UnmarshalJSON unmarshalls a TimeStamp from the API responder.
-func (ts *TimeStamp) UnmarshalJSON(b []byte) (err error) {
-	s := string(b)
-	if len(s) != 12 || s[0] != '"' && s[11] != '"' {
-		return fmt.Errorf("invalid timestamp: %s", s)
+func jsonDecode[T apiclient.APIResponse](body io.ReadCloser, entries []T) (results []apiclient.APIResponse, err error) {
+	if err = json.NewDecoder(body).Decode(&entries); err == nil {
+		results = copyMaybeSort(entries)
 	}
-	var year, month, day int
-	year, errYear := strconv.Atoi(s[1:5])
-	month, errMonth := strconv.Atoi(s[6:8])
-	day, errDay := strconv.Atoi(s[9:11])
-
-	if errYear != nil || errMonth != nil || errDay != nil {
-		return fmt.Errorf("invalid timestamp: %s", s)
-	}
-	ts.Time = time.Date(year, time.Month(month), day, 0, 0, 0, 0, time.UTC)
 	return
 }
 
@@ -143,14 +138,16 @@ func copyMaybeSort[T apiclient.APIResponse](input []T) (output []apiclient.APIRe
 	var timestamp time.Time
 	var mustSort bool
 	for idx, entry := range input {
-		output[idx] = entry
-		if entry.GetTimestamp().Before(timestamp) {
+		if !mustSort && entry.GetTimestamp().Before(timestamp) {
 			mustSort = true
 		}
+		output[idx] = entry
 		timestamp = entry.GetTimestamp()
 	}
 	if mustSort {
+		log.Debug("sorting")
 		sort.Slice(output, func(i, j int) bool { return output[i].GetTimestamp().Before(output[j].GetTimestamp()) })
+		log.Debug("sorted")
 	}
 	return
 }

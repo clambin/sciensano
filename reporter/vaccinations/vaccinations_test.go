@@ -1,8 +1,9 @@
 package vaccinations_test
 
 import (
+	"errors"
 	"github.com/clambin/sciensano/apiclient"
-	"github.com/clambin/sciensano/apiclient/cache/mocks"
+	"github.com/clambin/sciensano/apiclient/fetcher/mocks"
 	"github.com/clambin/sciensano/apiclient/sciensano"
 	"github.com/clambin/sciensano/reporter/cache"
 	"github.com/clambin/sciensano/reporter/vaccinations"
@@ -67,13 +68,13 @@ var (
 	}
 )
 
-func TestClient_GetVaccinations(t *testing.T) {
-	h := &mocks.Holder{}
-	h.On("Get", "Vaccinations").Return(testVaccinationsResponse, true)
+func TestReporter_Get(t *testing.T) {
+	f := &mocks.Fetcher{}
+	f.On("Fetch", mock.AnythingOfType("*context.emptyCtx"), sciensano.TypeVaccinations).Return(testVaccinationsResponse, nil)
 
 	r := vaccinations.Reporter{
 		ReportCache: cache.NewCache(time.Hour),
-		APICache:    h,
+		APIClient:   f,
 	}
 
 	entries, err := r.Get()
@@ -102,7 +103,7 @@ func TestClient_GetVaccinations(t *testing.T) {
 	require.True(t, ok)
 	assert.Equal(t, []float64{5, 5}, values)
 
-	mock.AssertExpectationsForObjects(t, h)
+	mock.AssertExpectationsForObjects(t, f)
 }
 
 type vaccinationsTestCase struct {
@@ -111,7 +112,7 @@ type vaccinationsTestCase struct {
 	values     map[string][]float64
 }
 
-func TestClient_GetVaccinationsByAgeGroup(t *testing.T) {
+func TestReporter_GetByAgeGroup(t *testing.T) {
 	testCases := []vaccinationsTestCase{
 		{
 			mode:       vaccinations.TypePartial,
@@ -140,12 +141,12 @@ func TestClient_GetVaccinationsByAgeGroup(t *testing.T) {
 		},
 	}
 
-	h := &mocks.Holder{}
-	h.On("Get", "Vaccinations").Return(testVaccinationsResponse, true)
+	f := &mocks.Fetcher{}
+	f.On("Fetch", mock.AnythingOfType("*context.emptyCtx"), sciensano.TypeVaccinations).Return(testVaccinationsResponse, nil)
 
 	r := vaccinations.Reporter{
 		ReportCache: cache.NewCache(time.Hour),
-		APICache:    h,
+		APIClient:   f,
 	}
 
 	for index, testCase := range testCases {
@@ -159,10 +160,10 @@ func TestClient_GetVaccinationsByAgeGroup(t *testing.T) {
 			assert.Equal(t, expected, values)
 		}
 	}
-	mock.AssertExpectationsForObjects(t, h)
+	mock.AssertExpectationsForObjects(t, f)
 }
 
-func TestClient_GetVaccinationsByRegion(t *testing.T) {
+func TestReporter_GetByRegion(t *testing.T) {
 	testCases := []vaccinationsTestCase{
 		{
 			mode:       vaccinations.TypePartial,
@@ -191,12 +192,12 @@ func TestClient_GetVaccinationsByRegion(t *testing.T) {
 		},
 	}
 
-	h := &mocks.Holder{}
-	h.On("Get", "Vaccinations").Return(testVaccinationsResponse, true)
+	f := &mocks.Fetcher{}
+	f.On("Fetch", mock.AnythingOfType("*context.emptyCtx"), sciensano.TypeVaccinations).Return(testVaccinationsResponse, nil)
 
 	r := vaccinations.Reporter{
 		ReportCache: cache.NewCache(time.Hour),
-		APICache:    h,
+		APIClient:   f,
 	}
 
 	for index, testCase := range testCases {
@@ -211,10 +212,10 @@ func TestClient_GetVaccinationsByRegion(t *testing.T) {
 			assert.Equal(t, expected, values)
 		}
 	}
-	mock.AssertExpectationsForObjects(t, h)
+	mock.AssertExpectationsForObjects(t, f)
 }
 
-func TestClient_GetVaccinationsByManufacturer(t *testing.T) {
+func TestReporter_GetByManufacturer(t *testing.T) {
 	testCases := []vaccinationsTestCase{
 		{
 			timestamps: []time.Time{
@@ -230,12 +231,12 @@ func TestClient_GetVaccinationsByManufacturer(t *testing.T) {
 		},
 	}
 
-	h := &mocks.Holder{}
-	h.On("Get", "Vaccinations").Return(testVaccinationsResponse, true)
+	f := &mocks.Fetcher{}
+	f.On("Fetch", mock.AnythingOfType("*context.emptyCtx"), sciensano.TypeVaccinations).Return(testVaccinationsResponse, nil)
 
 	r := vaccinations.Reporter{
 		ReportCache: cache.NewCache(time.Hour),
-		APICache:    h,
+		APIClient:   f,
 	}
 
 	for index, testCase := range testCases {
@@ -250,16 +251,16 @@ func TestClient_GetVaccinationsByManufacturer(t *testing.T) {
 			assert.Equal(t, expected, values, column+"-"+strconv.Itoa(index))
 		}
 	}
-	mock.AssertExpectationsForObjects(t, h)
+	mock.AssertExpectationsForObjects(t, f)
 }
 
-func TestClient_GetVaccinations_Failure(t *testing.T) {
-	h := &mocks.Holder{}
-	h.On("Get", "Vaccinations").Return(nil, false)
+func TestReporter_Get_Failures(t *testing.T) {
+	f := &mocks.Fetcher{}
+	f.On("Fetch", mock.AnythingOfType("*context.emptyCtx"), sciensano.TypeVaccinations).Return(nil, errors.New("fail"))
 
 	r := vaccinations.Reporter{
 		ReportCache: cache.NewCache(time.Hour),
-		APICache:    h,
+		APIClient:   f,
 	}
 
 	_, err := r.Get()
@@ -274,7 +275,7 @@ func TestClient_GetVaccinations_Failure(t *testing.T) {
 	_, err = r.GetByManufacturer()
 	assert.Error(t, err)
 
-	mock.AssertExpectationsForObjects(t, h)
+	mock.AssertExpectationsForObjects(t, f)
 }
 
 var bigVaccinationResponse []apiclient.APIResponse
@@ -305,22 +306,20 @@ func buildBigVaccinationResponse() {
 		}
 		startDate = startDate.Add(24 * time.Hour)
 	}
-	// fmt.Printf("responder had %d entries\n", len(bigVaccinationResponse))
 }
 
-func BenchmarkClient_GetVaccination(b *testing.B) {
+func BenchmarkVaccinations_Get(b *testing.B) {
 	buildBigVaccinationResponse()
 
-	h := &mocks.Holder{}
-	h.On("Get", "Vaccinations").Return(bigVaccinationResponse, true)
+	f := &mocks.Fetcher{}
+	f.On("Fetch", mock.AnythingOfType("*context.emptyCtx"), sciensano.TypeVaccinations).Return(bigVaccinationResponse, nil)
 
 	r := vaccinations.Reporter{
 		ReportCache: cache.NewCache(time.Hour),
-		APICache:    h,
+		APIClient:   f,
 	}
 
 	b.ResetTimer()
-
 	for i := 0; i < b.N; i++ {
 		_, err := r.Get()
 		if err != nil {
@@ -330,18 +329,17 @@ func BenchmarkClient_GetVaccination(b *testing.B) {
 	}
 }
 
-func BenchmarkClient_GetVaccinationsByAgeGroup(b *testing.B) {
+func BenchmarkVaccinations_GetByAgeGroup(b *testing.B) {
 	buildBigVaccinationResponse()
-	h := &mocks.Holder{}
-	h.On("Get", "Vaccinations").Return(bigVaccinationResponse, true)
+	f := &mocks.Fetcher{}
+	f.On("Fetch", mock.AnythingOfType("*context.emptyCtx"), sciensano.TypeVaccinations).Return(bigVaccinationResponse, nil)
 
 	r := vaccinations.Reporter{
 		ReportCache: cache.NewCache(time.Hour),
-		APICache:    h,
+		APIClient:   f,
 	}
 
 	b.ResetTimer()
-
 	for i := 0; i < b.N; i++ {
 		_, err := r.GetByAgeGroup(vaccinations.TypeFull)
 		if err != nil {
@@ -351,19 +349,17 @@ func BenchmarkClient_GetVaccinationsByAgeGroup(b *testing.B) {
 	}
 }
 
-func BenchmarkClient_GetVaccinationsByRegion(b *testing.B) {
+func BenchmarkVaccinations_GetByRegion(b *testing.B) {
 	buildBigVaccinationResponse()
-
-	h := &mocks.Holder{}
-	h.On("Get", "Vaccinations").Return(bigVaccinationResponse, true)
+	f := &mocks.Fetcher{}
+	f.On("Fetch", mock.AnythingOfType("*context.emptyCtx"), sciensano.TypeVaccinations).Return(bigVaccinationResponse, nil)
 
 	r := vaccinations.Reporter{
 		ReportCache: cache.NewCache(time.Hour),
-		APICache:    h,
+		APIClient:   f,
 	}
 
 	b.ResetTimer()
-
 	for i := 0; i < b.N; i++ {
 		_, err := r.GetByRegion(vaccinations.TypeFull)
 		if err != nil {

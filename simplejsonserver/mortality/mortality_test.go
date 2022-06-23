@@ -2,9 +2,10 @@ package mortality_test
 
 import (
 	"context"
+	"errors"
 	"github.com/clambin/go-metrics/client"
 	"github.com/clambin/sciensano/apiclient"
-	mockCache "github.com/clambin/sciensano/apiclient/cache/mocks"
+	"github.com/clambin/sciensano/apiclient/fetcher/mocks"
 	"github.com/clambin/sciensano/apiclient/sciensano"
 	"github.com/clambin/sciensano/reporter"
 	"github.com/clambin/sciensano/simplejsonserver/cases"
@@ -12,6 +13,7 @@ import (
 	"github.com/clambin/simplejson/v3/common"
 	"github.com/clambin/simplejson/v3/query"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"testing"
 	"time"
@@ -93,13 +95,11 @@ var (
 )
 
 func TestHandler_TableQuery(t *testing.T) {
-	getter := &mockCache.Holder{}
-	getter.
-		On("Get", "Mortality").
-		Return(testResponse, true)
+	f := &mocks.Fetcher{}
+	f.On("Fetch", mock.AnythingOfType("*context.emptyCtx"), sciensano.TypeMortality).Return(testResponse, nil)
 
 	r := reporter.NewWithOptions(time.Hour, client.Options{})
-	r.Mortality.APICache = getter
+	r.Mortality.APIClient = f
 
 	req := query.Request{Args: query.Args{Args: common.Args{Range: common.Range{
 		From: time.Time{},
@@ -116,17 +116,15 @@ func TestHandler_TableQuery(t *testing.T) {
 		assert.Equal(t, testCase.Response, response, index)
 	}
 
-	getter.AssertExpectations(t)
+	mock.AssertExpectationsForObjects(t, f)
 }
 
 func TestHandler_Failure(t *testing.T) {
-	getter := &mockCache.Holder{}
-	getter.
-		On("Get", "Mortality").
-		Return(nil, false)
+	f := &mocks.Fetcher{}
+	f.On("Fetch", mock.AnythingOfType("*context.emptyCtx"), sciensano.TypeMortality).Return(nil, errors.New("fail"))
 
 	r := reporter.NewWithOptions(time.Hour, client.Options{})
-	r.Mortality.APICache = getter
+	r.Mortality.APIClient = f
 
 	req := query.Request{}
 
@@ -137,11 +135,10 @@ func TestHandler_Failure(t *testing.T) {
 	_, err := h.Endpoints().Query(context.Background(), req)
 	assert.Error(t, err)
 
-	getter.AssertExpectations(t)
+	mock.AssertExpectationsForObjects(t, f)
 }
 
 func BenchmarkMortalityHandler(b *testing.B) {
-	b.StopTimer()
 	var bigResponse []apiclient.APIResponse
 	timestamp := time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)
 
@@ -157,13 +154,11 @@ func BenchmarkMortalityHandler(b *testing.B) {
 		timestamp = timestamp.Add(24 * time.Hour)
 	}
 
-	getter := &mockCache.Holder{}
-	getter.
-		On("Get", "Mortality").
-		Return(bigResponse, true)
+	f := &mocks.Fetcher{}
+	f.On("Fetch", mock.AnythingOfType("*context.emptyCtx"), sciensano.TypeMortality).Return(bigResponse, nil)
 
 	r := reporter.NewWithOptions(time.Hour, client.Options{})
-	r.Mortality.APICache = getter
+	r.Mortality.APIClient = f
 	h := mortality.Handler{
 		Reporter: r,
 		Scope:    mortality.ScopeRegion,
@@ -173,7 +168,7 @@ func BenchmarkMortalityHandler(b *testing.B) {
 		To: time.Date(2021, 10, 22, 0, 0, 0, 0, time.UTC),
 	}}}}
 
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_, err := h.Endpoints().Query(context.Background(), req)
 		if err != nil {

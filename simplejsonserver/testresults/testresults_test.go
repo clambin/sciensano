@@ -2,34 +2,34 @@ package testresults_test
 
 import (
 	"context"
+	"errors"
 	"github.com/clambin/go-metrics/client"
 	"github.com/clambin/sciensano/apiclient"
-	mockCache "github.com/clambin/sciensano/apiclient/cache/mocks"
+	"github.com/clambin/sciensano/apiclient/fetcher/mocks"
 	"github.com/clambin/sciensano/apiclient/sciensano"
 	"github.com/clambin/sciensano/reporter"
 	"github.com/clambin/sciensano/simplejsonserver/testresults"
 	"github.com/clambin/simplejson/v3/common"
 	"github.com/clambin/simplejson/v3/query"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"testing"
 	"time"
 )
 
 func TestHandler_TableQuery(t *testing.T) {
-	getter := &mockCache.Holder{}
-	getter.
-		On("Get", "TestResults").
-		Return([]apiclient.APIResponse{
-			&sciensano.APITestResultsResponse{
-				TimeStamp: sciensano.TimeStamp{Time: time.Date(2022, 1, 26, 0, 0, 0, 0, time.UTC)},
-				Positive:  10,
-				Total:     20,
-			},
-		}, true)
+	f := &mocks.Fetcher{}
+	f.On("Fetch", mock.AnythingOfType("*context.emptyCtx"), sciensano.TypeTestResults).Return([]apiclient.APIResponse{
+		&sciensano.APITestResultsResponse{
+			TimeStamp: sciensano.TimeStamp{Time: time.Date(2022, 1, 26, 0, 0, 0, 0, time.UTC)},
+			Positive:  10,
+			Total:     20,
+		},
+	}, nil)
 
 	r := reporter.NewWithOptions(time.Hour, client.Options{})
-	r.TestResults.APICache = getter
+	r.TestResults.APIClient = f
 	h := testresults.Handler{Reporter: r}
 
 	req := query.Request{Args: query.Args{Args: common.Args{Range: common.Range{
@@ -48,17 +48,15 @@ func TestHandler_TableQuery(t *testing.T) {
 		},
 	}, response)
 
-	getter.AssertExpectations(t)
+	mock.AssertExpectationsForObjects(t, f)
 }
 
 func TestHandler_Failure(t *testing.T) {
-	getter := &mockCache.Holder{}
-	getter.
-		On("Get", "TestResults").
-		Return(nil, false)
+	f := &mocks.Fetcher{}
+	f.On("Fetch", mock.AnythingOfType("*context.emptyCtx"), sciensano.TypeTestResults).Return(nil, errors.New("fail"))
 
 	r := reporter.NewWithOptions(time.Hour, client.Options{})
-	r.TestResults.APICache = getter
+	r.TestResults.APIClient = f
 	h := testresults.Handler{
 		Reporter: r,
 	}
@@ -68,5 +66,5 @@ func TestHandler_Failure(t *testing.T) {
 	_, err := h.Endpoints().Query(context.Background(), req)
 	assert.Error(t, err)
 
-	getter.AssertExpectations(t)
+	mock.AssertExpectationsForObjects(t, f)
 }

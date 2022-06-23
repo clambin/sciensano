@@ -1,63 +1,52 @@
 package sciensano_test
 
 import (
-	"context"
-	"github.com/clambin/go-metrics/client"
+	"encoding/json"
 	"github.com/clambin/sciensano/apiclient"
 	"github.com/clambin/sciensano/apiclient/sciensano"
-	"github.com/clambin/sciensano/apiclient/sciensano/fake"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"net/http"
-	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
 )
 
-func TestClient_GetMortality(t *testing.T) {
-	testServer := fake.Handler{}
-	apiServer := httptest.NewServer(http.HandlerFunc(testServer.Handle))
+func TestAPIMortalityResponses(t *testing.T) {
+	gp := filepath.Join("testdata", t.Name()+".golden")
+	if *update {
+		body, err := json.Marshal(mortalityResponses)
+		require.NoError(t, err)
 
-	c := &sciensano.Client{
-		URL:    apiServer.URL,
-		Caller: &client.BaseClient{HTTPClient: http.DefaultClient},
+		err = os.WriteFile(gp, body, 0644)
+		require.NoError(t, err)
 	}
 
-	ctx := context.Background()
-	result, err := c.GetMortality(ctx)
-
+	body, err := os.ReadFile(gp)
 	require.NoError(t, err)
 
-	assert.Equal(t, &sciensano.APIMortalityResponse{
-		TimeStamp: sciensano.TimeStamp{Time: time.Date(2020, time.March, 10, 0, 0, 0, 0, time.UTC)}, Region: "Brussels", AgeGroup: "85+", Deaths: 1,
-	}, result[0])
-
-	assert.Equal(t, &sciensano.APIMortalityResponse{
-		TimeStamp: sciensano.TimeStamp{Time: time.Date(2020, time.March, 10, 0, 0, 0, 0, time.UTC)}, Region: "Brussels", AgeGroup: "85+", Deaths: 2,
-	}, result[1])
-
-	testServer.Fail = true
-	_, err = c.GetMortality(ctx)
-	require.Error(t, err)
-
-	apiServer.Close()
-	_, err = c.GetMortality(ctx)
-	require.Error(t, err)
+	var output []sciensano.APIMortalityResponse
+	err = json.Unmarshal(body, &output)
+	require.NoError(t, err)
+	require.Len(t, output, len(mortalityResponses))
 }
 
-func TestClient_Mortality_Measurement(t *testing.T) {
-	entry := sciensano.APIMortalityResponse{
-		TimeStamp: sciensano.TimeStamp{Time: time.Now()},
-		Region:    "Flanders",
-		AgeGroup:  "85+",
-		Deaths:    10,
+func TestAPIMortalityResponses_Attributes(t *testing.T) {
+	assert.Equal(t, time.Date(2022, time.June, 19, 0, 0, 0, 0, time.UTC), mortalityResponses[0].GetTimestamp())
+	assert.Equal(t, []string{"total"}, mortalityResponses[0].GetAttributeNames())
+	assert.Equal(t, []float64{1}, mortalityResponses[0].GetAttributeValues())
+	assert.Equal(t, "Flanders", mortalityResponses[0].GetGroupFieldValue(apiclient.GroupByRegion))
+	assert.Equal(t, "21-30", mortalityResponses[0].GetGroupFieldValue(apiclient.GroupByAgeGroup))
+	assert.Equal(t, 1.0, mortalityResponses[0].GetTotalValue())
+}
+
+var (
+	mortalityResponses = []sciensano.APIMortalityResponse{
+		{
+			TimeStamp: sciensano.TimeStamp{Time: time.Date(2022, time.June, 19, 0, 0, 0, 0, time.UTC)},
+			Region:    "Flanders",
+			AgeGroup:  "21-30",
+			Deaths:    1,
+		},
 	}
-
-	assert.NotZero(t, entry.GetTimestamp())
-	assert.Equal(t, "Flanders", entry.GetGroupFieldValue(apiclient.GroupByRegion))
-	assert.Empty(t, entry.GetGroupFieldValue(apiclient.GroupByProvince))
-	assert.Equal(t, "85+", entry.GetGroupFieldValue(apiclient.GroupByAgeGroup))
-	assert.Equal(t, 10.0, entry.GetTotalValue())
-	assert.Equal(t, []string{"total"}, entry.GetAttributeNames())
-	assert.Equal(t, []float64{10}, entry.GetAttributeValues())
-}
+)

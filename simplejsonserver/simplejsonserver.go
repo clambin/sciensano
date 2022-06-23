@@ -15,7 +15,6 @@ import (
 	vaccinesHandler "github.com/clambin/sciensano/simplejsonserver/vaccines"
 	"github.com/clambin/simplejson/v3"
 	"net/http"
-	"time"
 )
 
 // Server groups Grafana SimpleJson API handlers that retrieve Belgium COVID-19-related statistics
@@ -25,24 +24,38 @@ type Server struct {
 	Demographics demographics.Fetcher
 }
 
-const refreshInterval = 1 * time.Hour
-
-// NewServer creates a Server object
-func NewServer(demographicsPath string) (server *Server) {
-	return NewServerWithDemographicsClient(&demographics.Server{
-		Path:     demographicsPath,
-		Interval: 24 * time.Hour,
-	})
+// Initialize starts background tasks to support Server
+func (server *Server) Initialize(ctx context.Context) {
+	// set up handler lookup table
+	server.initializeHandlers()
+	// set up auto-refresh of demographics
+	go server.Demographics.Run(ctx)
 }
 
-// NewServerWithDemographicsClient a Server object
-func NewServerWithDemographicsClient(demographicsClient demographics.Fetcher) (server *Server) {
-	server = &Server{
-		Server:       simplejson.Server{Name: "sciensano"},
-		Reporter:     reporter.New(refreshInterval),
-		Demographics: demographicsClient,
+// Run runs the API handler server
+func (server *Server) Run(port int) (err error) {
+	server.Initialize(context.Background())
+	r := server.GetRouter()
+	r.PathPrefix("/debug/pprof/").Handler(http.DefaultServeMux)
+	r.Path("/health").Handler(http.HandlerFunc(server.health))
+	return http.ListenAndServe(fmt.Sprintf(":%d", port), r)
+}
+
+func (server *Server) health(w http.ResponseWriter, _ *http.Request) {
+	response := struct {
+		Handlers      int
+		ReporterCache map[string]int
+	}{
+		Handlers:      len(server.Handlers),
+		ReporterCache: server.Reporter.ReportCache.Stats(),
 	}
 
+	encoder := json.NewEncoder(w)
+	encoder.SetIndent("", "  ")
+	_ = encoder.Encode(response)
+}
+
+func (server *Server) initializeHandlers() {
 	server.Handlers = map[string]simplejson.Handler{
 		"cases":                     &cases.Handler{Reporter: server.Reporter, Scope: cases.ScopeAll},
 		"cases-province":            &cases.Handler{Reporter: server.Reporter, Scope: cases.ScopeProvince},
@@ -75,39 +88,4 @@ func NewServerWithDemographicsClient(demographicsClient demographics.Fetcher) (s
 		"vaccines-stats":            &vaccinesHandler.StatsHandler{Reporter: server.Reporter},
 		"vaccines-time":             &vaccinesHandler.DelayHandler{Reporter: server.Reporter},
 	}
-
-	return server
-}
-
-// RunBackgroundTasks starts background tasks to support Server
-func (server *Server) RunBackgroundTasks(ctx context.Context) {
-	// set up auto-refresh of demographics
-	go server.Demographics.Run(ctx)
-	// set up auto-refresh of reports
-	go server.Reporter.APICache.Run(ctx, time.Hour)
-}
-
-// Run runs the API handler server
-func (server *Server) Run(port int) (err error) {
-	server.RunBackgroundTasks(context.Background())
-	r := server.GetRouter()
-	r.PathPrefix("/debug/pprof/").Handler(http.DefaultServeMux)
-	r.Path("/health").Handler(http.HandlerFunc(server.health))
-	return http.ListenAndServe(fmt.Sprintf(":%d", port), r)
-}
-
-func (server *Server) health(w http.ResponseWriter, _ *http.Request) {
-	response := struct {
-		Handlers      int
-		APICache      map[string]int
-		ReporterCache map[string]int
-	}{
-		Handlers:      len(server.Handlers),
-		APICache:      server.Reporter.APICache.Stats(),
-		ReporterCache: server.Reporter.ReportCache.Stats(),
-	}
-
-	encoder := json.NewEncoder(w)
-	encoder.SetIndent("", "  ")
-	_ = encoder.Encode(response)
 }

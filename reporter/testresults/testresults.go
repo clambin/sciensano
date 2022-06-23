@@ -1,8 +1,10 @@
 package testresults
 
 import (
-	"fmt"
-	apiCache "github.com/clambin/sciensano/apiclient/cache"
+	"context"
+	"github.com/clambin/sciensano/apiclient"
+	"github.com/clambin/sciensano/apiclient/fetcher"
+	"github.com/clambin/sciensano/apiclient/sciensano"
 	reportCache "github.com/clambin/sciensano/reporter/cache"
 	"github.com/clambin/sciensano/reporter/table"
 	"github.com/clambin/simplejson/v3/data"
@@ -11,17 +13,16 @@ import (
 
 type Reporter struct {
 	ReportCache *reportCache.Cache
-	APICache    apiCache.Holder
+	APIClient   fetcher.Fetcher
 }
 
 // Get returns all COVID-19 test results up to endTime
 func (r *Reporter) Get() (results *data.Table, err error) {
 	return r.ReportCache.MaybeGenerate("TestResults", func() (output *data.Table, err2 error) {
-		if apiResult, found := r.APICache.Get("TestResults"); found {
+		var apiResult []apiclient.APIResponse
+		if apiResult, err2 = r.APIClient.Fetch(context.Background(), sciensano.TypeTestResults); err2 == nil {
 			output = table.NewFromAPIResponse(apiResult)
 			calculateRate(output)
-		} else {
-			err2 = fmt.Errorf("cache does not contain TestResults entries")
 		}
 		return
 	})

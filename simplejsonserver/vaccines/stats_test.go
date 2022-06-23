@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/clambin/go-metrics/client"
 	"github.com/clambin/sciensano/apiclient"
-	mockCache "github.com/clambin/sciensano/apiclient/cache/mocks"
+	"github.com/clambin/sciensano/apiclient/fetcher/mocks"
 	"github.com/clambin/sciensano/apiclient/sciensano"
 	"github.com/clambin/sciensano/apiclient/vaccines"
 	"github.com/clambin/sciensano/reporter"
@@ -19,10 +19,10 @@ import (
 )
 
 func TestHandler_TableQuery_VaccinesStats(t *testing.T) {
-	vaccineCache := &mockCache.Holder{}
+	vaccineClient := &mocks.Fetcher{}
 	timestamp := time.Now().UTC()
-	vaccineCache.
-		On("Get", "Vaccines").
+	vaccineClient.
+		On("Fetch", mock.AnythingOfType("*context.emptyCtx"), vaccines.TypeBatches).
 		Return(
 			[]apiclient.APIResponse{
 				&vaccines.APIBatchResponse{
@@ -37,10 +37,10 @@ func TestHandler_TableQuery_VaccinesStats(t *testing.T) {
 					Date:   vaccines.Timestamp{Time: timestamp},
 					Amount: 200,
 				},
-			}, true)
-	vaccinationsCache := &mockCache.Holder{}
-	vaccinationsCache.
-		On("Get", "Vaccinations").
+			}, nil)
+	vaccinationsClient := &mocks.Fetcher{}
+	vaccinationsClient.
+		On("Fetch", mock.AnythingOfType("*context.emptyCtx"), sciensano.TypeVaccinations).
 		Return([]apiclient.APIResponse{
 			&sciensano.APIVaccinationsResponse{
 				TimeStamp: sciensano.TimeStamp{Time: timestamp.Add(-72 * time.Hour)},
@@ -67,11 +67,11 @@ func TestHandler_TableQuery_VaccinesStats(t *testing.T) {
 				Dose:      "C",
 				Count:     10,
 			},
-		}, true)
+		}, nil)
 
 	r := reporter.NewWithOptions(time.Hour, client.Options{})
-	r.Vaccines.APICache = vaccineCache
-	r.Vaccinations.APICache = vaccinationsCache
+	r.Vaccines.APIClient = vaccineClient
+	r.Vaccinations.APIClient = vaccinationsClient
 	h := vaccinesHandler.StatsHandler{Reporter: r}
 
 	request := query.Request{Args: query.Args{Args: common.Args{
@@ -96,5 +96,5 @@ func TestHandler_TableQuery_VaccinesStats(t *testing.T) {
 		{Text: "reserve", Data: query.NumberColumn{320.0}},
 	}}, response)
 
-	mock.AssertExpectationsForObjects(t, vaccineCache, vaccinationsCache)
+	mock.AssertExpectationsForObjects(t, vaccineClient, vaccinationsClient)
 }

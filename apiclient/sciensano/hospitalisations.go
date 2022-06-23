@@ -1,8 +1,6 @@
 package sciensano
 
 import (
-	"context"
-	"encoding/json"
 	"github.com/clambin/sciensano/apiclient"
 	"time"
 )
@@ -49,21 +47,4 @@ func (v APIHospitalisationsResponse) GetAttributeNames() []string {
 // GetAttributeValues gets the value for each supported type of vaccination
 func (v APIHospitalisationsResponse) GetAttributeValues() (values []float64) {
 	return []float64{float64(v.TotalIn), float64(v.TotalInICU), float64(v.TotalInResp), float64(v.TotalInECMO)}
-}
-
-// GetHospitalisations retrieves all recorded COVID-19 cases
-func (client *Client) GetHospitalisations(ctx context.Context) (results []apiclient.APIResponse, err error) {
-	var body []byte
-	body, err = client.call(ctx, "hospitalisations")
-	if err != nil {
-		return
-	}
-
-	var response []*APIHospitalisationsResponse
-	err = json.Unmarshal(body, &response)
-	if err != nil {
-		return
-	}
-
-	return copyMaybeSort(response), nil
 }

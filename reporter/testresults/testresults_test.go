@@ -1,8 +1,9 @@
 package testresults_test
 
 import (
+	"errors"
 	"github.com/clambin/sciensano/apiclient"
-	"github.com/clambin/sciensano/apiclient/cache/mocks"
+	"github.com/clambin/sciensano/apiclient/fetcher/mocks"
 	"github.com/clambin/sciensano/apiclient/sciensano"
 	"github.com/clambin/sciensano/reporter/cache"
 	"github.com/clambin/sciensano/reporter/testresults"
@@ -43,12 +44,12 @@ var (
 )
 
 func TestGetTests(t *testing.T) {
-	h := &mocks.Holder{}
-	h.On("Get", "TestResults").Return(testResultsResponse, true).Once()
+	f := &mocks.Fetcher{}
+	f.On("Fetch", mock.AnythingOfType("*context.emptyCtx"), sciensano.TypeTestResults).Return(testResultsResponse, nil)
 
 	r := testresults.Reporter{
 		ReportCache: cache.NewCache(time.Hour),
-		APICache:    h,
+		APIClient:   f,
 	}
 
 	entries, err := r.Get()
@@ -74,20 +75,20 @@ func TestGetTests(t *testing.T) {
 	require.True(t, ok)
 	assert.Equal(t, []float64{0.1, 0.2, 0}, values)
 
-	mock.AssertExpectationsForObjects(t, h)
+	mock.AssertExpectationsForObjects(t, f)
 }
 
 func TestClient_GetTestResults_Failure(t *testing.T) {
-	h := &mocks.Holder{}
-	h.On("Get", "TestResults").Return(nil, false).Once()
+	f := &mocks.Fetcher{}
+	f.On("Fetch", mock.AnythingOfType("*context.emptyCtx"), sciensano.TypeTestResults).Return(nil, errors.New("fail"))
 
 	r := testresults.Reporter{
 		ReportCache: cache.NewCache(time.Hour),
-		APICache:    h,
+		APIClient:   f,
 	}
 
 	_, err := r.Get()
 	require.Error(t, err)
 
-	mock.AssertExpectationsForObjects(t, h)
+	mock.AssertExpectationsForObjects(t, f)
 }

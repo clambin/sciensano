@@ -2,8 +2,10 @@ package vaccinations_test
 
 import (
 	"context"
+	"errors"
 	"github.com/clambin/go-metrics/client"
-	mockCache "github.com/clambin/sciensano/apiclient/cache/mocks"
+	"github.com/clambin/sciensano/apiclient/fetcher/mocks"
+	"github.com/clambin/sciensano/apiclient/sciensano"
 	"github.com/clambin/sciensano/demographics/bracket"
 	mockDemographics "github.com/clambin/sciensano/demographics/mocks"
 	"github.com/clambin/sciensano/reporter"
@@ -92,11 +94,11 @@ func TestRateHandler(t *testing.T) {
 		},
 	}
 
-	cache := &mockCache.Holder{}
-	cache.On("Get", "Vaccinations").Return(vaccinationTestData, true)
+	f := &mocks.Fetcher{}
+	f.On("Fetch", mock.AnythingOfType("*context.emptyCtx"), sciensano.TypeVaccinations).Return(vaccinationTestData, nil)
 
 	r := reporter.NewWithOptions(time.Hour, client.Options{})
-	r.Vaccinations.APICache = cache
+	r.Vaccinations.APIClient = f
 
 	demographicsClient := &mockDemographics.Fetcher{}
 	demographicsClient.
@@ -130,15 +132,15 @@ func TestRateHandler(t *testing.T) {
 		assert.Equal(t, testCase.expected, response, index)
 	}
 
-	mock.AssertExpectationsForObjects(t, cache, demographicsClient)
+	mock.AssertExpectationsForObjects(t, f, demographicsClient)
 }
 
 func TestRateHandler_Failure(t *testing.T) {
-	cache := &mockCache.Holder{}
-	cache.On("Get", "Vaccinations").Return(nil, false).Once()
+	f := &mocks.Fetcher{}
+	f.On("Fetch", mock.AnythingOfType("*context.emptyCtx"), sciensano.TypeVaccinations).Return(nil, errors.New("fail"))
 
 	r := reporter.NewWithOptions(time.Hour, client.Options{})
-	r.Vaccinations.APICache = cache
+	r.Vaccinations.APIClient = f
 
 	demographicsClient := &mockDemographics.Fetcher{}
 
@@ -154,17 +156,17 @@ func TestRateHandler_Failure(t *testing.T) {
 	_, err := h.Endpoints().Query(ctx, req)
 	assert.Error(t, err)
 
-	mock.AssertExpectationsForObjects(t, cache, demographicsClient)
+	mock.AssertExpectationsForObjects(t, f, demographicsClient)
 }
 
 func BenchmarkVaccinationsRateHandler(b *testing.B) {
-	b.StopTimer()
-	cache := &mockCache.Holder{}
 	content := buildBigResponse()
-	cache.On("Get", "Vaccinations").Return(content, true)
+
+	f := &mocks.Fetcher{}
+	f.On("Fetch", mock.AnythingOfType("*context.emptyCtx"), sciensano.TypeVaccinations).Return(content, nil)
 
 	r := reporter.NewWithOptions(time.Hour, client.Options{})
-	r.Vaccinations.APICache = cache
+	r.Vaccinations.APIClient = f
 
 	demographicsClient := &mockDemographics.Fetcher{}
 	demographicsClient.On("GetByRegion").Return(map[string]int{"Brussels": 1, "Flanders": 6, "Wallonia": 4})
@@ -176,7 +178,7 @@ func BenchmarkVaccinationsRateHandler(b *testing.B) {
 		Fetcher:  demographicsClient,
 	}
 
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_, err := h.Endpoints().Query(context.Background(), query.Request{})
 		if err != nil {

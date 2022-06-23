@@ -1,9 +1,10 @@
 package mortality
 
 import (
-	"fmt"
+	"context"
 	"github.com/clambin/sciensano/apiclient"
-	apiCache "github.com/clambin/sciensano/apiclient/cache"
+	"github.com/clambin/sciensano/apiclient/fetcher"
+	"github.com/clambin/sciensano/apiclient/sciensano"
 	reportCache "github.com/clambin/sciensano/reporter/cache"
 	table2 "github.com/clambin/sciensano/reporter/table"
 	"github.com/clambin/simplejson/v3/data"
@@ -11,7 +12,7 @@ import (
 
 type Reporter struct {
 	ReportCache *reportCache.Cache
-	APICache    apiCache.Holder
+	APIClient   fetcher.Fetcher
 }
 
 // GroupedMortalityEntry contains all the values for the (grouped) mortality figures
@@ -23,10 +24,9 @@ type GroupedMortalityEntry struct {
 // Get returns all mortality figures
 func (r *Reporter) Get() (results *data.Table, err error) {
 	return r.ReportCache.MaybeGenerate("Mortality", func() (output *data.Table, err2 error) {
-		if apiResult, found := r.APICache.Get("Mortality"); found {
+		var apiResult []apiclient.APIResponse
+		if apiResult, err2 = r.APIClient.Fetch(context.Background(), sciensano.TypeMortality); err2 == nil {
 			output = table2.NewFromAPIResponse(apiResult)
-		} else {
-			err2 = fmt.Errorf("cache does not contain Mortality entries")
 		}
 		return
 	})
@@ -35,10 +35,9 @@ func (r *Reporter) Get() (results *data.Table, err error) {
 // GetByRegion returns all mortality figures, grouped by region
 func (r *Reporter) GetByRegion() (results *data.Table, err error) {
 	return r.ReportCache.MaybeGenerate("MortalityByRegion", func() (output *data.Table, err2 error) {
-		if apiResult, found := r.APICache.Get("Mortality"); found {
+		var apiResult []apiclient.APIResponse
+		if apiResult, err2 = r.APIClient.Fetch(context.Background(), sciensano.TypeMortality); err2 == nil {
 			output = table2.NewGroupedFromAPIResponse(apiResult, apiclient.GroupByRegion)
-		} else {
-			err2 = fmt.Errorf("cache does not contain Mortality entries")
 		}
 		return
 	})
@@ -47,10 +46,9 @@ func (r *Reporter) GetByRegion() (results *data.Table, err error) {
 // GetByAgeGroup returns all Mortality, grouped by age group
 func (r *Reporter) GetByAgeGroup() (results *data.Table, err error) {
 	return r.ReportCache.MaybeGenerate("MortalityByAgeGroup", func() (output *data.Table, err2 error) {
-		if apiResult, found := r.APICache.Get("Mortality"); found {
+		var apiResult []apiclient.APIResponse
+		if apiResult, err2 = r.APIClient.Fetch(context.Background(), sciensano.TypeMortality); err2 == nil {
 			output = table2.NewGroupedFromAPIResponse(apiResult, apiclient.GroupByAgeGroup)
-		} else {
-			err2 = fmt.Errorf("cache does not contain Mortality entries")
 		}
 		return
 	})

@@ -1,9 +1,7 @@
 package sciensano
 
 import (
-	"context"
 	"github.com/clambin/sciensano/apiclient"
-	"github.com/mailru/easyjson"
 	"time"
 )
 
@@ -53,21 +51,4 @@ func (v APICasesResponse) GetAttributeNames() []string {
 // GetAttributeValues gets the value for each supported type of vaccination
 func (v APICasesResponse) GetAttributeValues() (values []float64) {
 	return []float64{float64(v.Cases)}
-}
-
-// GetCases retrieves all recorded COVID-19 cases
-func (client *Client) GetCases(ctx context.Context) (results []apiclient.APIResponse, err error) {
-	var body []byte
-	body, err = client.call(ctx, "cases")
-	if err != nil {
-		return
-	}
-
-	var response APICasesResponses
-	err = easyjson.Unmarshal(body, &response)
-	if err != nil {
-		return
-	}
-
-	return copyMaybeSort(response), nil
 }

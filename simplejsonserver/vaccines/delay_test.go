@@ -3,7 +3,7 @@ package vaccines_test
 import (
 	"context"
 	"github.com/clambin/sciensano/apiclient"
-	mockCache "github.com/clambin/sciensano/apiclient/cache/mocks"
+	"github.com/clambin/sciensano/apiclient/fetcher/mocks"
 	"github.com/clambin/sciensano/apiclient/sciensano"
 	"github.com/clambin/sciensano/apiclient/vaccines"
 	"github.com/clambin/sciensano/reporter"
@@ -18,10 +18,10 @@ import (
 )
 
 func TestHandler_TableQuery_VaccinesTime(t *testing.T) {
-	vaccineCache := &mockCache.Holder{}
+	vaccineClient := &mocks.Fetcher{}
 	timestamp := time.Date(2022, 1, 26, 0, 0, 0, 0, time.UTC)
-	vaccineCache.
-		On("Get", "Vaccines").
+	vaccineClient.
+		On("Fetch", mock.AnythingOfType("*context.emptyCtx"), vaccines.TypeBatches).
 		Return([]apiclient.APIResponse{
 			&vaccines.APIBatchResponse{
 				Date:   vaccines.Timestamp{Time: timestamp.Add(-7 * 24 * time.Hour)},
@@ -31,11 +31,11 @@ func TestHandler_TableQuery_VaccinesTime(t *testing.T) {
 				Date:   vaccines.Timestamp{Time: timestamp.Add(-2 * 24 * time.Hour)},
 				Amount: 50,
 			},
-		}, true)
+		}, nil)
 
-	vaccinationCache := &mockCache.Holder{}
-	vaccinationCache.
-		On("Get", "Vaccinations").
+	vaccinationClient := &mocks.Fetcher{}
+	vaccinationClient.
+		On("Fetch", mock.AnythingOfType("*context.emptyCtx"), sciensano.TypeVaccinations).
 		Return([]apiclient.APIResponse{
 			&sciensano.APIVaccinationsResponse{
 				TimeStamp: sciensano.TimeStamp{Time: timestamp.Add(-6 * 24 * time.Hour)},
@@ -67,11 +67,11 @@ func TestHandler_TableQuery_VaccinesTime(t *testing.T) {
 				Dose:      "A",
 				Count:     15,
 			},
-		}, true)
+		}, nil)
 
 	r := reporter.New(time.Hour)
-	r.Vaccines.APICache = vaccineCache
-	r.Vaccinations.APICache = vaccinationCache
+	r.Vaccines.APIClient = vaccineClient
+	r.Vaccinations.APIClient = vaccinationClient
 	h := vaccinesHandler.DelayHandler{Reporter: r}
 
 	request := query.Request{Args: query.Args{Args: common.Args{Range: common.Range{
@@ -85,5 +85,5 @@ func TestHandler_TableQuery_VaccinesTime(t *testing.T) {
 		{Text: "delay", Data: query.NumberColumn{4, 5, 1}},
 	}}, response)
 
-	mock.AssertExpectationsForObjects(t, vaccineCache, vaccinationCache)
+	mock.AssertExpectationsForObjects(t, vaccineClient, vaccinationClient)
 }

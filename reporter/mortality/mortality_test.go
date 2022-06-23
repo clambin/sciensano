@@ -1,8 +1,9 @@
 package mortality_test
 
 import (
+	"errors"
 	"github.com/clambin/sciensano/apiclient"
-	"github.com/clambin/sciensano/apiclient/cache/mocks"
+	"github.com/clambin/sciensano/apiclient/fetcher/mocks"
 	"github.com/clambin/sciensano/apiclient/sciensano"
 	"github.com/clambin/sciensano/reporter/cache"
 	"github.com/clambin/sciensano/reporter/mortality"
@@ -43,14 +44,12 @@ var (
 )
 
 func TestClient_GetMortality(t *testing.T) {
-	h := &mocks.Holder{}
-	h.
-		On("Get", "Mortality").
-		Return(testMortalityResponse, true)
+	f := &mocks.Fetcher{}
+	f.On("Fetch", mock.AnythingOfType("*context.emptyCtx"), sciensano.TypeMortality).Return(testMortalityResponse, nil)
 
 	r := mortality.Reporter{
 		ReportCache: cache.NewCache(time.Hour),
-		APICache:    h,
+		APIClient:   f,
 	}
 
 	entries, err := r.Get()
@@ -68,18 +67,16 @@ func TestClient_GetMortality(t *testing.T) {
 	require.True(t, ok)
 	assert.Equal(t, []float64{250, 120, 100}, values)
 
-	mock.AssertExpectationsForObjects(t, h)
+	mock.AssertExpectationsForObjects(t, f)
 }
 
 func TestClient_GetMortalityByRegion(t *testing.T) {
-	h := &mocks.Holder{}
-	h.
-		On("Get", "Mortality").
-		Return(testMortalityResponse, true)
+	f := &mocks.Fetcher{}
+	f.On("Fetch", mock.AnythingOfType("*context.emptyCtx"), sciensano.TypeMortality).Return(testMortalityResponse, nil)
 
 	r := mortality.Reporter{
 		ReportCache: cache.NewCache(time.Hour),
-		APICache:    h,
+		APIClient:   f,
 	}
 
 	entries, err := r.GetByRegion()
@@ -101,18 +98,16 @@ func TestClient_GetMortalityByRegion(t *testing.T) {
 	require.True(t, ok)
 	assert.Equal(t, []float64{100, 120, 100}, values)
 
-	mock.AssertExpectationsForObjects(t, h)
+	mock.AssertExpectationsForObjects(t, f)
 }
 
 func TestClient_GetMortalityByAgeGroup(t *testing.T) {
-	h := &mocks.Holder{}
-	h.
-		On("Get", "Mortality").
-		Return(testMortalityResponse, true)
+	f := &mocks.Fetcher{}
+	f.On("Fetch", mock.AnythingOfType("*context.emptyCtx"), sciensano.TypeMortality).Return(testMortalityResponse, nil)
 
 	r := mortality.Reporter{
 		ReportCache: cache.NewCache(time.Hour),
-		APICache:    h,
+		APIClient:   f,
 	}
 
 	entries, err := r.GetByAgeGroup()
@@ -138,18 +133,16 @@ func TestClient_GetMortalityByAgeGroup(t *testing.T) {
 	require.True(t, ok)
 	assert.Equal(t, []float64{100, 0, 0}, values)
 
-	mock.AssertExpectationsForObjects(t, h)
+	mock.AssertExpectationsForObjects(t, f)
 }
 
 func TestClient_GetMortality_Failure(t *testing.T) {
-	h := &mocks.Holder{}
-	h.
-		On("Get", "Mortality").
-		Return(nil, false)
+	f := &mocks.Fetcher{}
+	f.On("Fetch", mock.AnythingOfType("*context.emptyCtx"), sciensano.TypeMortality).Return(nil, errors.New("fail"))
 
 	r := mortality.Reporter{
 		ReportCache: cache.NewCache(time.Hour),
-		APICache:    h,
+		APIClient:   f,
 	}
 
 	_, err := r.Get()
@@ -161,11 +154,10 @@ func TestClient_GetMortality_Failure(t *testing.T) {
 	_, err = r.GetByAgeGroup()
 	require.Error(t, err)
 
-	mock.AssertExpectationsForObjects(t, h)
+	mock.AssertExpectationsForObjects(t, f)
 }
 
 func BenchmarkClient_GetMortalityByRegion(b *testing.B) {
-	b.StopTimer()
 	var bigResponse []apiclient.APIResponse
 	ts := time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)
 
@@ -179,17 +171,16 @@ func BenchmarkClient_GetMortalityByRegion(b *testing.B) {
 		}
 		ts = ts.Add(24 * time.Hour)
 	}
-	h := &mocks.Holder{}
-	h.
-		On("Get", "Mortality").
-		Return(bigResponse, true)
+
+	f := &mocks.Fetcher{}
+	f.On("Fetch", mock.AnythingOfType("*context.emptyCtx"), sciensano.TypeMortality).Return(bigResponse, nil)
 
 	r := mortality.Reporter{
 		ReportCache: cache.NewCache(time.Hour),
-		APICache:    h,
+		APIClient:   f,
 	}
 
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_, err := r.GetByRegion()
 		if err != nil {

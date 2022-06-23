@@ -1,8 +1,9 @@
 package vaccines_test
 
 import (
+	"errors"
 	"github.com/clambin/sciensano/apiclient"
-	"github.com/clambin/sciensano/apiclient/cache/mocks"
+	"github.com/clambin/sciensano/apiclient/fetcher/mocks"
 	vaccines2 "github.com/clambin/sciensano/apiclient/vaccines"
 	"github.com/clambin/sciensano/reporter/cache"
 	"github.com/clambin/sciensano/reporter/vaccines"
@@ -34,12 +35,12 @@ var (
 )
 
 func TestClient_GetVaccines(t *testing.T) {
-	h := &mocks.Holder{}
-	h.On("Get", "Vaccines").Return(testVaccinesResponse, true)
+	f := &mocks.Fetcher{}
+	f.On("Fetch", mock.AnythingOfType("*context.emptyCtx"), vaccines2.TypeBatches).Return(testVaccinesResponse, nil)
 
 	r := vaccines.Reporter{
 		ReportCache: cache.NewCache(time.Hour),
-		APICache:    h,
+		APIClient:   f,
 	}
 
 	entries, err := r.Get()
@@ -56,16 +57,16 @@ func TestClient_GetVaccines(t *testing.T) {
 	require.True(t, ok)
 	assert.Equal(t, []float64{30, 40}, values)
 
-	mock.AssertExpectationsForObjects(t, h)
+	mock.AssertExpectationsForObjects(t, f)
 }
 
 func TestClient_GetVaccinesByManufacturer(t *testing.T) {
-	h := &mocks.Holder{}
-	h.On("Get", "Vaccines").Return(testVaccinesResponse, true)
+	f := &mocks.Fetcher{}
+	f.On("Fetch", mock.AnythingOfType("*context.emptyCtx"), vaccines2.TypeBatches).Return(testVaccinesResponse, nil)
 
 	r := vaccines.Reporter{
 		ReportCache: cache.NewCache(time.Hour),
-		APICache:    h,
+		APIClient:   f,
 	}
 
 	entries, err := r.GetByManufacturer()
@@ -86,16 +87,16 @@ func TestClient_GetVaccinesByManufacturer(t *testing.T) {
 	require.True(t, ok)
 	assert.Equal(t, []float64{20, 0}, values)
 
-	mock.AssertExpectationsForObjects(t, h)
+	mock.AssertExpectationsForObjects(t, f)
 }
 
 func TestClient_GetVaccines_Failure(t *testing.T) {
-	h := &mocks.Holder{}
-	h.On("Get", "Vaccines").Return(nil, false)
+	f := &mocks.Fetcher{}
+	f.On("Fetch", mock.AnythingOfType("*context.emptyCtx"), vaccines2.TypeBatches).Return(nil, errors.New("fail"))
 
 	r := vaccines.Reporter{
 		ReportCache: cache.NewCache(time.Hour),
-		APICache:    h,
+		APIClient:   f,
 	}
 
 	_, err := r.Get()
@@ -104,5 +105,5 @@ func TestClient_GetVaccines_Failure(t *testing.T) {
 	_, err = r.GetByManufacturer()
 	require.Error(t, err)
 
-	mock.AssertExpectationsForObjects(t, h)
+	mock.AssertExpectationsForObjects(t, f)
 }

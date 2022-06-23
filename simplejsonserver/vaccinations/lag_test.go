@@ -2,12 +2,14 @@ package vaccinations_test
 
 import (
 	"context"
-	mockCache "github.com/clambin/sciensano/apiclient/cache/mocks"
+	"github.com/clambin/sciensano/apiclient/fetcher/mocks"
+	"github.com/clambin/sciensano/apiclient/sciensano"
 	"github.com/clambin/sciensano/reporter"
 	"github.com/clambin/sciensano/simplejsonserver/vaccinations"
 	"github.com/clambin/simplejson/v3/common"
 	"github.com/clambin/simplejson/v3/query"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"testing"
 	"time"
@@ -17,20 +19,15 @@ func TestLagHandler(t *testing.T) {
 	ctx := context.Background()
 	req := query.Request{Args: query.Args{Args: common.Args{Range: common.Range{To: timestamp.Add(24 * time.Hour)}}}}
 
-	cache := &mockCache.Holder{}
+	f := &mocks.Fetcher{}
+	f.On("Fetch", mock.AnythingOfType("*context.emptyCtx"), sciensano.TypeVaccinations).Return(vaccinationTestData, nil)
+
 	client := reporter.New(time.Hour)
-	client.Vaccinations.APICache = cache
+	client.Vaccinations.APIClient = f
 
 	h := vaccinations.LagHandler{Reporter: client}
 
-	cache.On("Get", "Vaccinations").Return(nil, false).Once()
-	_, err := h.Endpoints().Query(ctx, req)
-	assert.Error(t, err)
-
-	cache.On("Get", "Vaccinations").Return(vaccinationTestData, true).Once()
-
-	var response query.Response
-	response, err = h.Endpoints().Query(ctx, req)
+	response, err := h.Endpoints().Query(ctx, req)
 	require.NoError(t, err)
 	assert.Equal(t, &query.TableResponse{
 		Columns: []query.Column{
@@ -39,4 +36,5 @@ func TestLagHandler(t *testing.T) {
 		},
 	}, response)
 
+	mock.AssertExpectationsForObjects(t, f)
 }

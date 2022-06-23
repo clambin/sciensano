@@ -1,78 +1,144 @@
 package sciensano_test
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
+	"flag"
 	"github.com/clambin/go-metrics/client"
-	"github.com/clambin/sciensano/apiclient/cache"
 	"github.com/clambin/sciensano/apiclient/sciensano"
-	"github.com/clambin/sciensano/apiclient/sciensano/fake"
+	"github.com/go-http-utils/headers"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"sync"
 	"testing"
 	"time"
 )
 
-func TestClient_Update(t *testing.T) {
-	server := &fake.Handler{}
-	testServer := httptest.NewServer(http.HandlerFunc(server.Handle))
-	defer testServer.Close()
+var update = flag.Bool("update", false, "update .golden files")
 
-	c := sciensano.Client{
-		URL:    testServer.URL,
-		Caller: &client.BaseClient{HTTPClient: http.DefaultClient},
-	}
+func TestClient_GetLastUpdates(t *testing.T) {
+	s := &server{}
+	testServer := httptest.NewServer(http.HandlerFunc(s.handle))
+
+	c := sciensano.Client{Caller: &client.InstrumentedClient{
+		Application: "test",
+	}}
+	c.URL = testServer.URL
+
 	ctx := context.Background()
+	lastModified, err := c.GetLastUpdates(ctx, sciensano.TypeTestResults)
+	require.NoError(t, err)
+	assert.NotZero(t, lastModified)
 
-	ch := make(chan cache.FetcherResponse)
-	go c.Fetch(ctx, ch)
+	_, err = c.GetLastUpdates(ctx, -1)
+	require.Error(t, err)
 
-	expected := []string{
-		"TestResults",
-		"Vaccinations",
-		"Hospitalisations",
-		"Cases",
-		"Mortality",
-	}
-
-	for i := 0; i < len(expected); i++ {
-		response := <-ch
-		assert.Contains(t, expected, response.Name)
-	}
+	testServer.Close()
+	_, err = c.GetLastUpdates(ctx, sciensano.TypeTestResults)
+	require.Error(t, err)
 }
 
-func TestTimeStamp_UnmarshalJSON(t *testing.T) {
-	testCases := []struct {
-		input  []byte
-		pass   bool
-		output sciensano.TimeStamp
-	}{
-		{input: []byte(`"2021-10-06"`), pass: true, output: sciensano.TimeStamp{Time: time.Date(2021, 10, 6, 0, 0, 0, 0, time.UTC)}},
-		{input: []byte(`"2021-13-06"`), pass: true, output: sciensano.TimeStamp{Time: time.Date(2022, 1, 6, 0, 0, 0, 0, time.UTC)}},
-		{input: []byte(`"2021-09-31"`), pass: true, output: sciensano.TimeStamp{Time: time.Date(2021, 10, 1, 0, 0, 0, 0, time.UTC)}},
-		{input: []byte(`2021-10-06`), pass: false},
-		{input: []byte(``), pass: false},
-		{input: []byte(`""`), pass: false},
-		{input: []byte(`"2021-10"`), pass: false},
-		{input: []byte(`"2021-AA-06"`), pass: false},
-	}
-	var ts sciensano.TimeStamp
+func TestClient_Fetch(t *testing.T) {
+	s := &server{}
+	testServer := httptest.NewServer(http.HandlerFunc(s.handle))
+	defer testServer.Close()
 
-	for _, testCase := range testCases {
-		err := ts.UnmarshalJSON(testCase.input)
-		if testCase.pass {
-			assert.NoError(t, err, string(testCase.input))
-			assert.Equal(t, testCase.output, ts, string(testCase.input))
-		} else {
-			assert.Error(t, err, string(testCase.input))
+	c := sciensano.Client{Caller: &client.InstrumentedClient{
+		Application: "test",
+	}}
+	c.URL = testServer.URL
+	ctx := context.Background()
+
+	for i := sciensano.TypeTestResults; i <= sciensano.TypeHospitalisations; i++ {
+		_, err := c.Fetch(ctx, i)
+		assert.NoError(t, err, i)
+	}
+
+	_, err := c.Fetch(ctx, -1)
+	require.Error(t, err)
+
+	testServer.Close()
+	_, err = c.Fetch(ctx, sciensano.TypeHospitalisations)
+	require.Error(t, err)
+
+}
+
+type server struct {
+	cache map[string][]byte
+	lock  sync.Mutex
+}
+
+func (s *server) handle(w http.ResponseWriter, req *http.Request) {
+	if req.Method == http.MethodHead {
+		w.Header().Set(headers.LastModified, time.Now().Format(time.RFC1123))
+		return
+	}
+
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
+	if s.cache == nil {
+		s.cache = make(map[string][]byte)
+	}
+
+	body, found := s.cache[req.URL.Path]
+	if !found {
+		switch req.URL.Path {
+		case "/Data/COVID19BE_tests.json":
+			body, _ = json.Marshal(testResultsResponses)
+		case "/Data/COVID19BE_CASES_AGESEX.json":
+			body, _ = json.Marshal(casesResponses)
+		case "/Data/COVID19BE_HOSP.json":
+			body, _ = json.Marshal(hospitalisationResponses)
+		case "/Data/COVID19BE_MORT.json":
+			body, _ = json.Marshal(mortalityResponses)
+		case "/Data/COVID19BE_VACC.json":
+			body, _ = json.Marshal(vaccinationResponses)
+		default:
+			http.Error(w, "path not found", http.StatusNotFound)
+			return
+		}
+		s.cache[req.URL.Path] = body
+	}
+	_, _ = w.Write(body)
+}
+
+func BenchmarkClient_Fetch(b *testing.B) {
+	c := sciensano.Client{
+		Caller: &bigResponseCaller{},
+	}
+	ctx := context.Background()
+	_, _ = c.Fetch(ctx, sciensano.TypeVaccinations)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_, err := c.Fetch(ctx, sciensano.TypeVaccinations)
+		if err != nil {
+			b.Fatal(err)
 		}
 	}
 }
 
-func BenchmarkTimeStamp_UnmarshalJSON(b *testing.B) {
-	ts := &sciensano.TimeStamp{}
+type bigResponseCaller struct {
+	body []byte
+	lock sync.Mutex
+}
 
-	for i := 0; i < b.N; i++ {
-		_ = ts.UnmarshalJSON([]byte("\"2021-03-02\""))
+func (b *bigResponseCaller) Do(_ *http.Request) (resp *http.Response, err error) {
+	b.lock.Lock()
+	defer b.lock.Unlock()
+	if len(b.body) == 0 {
+		if b.body, err = os.ReadFile("../../data/vaccinations.json"); err != nil {
+			panic(err)
+		}
 	}
+	resp = &http.Response{
+		StatusCode: http.StatusOK,
+		Body:       io.NopCloser(bytes.NewBuffer(b.body)),
+	}
+	return
 }

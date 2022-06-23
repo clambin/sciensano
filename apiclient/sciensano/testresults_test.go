@@ -1,64 +1,53 @@
 package sciensano_test
 
 import (
-	"context"
-	"github.com/clambin/go-metrics/client"
+	"encoding/json"
 	"github.com/clambin/sciensano/apiclient"
 	"github.com/clambin/sciensano/apiclient/sciensano"
-	"github.com/clambin/sciensano/apiclient/sciensano/fake"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"net/http"
-	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
 )
 
-func TestClient_GetTestResults(t *testing.T) {
-	testServer := fake.Handler{}
-	apiServer := httptest.NewServer(http.HandlerFunc(testServer.Handle))
+func TestAPITestResultsResponse(t *testing.T) {
+	gp := filepath.Join("testdata", t.Name()+".golden")
+	if *update {
+		body, err := json.Marshal(testResultsResponses)
+		require.NoError(t, err)
 
-	c := sciensano.Client{
-		URL:    apiServer.URL,
-		Caller: &client.BaseClient{HTTPClient: http.DefaultClient},
+		err = os.WriteFile(gp, body, 0644)
+		require.NoError(t, err)
 	}
 
-	ctx := context.Background()
-	result, err := c.GetTestResults(ctx)
-
+	body, err := os.ReadFile(gp)
 	require.NoError(t, err)
-	require.Len(t, result, 3)
-	assert.Equal(t, &sciensano.APITestResultsResponse{
-		TimeStamp: sciensano.TimeStamp{Time: time.Date(2021, 3, 11, 0, 0, 0, 0, time.UTC)},
-		Region:    "Flanders",
-		Province:  "",
-		Total:     15,
-		Positive:  10,
-	}, result[2])
 
-	testServer.Fail = true
-	_, err = c.GetTestResults(ctx)
-	require.Error(t, err)
-
-	apiServer.Close()
-	_, err = c.GetTestResults(ctx)
-	require.Error(t, err)
+	var output []sciensano.APITestResultsResponse
+	err = json.Unmarshal(body, &output)
+	require.NoError(t, err)
+	require.Len(t, output, len(mortalityResponses))
 }
 
-func TestClient_TestResult_Measurement(t *testing.T) {
-	entry := sciensano.APITestResultsResponse{
-		TimeStamp: sciensano.TimeStamp{Time: time.Now()},
-		Region:    "Flanders",
-		Province:  "VlaamsBrabant",
-		Total:     100,
-		Positive:  10,
+func TestAPITestResultsResponse_Attributes(t *testing.T) {
+	assert.Equal(t, time.Date(2022, time.June, 19, 0, 0, 0, 0, time.UTC), testResultsResponses[0].GetTimestamp())
+	assert.Equal(t, []string{"total", "positive"}, testResultsResponses[0].GetAttributeNames())
+	assert.Equal(t, []float64{10, 1}, testResultsResponses[0].GetAttributeValues())
+	assert.Equal(t, "Flanders", testResultsResponses[0].GetGroupFieldValue(apiclient.GroupByRegion))
+	assert.Equal(t, "VlaamsBrabant", testResultsResponses[0].GetGroupFieldValue(apiclient.GroupByProvince))
+	assert.Equal(t, 10.0, testResultsResponses[0].GetTotalValue())
+}
+
+var (
+	testResultsResponses = []sciensano.APITestResultsResponse{
+		{
+			TimeStamp: sciensano.TimeStamp{Time: time.Date(2022, time.June, 19, 0, 0, 0, 0, time.UTC)},
+			Region:    "Flanders",
+			Province:  "VlaamsBrabant",
+			Total:     10,
+			Positive:  1,
+		},
 	}
-
-	assert.NotZero(t, entry.GetTimestamp())
-	assert.Equal(t, "Flanders", entry.GetGroupFieldValue(apiclient.GroupByRegion))
-	assert.Equal(t, "VlaamsBrabant", entry.GetGroupFieldValue(apiclient.GroupByProvince))
-	assert.Empty(t, entry.GetGroupFieldValue(apiclient.GroupByAgeGroup))
-	assert.Equal(t, 100.0, entry.GetTotalValue())
-	assert.Equal(t, []string{"total", "positive"}, entry.GetAttributeNames())
-	assert.Equal(t, []float64{100, 10}, entry.GetAttributeValues())
-}
+)

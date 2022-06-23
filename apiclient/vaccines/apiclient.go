@@ -3,100 +3,94 @@ package vaccines
 import (
 	"context"
 	"encoding/json"
-	"errors"
+	"fmt"
 	"github.com/clambin/go-metrics/client"
 	"github.com/clambin/sciensano/apiclient"
-	"github.com/clambin/sciensano/apiclient/cache"
-	log "github.com/sirupsen/logrus"
+	"github.com/clambin/sciensano/apiclient/fetcher"
+	"github.com/go-http-utils/headers"
 	"io"
 	"net/http"
 	"sort"
 	"time"
 )
 
-// Getter interface retrieves vaccine batches
-//go:generate mockery --name Getter
-type Getter interface {
-	GetBatches(ctx context.Context) (batches []apiclient.APIResponse, err error)
-}
+const (
+	TypeBatches = iota
+)
 
-var _ cache.Fetcher = &Client{}
-var _ Getter = &Client{}
-
-// Client calls the API to retrieve vaccine batches
+// Client calls the different Vaccines APIs
 type Client struct {
 	client.Caller
 	URL string
-	cache.Cache
 }
 
-const baseURL = "https://covid-vaccinatie.be"
+var _ fetcher.Fetcher = &Client{}
 
-func (client *Client) getURL() (url string) {
-	url = baseURL
-	if client.URL != "" {
-		url = client.URL
+func (c Client) Fetch(ctx context.Context, dataType int) (results []apiclient.APIResponse, err error) {
+	var resp *http.Response
+	if resp, err = c.call(ctx, dataType, http.MethodGet); err != nil {
+		return
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	return c.parseResponse(dataType, resp.Body)
+}
+
+func (c Client) GetLastUpdates(ctx context.Context, dataType int) (lastModified time.Time, err error) {
+	var resp *http.Response
+	if resp, err = c.call(ctx, dataType, http.MethodHead); err != nil {
+		return
+	}
+	_ = resp.Body.Close()
+
+	if lastModified, err = time.Parse(time.RFC1123, resp.Header.Get(headers.LastModified)); err != nil {
+		err = fmt.Errorf("call failed: invalid %s timestamp: %w", headers.LastModified, err)
 	}
 	return
 }
 
-// APIBatchResponse represents one batch of vaccines
-type APIBatchResponse struct {
-	Date         Timestamp `json:"date"`
-	Manufacturer string    `json:"manufacturer"`
-	Amount       int       `json:"amount"`
+func (c Client) DataTypes() map[int]string {
+	return map[int]string{
+		TypeBatches: "Batches",
+	}
 }
 
-var _ apiclient.APIResponse = &APIBatchResponse{}
-
-// GetTimestamp returns the batch's timestamp
-func (b APIBatchResponse) GetTimestamp() time.Time {
-	return b.Date.Time
+var endpoints = map[int]string{
+	TypeBatches: "delivered.json",
 }
 
-// GetGroupFieldValue returns the value of a groupable field.  Not used for APIBatchResponse.
-func (b APIBatchResponse) GetGroupFieldValue(groupField int) (value string) {
-	if groupField == apiclient.GroupByManufacturer {
-		value = b.Manufacturer
+func (c Client) getURL(dataType int) (string, error) {
+	endpoint, found := endpoints[dataType]
+	if !found {
+		return "", fmt.Errorf("invalid data type: %d", dataType)
+	}
+	target := "https://covid-vaccinatie.be"
+	if c.URL != "" {
+		target = c.URL
+	}
+	return target + "/api/v1/" + endpoint, nil
+}
+
+func (c Client) call(ctx context.Context, dataType int, method string) (resp *http.Response, err error) {
+	var target string
+	if target, err = c.getURL(dataType); err != nil {
+		return
+	}
+
+	req, _ := http.NewRequestWithContext(ctx, method, target, nil)
+
+	if resp, err = c.Caller.Do(req); err == nil && resp.StatusCode != http.StatusOK {
+		err = fmt.Errorf("call failed: %s", resp.Status)
 	}
 	return
 }
 
-// GetTotalValue returns the entry's total number of vaccines
-func (b APIBatchResponse) GetTotalValue() float64 {
-	return float64(b.Amount)
-}
-
-// GetAttributeNames returns the names of the types of vaccinations
-func (b APIBatchResponse) GetAttributeNames() []string {
-	return []string{"total"}
-}
-
-// GetAttributeValues gets the value for each supported type of vaccination
-func (b APIBatchResponse) GetAttributeValues() (values []float64) {
-	return []float64{float64(b.Amount)}
-}
-
-// Timestamp representation for APIBatchResponse. Needed to unmarshal the date as received from the API
-type Timestamp struct {
-	time.Time
-}
-
-// UnmarshalJSON unmarshals the Timestamp in a APIBatchResponse
-func (date *Timestamp) UnmarshalJSON(b []byte) (err error) {
-	var timestamp time.Time
-	if timestamp, err = time.Parse(`"2006-01-02"`, string(b)); err == nil {
-		date.Time = timestamp
+func (c Client) parseResponse(dataType int, body io.ReadCloser) (results []apiclient.APIResponse, err error) {
+	switch dataType {
+	case TypeBatches:
+		results, err = c.parseBatches(body)
 	}
 	return
-}
-
-// Update calls all endpoints and returns this to the caller. This is used by a cache to refresh its content
-func (client *Client) Fetch(ctx context.Context, ch chan<- cache.FetcherResponse) {
-	log.Debug("refreshing Vaccine API cache")
-	start := time.Now()
-	cache.Fetch(ctx, ch, "Vaccines", client.GetBatches)
-	log.WithField("duration", time.Since(start)).Debugf("refreshed Vaccine API cache")
 }
 
 type apiBatchesResponse struct {
@@ -105,43 +99,25 @@ type apiBatchesResponse struct {
 	} `json:"result"`
 }
 
-// GetBatches returns all vaccine batches
-func (client *Client) GetBatches(ctx context.Context) (batches []apiclient.APIResponse, err error) {
-	var stats apiBatchesResponse
-	stats, err = client.call(ctx)
-	if err != nil {
-		return
+func (c Client) parseBatches(body io.ReadCloser) (results []apiclient.APIResponse, err error) {
+	var response apiBatchesResponse
+	if err = json.NewDecoder(body).Decode(&response); err != nil {
+		err = fmt.Errorf("decode failed: %w", err)
 	}
 
-	batches = make([]apiclient.APIResponse, 0, len(stats.Result.Delivered))
-	for _, entry := range stats.Result.Delivered {
-		batches = append(batches, entry)
+	results = make([]apiclient.APIResponse, len(response.Result.Delivered))
+	var mustSort bool
+	var timestamp time.Time
+	for idx, entry := range response.Result.Delivered {
+		results[idx] = entry
+		if !mustSort && entry.GetTimestamp().Before(timestamp) {
+			mustSort = true
+		}
+		timestamp = entry.GetTimestamp()
 	}
 
-	sort.Slice(batches, func(i, j int) bool { return batches[i].GetTimestamp().Before(batches[j].GetTimestamp()) })
-	return
-}
-
-func (client *Client) call(ctx context.Context) (stats apiBatchesResponse, err error) {
-	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, client.getURL()+"/api/v1/delivered.json", nil)
-
-	var resp *http.Response
-	resp, err = client.Caller.Do(req)
-
-	if err != nil {
-		return
-	}
-	defer func(body io.ReadCloser) {
-		_ = body.Close()
-	}(resp.Body)
-
-	if resp.StatusCode != http.StatusOK {
-		return stats, errors.New(resp.Status)
-	}
-
-	var body []byte
-	if body, err = io.ReadAll(resp.Body); err == nil {
-		err = json.Unmarshal(body, &stats)
+	if mustSort {
+		sort.Slice(results, func(i, j int) bool { return results[i].GetTimestamp().Before(results[j].GetTimestamp()) })
 	}
 	return
 }

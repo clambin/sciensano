@@ -1,8 +1,6 @@
 package sciensano
 
 import (
-	"context"
-	"encoding/json"
 	"github.com/clambin/sciensano/apiclient"
 	"time"
 )
@@ -47,21 +45,4 @@ func (v APITestResultsResponse) GetAttributeNames() []string {
 // GetAttributeValues gets the value for each supported type of vaccination
 func (v APITestResultsResponse) GetAttributeValues() (values []float64) {
 	return []float64{float64(v.Total), float64(v.Positive)}
-}
-
-// GetTestResults retrieves all COVID-19 test results.
-func (client *Client) GetTestResults(ctx context.Context) (results []apiclient.APIResponse, err error) {
-	var body []byte
-	body, err = client.call(ctx, "tests")
-	if err != nil {
-		return
-	}
-
-	var response []*APITestResultsResponse
-	err = json.Unmarshal(body, &response)
-	if err != nil {
-		return
-	}
-
-	return copyMaybeSort(response), nil
 }

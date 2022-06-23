@@ -1,10 +1,12 @@
 package cache
 
 import (
+	"errors"
 	"github.com/clambin/cache"
 	"github.com/clambin/simplejson/v3/data"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
+	log "github.com/sirupsen/logrus"
 	"sync"
 	"time"
 )
@@ -70,14 +72,19 @@ func (cache *Cache) Save(name string, entry *Entry) {
 func (cache *Cache) MaybeGenerate(name string, generate func() (*data.Table, error)) (report *data.Table, err error) {
 	entry := cache.Load(name)
 	entry.Once.Do(func() {
+		log.Debugf("generate report for %s", name)
 		entry.Data, err = generate()
 		if err != nil {
+			log.WithError(err).Warningf("failed to generate report '%s'", name)
 			entry = nil
 		}
 		cache.Save(name, entry)
 	})
 	if err == nil {
 		report = entry.Data
+		if report == nil {
+			err = errors.New("not available")
+		}
 	}
 	return
 }
@@ -91,8 +98,11 @@ func (cache *Cache) Stats() (stats map[string]int) {
 	for _, name := range cache.GetKeys() {
 		entries, ok := cache.Get(name)
 		var count int
-		if ok {
-			count = entries.Data.Frame.Rows()
+		if ok && entries != nil && entries.Data != nil {
+			if cols := entries.Data.GetColumns(); len(cols) > 0 {
+				values, _ := entries.Data.GetValues(cols[0])
+				count = len(values)
+			}
 		}
 		stats[name] = count
 	}

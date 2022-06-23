@@ -2,89 +2,97 @@ package vaccines_test
 
 import (
 	"context"
+	"encoding/json"
 	"github.com/clambin/go-metrics/client"
-	"github.com/clambin/sciensano/apiclient"
-	"github.com/clambin/sciensano/apiclient/cache"
 	"github.com/clambin/sciensano/apiclient/vaccines"
-	"github.com/clambin/sciensano/apiclient/vaccines/fake"
+	"github.com/go-http-utils/headers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"net/http"
 	"net/http/httptest"
+	"sync"
 	"testing"
 	"time"
 )
 
-func TestClient_GetBatches(t *testing.T) {
-	server := fake.Server{}
-	apiServer := httptest.NewServer(http.HandlerFunc(server.Handler))
+func TestClient_GetLastUpdates(t *testing.T) {
+	s := &server{}
+	testServer := httptest.NewServer(http.HandlerFunc(s.handle))
 
-	c := vaccines.Client{
-		Caller: &client.BaseClient{HTTPClient: http.DefaultClient},
-		URL:    apiServer.URL,
-	}
+	c := vaccines.Client{Caller: &client.InstrumentedClient{Application: "test"}}
+	c.URL = testServer.URL
 
-	batches, err := c.GetBatches(context.Background())
+	ctx := context.Background()
+	lastModified, err := c.GetLastUpdates(ctx, vaccines.TypeBatches)
 	require.NoError(t, err)
-	require.Len(t, batches, 3)
-	assert.Equal(t, 300, batches[0].(*vaccines.APIBatchResponse).Amount)
-	assert.Equal(t, 200, batches[1].(*vaccines.APIBatchResponse).Amount)
-	assert.Equal(t, 100, batches[2].(*vaccines.APIBatchResponse).Amount)
+	assert.NotZero(t, lastModified)
 
-	server.Fail = true
-	_, err = c.GetBatches(context.Background())
+	_, err = c.GetLastUpdates(ctx, -1)
 	require.Error(t, err)
 
-	apiServer.Close()
-	_, err = c.GetBatches(context.Background())
+	testServer.Close()
+	_, err = c.GetLastUpdates(ctx, vaccines.TypeBatches)
 	require.Error(t, err)
 }
 
-func BenchmarkClient_GetBatches(b *testing.B) {
-	server := fake.Server{}
-	apiServer := httptest.NewServer(http.HandlerFunc(server.Handler))
+func TestClient_Fetch(t *testing.T) {
+	s := &server{}
+	testServer := httptest.NewServer(http.HandlerFunc(s.handle))
 
-	c := vaccines.Client{
-		Caller: &client.BaseClient{HTTPClient: http.DefaultClient},
-		URL:    apiServer.URL,
+	c := vaccines.Client{Caller: &client.InstrumentedClient{
+		Application: "test",
+	}}
+	c.URL = testServer.URL
+	ctx := context.Background()
+
+	for i := vaccines.TypeBatches; i <= vaccines.TypeBatches; i++ {
+		entries, err := c.Fetch(ctx, i)
+		assert.NoError(t, err, i)
+		assert.NotEmpty(t, entries)
 	}
 
-	for i := 0; i < b.N; i++ {
-		_, err := c.GetBatches(context.Background())
-		if err != nil {
-			b.Fatal(err)
+	_, err := c.Fetch(ctx, -1)
+	require.Error(t, err)
+
+	testServer.Close()
+	_, err = c.Fetch(ctx, vaccines.TypeBatches)
+	require.Error(t, err)
+}
+
+type server struct {
+	cache map[string][]byte
+	lock  sync.Mutex
+}
+
+func (s *server) handle(w http.ResponseWriter, req *http.Request) {
+	if req.Method == http.MethodHead {
+		w.Header().Set(headers.LastModified, time.Now().Format(time.RFC1123))
+		return
+	}
+
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
+	if s.cache == nil {
+		s.cache = make(map[string][]byte)
+	}
+
+	body, found := s.cache[req.URL.Path]
+	if !found {
+		switch req.URL.Path {
+		case "/api/v1/delivered.json":
+			output := struct {
+				Result struct {
+					Delivered []*vaccines.APIBatchResponse `json:"delivered"`
+				} `json:"result"`
+			}{}
+			output.Result.Delivered = batchResponse
+			body, _ = json.Marshal(output)
+		default:
+			http.Error(w, "path not found", http.StatusNotFound)
+			return
 		}
+		s.cache[req.URL.Path] = body
 	}
-}
-
-func TestBatch_Measurement(t *testing.T) {
-	b := vaccines.APIBatchResponse{
-		Date:         vaccines.Timestamp{Time: time.Now()},
-		Manufacturer: "A",
-		Amount:       200,
-	}
-
-	assert.NotZero(t, b.GetTimestamp())
-	assert.Empty(t, b.GetGroupFieldValue(apiclient.GroupByAgeGroup))
-	assert.Equal(t, "A", b.GetGroupFieldValue(apiclient.GroupByManufacturer))
-	assert.Equal(t, 200.0, b.GetTotalValue())
-	assert.Equal(t, []string{"total"}, b.GetAttributeNames())
-	assert.Equal(t, []float64{200}, b.GetAttributeValues())
-}
-
-func TestClient_Refresh(t *testing.T) {
-	server := fake.Server{}
-	apiServer := httptest.NewServer(http.HandlerFunc(server.Handler))
-	defer apiServer.Close()
-
-	c := vaccines.Client{
-		Caller: &client.BaseClient{HTTPClient: http.DefaultClient},
-		URL:    apiServer.URL,
-	}
-
-	ch := make(chan cache.FetcherResponse)
-	go c.Fetch(context.Background(), ch)
-
-	response := <-ch
-	assert.Equal(t, "Vaccines", response.Name)
+	_, _ = w.Write(body)
 }

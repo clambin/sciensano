@@ -1,7 +1,6 @@
 package reporter_test
 
 import (
-	"context"
 	"github.com/clambin/go-metrics/client"
 	"github.com/clambin/go-metrics/tools"
 	"github.com/clambin/sciensano/reporter"
@@ -14,7 +13,6 @@ import (
 func TestReporterMetrics(t *testing.T) {
 	m := client.NewMetrics("foo", "")
 	r := reporter.NewWithOptions(time.Hour, client.Options{PrometheusMetrics: m})
-	go r.APICache.Run(context.Background(), time.Minute)
 
 	assert.Eventually(t, func() bool {
 		_, err := r.TestResults.Get()

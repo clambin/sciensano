@@ -1,9 +1,11 @@
 package vaccines
 
 import (
-	"errors"
+	"context"
+	"fmt"
 	"github.com/clambin/sciensano/apiclient"
-	apiCache "github.com/clambin/sciensano/apiclient/cache"
+	"github.com/clambin/sciensano/apiclient/fetcher"
+	"github.com/clambin/sciensano/apiclient/vaccines"
 	reportCache "github.com/clambin/sciensano/reporter/cache"
 	"github.com/clambin/sciensano/reporter/table"
 	"github.com/clambin/simplejson/v3/data"
@@ -11,16 +13,16 @@ import (
 
 type Reporter struct {
 	ReportCache *reportCache.Cache
-	APICache    apiCache.Holder
+	APIClient   fetcher.Fetcher
 }
 
 // Get returns all vaccines data
 func (r *Reporter) Get() (results *data.Table, err error) {
 	return r.ReportCache.MaybeGenerate("Vaccines", func() (*data.Table, error) {
-		apiResult, ok := r.APICache.Get("Vaccines")
+		apiResult, err2 := r.APIClient.Fetch(context.Background(), vaccines.TypeBatches)
 
-		if !ok {
-			return nil, errors.New("cache does not contain Vaccines entries")
+		if err2 != nil {
+			return nil, fmt.Errorf("call failed: %w", err2)
 		}
 		return table.NewFromAPIResponse(apiResult), nil
 
@@ -30,10 +32,10 @@ func (r *Reporter) Get() (results *data.Table, err error) {
 // GetByManufacturer returns all hospitalisations, grouped by manufacturer
 func (r *Reporter) GetByManufacturer() (results *data.Table, err error) {
 	return r.ReportCache.MaybeGenerate("VaccinesByManufacturer", func() (*data.Table, error) {
-		apiResult, ok := r.APICache.Get("Vaccines")
+		apiResult, err2 := r.APIClient.Fetch(context.Background(), vaccines.TypeBatches)
 
-		if !ok {
-			return nil, errors.New("cache does not contain Vaccines entries")
+		if err2 != nil {
+			return nil, fmt.Errorf("call failed: %w", err2)
 		}
 		return table.NewGroupedFromAPIResponse(apiResult, apiclient.GroupByManufacturer), nil
 	})

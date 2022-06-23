@@ -2,14 +2,18 @@ package main
 
 import (
 	"errors"
+	"github.com/clambin/sciensano/demographics"
+	"github.com/clambin/sciensano/reporter"
 	"github.com/clambin/sciensano/simplejsonserver"
 	"github.com/clambin/sciensano/version"
+	"github.com/clambin/simplejson/v3"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/alecthomas/kingpin.v2"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
 	"path/filepath"
+	"time"
 )
 
 func main() {
@@ -37,9 +41,16 @@ func main() {
 		log.SetLevel(log.DebugLevel)
 	}
 
-	handler := simplejsonserver.NewServer(demographicsPath)
+	s := simplejsonserver.Server{
+		Server:   simplejson.Server{Name: "sciensano"},
+		Reporter: reporter.New(1 * time.Minute),
+		Demographics: &demographics.Server{
+			Path:     demographicsPath,
+			Interval: 24 * time.Hour,
+		},
+	}
 
-	if err := handler.Run(port); !errors.Is(err, http.ErrServerClosed) {
+	if err := s.Run(port); !errors.Is(err, http.ErrServerClosed) {
 		log.WithError(err).Fatal("failed to start HTTP server")
 	}
 }

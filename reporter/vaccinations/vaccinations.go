@@ -1,9 +1,9 @@
 package vaccinations
 
 import (
-	"fmt"
+	"context"
 	"github.com/clambin/sciensano/apiclient"
-	apiCache "github.com/clambin/sciensano/apiclient/cache"
+	"github.com/clambin/sciensano/apiclient/fetcher"
 	"github.com/clambin/sciensano/apiclient/sciensano"
 	reportCache "github.com/clambin/sciensano/reporter/cache"
 	"github.com/clambin/sciensano/reporter/table"
@@ -24,16 +24,15 @@ const (
 
 type Reporter struct {
 	ReportCache *reportCache.Cache
-	APICache    apiCache.Holder
+	APIClient   fetcher.Fetcher
 }
 
 // Get returns all vaccinations
 func (r *Reporter) Get() (results *data.Table, err error) {
 	return r.ReportCache.MaybeGenerate("Vaccinations", func() (output *data.Table, err2 error) {
-		if apiResult, found := r.APICache.Get("Vaccinations"); found {
+		var apiResult []apiclient.APIResponse
+		if apiResult, err2 = r.APIClient.Fetch(context.Background(), sciensano.TypeVaccinations); err2 == nil {
 			output = table.NewFromAPIResponse(apiResult)
-		} else {
-			err2 = fmt.Errorf("cache does not contain Vaccinations entries")
 		}
 		return output, err2
 	})
@@ -64,9 +63,10 @@ func (r *Reporter) GetByManufacturer() (results *data.Table, err error) {
 }
 
 func (r *Reporter) getByType(mode int, vaccinationType int) (results *data.Table, err error) {
-	apiResult, found := r.APICache.Get("Vaccinations")
-	if !found {
-		err = fmt.Errorf("cache does not contain Vaccinations entries")
+	var apiResult []apiclient.APIResponse
+	apiResult, err = r.APIClient.Fetch(context.Background(), sciensano.TypeVaccinations)
+	if err != nil {
+		return
 	}
 
 	if vaccinationType != TypeAll {

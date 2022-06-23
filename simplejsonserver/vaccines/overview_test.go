@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/clambin/go-metrics/client"
 	"github.com/clambin/sciensano/apiclient"
-	mockCache "github.com/clambin/sciensano/apiclient/cache/mocks"
+	"github.com/clambin/sciensano/apiclient/fetcher/mocks"
 	"github.com/clambin/sciensano/apiclient/vaccines"
 	"github.com/clambin/sciensano/reporter"
 	vaccinesHandler "github.com/clambin/sciensano/simplejsonserver/vaccines"
@@ -18,27 +18,25 @@ import (
 )
 
 func TestHandler_TableQuery_Vaccines(t *testing.T) {
-	cache := &mockCache.Holder{}
 	timestamp := time.Now().UTC()
-	cache.
-		On("Get", "Vaccines").
-		Return([]apiclient.APIResponse{
-			&vaccines.APIBatchResponse{
-				Date:   vaccines.Timestamp{Time: timestamp.Add(-24 * time.Hour)},
-				Amount: 100,
-			},
-			&vaccines.APIBatchResponse{
-				Date:   vaccines.Timestamp{Time: timestamp},
-				Amount: 200,
-			},
-			&vaccines.APIBatchResponse{
-				Date:   vaccines.Timestamp{Time: timestamp.Add(24 * time.Hour)},
-				Amount: 200,
-			},
-		}, true)
+	f := &mocks.Fetcher{}
+	f.On("Fetch", mock.AnythingOfType("*context.emptyCtx"), vaccines.TypeBatches).Return([]apiclient.APIResponse{
+		&vaccines.APIBatchResponse{
+			Date:   vaccines.Timestamp{Time: timestamp.Add(-24 * time.Hour)},
+			Amount: 100,
+		},
+		&vaccines.APIBatchResponse{
+			Date:   vaccines.Timestamp{Time: timestamp},
+			Amount: 200,
+		},
+		&vaccines.APIBatchResponse{
+			Date:   vaccines.Timestamp{Time: timestamp.Add(24 * time.Hour)},
+			Amount: 200,
+		},
+	}, nil)
 
 	r := reporter.NewWithOptions(time.Hour, client.Options{})
-	r.Vaccines.APICache = cache
+	r.Vaccines.APIClient = f
 	h := vaccinesHandler.OverviewHandler{Reporter: r}
 
 	req := query.Request{Args: query.Args{Args: common.Args{Range: common.Range{To: timestamp}}}}
@@ -50,5 +48,5 @@ func TestHandler_TableQuery_Vaccines(t *testing.T) {
 		{Text: "total", Data: query.NumberColumn{100, 300}},
 	}}, response)
 
-	mock.AssertExpectationsForObjects(t, cache)
+	mock.AssertExpectationsForObjects(t, f)
 }

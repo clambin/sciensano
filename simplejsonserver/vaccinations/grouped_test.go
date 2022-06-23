@@ -2,14 +2,17 @@ package vaccinations_test
 
 import (
 	"context"
+	"errors"
 	"github.com/clambin/go-metrics/client"
-	mockCache "github.com/clambin/sciensano/apiclient/cache/mocks"
+	"github.com/clambin/sciensano/apiclient/fetcher/mocks"
+	"github.com/clambin/sciensano/apiclient/sciensano"
 	"github.com/clambin/sciensano/reporter"
 	vaccinations2 "github.com/clambin/sciensano/reporter/vaccinations"
 	"github.com/clambin/sciensano/simplejsonserver/vaccinations"
 	"github.com/clambin/simplejson/v3/common"
 	"github.com/clambin/simplejson/v3/query"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"testing"
 	"time"
@@ -94,11 +97,11 @@ func TestGroupedHandler(t *testing.T) {
 	ctx := context.Background()
 	req := query.Request{Args: query.Args{Args: common.Args{Range: common.Range{To: timestamp.Add(24 * time.Hour)}}}}
 
-	cache := &mockCache.Holder{}
-	cache.On("Get", "Vaccinations").Return(vaccinationTestData, true)
+	f := &mocks.Fetcher{}
+	f.On("Fetch", mock.AnythingOfType("*context.emptyCtx"), sciensano.TypeVaccinations).Return(vaccinationTestData, nil)
 
 	r := reporter.NewWithOptions(time.Hour, client.Options{})
-	r.Vaccinations.APICache = cache
+	r.Vaccinations.APIClient = f
 
 	for index, testCase := range testCases {
 		h := vaccinations.GroupedHandler{
@@ -111,14 +114,16 @@ func TestGroupedHandler(t *testing.T) {
 		require.NoError(t, err, index)
 		assert.Equal(t, testCase.expected, response, index)
 	}
+
+	mock.AssertExpectationsForObjects(t, f)
 }
 
 func TestGroupedHandler_Failure(t *testing.T) {
-	cache := &mockCache.Holder{}
-	cache.On("Get", "Vaccinations").Return(nil, false)
+	f := &mocks.Fetcher{}
+	f.On("Fetch", mock.AnythingOfType("*context.emptyCtx"), sciensano.TypeVaccinations).Return(nil, errors.New("fail"))
 
 	r := reporter.NewWithOptions(time.Hour, client.Options{})
-	r.Vaccinations.APICache = cache
+	r.Vaccinations.APIClient = f
 
 	h := vaccinations.GroupedHandler{
 		Reporter: r,
@@ -128,19 +133,21 @@ func TestGroupedHandler_Failure(t *testing.T) {
 
 	_, err := h.Endpoints().Query(context.Background(), query.Request{})
 	require.Error(t, err)
+
+	mock.AssertExpectationsForObjects(t, f)
 }
 
 func BenchmarkVaccinationsGroupedHandler(b *testing.B) {
-	cache := &mockCache.Holder{}
 	content := buildBigResponse()
-	cache.On("Get", "Vaccinations").Return(content, true)
+	f := &mocks.Fetcher{}
+	f.On("Fetch", mock.AnythingOfType("*context.emptyCtx"), sciensano.TypeVaccinations).Return(content, nil)
 
 	r := reporter.NewWithOptions(time.Hour, client.Options{})
-	r.Vaccinations.APICache = cache
+	r.Vaccinations.APIClient = f
 
 	h := vaccinations.GroupedHandler{
 		Reporter: r,
-		Type:     vaccinations2.TypeBooster,
+		Type:     vaccinations2.TypePartial,
 		Scope:    vaccinations.ScopeAge,
 	}
 
