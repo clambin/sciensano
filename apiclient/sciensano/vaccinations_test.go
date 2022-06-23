@@ -1,8 +1,10 @@
 package sciensano_test
 
 import (
+	"encoding/json"
 	"github.com/clambin/sciensano/apiclient"
 	"github.com/clambin/sciensano/apiclient/sciensano"
+	jsoniter "github.com/json-iterator/go"
 	"github.com/mailru/easyjson"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -69,3 +71,68 @@ var (
 		},
 	}
 )
+
+func BenchmarkAPIVaccinationsResponses_UnmarshalEasyJSON(b *testing.B) {
+	var body []byte
+	var err error
+	if body, err = os.ReadFile("../../data/vaccinations.json"); err != nil {
+		b.Fatal(err)
+	}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		var response sciensano.APIVaccinationsResponses
+		if err = easyjson.Unmarshal(body, &response); err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+func BenchmarkAPIVaccinationsResponses_UnmarshalJSON(b *testing.B) {
+	type vaccinationEntry struct {
+		TimeStamp    sciensano.TimeStamp `json:"DATE"`
+		Manufacturer string              `json:"BRAND"`
+		Region       string              `json:"REGION"`
+		AgeGroup     string              `json:"AGEGROUP"`
+		Gender       string              `json:"SEX"`
+		Dose         string              `json:"DOSE"`
+		Count        int                 `json:"COUNT"`
+	}
+
+	var body []byte
+	var err error
+	if body, err = os.ReadFile("../../data/vaccinations.json"); err != nil {
+		b.Fatal(err)
+	}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		var response []vaccinationEntry
+		if err = json.Unmarshal(body, &response); err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+func BenchmarkAPIVaccinationsResponses_UnmarshalJSONIter(b *testing.B) {
+	type vaccinationEntry struct {
+		TimeStamp    sciensano.TimeStamp `json:"DATE"`
+		Manufacturer string              `json:"BRAND"`
+		Region       string              `json:"REGION"`
+		AgeGroup     string              `json:"AGEGROUP"`
+		Gender       string              `json:"SEX"`
+		Dose         string              `json:"DOSE"`
+		Count        int                 `json:"COUNT"`
+	}
+
+	var body []byte
+	var err error
+	if body, err = os.ReadFile("../../data/vaccinations.json"); err != nil {
+		b.Fatal(err)
+	}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		var response []vaccinationEntry
+		if err = jsoniter.Unmarshal(body, &response); err != nil {
+			b.Fatal(err)
+		}
+	}
+}
