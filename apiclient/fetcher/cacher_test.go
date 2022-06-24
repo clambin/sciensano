@@ -109,6 +109,20 @@ func TestCacher_Failures(t *testing.T) {
 	mock.AssertExpectationsForObjects(t, f)
 }
 
+func TestCacher_AutoRefresh(t *testing.T) {
+	f := &mocks.Fetcher{}
+	f.On("DataTypes").Return(map[int]string{0: "test"})
+	f.On("Fetch", mock.AnythingOfType("*context.cancelCtx"), 0).Return(nil, nil).Once()
+	c := fetcher.NewCacher(f)
+	ctx, cancel := context.WithCancel(context.Background())
+
+	go c.AutoRefresh(ctx, time.Hour)
+
+	assert.Eventually(t, func() bool { return c.Len() > 0 }, time.Second, 20*time.Millisecond)
+
+	cancel()
+}
+
 func BenchmarkCacher_Fetch(b *testing.B) {
 	f := &fakeClient{}
 	c := fetcher.NewCacher(f)

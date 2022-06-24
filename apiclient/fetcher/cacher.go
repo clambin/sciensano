@@ -93,6 +93,10 @@ func (c *Cacher) refresh(ctx context.Context) {
 	wg.Wait()
 }
 
+func (c *Cacher) Len() int {
+	return c.Cache.Len()
+}
+
 func (c *Cacher) checkCache(ctx context.Context, dataType int) (entry cacheEntry, err error) {
 	c.lock.Lock()
 	defer c.lock.Unlock()
