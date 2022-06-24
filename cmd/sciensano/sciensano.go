@@ -43,7 +43,7 @@ func main() {
 
 	s := simplejsonserver.Server{
 		Server:   simplejson.Server{Name: "sciensano"},
-		Reporter: reporter.New(1 * time.Minute),
+		Reporter: reporter.New(15 * time.Minute),
 		Demographics: &demographics.Server{
 			Path:     demographicsPath,
 			Interval: 24 * time.Hour,
