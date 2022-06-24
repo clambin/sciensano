@@ -131,7 +131,7 @@ func BenchmarkAPIVaccinationsResponses_UnmarshalJSONIter(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		var response []vaccinationEntry
-		if err = jsoniter.Unmarshal(body, &response); err != nil {
+		if err = jsoniter.ConfigCompatibleWithStandardLibrary.Unmarshal(body, &response); err != nil {
 			b.Fatal(err)
 		}
 	}

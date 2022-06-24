@@ -19,19 +19,27 @@ func TestReporterMetrics(t *testing.T) {
 		return err == nil
 	}, time.Minute, time.Second)
 
+	len1 := len(r.Cases.APIClient.DataTypes())
+	len2 := len(r.Vaccines.APIClient.DataTypes())
+	l := len1 + len2
+
 	ch := make(chan prometheus.Metric)
 	go m.Latency.Collect(ch)
 
-	metric := <-ch
-	assert.Equal(t, `foo_api_latency`, tools.MetricName(metric))
-	//assert.Equal(t, uint64(1), tools.MetricValue(metric).GetSummary().GetSampleCount())
-	assert.Equal(t, "GET", tools.MetricLabel(metric, "method"))
+	for i := 0; i < l; i++ {
+		metric := <-ch
+		assert.Equal(t, "foo_api_latency", tools.MetricName(metric))
+		assert.Contains(t, []string{"sciensano", "vaccines"}, tools.MetricLabel(metric, "application"))
+		assert.Contains(t, []string{"GET", "HEAD"}, tools.MetricLabel(metric, "method"))
+	}
 
 	ch = make(chan prometheus.Metric)
 	go m.Errors.Collect(ch)
 
-	metric = <-ch
-	assert.Equal(t, `foo_api_errors_total`, tools.MetricName(metric))
-	//assert.Equal(t, float64(0), tools.MetricValue(metric).GetCounter().GetValue())
-	assert.Equal(t, "GET", tools.MetricLabel(metric, "method"))
+	for i := 0; i < l; i++ {
+		metric := <-ch
+		assert.Equal(t, "foo_api_errors_total", tools.MetricName(metric))
+		assert.Contains(t, []string{"sciensano", "vaccines"}, tools.MetricLabel(metric, "application"))
+		assert.Contains(t, []string{"GET", "HEAD"}, tools.MetricLabel(metric, "method"))
+	}
 }
