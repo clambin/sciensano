@@ -9,7 +9,7 @@ require (
 	github.com/prometheus/common v0.35.0 // indirect
 	github.com/prometheus/procfs v0.7.3 // indirect
 	github.com/sirupsen/logrus v1.8.1
-	github.com/stretchr/testify v1.7.4
+	github.com/stretchr/testify v1.7.5
 	golang.org/x/sys v0.0.0-20220622161953-175b2fd9d664 // indirect
 	google.golang.org/protobuf v1.28.0 // indirect
 )
@@ -20,6 +20,7 @@ require (
 	github.com/clambin/simplejson/v3 v3.4.2
 	github.com/go-http-utils/headers v0.0.0-20181008091004-fed159eddc2a
 	github.com/grafana/grafana-plugin-sdk-go v0.138.0
+	github.com/json-iterator/go v1.1.12
 	github.com/mailru/easyjson v0.7.7
 	github.com/rovaughn/fastcsv v0.0.0-20170331030356-1090019547fb
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
@@ -38,7 +39,6 @@ require (
 	github.com/google/go-cmp v0.5.7 // indirect
 	github.com/gorilla/mux v1.8.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
-	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/compress v1.13.1 // indirect
 	github.com/mattetti/filebuffer v1.0.1 // indirect
 	github.com/mattn/go-runewidth v0.0.9 // indirect
