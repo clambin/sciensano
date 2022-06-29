@@ -37,11 +37,11 @@ func (server *Server) Run(port int) (err error) {
 	server.Initialize(context.Background())
 	r := server.GetRouter()
 	r.PathPrefix("/debug/pprof/").Handler(http.DefaultServeMux)
-	r.Path("/health").Handler(http.HandlerFunc(server.health))
+	r.Path("/health").Handler(http.HandlerFunc(server.Health))
 	return http.ListenAndServe(fmt.Sprintf(":%d", port), r)
 }
 
-func (server *Server) health(w http.ResponseWriter, _ *http.Request) {
+func (server *Server) Health(w http.ResponseWriter, _ *http.Request) {
 	response := struct {
 		Handlers      int
 		ReporterCache map[string]int

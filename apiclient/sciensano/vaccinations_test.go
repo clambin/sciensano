@@ -2,6 +2,7 @@ package sciensano_test
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/clambin/sciensano/apiclient"
 	"github.com/clambin/sciensano/apiclient/sciensano"
 	jsoniter "github.com/json-iterator/go"
@@ -67,6 +68,49 @@ func TestAPIVaccinationsResponse_Attributes(t *testing.T) {
 		assert.Equal(t, "Flanders", entry.GetGroupFieldValue(apiclient.GroupByRegion))
 		assert.Equal(t, "45-54", entry.GetGroupFieldValue(apiclient.GroupByAgeGroup))
 		assert.Equal(t, "A", entry.GetGroupFieldValue(apiclient.GroupByManufacturer))
+	}
+}
+
+func TestDoseType_UnmarshalJSON(t *testing.T) {
+	tests := []struct {
+		d        sciensano.DoseType
+		body     string
+		expected sciensano.DoseType
+		wantErr  assert.ErrorAssertionFunc
+	}{
+		{body: `"A"`, expected: sciensano.TypeVaccinationPartial, wantErr: assert.NoError},
+		{body: `"B"`, expected: sciensano.TypeVaccinationFull, wantErr: assert.NoError},
+		{body: `"C"`, expected: sciensano.TypeVaccinationSingle, wantErr: assert.NoError},
+		{body: `"E"`, expected: sciensano.TypeVaccinationBooster, wantErr: assert.NoError},
+		{body: `"E2"`, expected: sciensano.TypeVaccinationBooster2, wantErr: assert.NoError},
+		{body: `""`, wantErr: assert.Error},
+		{body: `A`, wantErr: assert.Error},
+	}
+	for _, tt := range tests {
+		tt.wantErr(t, tt.d.UnmarshalJSON([]byte(tt.body)), fmt.Sprintf("UnmarshalJSON(%v)", tt.body))
+	}
+}
+
+func TestDoseType_MarshalJSON(t *testing.T) {
+	tests := []struct {
+		d        sciensano.DoseType
+		wantBody string
+		wantErr  assert.ErrorAssertionFunc
+	}{
+		{d: sciensano.DoseType(sciensano.TypeVaccinationPartial), wantBody: `"A"`, wantErr: assert.NoError},
+		{d: sciensano.DoseType(sciensano.TypeVaccinationFull), wantBody: `"B"`, wantErr: assert.NoError},
+		{d: sciensano.DoseType(sciensano.TypeVaccinationSingle), wantBody: `"C"`, wantErr: assert.NoError},
+		{d: sciensano.DoseType(sciensano.TypeVaccinationBooster), wantBody: `"E"`, wantErr: assert.NoError},
+		{d: sciensano.DoseType(sciensano.TypeVaccinationBooster2), wantBody: `"E2"`, wantErr: assert.NoError},
+		{d: sciensano.DoseType(-1), wantErr: assert.Error},
+	}
+
+	for _, tt := range tests {
+		gotBody, err := tt.d.MarshalJSON()
+		if !tt.wantErr(t, err, "MarshalJSON()") {
+			return
+		}
+		assert.Equalf(t, tt.wantBody, string(gotBody), "MarshalJSON()")
 	}
 }
 

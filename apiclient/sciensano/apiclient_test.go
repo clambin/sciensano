@@ -142,3 +142,13 @@ func (b *bigResponseCaller) Do(_ *http.Request) (resp *http.Response, err error)
 	}
 	return
 }
+
+func TestClient_DataTypes(t *testing.T) {
+	c := sciensano.Client{}
+	dataTypes := c.DataTypes()
+
+	for _, code := range []int{sciensano.TypeCases, sciensano.TypeHospitalisations, sciensano.TypeMortality, sciensano.TypeTestResults, sciensano.TypeVaccinations} {
+		_, found := dataTypes[code]
+		assert.True(t, found, code)
+	}
+}

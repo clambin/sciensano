@@ -11,6 +11,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"net/http"
+	"net/http/httptest"
 	"sync"
 	"testing"
 	"time"
@@ -79,4 +81,10 @@ func TestRun(t *testing.T) {
 		}(handler, target)
 	}
 	wg.Wait()
+
+	b := httptest.NewRecorder()
+	h.Health(b, nil)
+	assert.Equal(t, http.StatusOK, b.Code)
+	assert.Contains(t, b.Body.String(), `"Handlers": `)
+	assert.Contains(t, b.Body.String(), `"ReporterCache": `)
 }
