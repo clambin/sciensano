@@ -20,6 +20,8 @@ const (
 	TypeFull
 	// TypeBooster filters booster vaccinations
 	TypeBooster
+	// TypeBooster2 filters 2nd booster vaccinations
+	TypeBooster2
 )
 
 type Reporter struct {
@@ -81,9 +83,19 @@ func filterVaccinations(input []apiclient.APIResponse, vaccinationType int) (out
 	for _, entry := range input {
 		// this is faster than using cache.GetAttributeValues()
 		dose := entry.(*sciensano.APIVaccinationsResponse).Dose
-		if (vaccinationType == TypePartial && dose == "A") ||
-			(vaccinationType == TypeFull && (dose == "B" || dose == "C")) ||
-			(vaccinationType == TypeBooster && dose == "E") {
+
+		var add bool
+		switch vaccinationType {
+		case TypePartial:
+			add = dose == sciensano.TypeVaccinationPartial
+		case TypeFull:
+			add = dose == sciensano.TypeVaccinationFull || dose == sciensano.TypeVaccinationSingle
+		case TypeBooster:
+			add = dose == sciensano.TypeVaccinationBooster
+		case TypeBooster2:
+			add = dose == sciensano.TypeVaccinationBooster2
+		}
+		if add {
 			output = append(output, entry)
 		}
 	}

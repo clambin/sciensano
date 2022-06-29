@@ -39,32 +39,32 @@ func TestHandler_TableQuery_VaccinesTime(t *testing.T) {
 		Return([]apiclient.APIResponse{
 			&sciensano.APIVaccinationsResponse{
 				TimeStamp: sciensano.TimeStamp{Time: timestamp.Add(-6 * 24 * time.Hour)},
-				Dose:      "A",
+				Dose:      sciensano.TypeVaccinationPartial,
 				Count:     50,
 			},
 			&sciensano.APIVaccinationsResponse{
 				TimeStamp: sciensano.TimeStamp{Time: timestamp.Add(-5 * 24 * time.Hour)},
-				Dose:      "A",
+				Dose:      sciensano.TypeVaccinationPartial,
 				Count:     25,
 			},
 			&sciensano.APIVaccinationsResponse{
 				TimeStamp: sciensano.TimeStamp{Time: timestamp.Add(-4 * 24 * time.Hour)},
-				Dose:      "A",
+				Dose:      sciensano.TypeVaccinationPartial,
 				Count:     15,
 			},
 			&sciensano.APIVaccinationsResponse{
 				TimeStamp: sciensano.TimeStamp{Time: timestamp.Add(-3 * 24 * time.Hour)},
-				Dose:      "A",
+				Dose:      sciensano.TypeVaccinationPartial,
 				Count:     15,
 			},
 			&sciensano.APIVaccinationsResponse{
 				TimeStamp: sciensano.TimeStamp{Time: timestamp.Add(-2 * 24 * time.Hour)},
-				Dose:      "A",
+				Dose:      sciensano.TypeVaccinationPartial,
 				Count:     40,
 			},
 			&sciensano.APIVaccinationsResponse{
 				TimeStamp: sciensano.TimeStamp{Time: timestamp.Add(-1 * 24 * time.Hour)},
-				Dose:      "A",
+				Dose:      sciensano.TypeVaccinationPartial,
 				Count:     15,
 			},
 		}, nil)

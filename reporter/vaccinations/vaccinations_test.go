@@ -22,7 +22,7 @@ var (
 			Manufacturer: "Pfizer-BioNTech",
 			Region:       "Flanders",
 			AgeGroup:     "25-34",
-			Dose:         "A",
+			Dose:         sciensano.TypeVaccinationPartial,
 			Count:        1,
 		},
 		&sciensano.APIVaccinationsResponse{
@@ -30,7 +30,7 @@ var (
 			Manufacturer: "AstraZeneca-Oxford",
 			Region:       "Flanders",
 			AgeGroup:     "35-44",
-			Dose:         "A",
+			Dose:         sciensano.TypeVaccinationPartial,
 			Count:        1,
 		},
 		&sciensano.APIVaccinationsResponse{
@@ -38,7 +38,7 @@ var (
 			Manufacturer: "Johnson&Johnson",
 			Region:       "Flanders",
 			AgeGroup:     "35-44",
-			Dose:         "C",
+			Dose:         sciensano.TypeVaccinationSingle,
 			Count:        4,
 		},
 		&sciensano.APIVaccinationsResponse{
@@ -46,7 +46,7 @@ var (
 			Manufacturer: "Moderna",
 			Region:       "Brussels",
 			AgeGroup:     "35-44",
-			Dose:         "B",
+			Dose:         sciensano.TypeVaccinationFull,
 			Count:        1,
 		},
 		&sciensano.APIVaccinationsResponse{
@@ -54,7 +54,7 @@ var (
 			Manufacturer: "Moderna",
 			Region:       "Brussels",
 			AgeGroup:     "35-44",
-			Dose:         "E",
+			Dose:         sciensano.TypeVaccinationBooster,
 			Count:        5,
 		},
 		&sciensano.APIVaccinationsResponse{
@@ -62,7 +62,7 @@ var (
 			Manufacturer: "Moderna",
 			Region:       "Brussels",
 			AgeGroup:     "35-44",
-			Dose:         "E",
+			Dose:         sciensano.TypeVaccinationBooster,
 			Count:        5,
 		},
 	}
@@ -85,7 +85,7 @@ func TestReporter_Get(t *testing.T) {
 		time.Date(2021, time.March, 11, 0, 0, 0, 0, time.UTC),
 	}, entries.GetTimestamps())
 
-	assert.Equal(t, []string{"time", "partial", "full", "singledose", "booster"}, entries.GetColumns())
+	assert.Equal(t, []string{"time", "partial", "full", "singledose", "booster", "booster2"}, entries.GetColumns())
 
 	values, ok := entries.GetFloatValues("partial")
 	require.True(t, ok)
@@ -102,6 +102,10 @@ func TestReporter_Get(t *testing.T) {
 	values, ok = entries.GetFloatValues("booster")
 	require.True(t, ok)
 	assert.Equal(t, []float64{5, 5}, values)
+
+	values, ok = entries.GetFloatValues("booster2")
+	require.True(t, ok)
+	assert.Equal(t, []float64{0, 0}, values)
 
 	mock.AssertExpectationsForObjects(t, f)
 }
@@ -152,12 +156,12 @@ func TestReporter_GetByAgeGroup(t *testing.T) {
 	for index, testCase := range testCases {
 		result, err := r.GetByAgeGroup(testCase.mode)
 		require.NoError(t, err, index)
-		assert.Equal(t, testCase.timestamps, result.GetTimestamps())
-		assert.Len(t, result.GetColumns(), 1+len(testCase.values))
+		assert.Equal(t, testCase.timestamps, result.GetTimestamps(), index)
+		assert.Len(t, result.GetColumns(), 1+len(testCase.values), index)
 		for column, expected := range testCase.values {
 			values, ok := result.GetFloatValues(column)
-			require.True(t, ok)
-			assert.Equal(t, expected, values)
+			require.True(t, ok, column)
+			assert.Equal(t, expected, values, column)
 		}
 	}
 	mock.AssertExpectationsForObjects(t, f)
@@ -292,14 +296,14 @@ func buildBigVaccinationResponse() {
 						TimeStamp: sciensano.TimeStamp{Time: startDate},
 						Region:    region,
 						AgeGroup:  ageGroup,
-						Dose:      "A",
+						Dose:      sciensano.TypeVaccinationPartial,
 						Count:     i * 2,
 					},
 					&sciensano.APIVaccinationsResponse{
 						TimeStamp: sciensano.TimeStamp{Time: startDate},
 						Region:    region,
 						AgeGroup:  ageGroup,
-						Dose:      "B",
+						Dose:      sciensano.TypeVaccinationFull,
 						Count:     i,
 					})
 			}

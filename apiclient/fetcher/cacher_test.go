@@ -172,7 +172,12 @@ func bigResponse() (output []apiclient.APIResponse) {
 	timestamp := time.Date(2021, time.January, 1, 0, 0, 0, 0, time.UTC)
 	for d := 0; d < 2*365; d++ {
 		for _, region := range []string{"Flanders", "Brussels", "Wallonia"} {
-			for _, dose := range []string{"A", "B", "C", "E"} {
+			for _, dose := range []sciensano.DoseType{
+				sciensano.TypeVaccinationPartial,
+				sciensano.TypeVaccinationFull,
+				sciensano.TypeVaccinationSingle,
+				sciensano.TypeVaccinationBooster,
+			} {
 				output = append(output, &sciensano.APIVaccinationsResponse{
 					TimeStamp:    sciensano.TimeStamp{Time: timestamp},
 					Manufacturer: "",

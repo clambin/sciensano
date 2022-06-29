@@ -127,7 +127,9 @@ func easyjson320b91e2DecodeGithubComClambinSciensanoApiclientSciensano1(in *jlex
 		case "SEX":
 			out.Gender = string(in.String())
 		case "DOSE":
-			out.Dose = string(in.String())
+			if data := in.Raw(); in.Ok() {
+				in.AddError((out.Dose).UnmarshalJSON(data))
+			}
 		case "COUNT":
 			out.Count = int(in.Int())
 		default:
@@ -172,7 +174,7 @@ func easyjson320b91e2EncodeGithubComClambinSciensanoApiclientSciensano1(out *jwr
 	{
 		const prefix string = ",\"DOSE\":"
 		out.RawString(prefix)
-		out.String(string(in.Dose))
+		out.Raw((in.Dose).MarshalJSON())
 	}
 	{
 		const prefix string = ",\"COUNT\":"

@@ -44,27 +44,27 @@ func TestHandler_TableQuery_VaccinesStats(t *testing.T) {
 		Return([]apiclient.APIResponse{
 			&sciensano.APIVaccinationsResponse{
 				TimeStamp: sciensano.TimeStamp{Time: timestamp.Add(-72 * time.Hour)},
-				Dose:      "A",
+				Dose:      sciensano.TypeVaccinationPartial,
 				Count:     0,
 			},
 			&sciensano.APIVaccinationsResponse{
 				TimeStamp: sciensano.TimeStamp{Time: timestamp.Add(-48 * time.Hour)},
-				Dose:      "A",
+				Dose:      sciensano.TypeVaccinationPartial,
 				Count:     0,
 			},
 			&sciensano.APIVaccinationsResponse{
 				TimeStamp: sciensano.TimeStamp{Time: timestamp.Add(-24 * time.Hour)},
-				Dose:      "A",
+				Dose:      sciensano.TypeVaccinationPartial,
 				Count:     10,
 			},
 			&sciensano.APIVaccinationsResponse{
 				TimeStamp: sciensano.TimeStamp{Time: timestamp.Add(-24 * time.Hour)},
-				Dose:      "B",
+				Dose:      sciensano.TypeVaccinationFull,
 				Count:     10,
 			},
 			&sciensano.APIVaccinationsResponse{
 				TimeStamp: sciensano.TimeStamp{Time: timestamp},
-				Dose:      "C",
+				Dose:      sciensano.TypeVaccinationSingle,
 				Count:     10,
 			},
 		}, nil)

@@ -72,13 +72,15 @@ func (cache *Cache) Save(name string, entry *Entry) {
 func (cache *Cache) MaybeGenerate(name string, generate func() (*data.Table, error)) (report *data.Table, err error) {
 	entry := cache.Load(name)
 	entry.Once.Do(func() {
-		log.Debugf("generate report for %s", name)
+		start := time.Now()
+		log.WithField("report", name).Debug("generating report")
 		entry.Data, err = generate()
 		if err != nil {
 			log.WithError(err).Warningf("failed to generate report '%s'", name)
 			entry = nil
 		}
 		cache.Save(name, entry)
+		log.WithFields(log.Fields{"report": name, "duration": time.Since(start)}).Debug("generated report")
 	})
 	if err == nil {
 		report = entry.Data

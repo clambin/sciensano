@@ -15,9 +15,11 @@ import (
 )
 
 func TestAPIVaccinationsResponses(t *testing.T) {
+	responses := buildVaccinationResponses()
+
 	gp := filepath.Join("testdata", t.Name()+".golden")
 	if *update {
-		body, err := easyjson.Marshal(vaccinationResponses)
+		body, err := easyjson.Marshal(responses)
 		require.NoError(t, err)
 
 		err = os.WriteFile(gp, body, 0644)
@@ -30,25 +32,62 @@ func TestAPIVaccinationsResponses(t *testing.T) {
 	var output sciensano.APIVaccinationsResponses
 	err = easyjson.Unmarshal(body, &output)
 	require.NoError(t, err)
-	require.Len(t, output, len(casesResponses))
+	require.Len(t, output, len(responses))
 }
 
 func TestAPIVaccinationsResponse_Attributes(t *testing.T) {
-	timestamps := []time.Time{
-		time.Date(2022, time.June, 19, 0, 0, 0, 0, time.UTC),
-		time.Date(2022, time.June, 18, 0, 0, 0, 0, time.UTC),
-	}
-	groups := []string{"55-54", "45-54"}
-	doses := [][]float64{{1, 0, 0, 0}, {0, 2, 0, 0}}
-	for idx, entry := range vaccinationResponses {
-		assert.Equal(t, timestamps[idx], entry.GetTimestamp(), idx)
-		assert.Equal(t, []string{"partial", "full", "singledose", "booster"}, entry.GetAttributeNames())
-		assert.Equal(t, doses[idx], entry.GetAttributeValues())
-		assert.Equal(t, float64(idx+1), entry.GetTotalValue())
+	for _, entry := range buildVaccinationResponses() {
+		assert.Equal(t, time.Date(2022, time.June, 19, 0, 0, 0, 0, time.UTC), entry.GetTimestamp())
+		assert.Equal(t, []string{"partial", "full", "singledose", "booster", "booster2"}, entry.GetAttributeNames())
+
+		var attributeValues []float64
+		var totalValue float64
+		switch entry.Dose {
+		case sciensano.TypeVaccinationPartial:
+			attributeValues = []float64{0, 0, 0, 0, 0}
+			totalValue = 0.0
+		case sciensano.TypeVaccinationFull:
+			attributeValues = []float64{0, 1, 0, 0, 0}
+			totalValue = 1.0
+		case sciensano.TypeVaccinationSingle:
+			attributeValues = []float64{0, 0, 2, 0, 0}
+			totalValue = 2.0
+		case sciensano.TypeVaccinationBooster:
+			attributeValues = []float64{0, 0, 0, 3, 0}
+			totalValue = 3.0
+		case sciensano.TypeVaccinationBooster2:
+			attributeValues = []float64{0, 0, 0, 0, 4}
+			totalValue = 4.0
+		default:
+			t.Fatalf("unexpected dose value: %d", int(entry.Dose))
+		}
+
+		assert.Equal(t, attributeValues, entry.GetAttributeValues())
+		assert.Equal(t, totalValue, entry.GetTotalValue())
 		assert.Equal(t, "Flanders", entry.GetGroupFieldValue(apiclient.GroupByRegion))
-		assert.Equal(t, groups[idx], entry.GetGroupFieldValue(apiclient.GroupByAgeGroup))
+		assert.Equal(t, "45-54", entry.GetGroupFieldValue(apiclient.GroupByAgeGroup))
 		assert.Equal(t, "A", entry.GetGroupFieldValue(apiclient.GroupByManufacturer))
 	}
+}
+
+func buildVaccinationResponses() (responses sciensano.APIVaccinationsResponses) {
+	for _, doseType := range []sciensano.DoseType{
+		sciensano.TypeVaccinationPartial,
+		sciensano.TypeVaccinationFull,
+		sciensano.TypeVaccinationSingle,
+		sciensano.TypeVaccinationBooster,
+		sciensano.TypeVaccinationBooster2,
+	} {
+		responses = append(responses, &sciensano.APIVaccinationsResponse{
+			TimeStamp:    sciensano.TimeStamp{Time: time.Date(2022, time.June, 19, 0, 0, 0, 0, time.UTC)},
+			Manufacturer: "A",
+			Region:       "Flanders",
+			AgeGroup:     "45-54",
+			Dose:         doseType,
+			Count:        int(doseType),
+		})
+	}
+	return
 }
 
 var (
@@ -58,7 +97,7 @@ var (
 			Manufacturer: "A",
 			Region:       "Flanders",
 			AgeGroup:     "55-54",
-			Dose:         "A",
+			Dose:         sciensano.TypeVaccinationPartial,
 			Count:        1,
 		},
 		&sciensano.APIVaccinationsResponse{
@@ -66,7 +105,7 @@ var (
 			Manufacturer: "A",
 			Region:       "Flanders",
 			AgeGroup:     "45-54",
-			Dose:         "B",
+			Dose:         sciensano.TypeVaccinationFull,
 			Count:        2,
 		},
 	}
@@ -94,7 +133,7 @@ func BenchmarkAPIVaccinationsResponses_UnmarshalJSON(b *testing.B) {
 		Region       string              `json:"REGION"`
 		AgeGroup     string              `json:"AGEGROUP"`
 		Gender       string              `json:"SEX"`
-		Dose         string              `json:"DOSE"`
+		Dose         sciensano.DoseType  `json:"DOSE"`
 		Count        int                 `json:"COUNT"`
 	}
 
@@ -119,7 +158,7 @@ func BenchmarkAPIVaccinationsResponses_UnmarshalJSONIter(b *testing.B) {
 		Region       string              `json:"REGION"`
 		AgeGroup     string              `json:"AGEGROUP"`
 		Gender       string              `json:"SEX"`
-		Dose         string              `json:"DOSE"`
+		Dose         sciensano.DoseType  `json:"DOSE"`
 		Count        int                 `json:"COUNT"`
 	}
 

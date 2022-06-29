@@ -4,8 +4,7 @@ on:
   push:
     branches-ignore:
       - master
-      - memcached
-      - httphead
+      - booster
     paths-ignore:
       - '**.md'
       - 'assets/grafana/dashboards/**'

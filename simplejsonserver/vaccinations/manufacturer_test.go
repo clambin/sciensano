@@ -41,7 +41,7 @@ func TestManufacturerHandler(t *testing.T) {
 		},
 		{
 			Text: "(unknown)",
-			Data: query.NumberColumn{7, 24},
+			Data: query.NumberColumn{7, 25},
 		},
 	}}, response)
 
