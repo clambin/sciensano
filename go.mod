@@ -5,13 +5,13 @@ go 1.18
 require (
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
-	github.com/prometheus/client_golang v1.12.2
-	github.com/prometheus/common v0.35.0 // indirect
-	github.com/prometheus/procfs v0.7.3 // indirect
+	github.com/prometheus/client_golang v1.13.0
+	github.com/prometheus/common v0.37.0 // indirect
+	github.com/prometheus/procfs v0.8.0 // indirect
 	github.com/sirupsen/logrus v1.9.0
 	github.com/stretchr/testify v1.8.0
 	golang.org/x/sys v0.0.0-20220715151400-c0bba94af5f8 // indirect
-	google.golang.org/protobuf v1.28.0 // indirect
+	google.golang.org/protobuf v1.28.1 // indirect
 )
 
 require (
@@ -23,7 +23,7 @@ require (
 	github.com/json-iterator/go v1.1.12
 	github.com/mailru/easyjson v0.7.7
 	github.com/rovaughn/fastcsv v0.0.0-20170331030356-1090019547fb
-	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
+	golang.org/x/sync v0.0.0-20220601150217-0de741cfad7f
 	gopkg.in/alecthomas/kingpin.v2 v2.2.6
 )
 
@@ -36,7 +36,7 @@ require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/golang/snappy v0.0.3 // indirect
 	github.com/google/flatbuffers v2.0.0+incompatible // indirect
-	github.com/google/go-cmp v0.5.7 // indirect
+	github.com/google/go-cmp v0.5.8 // indirect
 	github.com/gorilla/mux v1.8.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/klauspost/compress v1.13.1 // indirect
