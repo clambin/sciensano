@@ -45,20 +45,16 @@ func TestRun(t *testing.T) {
 		"mortality-region",
 		"tests",
 		"vacc-age-booster",
-		"vacc-age-booster2",
 		"vacc-age-full",
 		"vacc-age-partial",
 		"vacc-age-rate-booster",
-		"vacc-age-rate-booster2",
 		"vacc-age-rate-full",
 		"vacc-age-rate-partial",
 		"vacc-manufacturer",
 		"vacc-region-booster",
-		"vacc-region-booster2",
 		"vacc-region-full",
 		"vacc-region-partial",
 		"vacc-region-rate-booster",
-		"vacc-region-rate-booster2",
 		"vacc-region-rate-full",
 		"vacc-region-rate-partial",
 		"vaccination-lag",
@@ -76,7 +72,7 @@ func TestRun(t *testing.T) {
 		wg.Add(1)
 		go func(handler simplejson.Handler, target string) {
 			_, err := handler.Endpoints().Query(ctx, req)
-			require.NoError(t, err, target)
+			require.NoError(t, err, target, target)
 			wg.Done()
 		}(handler, target)
 	}

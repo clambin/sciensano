@@ -4,7 +4,7 @@ on:
   push:
     branches:
     - master
-    - booster2
+    - booster
     paths-ignore:
       - '**.md'
       - 'assets/grafana/dashboards/**'

@@ -85,7 +85,7 @@ func TestReporter_Get(t *testing.T) {
 		time.Date(2021, time.March, 11, 0, 0, 0, 0, time.UTC),
 	}, entries.GetTimestamps())
 
-	assert.Equal(t, []string{"time", "partial", "full", "singledose", "booster", "booster2"}, entries.GetColumns())
+	assert.Equal(t, []string{"time", "partial", "full", "singledose", "booster"}, entries.GetColumns())
 
 	values, ok := entries.GetFloatValues("partial")
 	require.True(t, ok)
@@ -102,10 +102,6 @@ func TestReporter_Get(t *testing.T) {
 	values, ok = entries.GetFloatValues("booster")
 	require.True(t, ok)
 	assert.Equal(t, []float64{5, 5}, values)
-
-	values, ok = entries.GetFloatValues("booster2")
-	require.True(t, ok)
-	assert.Equal(t, []float64{0, 0}, values)
 
 	mock.AssertExpectationsForObjects(t, f)
 }

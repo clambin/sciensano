@@ -30,7 +30,6 @@ func (handler *Handler) tableQuery(_ context.Context, req query.Request) (query.
 	second, _ := vaccinationData.GetFloatValues("full")
 	singledose, _ := vaccinationData.GetFloatValues("singledose")
 	booster, _ := vaccinationData.GetFloatValues("booster")
-	booster2, _ := vaccinationData.GetFloatValues("booster2")
 
 	if len(second) != len(singledose) {
 		panic("data for second dose & single full-dose should be the same")
@@ -43,7 +42,6 @@ func (handler *Handler) tableQuery(_ context.Context, req query.Request) (query.
 
 	d := data.New(
 		data.Column{Name: "time", Values: timestamps},
-		data.Column{Name: "booster2", Values: booster2},
 		data.Column{Name: "booster", Values: booster},
 		data.Column{Name: "full", Values: full},
 		data.Column{Name: "partial", Values: partial})

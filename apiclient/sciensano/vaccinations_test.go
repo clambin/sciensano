@@ -39,26 +39,23 @@ func TestAPIVaccinationsResponses(t *testing.T) {
 func TestAPIVaccinationsResponse_Attributes(t *testing.T) {
 	for _, entry := range buildVaccinationResponses() {
 		assert.Equal(t, time.Date(2022, time.June, 19, 0, 0, 0, 0, time.UTC), entry.GetTimestamp())
-		assert.Equal(t, []string{"partial", "full", "singledose", "booster", "booster2"}, entry.GetAttributeNames())
+		assert.Equal(t, []string{"partial", "full", "singledose", "booster"}, entry.GetAttributeNames())
 
 		var attributeValues []float64
 		var totalValue float64
 		switch entry.Dose {
 		case sciensano.TypeVaccinationPartial:
-			attributeValues = []float64{0, 0, 0, 0, 0}
+			attributeValues = []float64{0, 0, 0, 0}
 			totalValue = 0.0
 		case sciensano.TypeVaccinationFull:
-			attributeValues = []float64{0, 1, 0, 0, 0}
+			attributeValues = []float64{0, 1, 0, 0}
 			totalValue = 1.0
 		case sciensano.TypeVaccinationSingle:
-			attributeValues = []float64{0, 0, 2, 0, 0}
+			attributeValues = []float64{0, 0, 2, 0}
 			totalValue = 2.0
 		case sciensano.TypeVaccinationBooster:
-			attributeValues = []float64{0, 0, 0, 3, 0}
+			attributeValues = []float64{0, 0, 0, 3}
 			totalValue = 3.0
-		case sciensano.TypeVaccinationBooster2:
-			attributeValues = []float64{0, 0, 0, 0, 4}
-			totalValue = 4.0
 		default:
 			t.Fatalf("unexpected dose value: %d", int(entry.Dose))
 		}
@@ -82,12 +79,15 @@ func TestDoseType_UnmarshalJSON(t *testing.T) {
 		{body: `"B"`, expected: sciensano.TypeVaccinationFull, wantErr: assert.NoError},
 		{body: `"C"`, expected: sciensano.TypeVaccinationSingle, wantErr: assert.NoError},
 		{body: `"E"`, expected: sciensano.TypeVaccinationBooster, wantErr: assert.NoError},
-		{body: `"E2"`, expected: sciensano.TypeVaccinationBooster2, wantErr: assert.NoError},
+		{body: `"E2"`, expected: sciensano.TypeVaccinationBooster, wantErr: assert.NoError},
+		{body: `"E3"`, expected: sciensano.TypeVaccinationBooster, wantErr: assert.NoError},
 		{body: `""`, wantErr: assert.Error},
 		{body: `A`, wantErr: assert.Error},
 	}
 	for _, tt := range tests {
-		tt.wantErr(t, tt.d.UnmarshalJSON([]byte(tt.body)), fmt.Sprintf("UnmarshalJSON(%v)", tt.body))
+		t.Run(tt.body, func(t *testing.T) {
+			tt.wantErr(t, tt.d.UnmarshalJSON([]byte(tt.body)), fmt.Sprintf("UnmarshalJSON(%v)", tt.body), tt.body)
+		})
 	}
 }
 
@@ -97,20 +97,19 @@ func TestDoseType_MarshalJSON(t *testing.T) {
 		wantBody string
 		wantErr  assert.ErrorAssertionFunc
 	}{
-		{d: sciensano.DoseType(sciensano.TypeVaccinationPartial), wantBody: `"A"`, wantErr: assert.NoError},
-		{d: sciensano.DoseType(sciensano.TypeVaccinationFull), wantBody: `"B"`, wantErr: assert.NoError},
-		{d: sciensano.DoseType(sciensano.TypeVaccinationSingle), wantBody: `"C"`, wantErr: assert.NoError},
-		{d: sciensano.DoseType(sciensano.TypeVaccinationBooster), wantBody: `"E"`, wantErr: assert.NoError},
-		{d: sciensano.DoseType(sciensano.TypeVaccinationBooster2), wantBody: `"E2"`, wantErr: assert.NoError},
+		{d: sciensano.TypeVaccinationPartial, wantBody: `"A"`, wantErr: assert.NoError},
+		{d: sciensano.TypeVaccinationFull, wantBody: `"B"`, wantErr: assert.NoError},
+		{d: sciensano.TypeVaccinationSingle, wantBody: `"C"`, wantErr: assert.NoError},
+		{d: sciensano.TypeVaccinationBooster, wantBody: `"E"`, wantErr: assert.NoError},
 		{d: sciensano.DoseType(-1), wantErr: assert.Error},
 	}
 
 	for _, tt := range tests {
-		gotBody, err := tt.d.MarshalJSON()
-		if !tt.wantErr(t, err, "MarshalJSON()") {
-			return
-		}
-		assert.Equalf(t, tt.wantBody, string(gotBody), "MarshalJSON()")
+		t.Run(fmt.Sprintf("%d", tt.d), func(t *testing.T) {
+			gotBody, err := tt.d.MarshalJSON()
+			tt.wantErr(t, err)
+			assert.Equal(t, tt.wantBody, string(gotBody))
+		})
 	}
 }
 
@@ -120,7 +119,6 @@ func buildVaccinationResponses() (responses sciensano.APIVaccinationsResponses) 
 		sciensano.TypeVaccinationFull,
 		sciensano.TypeVaccinationSingle,
 		sciensano.TypeVaccinationBooster,
-		sciensano.TypeVaccinationBooster2,
 	} {
 		responses = append(responses, &sciensano.APIVaccinationsResponse{
 			TimeStamp:    sciensano.TimeStamp{Time: time.Date(2022, time.June, 19, 0, 0, 0, 0, time.UTC)},

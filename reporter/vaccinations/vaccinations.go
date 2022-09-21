@@ -20,8 +20,6 @@ const (
 	TypeFull
 	// TypeBooster filters booster vaccinations
 	TypeBooster
-	// TypeBooster2 filters 2nd booster vaccinations
-	TypeBooster2
 )
 
 type Reporter struct {
@@ -92,8 +90,6 @@ func filterVaccinations(input []apiclient.APIResponse, vaccinationType int) (out
 			add = dose == sciensano.TypeVaccinationFull || dose == sciensano.TypeVaccinationSingle
 		case TypeBooster:
 			add = dose == sciensano.TypeVaccinationBooster
-		case TypeBooster2:
-			add = dose == sciensano.TypeVaccinationBooster2
 		}
 		if add {
 			output = append(output, entry)

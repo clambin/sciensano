@@ -18,11 +18,19 @@ type APIVaccinationsResponse struct {
 }
 
 // APIVaccinationsResponses is a slice of APIVaccinationResponse structures
+//
 //easyjson:json
 type APIVaccinationsResponses []*APIVaccinationsResponse
 
 // DoseType is the type of vaccination: first, full, singledose, booster, etc.
 type DoseType int
+
+const (
+	TypeVaccinationPartial DoseType = iota
+	TypeVaccinationFull
+	TypeVaccinationSingle
+	TypeVaccinationBooster
+)
 
 func (d *DoseType) UnmarshalJSON(body []byte) (err error) {
 	switch string(body) {
@@ -32,10 +40,8 @@ func (d *DoseType) UnmarshalJSON(body []byte) (err error) {
 		*d = TypeVaccinationFull
 	case `"C"`:
 		*d = TypeVaccinationSingle
-	case `"E"`:
+	case `"E"`, `"E2"`, `"E3"`:
 		*d = TypeVaccinationBooster
-	case `"E2"`:
-		*d = TypeVaccinationBooster2
 	default:
 		err = fmt.Errorf("invalid Dose: %s", string(body))
 	}
@@ -52,21 +58,11 @@ func (d DoseType) MarshalJSON() (body []byte, err error) {
 		body = []byte(`"C"`)
 	case TypeVaccinationBooster:
 		body = []byte(`"E"`)
-	case TypeVaccinationBooster2:
-		body = []byte(`"E2"`)
 	default:
 		err = fmt.Errorf("invalid Dose: %d", d)
 	}
 	return
 }
-
-const (
-	TypeVaccinationPartial = iota
-	TypeVaccinationFull
-	TypeVaccinationSingle
-	TypeVaccinationBooster
-	TypeVaccinationBooster2
-)
 
 var _ apiclient.APIResponse = &APIVaccinationsResponse{}
 
@@ -95,12 +91,12 @@ func (v APIVaccinationsResponse) GetTotalValue() float64 {
 
 // GetAttributeNames returns the names of the types of vaccinations
 func (v APIVaccinationsResponse) GetAttributeNames() []string {
-	return []string{"partial", "full", "singledose", "booster", "booster2"}
+	return []string{"partial", "full", "singledose", "booster"}
 }
 
 // GetAttributeValues gets the value for each supported type of vaccination
 func (v APIVaccinationsResponse) GetAttributeValues() (values []float64) {
-	values = []float64{0, 0, 0, 0, 0}
+	values = []float64{0, 0, 0, 0}
 	switch v.Dose {
 	case TypeVaccinationPartial:
 		values[0] = float64(v.Count)
@@ -110,8 +106,6 @@ func (v APIVaccinationsResponse) GetAttributeValues() (values []float64) {
 		values[2] = float64(v.Count)
 	case TypeVaccinationBooster:
 		values[3] = float64(v.Count)
-	case TypeVaccinationBooster2:
-		values[4] = float64(v.Count)
 	}
 	return
 }

@@ -64,22 +64,22 @@ func (d *Tabulator) ensureColumnExists(column string) {
 }
 
 // Size returns the number of rows in the table.
-func (d Tabulator) Size() int {
+func (d *Tabulator) Size() int {
 	return len(d.data)
 }
 
 // GetTimestamps returns the (sorted) list of timestamps in the table.
-func (d Tabulator) GetTimestamps() (timestamps []time.Time) {
+func (d *Tabulator) GetTimestamps() (timestamps []time.Time) {
 	return d.timestamps
 }
 
 // GetColumns returns the (sorted) list of column names.
-func (d Tabulator) GetColumns() (columns []string) {
+func (d *Tabulator) GetColumns() (columns []string) {
 	return d.columns.List()
 }
 
 // GetValues returns the value for the specified column for each timestamp in the table. The values are sorted by timestamp.
-func (d Tabulator) GetValues(column string) (values []float64, ok bool) {
+func (d *Tabulator) GetValues(column string) (values []float64, ok bool) {
 	var index int
 	index, ok = d.columns.GetIndex(column)
 
