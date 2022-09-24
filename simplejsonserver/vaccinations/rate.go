@@ -27,9 +27,10 @@ func (r RateHandler) Endpoints() simplejson.Endpoints {
 func (r *RateHandler) tableQuery(ctx context.Context, req query.Request) (response query.Response, err error) {
 	if r.helper == nil {
 		r.helper = &GroupedHandler{
-			Reporter: r.Reporter,
-			Type:     r.Type,
-			Scope:    r.Scope,
+			Reporter:   r.Reporter,
+			Type:       r.Type,
+			Scope:      r.Scope,
+			Accumulate: true,
 		}
 	}
 

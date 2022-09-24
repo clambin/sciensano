@@ -11,8 +11,9 @@ import (
 
 // GroupedHandler returns COVID-19 vaccinations grouped by region or age group, for a specific type (i.e. partial, full or booster vaccination)
 type GroupedHandler struct {
-	Reporter *reporter.Client
-	Type     int
+	Reporter   *reporter.Client
+	Type       int
+	Accumulate bool
 	Scope
 }
 
@@ -26,7 +27,7 @@ const (
 )
 
 // Endpoints implements the grafana-json Endpoint function. It returns all supported endpoints
-func (handler GroupedHandler) Endpoints() simplejson.Endpoints {
+func (handler *GroupedHandler) Endpoints() simplejson.Endpoints {
 	return simplejson.Endpoints{Query: handler.tableQuery}
 }
 
@@ -43,5 +44,9 @@ func (handler *GroupedHandler) tableQuery(_ context.Context, req query.Request) 
 		return nil, fmt.Errorf("grouped vaccinations failed: %w", err)
 	}
 
-	return vaccinationData.Accumulate().Filter(req.Args).CreateTableResponse(), nil
+	if handler.Accumulate {
+		vaccinationData = vaccinationData.Accumulate()
+	}
+
+	return vaccinationData.Filter(req.Args).CreateTableResponse(), nil
 }
