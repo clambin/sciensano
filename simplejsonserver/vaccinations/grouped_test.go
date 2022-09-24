@@ -171,6 +171,7 @@ func BenchmarkVaccinationsGroupedHandler(b *testing.B) {
 		Scope:    vaccinations.ScopeAge,
 	}
 
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_, err := h.Endpoints().Query(context.Background(), query.Request{})
 		if err != nil {

@@ -33,7 +33,7 @@ func TestHandler(t *testing.T) {
 	assert.Equal(t, &query.TableResponse{
 		Columns: []query.Column{
 			{Text: "time", Data: query.TimeColumn{time.Date(2020, time.January, 1, 0, 0, 0, 0, time.UTC), time.Date(2020, time.January, 2, 0, 0, 0, 0, time.UTC)}},
-			{Text: "booster", Data: query.NumberColumn{1, 6}},
+			//{Text: "booster", Data: query.NumberColumn{1, 6}},
 			{Text: "full", Data: query.NumberColumn{3, 10}},
 			{Text: "partial", Data: query.NumberColumn{3, 8}},
 		},
