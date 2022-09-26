@@ -62,8 +62,8 @@ github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e/go.mod h1:nSuG5e5P
 github.com/chzyer/test v0.0.0-20180213035817-a1ea475d72b1/go.mod h1:Q3SI9o4m/ZMnBNeIyt5eFwwo7qiLfzFZmjNmxjkiQlU=
 github.com/clambin/cache v0.0.5 h1:VqfQIEsuUFlk6n1NLUm5uSS1OIBgO8XXNQQjKSBwiFY=
 github.com/clambin/cache v0.0.5/go.mod h1:+BKmGZ4iIz30+yxq9gOD9ZLCBNPzu8dLyejefdkQQes=
-github.com/clambin/go-metrics v0.5.1 h1:94keFDQSSiVh+H55oKw9tr02LlOkcON4zmZh9OohLGo=
-github.com/clambin/go-metrics v0.5.1/go.mod h1:z3hpFI7lxGIHH+156BR/lPhwM+oYBgr9pP9Wov1/plc=
+github.com/clambin/go-metrics v0.6.0 h1:ACBCD9tqDWdCV3xDSCYK249AKKh3oeCUbtpjhDvojpU=
+github.com/clambin/go-metrics v0.6.0/go.mod h1:v/FFsSZlvDqUIf1NgtYwthrOb5efirZONt62uLlv6hM=
 github.com/clambin/simplejson/v3 v3.4.2 h1:FgI0PWuLcd/qkirmGpYWvX4PocVH85WkHu3ERv3Vz28=
 github.com/clambin/simplejson/v3 v3.4.2/go.mod h1:zdPt0GKi18mvsNcAZXV3auLnh+3D1oXO6nQKu+y3lv4=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
