@@ -72,8 +72,8 @@ func TestRun(t *testing.T) {
 		wg.Add(1)
 		go func(handler simplejson.Handler, target string) {
 			_, err := handler.Endpoints().Query(ctx, req)
-			require.NoError(t, err, target, target)
 			wg.Done()
+			require.NoError(t, err, target, target)
 		}(handler, target)
 	}
 	wg.Wait()

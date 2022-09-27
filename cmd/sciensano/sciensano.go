@@ -2,11 +2,13 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"github.com/clambin/sciensano/demographics"
 	"github.com/clambin/sciensano/reporter"
 	"github.com/clambin/sciensano/simplejsonserver"
 	"github.com/clambin/sciensano/version"
 	"github.com/clambin/simplejson/v3"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/alecthomas/kingpin.v2"
 	"net/http"
@@ -19,7 +21,8 @@ import (
 func main() {
 	var (
 		debug            bool
-		port             int
+		simpleJSONPort   int
+		prometheusPort   int
 		demographicsPath string
 	)
 
@@ -29,7 +32,8 @@ func main() {
 	a.HelpFlag.Short('h')
 	a.VersionFlag.Short('v')
 	a.Flag("debug", "Log debug messages").Short('d').BoolVar(&debug)
-	a.Flag("port", "Server port").Short('p').Default("8080").IntVar(&port)
+	a.Flag("port", "Server port").Short('p').Default("8080").IntVar(&simpleJSONPort)
+	a.Flag("prometheus", "Prometheus metrics port").Default("9090").IntVar(&prometheusPort)
 	a.Flag("demographics", "Path of the demographics server").Default("/data/population/TF_SOC_POP_STRUCT_2021.txt").StringVar(&demographicsPath)
 
 	if _, err := a.Parse(os.Args[1:]); err != nil {
@@ -41,6 +45,19 @@ func main() {
 		log.SetLevel(log.DebugLevel)
 	}
 
+	go runPrometheusServer(prometheusPort)
+
+	runSimpleJSONServer(simpleJSONPort, demographicsPath)
+}
+
+func runPrometheusServer(port int) {
+	http.Handle("/metrics", promhttp.Handler())
+	if err := http.ListenAndServe(fmt.Sprintf(":%d", port), nil); !errors.Is(err, http.ErrServerClosed) {
+		log.WithError(err).Fatal("failed to start Prometheus listener")
+	}
+}
+
+func runSimpleJSONServer(port int, demographicsPath string) {
 	s := simplejsonserver.Server{
 		Server:   simplejson.Server{Name: "sciensano"},
 		Reporter: reporter.New(15 * time.Minute),
@@ -51,6 +68,6 @@ func main() {
 	}
 
 	if err := s.Run(port); !errors.Is(err, http.ErrServerClosed) {
-		log.WithError(err).Fatal("failed to start HTTP server")
+		log.WithError(err).Fatal("failed to start SimpleJSON server")
 	}
 }
