@@ -17,7 +17,7 @@ require (
 require (
 	github.com/clambin/cache v0.0.5
 	github.com/clambin/go-metrics v0.6.0
-	github.com/clambin/simplejson/v3 v3.5.0
+	github.com/clambin/simplejson/v3 v3.6.0-rc1
 	github.com/go-http-utils/headers v0.0.0-20181008091004-fed159eddc2a
 	github.com/grafana/grafana-plugin-sdk-go v0.140.0
 	github.com/json-iterator/go v1.1.12
@@ -37,7 +37,6 @@ require (
 	github.com/golang/snappy v0.0.3 // indirect
 	github.com/google/flatbuffers v2.0.0+incompatible // indirect
 	github.com/google/go-cmp v0.5.8 // indirect
-	github.com/gorilla/mux v1.8.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/klauspost/compress v1.13.1 // indirect
 	github.com/mattetti/filebuffer v1.0.1 // indirect

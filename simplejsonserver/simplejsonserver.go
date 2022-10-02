@@ -67,7 +67,7 @@ func (s *Server) Initialize(ctx context.Context) {
 func (s *Server) Run(port int) (err error) {
 	s.Initialize(context.Background())
 	r := s.Server.GetRouter()
-	r.Path("/health").Handler(http.HandlerFunc(s.Health))
+	r.HandleFunc("/health", s.Health)
 	return http.ListenAndServe(fmt.Sprintf(":%d", port), r)
 }
 
