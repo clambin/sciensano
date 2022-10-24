@@ -89,7 +89,7 @@ func filterVaccinations(input []apiclient.APIResponse, vaccinationType int) (out
 		case TypeFull:
 			add = dose == sciensano.TypeVaccinationFull || dose == sciensano.TypeVaccinationSingle
 		case TypeBooster:
-			add = dose == sciensano.TypeVaccinationBooster
+			add = dose == sciensano.TypeVaccinationBooster || dose == sciensano.TypeVaccinationBooster2 || dose == sciensano.TypeVaccinationBooster3
 		}
 		if add {
 			output = append(output, entry)

@@ -39,23 +39,29 @@ func TestAPIVaccinationsResponses(t *testing.T) {
 func TestAPIVaccinationsResponse_Attributes(t *testing.T) {
 	for _, entry := range buildVaccinationResponses() {
 		assert.Equal(t, time.Date(2022, time.June, 19, 0, 0, 0, 0, time.UTC), entry.GetTimestamp())
-		assert.Equal(t, []string{"partial", "full", "singledose", "booster"}, entry.GetAttributeNames())
+		assert.Equal(t, []string{"partial", "full", "singledose", "booster", "booster2", "booster3"}, entry.GetAttributeNames())
 
 		var attributeValues []float64
 		var totalValue float64
 		switch entry.Dose {
 		case sciensano.TypeVaccinationPartial:
-			attributeValues = []float64{0, 0, 0, 0}
+			attributeValues = []float64{0, 0, 0, 0, 0, 0}
 			totalValue = 0.0
 		case sciensano.TypeVaccinationFull:
-			attributeValues = []float64{0, 1, 0, 0}
+			attributeValues = []float64{0, 1, 0, 0, 0, 0}
 			totalValue = 1.0
 		case sciensano.TypeVaccinationSingle:
-			attributeValues = []float64{0, 0, 2, 0}
+			attributeValues = []float64{0, 0, 2, 0, 0, 0}
 			totalValue = 2.0
 		case sciensano.TypeVaccinationBooster:
-			attributeValues = []float64{0, 0, 0, 3}
+			attributeValues = []float64{0, 0, 0, 3, 0, 0}
 			totalValue = 3.0
+		case sciensano.TypeVaccinationBooster2:
+			attributeValues = []float64{0, 0, 0, 0, 4, 0}
+			totalValue = 4.0
+		case sciensano.TypeVaccinationBooster3:
+			attributeValues = []float64{0, 0, 0, 0, 0, 5}
+			totalValue = 5.0
 		default:
 			t.Fatalf("unexpected dose value: %d", int(entry.Dose))
 		}
@@ -79,8 +85,8 @@ func TestDoseType_UnmarshalJSON(t *testing.T) {
 		{body: `"B"`, expected: sciensano.TypeVaccinationFull, wantErr: assert.NoError},
 		{body: `"C"`, expected: sciensano.TypeVaccinationSingle, wantErr: assert.NoError},
 		{body: `"E"`, expected: sciensano.TypeVaccinationBooster, wantErr: assert.NoError},
-		{body: `"E2"`, expected: sciensano.TypeVaccinationBooster, wantErr: assert.NoError},
-		{body: `"E3"`, expected: sciensano.TypeVaccinationBooster, wantErr: assert.NoError},
+		{body: `"E2"`, expected: sciensano.TypeVaccinationBooster2, wantErr: assert.NoError},
+		{body: `"E3"`, expected: sciensano.TypeVaccinationBooster3, wantErr: assert.NoError},
 		{body: `""`, wantErr: assert.Error},
 		{body: `A`, wantErr: assert.Error},
 	}
@@ -101,6 +107,8 @@ func TestDoseType_MarshalJSON(t *testing.T) {
 		{d: sciensano.TypeVaccinationFull, wantBody: `"B"`, wantErr: assert.NoError},
 		{d: sciensano.TypeVaccinationSingle, wantBody: `"C"`, wantErr: assert.NoError},
 		{d: sciensano.TypeVaccinationBooster, wantBody: `"E"`, wantErr: assert.NoError},
+		{d: sciensano.TypeVaccinationBooster2, wantBody: `"E2"`, wantErr: assert.NoError},
+		{d: sciensano.TypeVaccinationBooster3, wantBody: `"E3"`, wantErr: assert.NoError},
 		{d: sciensano.DoseType(-1), wantErr: assert.Error},
 	}
 
@@ -119,6 +127,8 @@ func buildVaccinationResponses() (responses sciensano.APIVaccinationsResponses) 
 		sciensano.TypeVaccinationFull,
 		sciensano.TypeVaccinationSingle,
 		sciensano.TypeVaccinationBooster,
+		sciensano.TypeVaccinationBooster2,
+		sciensano.TypeVaccinationBooster3,
 	} {
 		responses = append(responses, &sciensano.APIVaccinationsResponse{
 			TimeStamp:    sciensano.TimeStamp{Time: time.Date(2022, time.June, 19, 0, 0, 0, 0, time.UTC)},

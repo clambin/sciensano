@@ -85,7 +85,7 @@ func TestReporter_Get(t *testing.T) {
 		time.Date(2021, time.March, 11, 0, 0, 0, 0, time.UTC),
 	}, entries.GetTimestamps())
 
-	assert.Equal(t, []string{"time", "partial", "full", "singledose", "booster"}, entries.GetColumns())
+	assert.Equal(t, []string{"time", "partial", "full", "singledose", "booster", "booster2", "booster3"}, entries.GetColumns())
 
 	values, ok := entries.GetFloatValues("partial")
 	require.True(t, ok)

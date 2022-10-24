@@ -20,7 +20,7 @@ type RateHandler struct {
 
 var _ simplejson.Handler = &RateHandler{}
 
-func (r RateHandler) Endpoints() simplejson.Endpoints {
+func (r *RateHandler) Endpoints() simplejson.Endpoints {
 	return simplejson.Endpoints{Query: r.tableQuery}
 }
 

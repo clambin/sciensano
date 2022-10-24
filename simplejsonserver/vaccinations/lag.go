@@ -15,7 +15,7 @@ type LagHandler struct {
 	Reporter *reporter.Client
 }
 
-func (handler LagHandler) Endpoints() simplejson.Endpoints {
+func (handler *LagHandler) Endpoints() simplejson.Endpoints {
 	return simplejson.Endpoints{Query: handler.tableQuery}
 }
 

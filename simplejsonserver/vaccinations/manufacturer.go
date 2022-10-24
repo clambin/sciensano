@@ -16,7 +16,7 @@ type ManufacturerHandler struct {
 var _ simplejson.Handler = &ManufacturerHandler{}
 
 // Endpoints implements the grafana-json Endpoint function. It returns all supported endpoints
-func (handler ManufacturerHandler) Endpoints() simplejson.Endpoints {
+func (handler *ManufacturerHandler) Endpoints() simplejson.Endpoints {
 	return simplejson.Endpoints{Query: handler.tableQuery}
 }
 
