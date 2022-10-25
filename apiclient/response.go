@@ -6,15 +6,17 @@ import "time"
 // These allow datasets to process API responses in a generic way
 type APIResponse interface {
 	GetTimestamp() time.Time
-	GetGroupFieldValue(groupField int) (value string)
+	GetGroupFieldValue(groupField GroupField) (value string)
 	GetTotalValue() float64
 	GetAttributeNames() []string
 	GetAttributeValues() []float64
 }
 
+type GroupField int
+
 const (
 	// GroupByAgeGroup is used by GetGroupFieldName. This groups all data by Age Group.
-	GroupByAgeGroup int = iota
+	GroupByAgeGroup GroupField = iota
 	// GroupByRegion is used by GetGroupFieldName. This groups all data by Region
 	GroupByRegion
 	// GroupByProvince is used by GetGroupFieldName. This groups all data by Province

@@ -139,7 +139,7 @@ func (t testResponse) GetTimestamp() time.Time {
 	return t.timestamp
 }
 
-func (t testResponse) GetGroupFieldValue(groupField int) (value string) {
+func (t testResponse) GetGroupFieldValue(groupField apiclient.GroupField) (value string) {
 	if groupField == 0 {
 		return ""
 	}
@@ -164,7 +164,7 @@ func (t testMultiValueResponse) GetTimestamp() time.Time {
 	return t.timestamp
 }
 
-func (t testMultiValueResponse) GetGroupFieldValue(_ int) (value string) {
+func (t testMultiValueResponse) GetGroupFieldValue(_ apiclient.GroupField) (value string) {
 	panic("implement me")
 }
 

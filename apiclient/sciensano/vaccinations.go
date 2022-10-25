@@ -82,7 +82,7 @@ func (v *APIVaccinationsResponse) GetTimestamp() time.Time {
 }
 
 // GetGroupFieldValue returns the value of the specified entry's field
-func (v *APIVaccinationsResponse) GetGroupFieldValue(groupField int) (value string) {
+func (v *APIVaccinationsResponse) GetGroupFieldValue(groupField apiclient.GroupField) (value string) {
 	switch groupField {
 	case apiclient.GroupByRegion:
 		value = v.Region

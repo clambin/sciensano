@@ -62,7 +62,7 @@ func (r *Reporter) GetByManufacturer() (results *data.Table, err error) {
 	})
 }
 
-func (r *Reporter) getByType(mode int, vaccinationType int) (results *data.Table, err error) {
+func (r *Reporter) getByType(mode apiclient.GroupField, vaccinationType int) (results *data.Table, err error) {
 	var apiResult []apiclient.APIResponse
 	apiResult, err = r.APIClient.Fetch(context.Background(), sciensano.TypeVaccinations)
 	if err != nil {

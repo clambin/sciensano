@@ -15,6 +15,7 @@ type APICasesResponse struct {
 }
 
 // APICasesResponses is a slice of APICasesResponses structs
+//
 //easyjson:json
 type APICasesResponses []*APICasesResponse
 
@@ -26,7 +27,7 @@ func (v APICasesResponse) GetTimestamp() time.Time {
 }
 
 // GetGroupFieldValue returns the value of the specified entry's field
-func (v APICasesResponse) GetGroupFieldValue(groupField int) (value string) {
+func (v APICasesResponse) GetGroupFieldValue(groupField apiclient.GroupField) (value string) {
 	switch groupField {
 	case apiclient.GroupByRegion:
 		value = v.Region
