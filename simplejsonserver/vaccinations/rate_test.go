@@ -94,13 +94,13 @@ func TestRateHandler(t *testing.T) {
 		},
 	}
 
-	f := &mocks.Fetcher{}
+	f := mocks.NewFetcher(t)
 	f.On("Fetch", mock.AnythingOfType("*context.emptyCtx"), sciensano.TypeVaccinations).Return(vaccinationTestData, nil)
 
 	r := reporter.NewWithOptions(time.Hour, client.Options{})
 	r.Vaccinations.APIClient = f
 
-	demographicsClient := &mockDemographics.Fetcher{}
+	demographicsClient := mockDemographics.NewFetcher(t)
 	demographicsClient.
 		On("GetByRegion").
 		Return(map[string]int{
@@ -131,18 +131,16 @@ func TestRateHandler(t *testing.T) {
 		require.NoError(t, err, index)
 		assert.Equal(t, testCase.expected, response, index)
 	}
-
-	mock.AssertExpectationsForObjects(t, f, demographicsClient)
 }
 
 func TestRateHandler_Failure(t *testing.T) {
-	f := &mocks.Fetcher{}
+	f := mocks.NewFetcher(t)
 	f.On("Fetch", mock.AnythingOfType("*context.emptyCtx"), sciensano.TypeVaccinations).Return(nil, errors.New("fail"))
 
 	r := reporter.NewWithOptions(time.Hour, client.Options{})
 	r.Vaccinations.APIClient = f
 
-	demographicsClient := &mockDemographics.Fetcher{}
+	demographicsClient := mockDemographics.NewFetcher(t)
 
 	ctx := context.Background()
 	req := query.Request{Args: query.Args{Args: common.Args{Range: common.Range{To: timestamp.Add(24 * time.Hour)}}}}
@@ -155,8 +153,6 @@ func TestRateHandler_Failure(t *testing.T) {
 
 	_, err := h.Endpoints().Query(ctx, req)
 	assert.Error(t, err)
-
-	mock.AssertExpectationsForObjects(t, f, demographicsClient)
 }
 
 func BenchmarkVaccinationsRateHandler(b *testing.B) {

@@ -116,7 +116,7 @@ func TestGroupedHandler(t *testing.T) {
 	ctx := context.Background()
 	req := query.Request{Args: query.Args{Args: common.Args{Range: common.Range{To: timestamp.Add(24 * time.Hour)}}}}
 
-	f := &mocks.Fetcher{}
+	f := mocks.NewFetcher(t)
 	f.On("Fetch", mock.AnythingOfType("*context.emptyCtx"), sciensano.TypeVaccinations).Return(vaccinationTestData, nil)
 
 	r := reporter.NewWithOptions(time.Hour, client.Options{})
@@ -134,12 +134,10 @@ func TestGroupedHandler(t *testing.T) {
 		require.NoError(t, err, index)
 		assert.Equal(t, testCase.expected, response, index)
 	}
-
-	mock.AssertExpectationsForObjects(t, f)
 }
 
 func TestGroupedHandler_Failure(t *testing.T) {
-	f := &mocks.Fetcher{}
+	f := mocks.NewFetcher(t)
 	f.On("Fetch", mock.AnythingOfType("*context.emptyCtx"), sciensano.TypeVaccinations).Return(nil, errors.New("fail"))
 
 	r := reporter.NewWithOptions(time.Hour, client.Options{})
@@ -153,8 +151,6 @@ func TestGroupedHandler_Failure(t *testing.T) {
 
 	_, err := h.Endpoints().Query(context.Background(), query.Request{})
 	require.Error(t, err)
-
-	mock.AssertExpectationsForObjects(t, f)
 }
 
 func BenchmarkVaccinationsGroupedHandler(b *testing.B) {

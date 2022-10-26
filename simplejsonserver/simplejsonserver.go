@@ -7,7 +7,6 @@ import (
 	"github.com/clambin/sciensano/demographics"
 	"github.com/clambin/sciensano/reporter"
 	"github.com/clambin/sciensano/reporter/vaccinations"
-	"github.com/clambin/sciensano/simplejsonserver/booster"
 	vaccinations2 "github.com/clambin/sciensano/simplejsonserver/vaccinations"
 	"github.com/clambin/simplejson/v3"
 	"github.com/clambin/simplejson/v3/data"
@@ -26,10 +25,8 @@ type Server struct {
 func (s *Server) Initialize(ctx context.Context) {
 	// set up auto-refresh of demographics
 	go s.Demographics.Run(ctx)
+
 	// set up handler lookup table
-
-	b := booster.Handler{Reporter: s.Reporter}
-
 	s.Handlers = map[string]simplejson.Handler{
 		"cases":                     &Handler{Fetcher: s.Reporter.Cases.Get},
 		"cases-province":            &Handler{Fetcher: s.Reporter.Cases.GetByProvince},
@@ -50,7 +47,7 @@ func (s *Server) Initialize(ctx context.Context) {
 		"vacc-age-booster":          &vaccinations2.GroupedHandler{Reporter: s.Reporter, Scope: vaccinations2.ByAge, Type: vaccinations.TypeBooster},
 		"vacc-region-booster":       &vaccinations2.GroupedHandler{Reporter: s.Reporter, Scope: vaccinations2.ByRegion, Type: vaccinations.TypeBooster},
 		"vacc-manufacturer":         &Handler{Fetcher: s.Reporter.Vaccinations.GetByManufacturer, Accumulate: true},
-		"boosters":                  &Handler{Fetcher: b.Fetch, Accumulate: true},
+		"boosters":                  &vaccinations2.BoosterHandler{Reporter: s.Reporter},
 	}
 }
 

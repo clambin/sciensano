@@ -8,6 +8,7 @@ import (
 	"github.com/clambin/sciensano/reporter"
 	"github.com/clambin/simplejson/v3"
 	"github.com/clambin/simplejson/v3/query"
+	"sync"
 )
 
 type RateHandler struct {
@@ -16,6 +17,7 @@ type RateHandler struct {
 	Scope
 	demographics.Fetcher
 	helper *GroupedHandler
+	lock   sync.Mutex
 }
 
 var _ simplejson.Handler = &RateHandler{}
@@ -25,8 +27,8 @@ func (r *RateHandler) Endpoints() simplejson.Endpoints {
 }
 
 func (r *RateHandler) tableQuery(ctx context.Context, req query.Request) (response query.Response, err error) {
+	r.lock.Lock()
 	if r.helper == nil {
-		// FIXME: race condition
 		r.helper = &GroupedHandler{
 			Reporter:   r.Reporter,
 			Type:       r.Type,
@@ -34,6 +36,7 @@ func (r *RateHandler) tableQuery(ctx context.Context, req query.Request) (respon
 			Accumulate: true,
 		}
 	}
+	r.lock.Unlock()
 
 	response, err = r.helper.tableQuery(ctx, req)
 

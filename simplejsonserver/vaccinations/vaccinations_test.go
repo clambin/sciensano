@@ -72,10 +72,10 @@ var (
 		&sciensano.APIVaccinationsResponse{TimeStamp: sciensano.TimeStamp{Time: timestamp.Add(24 * time.Hour)}, Region: "Flanders", AgeGroup: "25-34", Dose: sciensano.TypeVaccinationFull, Count: 3},
 		&sciensano.APIVaccinationsResponse{TimeStamp: sciensano.TimeStamp{Time: timestamp.Add(24 * time.Hour)}, Region: "Brussels", AgeGroup: "35-44", Dose: sciensano.TypeVaccinationSingle, Count: 4},
 		&sciensano.APIVaccinationsResponse{TimeStamp: sciensano.TimeStamp{Time: timestamp.Add(24 * time.Hour)}, Region: "Brussels", AgeGroup: "35-44", Dose: sciensano.TypeVaccinationPartial, Count: 5},
-		&sciensano.APIVaccinationsResponse{TimeStamp: sciensano.TimeStamp{Time: timestamp.Add(24 * time.Hour)}, Region: "Brussels", AgeGroup: "25-34", Dose: sciensano.TypeVaccinationBooster, Count: 5},
+		&sciensano.APIVaccinationsResponse{TimeStamp: sciensano.TimeStamp{Time: timestamp.Add(24 * time.Hour)}, Region: "Brussels", AgeGroup: "25-34", Dose: sciensano.TypeVaccinationBooster2, Count: 5},
 
 		&sciensano.APIVaccinationsResponse{TimeStamp: sciensano.TimeStamp{Time: timestamp.Add(48 * time.Hour)}, Region: "Flanders", AgeGroup: "25-34", Dose: sciensano.TypeVaccinationPartial, Count: 9},
-		&sciensano.APIVaccinationsResponse{TimeStamp: sciensano.TimeStamp{Time: timestamp.Add(48 * time.Hour)}, Region: "Brussels", AgeGroup: "35-44", Dose: sciensano.TypeVaccinationBooster, Count: 9},
+		&sciensano.APIVaccinationsResponse{TimeStamp: sciensano.TimeStamp{Time: timestamp.Add(48 * time.Hour)}, Region: "Brussels", AgeGroup: "35-44", Dose: sciensano.TypeVaccinationBooster3, Count: 9},
 	}
 )
 
