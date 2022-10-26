@@ -10,7 +10,6 @@ import (
 	"github.com/clambin/simplejson/v3/query"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 	"net/http"
 	"net/http/httptest"
 	"sync"
@@ -53,17 +52,17 @@ func TestRun(t *testing.T) {
 		"vacc-region-rate-full",
 		"vacc-region-rate-partial",
 		"vaccinations",
-	}, h.Targets())
+	}, h.Server.Targets())
 
 	req := query.Request{Args: query.Args{Args: common.Args{Range: common.Range{To: time.Now()}}}}
 
 	wg := sync.WaitGroup{}
-	for target, handler := range h.Handlers {
-		wg.Add(1)
+	wg.Add(len(h.Server.Handlers))
+	for target, handler := range h.Server.Handlers {
 		go func(handler simplejson.Handler, target string) {
 			_, err := handler.Endpoints().Query(ctx, req)
 			wg.Done()
-			require.NoError(t, err, target, target)
+			assert.NoError(t, err, target, target)
 		}(handler, target)
 	}
 	wg.Wait()
