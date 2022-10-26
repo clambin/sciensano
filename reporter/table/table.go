@@ -13,9 +13,11 @@ func NewFromAPIResponse(response []apiclient.APIResponse) *data.Table {
 	rows := len(response)
 	timestamps := make([]time.Time, 0, rows)
 
-	var values [][]float64
-	var attribs []string
-	var lastTimestamp time.Time
+	var (
+		values        [][]float64
+		attribs       []string
+		lastTimestamp time.Time
+	)
 	row := -1
 
 	for _, entry := range response {
@@ -50,7 +52,7 @@ func NewFromAPIResponse(response []apiclient.APIResponse) *data.Table {
 }
 
 // NewGroupedFromAPIResponse created a (grouped) dataframe from a set of APIResponses. Responses need to be in sequential order.
-func NewGroupedFromAPIResponse(response []apiclient.APIResponse, groupField int) *data.Table {
+func NewGroupedFromAPIResponse(response []apiclient.APIResponse, groupField apiclient.GroupField) *data.Table {
 	table := tabulator.New(getUniqueColumns(response, groupField)...)
 
 	for _, entry := range response {
@@ -60,7 +62,7 @@ func NewGroupedFromAPIResponse(response []apiclient.APIResponse, groupField int)
 	return &data.Table{Frame: tableToDataFrame(table)}
 }
 
-func getUniqueColumns(response []apiclient.APIResponse, groupField int) (columns []string) {
+func getUniqueColumns(response []apiclient.APIResponse, groupField apiclient.GroupField) (columns []string) {
 	cols := make(map[string]struct{})
 	for _, entry := range response {
 		cols[entry.GetGroupFieldValue(groupField)] = struct{}{}

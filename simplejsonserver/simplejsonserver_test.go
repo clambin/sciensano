@@ -10,7 +10,6 @@ import (
 	"github.com/clambin/simplejson/v3/query"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 	"net/http"
 	"net/http/httptest"
 	"sync"
@@ -33,6 +32,7 @@ func TestRun(t *testing.T) {
 	h.Initialize(ctx)
 
 	assert.Equal(t, []string{
+		"boosters",
 		"cases",
 		"cases-age",
 		"cases-province",
@@ -45,40 +45,29 @@ func TestRun(t *testing.T) {
 		"mortality-region",
 		"tests",
 		"vacc-age-booster",
-		"vacc-age-booster2",
-		"vacc-age-full",
-		"vacc-age-partial",
-		"vacc-age-rate-booster",
-		"vacc-age-rate-booster2",
 		"vacc-age-rate-full",
 		"vacc-age-rate-partial",
 		"vacc-manufacturer",
 		"vacc-region-booster",
-		"vacc-region-booster2",
-		"vacc-region-full",
-		"vacc-region-partial",
-		"vacc-region-rate-booster",
-		"vacc-region-rate-booster2",
 		"vacc-region-rate-full",
 		"vacc-region-rate-partial",
-		"vaccination-lag",
 		"vaccinations",
-		"vaccines",
-		"vaccines-manufacturer",
-		"vaccines-stats",
-		"vaccines-time",
-	}, h.Targets())
+	}, h.Server.Targets())
 
 	req := query.Request{Args: query.Args{Args: common.Args{Range: common.Range{To: time.Now()}}}}
 
 	wg := sync.WaitGroup{}
-	for target, handler := range h.Handlers {
-		wg.Add(1)
-		go func(handler simplejson.Handler, target string) {
+	wg.Add(len(h.Server.Handlers))
+	var count int
+	for target, handler := range h.Server.Handlers {
+		count++
+		go func(handler simplejson.Handler, target string, counter int) {
+			t.Logf("%2d: %s started", counter, target)
 			_, err := handler.Endpoints().Query(ctx, req)
-			require.NoError(t, err, target)
+			t.Logf("%2d: %s done. err: %v", counter, target, err)
 			wg.Done()
-		}(handler, target)
+			assert.NoError(t, err, target, target)
+		}(handler, target, count)
 	}
 	wg.Wait()
 

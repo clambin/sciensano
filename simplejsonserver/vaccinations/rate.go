@@ -8,6 +8,7 @@ import (
 	"github.com/clambin/sciensano/reporter"
 	"github.com/clambin/simplejson/v3"
 	"github.com/clambin/simplejson/v3/query"
+	"sync"
 )
 
 type RateHandler struct {
@@ -16,22 +17,26 @@ type RateHandler struct {
 	Scope
 	demographics.Fetcher
 	helper *GroupedHandler
+	lock   sync.Mutex
 }
 
 var _ simplejson.Handler = &RateHandler{}
 
-func (r RateHandler) Endpoints() simplejson.Endpoints {
+func (r *RateHandler) Endpoints() simplejson.Endpoints {
 	return simplejson.Endpoints{Query: r.tableQuery}
 }
 
 func (r *RateHandler) tableQuery(ctx context.Context, req query.Request) (response query.Response, err error) {
+	r.lock.Lock()
 	if r.helper == nil {
 		r.helper = &GroupedHandler{
-			Reporter: r.Reporter,
-			Type:     r.Type,
-			Scope:    r.Scope,
+			Reporter:   r.Reporter,
+			Type:       r.Type,
+			Scope:      r.Scope,
+			Accumulate: true,
 		}
 	}
+	r.lock.Unlock()
 
 	response, err = r.helper.tableQuery(ctx, req)
 
@@ -44,9 +49,9 @@ func (r *RateHandler) tableQuery(ctx context.Context, req query.Request) (respon
 
 	var figures map[string]int
 	switch r.Scope {
-	case ScopeRegion:
+	case ByRegion:
 		figures = r.Fetcher.GetByRegion()
-	case ScopeAge:
+	case ByAge:
 		figures = make(map[string]int)
 		for _, column := range resp.Columns {
 			if column.Text == "time" {

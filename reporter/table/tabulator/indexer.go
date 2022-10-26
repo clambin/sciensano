@@ -27,13 +27,13 @@ func MakeIndexer[T ordered]() *Indexer[T] {
 }
 
 // GetIndex returns the index of a value (i.e. when that value was added)
-func (idx Indexer[T]) GetIndex(value T) (index int, found bool) {
+func (idx *Indexer[T]) GetIndex(value T) (index int, found bool) {
 	index, found = idx.indices[value]
 	return
 }
 
 // Count returns the number of values in the Indexer
-func (idx Indexer[T]) Count() int {
+func (idx *Indexer[T]) Count() int {
 	return len(idx.values)
 }
 

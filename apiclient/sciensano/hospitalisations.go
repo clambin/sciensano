@@ -24,7 +24,7 @@ func (v APIHospitalisationsResponse) GetTimestamp() time.Time {
 }
 
 // GetGroupFieldValue returns the value of the specified entry's field
-func (v APIHospitalisationsResponse) GetGroupFieldValue(groupField int) (value string) {
+func (v APIHospitalisationsResponse) GetGroupFieldValue(groupField apiclient.GroupField) (value string) {
 	switch groupField {
 	case apiclient.GroupByRegion:
 		value = v.Region

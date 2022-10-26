@@ -20,8 +20,6 @@ const (
 	TypeFull
 	// TypeBooster filters booster vaccinations
 	TypeBooster
-	// TypeBooster2 filters 2nd booster vaccinations
-	TypeBooster2
 )
 
 type Reporter struct {
@@ -64,7 +62,7 @@ func (r *Reporter) GetByManufacturer() (results *data.Table, err error) {
 	})
 }
 
-func (r *Reporter) getByType(mode int, vaccinationType int) (results *data.Table, err error) {
+func (r *Reporter) getByType(mode apiclient.GroupField, vaccinationType int) (results *data.Table, err error) {
 	var apiResult []apiclient.APIResponse
 	apiResult, err = r.APIClient.Fetch(context.Background(), sciensano.TypeVaccinations)
 	if err != nil {
@@ -91,9 +89,7 @@ func filterVaccinations(input []apiclient.APIResponse, vaccinationType int) (out
 		case TypeFull:
 			add = dose == sciensano.TypeVaccinationFull || dose == sciensano.TypeVaccinationSingle
 		case TypeBooster:
-			add = dose == sciensano.TypeVaccinationBooster
-		case TypeBooster2:
-			add = dose == sciensano.TypeVaccinationBooster2
+			add = dose == sciensano.TypeVaccinationBooster || dose == sciensano.TypeVaccinationBooster2 || dose == sciensano.TypeVaccinationBooster3
 		}
 		if add {
 			output = append(output, entry)

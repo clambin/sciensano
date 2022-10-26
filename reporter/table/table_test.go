@@ -100,12 +100,12 @@ func BenchmarkNewFromAPIResponse(b *testing.B) {
 }
 
 func BenchmarkNewGroupedDataframeNewGroupedFromAPIResponse(b *testing.B) {
-	var input []apiclient.APIResponse
+	var r []apiclient.APIResponse
 	timestamp := time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)
 	for i := 0; i < 720; i++ {
 		for c := 0; c < 9; c++ {
 			for d := 0; d < 12; d++ {
-				input = append(input, &testResponse{
+				r = append(r, &testResponse{
 					timestamp: timestamp,
 					group:     strconv.Itoa(c),
 					value:     1,
@@ -117,7 +117,7 @@ func BenchmarkNewGroupedDataframeNewGroupedFromAPIResponse(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_ = table.NewGroupedFromAPIResponse(input, 1)
+		_ = table.NewGroupedFromAPIResponse(r, 1)
 	}
 }
 
@@ -139,7 +139,7 @@ func (t testResponse) GetTimestamp() time.Time {
 	return t.timestamp
 }
 
-func (t testResponse) GetGroupFieldValue(groupField int) (value string) {
+func (t testResponse) GetGroupFieldValue(groupField apiclient.GroupField) (value string) {
 	if groupField == 0 {
 		return ""
 	}
@@ -164,7 +164,7 @@ func (t testMultiValueResponse) GetTimestamp() time.Time {
 	return t.timestamp
 }
 
-func (t testMultiValueResponse) GetGroupFieldValue(_ int) (value string) {
+func (t testMultiValueResponse) GetGroupFieldValue(_ apiclient.GroupField) (value string) {
 	panic("implement me")
 }
 

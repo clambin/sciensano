@@ -20,7 +20,7 @@ func (b APIBatchResponse) GetTimestamp() time.Time {
 }
 
 // GetGroupFieldValue returns the value of a groupable field.  Not used for APIBatchResponse.
-func (b APIBatchResponse) GetGroupFieldValue(groupField int) (value string) {
+func (b APIBatchResponse) GetGroupFieldValue(groupField apiclient.GroupField) (value string) {
 	if groupField == apiclient.GroupByManufacturer {
 		value = b.Manufacturer
 	}

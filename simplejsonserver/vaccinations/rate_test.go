@@ -27,7 +27,7 @@ func TestRateHandler(t *testing.T) {
 		expected *query.TableResponse
 	}{
 		{
-			Scope: vaccinations.ScopeRegion,
+			Scope: vaccinations.ByRegion,
 			Type:  vaccinations2.TypePartial,
 			expected: &query.TableResponse{
 				Columns: []query.Column{
@@ -38,7 +38,7 @@ func TestRateHandler(t *testing.T) {
 			},
 		},
 		{
-			Scope: vaccinations.ScopeRegion,
+			Scope: vaccinations.ByRegion,
 			Type:  vaccinations2.TypeFull,
 			expected: &query.TableResponse{
 				Columns: []query.Column{
@@ -49,7 +49,7 @@ func TestRateHandler(t *testing.T) {
 			},
 		},
 		{
-			Scope: vaccinations.ScopeRegion,
+			Scope: vaccinations.ByRegion,
 			Type:  vaccinations2.TypeBooster,
 			expected: &query.TableResponse{
 				Columns: []query.Column{
@@ -60,7 +60,7 @@ func TestRateHandler(t *testing.T) {
 			},
 		},
 		{
-			Scope: vaccinations.ScopeAge,
+			Scope: vaccinations.ByAge,
 			Type:  vaccinations2.TypePartial,
 			expected: &query.TableResponse{
 				Columns: []query.Column{
@@ -71,7 +71,7 @@ func TestRateHandler(t *testing.T) {
 			},
 		},
 		{
-			Scope: vaccinations.ScopeAge,
+			Scope: vaccinations.ByAge,
 			Type:  vaccinations2.TypeFull,
 			expected: &query.TableResponse{
 				Columns: []query.Column{
@@ -82,7 +82,7 @@ func TestRateHandler(t *testing.T) {
 			},
 		},
 		{
-			Scope: vaccinations.ScopeAge,
+			Scope: vaccinations.ByAge,
 			Type:  vaccinations2.TypeBooster,
 			expected: &query.TableResponse{
 				Columns: []query.Column{
@@ -94,13 +94,13 @@ func TestRateHandler(t *testing.T) {
 		},
 	}
 
-	f := &mocks.Fetcher{}
+	f := mocks.NewFetcher(t)
 	f.On("Fetch", mock.AnythingOfType("*context.emptyCtx"), sciensano.TypeVaccinations).Return(vaccinationTestData, nil)
 
 	r := reporter.NewWithOptions(time.Hour, client.Options{})
 	r.Vaccinations.APIClient = f
 
-	demographicsClient := &mockDemographics.Fetcher{}
+	demographicsClient := mockDemographics.NewFetcher(t)
 	demographicsClient.
 		On("GetByRegion").
 		Return(map[string]int{
@@ -131,32 +131,28 @@ func TestRateHandler(t *testing.T) {
 		require.NoError(t, err, index)
 		assert.Equal(t, testCase.expected, response, index)
 	}
-
-	mock.AssertExpectationsForObjects(t, f, demographicsClient)
 }
 
 func TestRateHandler_Failure(t *testing.T) {
-	f := &mocks.Fetcher{}
+	f := mocks.NewFetcher(t)
 	f.On("Fetch", mock.AnythingOfType("*context.emptyCtx"), sciensano.TypeVaccinations).Return(nil, errors.New("fail"))
 
 	r := reporter.NewWithOptions(time.Hour, client.Options{})
 	r.Vaccinations.APIClient = f
 
-	demographicsClient := &mockDemographics.Fetcher{}
+	demographicsClient := mockDemographics.NewFetcher(t)
 
 	ctx := context.Background()
 	req := query.Request{Args: query.Args{Args: common.Args{Range: common.Range{To: timestamp.Add(24 * time.Hour)}}}}
 	h := vaccinations.RateHandler{
 		Reporter: r,
 		Type:     vaccinations2.TypeBooster,
-		Scope:    vaccinations.ScopeAge,
+		Scope:    vaccinations.ByAge,
 		Fetcher:  demographicsClient,
 	}
 
 	_, err := h.Endpoints().Query(ctx, req)
 	assert.Error(t, err)
-
-	mock.AssertExpectationsForObjects(t, f, demographicsClient)
 }
 
 func BenchmarkVaccinationsRateHandler(b *testing.B) {
@@ -174,7 +170,7 @@ func BenchmarkVaccinationsRateHandler(b *testing.B) {
 	h := vaccinations.RateHandler{
 		Reporter: r,
 		Type:     vaccinations2.TypeBooster,
-		Scope:    vaccinations.ScopeRegion,
+		Scope:    vaccinations.ByRegion,
 		Fetcher:  demographicsClient,
 	}
 

@@ -21,12 +21,14 @@ import (
 func TestGroupedHandler(t *testing.T) {
 	var testCases = []struct {
 		vaccinations.Scope
-		Type     int
-		expected *query.TableResponse
+		Type       int
+		Accumulate bool
+		expected   *query.TableResponse
 	}{
 		{
-			Scope: vaccinations.ScopeRegion,
-			Type:  vaccinations2.TypePartial,
+			Scope:      vaccinations.ByRegion,
+			Type:       vaccinations2.TypePartial,
+			Accumulate: true,
 			expected: &query.TableResponse{
 				Columns: []query.Column{
 					{Text: "time", Data: query.TimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
@@ -37,8 +39,9 @@ func TestGroupedHandler(t *testing.T) {
 			},
 		},
 		{
-			Scope: vaccinations.ScopeRegion,
-			Type:  vaccinations2.TypeFull,
+			Scope:      vaccinations.ByRegion,
+			Type:       vaccinations2.TypeFull,
+			Accumulate: true,
 			expected: &query.TableResponse{
 				Columns: []query.Column{
 					{Text: "time", Data: query.TimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
@@ -48,8 +51,9 @@ func TestGroupedHandler(t *testing.T) {
 			},
 		},
 		{
-			Scope: vaccinations.ScopeRegion,
-			Type:  vaccinations2.TypeBooster,
+			Scope:      vaccinations.ByRegion,
+			Type:       vaccinations2.TypeBooster,
+			Accumulate: true,
 			expected: &query.TableResponse{
 				Columns: []query.Column{
 					{Text: "time", Data: query.TimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
@@ -59,8 +63,21 @@ func TestGroupedHandler(t *testing.T) {
 			},
 		},
 		{
-			Scope: vaccinations.ScopeAge,
-			Type:  vaccinations2.TypePartial,
+			Scope:      vaccinations.ByRegion,
+			Type:       vaccinations2.TypeBooster,
+			Accumulate: false,
+			expected: &query.TableResponse{
+				Columns: []query.Column{
+					{Text: "time", Data: query.TimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
+					{Text: "Brussels", Data: query.NumberColumn{0, 5}},
+					{Text: "Flanders", Data: query.NumberColumn{1, 0}},
+				},
+			},
+		},
+		{
+			Scope:      vaccinations.ByAge,
+			Type:       vaccinations2.TypePartial,
+			Accumulate: true,
 			expected: &query.TableResponse{
 				Columns: []query.Column{
 					{Text: "time", Data: query.TimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
@@ -71,8 +88,9 @@ func TestGroupedHandler(t *testing.T) {
 			},
 		},
 		{
-			Scope: vaccinations.ScopeAge,
-			Type:  vaccinations2.TypeFull,
+			Scope:      vaccinations.ByAge,
+			Type:       vaccinations2.TypeFull,
+			Accumulate: true,
 			expected: &query.TableResponse{
 				Columns: []query.Column{
 					{Text: "time", Data: query.TimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
@@ -82,13 +100,14 @@ func TestGroupedHandler(t *testing.T) {
 			},
 		},
 		{
-			Scope: vaccinations.ScopeAge,
-			Type:  vaccinations2.TypeBooster,
+			Scope:      vaccinations.ByAge,
+			Type:       vaccinations2.TypeBooster,
+			Accumulate: false,
 			expected: &query.TableResponse{
 				Columns: []query.Column{
 					{Text: "time", Data: query.TimeColumn{timestamp, timestamp.Add(24 * time.Hour)}},
 					{Text: "25-34", Data: query.NumberColumn{0, 5}},
-					{Text: "35-44", Data: query.NumberColumn{1, 1}},
+					{Text: "35-44", Data: query.NumberColumn{1, 0}},
 				},
 			},
 		},
@@ -97,7 +116,7 @@ func TestGroupedHandler(t *testing.T) {
 	ctx := context.Background()
 	req := query.Request{Args: query.Args{Args: common.Args{Range: common.Range{To: timestamp.Add(24 * time.Hour)}}}}
 
-	f := &mocks.Fetcher{}
+	f := mocks.NewFetcher(t)
 	f.On("Fetch", mock.AnythingOfType("*context.emptyCtx"), sciensano.TypeVaccinations).Return(vaccinationTestData, nil)
 
 	r := reporter.NewWithOptions(time.Hour, client.Options{})
@@ -105,21 +124,20 @@ func TestGroupedHandler(t *testing.T) {
 
 	for index, testCase := range testCases {
 		h := vaccinations.GroupedHandler{
-			Reporter: r,
-			Type:     testCase.Type,
-			Scope:    testCase.Scope,
+			Reporter:   r,
+			Type:       testCase.Type,
+			Scope:      testCase.Scope,
+			Accumulate: testCase.Accumulate,
 		}
 
 		response, err := h.Endpoints().Query(ctx, req)
 		require.NoError(t, err, index)
 		assert.Equal(t, testCase.expected, response, index)
 	}
-
-	mock.AssertExpectationsForObjects(t, f)
 }
 
 func TestGroupedHandler_Failure(t *testing.T) {
-	f := &mocks.Fetcher{}
+	f := mocks.NewFetcher(t)
 	f.On("Fetch", mock.AnythingOfType("*context.emptyCtx"), sciensano.TypeVaccinations).Return(nil, errors.New("fail"))
 
 	r := reporter.NewWithOptions(time.Hour, client.Options{})
@@ -128,13 +146,11 @@ func TestGroupedHandler_Failure(t *testing.T) {
 	h := vaccinations.GroupedHandler{
 		Reporter: r,
 		Type:     vaccinations2.TypeBooster,
-		Scope:    vaccinations.ScopeAge,
+		Scope:    vaccinations.ByAge,
 	}
 
 	_, err := h.Endpoints().Query(context.Background(), query.Request{})
 	require.Error(t, err)
-
-	mock.AssertExpectationsForObjects(t, f)
 }
 
 func BenchmarkVaccinationsGroupedHandler(b *testing.B) {
@@ -148,9 +164,10 @@ func BenchmarkVaccinationsGroupedHandler(b *testing.B) {
 	h := vaccinations.GroupedHandler{
 		Reporter: r,
 		Type:     vaccinations2.TypePartial,
-		Scope:    vaccinations.ScopeAge,
+		Scope:    vaccinations.ByAge,
 	}
 
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_, err := h.Endpoints().Query(context.Background(), query.Request{})
 		if err != nil {
