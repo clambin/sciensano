@@ -33,6 +33,7 @@ func TestRun(t *testing.T) {
 	h.Initialize(ctx)
 
 	assert.Equal(t, []string{
+		"boosters",
 		"cases",
 		"cases-age",
 		"cases-province",
@@ -45,24 +46,13 @@ func TestRun(t *testing.T) {
 		"mortality-region",
 		"tests",
 		"vacc-age-booster",
-		"vacc-age-full",
-		"vacc-age-partial",
-		"vacc-age-rate-booster",
 		"vacc-age-rate-full",
 		"vacc-age-rate-partial",
 		"vacc-manufacturer",
 		"vacc-region-booster",
-		"vacc-region-full",
-		"vacc-region-partial",
-		"vacc-region-rate-booster",
 		"vacc-region-rate-full",
 		"vacc-region-rate-partial",
-		"vaccination-lag",
 		"vaccinations",
-		"vaccines",
-		"vaccines-manufacturer",
-		"vaccines-stats",
-		"vaccines-time",
 	}, h.Targets())
 
 	req := query.Request{Args: query.Args{Args: common.Args{Range: common.Range{To: time.Now()}}}}

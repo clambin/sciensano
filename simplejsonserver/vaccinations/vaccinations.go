@@ -25,26 +25,22 @@ func (handler *Handler) tableQuery(_ context.Context, req query.Request) (query.
 		return nil, fmt.Errorf("vaccinations failed: %w", err)
 	}
 
-	timestamps := vaccinationData.GetTimestamps()
-	partial, _ := vaccinationData.GetFloatValues("partial")
-	second, _ := vaccinationData.GetFloatValues("full")
+	partials, _ := vaccinationData.GetFloatValues("partial")
+	full, _ := vaccinationData.GetFloatValues("full")
 	singledose, _ := vaccinationData.GetFloatValues("singledose")
-	//booster, _ := vaccinationData.GetFloatValues("booster")
 
-	if len(second) != len(singledose) {
+	if len(full) != len(singledose) {
 		panic("data for second dose & single full-dose should be the same")
 	}
 
-	full := make([]float64, len(second))
-	for i := range second {
-		full[i] = second[i] + singledose[i]
+	for i := range full {
+		full[i] += singledose[i]
 	}
 
 	d := data.New(
-		data.Column{Name: "time", Values: timestamps},
-		//data.Column{Name: "booster", Values: booster},
+		data.Column{Name: "time", Values: vaccinationData.GetTimestamps()},
 		data.Column{Name: "full", Values: full},
-		data.Column{Name: "partial", Values: partial})
+		data.Column{Name: "partial", Values: partials})
 
 	return d.Accumulate().Filter(req.Args).CreateTableResponse(), nil
 }

@@ -22,8 +22,8 @@ var _ simplejson.Handler = &GroupedHandler{}
 type Scope int
 
 const (
-	ScopeRegion = iota
-	ScopeAge
+	ByRegion = iota
+	ByAge
 )
 
 // Endpoints implements the grafana-json Endpoint function. It returns all supported endpoints
@@ -34,9 +34,9 @@ func (handler *GroupedHandler) Endpoints() simplejson.Endpoints {
 func (handler *GroupedHandler) tableQuery(_ context.Context, req query.Request) (response query.Response, err error) {
 	var vaccinationData *data.Table
 	switch handler.Scope {
-	case ScopeAge:
+	case ByAge:
 		vaccinationData, err = handler.Reporter.Vaccinations.GetByAgeGroup(handler.Type)
-	case ScopeRegion:
+	case ByRegion:
 		vaccinationData, err = handler.Reporter.Vaccinations.GetByRegion(handler.Type)
 	}
 

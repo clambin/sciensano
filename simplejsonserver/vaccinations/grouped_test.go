@@ -26,7 +26,7 @@ func TestGroupedHandler(t *testing.T) {
 		expected   *query.TableResponse
 	}{
 		{
-			Scope:      vaccinations.ScopeRegion,
+			Scope:      vaccinations.ByRegion,
 			Type:       vaccinations2.TypePartial,
 			Accumulate: true,
 			expected: &query.TableResponse{
@@ -39,7 +39,7 @@ func TestGroupedHandler(t *testing.T) {
 			},
 		},
 		{
-			Scope:      vaccinations.ScopeRegion,
+			Scope:      vaccinations.ByRegion,
 			Type:       vaccinations2.TypeFull,
 			Accumulate: true,
 			expected: &query.TableResponse{
@@ -51,7 +51,7 @@ func TestGroupedHandler(t *testing.T) {
 			},
 		},
 		{
-			Scope:      vaccinations.ScopeRegion,
+			Scope:      vaccinations.ByRegion,
 			Type:       vaccinations2.TypeBooster,
 			Accumulate: true,
 			expected: &query.TableResponse{
@@ -63,7 +63,7 @@ func TestGroupedHandler(t *testing.T) {
 			},
 		},
 		{
-			Scope:      vaccinations.ScopeRegion,
+			Scope:      vaccinations.ByRegion,
 			Type:       vaccinations2.TypeBooster,
 			Accumulate: false,
 			expected: &query.TableResponse{
@@ -75,7 +75,7 @@ func TestGroupedHandler(t *testing.T) {
 			},
 		},
 		{
-			Scope:      vaccinations.ScopeAge,
+			Scope:      vaccinations.ByAge,
 			Type:       vaccinations2.TypePartial,
 			Accumulate: true,
 			expected: &query.TableResponse{
@@ -88,7 +88,7 @@ func TestGroupedHandler(t *testing.T) {
 			},
 		},
 		{
-			Scope:      vaccinations.ScopeAge,
+			Scope:      vaccinations.ByAge,
 			Type:       vaccinations2.TypeFull,
 			Accumulate: true,
 			expected: &query.TableResponse{
@@ -100,7 +100,7 @@ func TestGroupedHandler(t *testing.T) {
 			},
 		},
 		{
-			Scope:      vaccinations.ScopeAge,
+			Scope:      vaccinations.ByAge,
 			Type:       vaccinations2.TypeBooster,
 			Accumulate: false,
 			expected: &query.TableResponse{
@@ -148,7 +148,7 @@ func TestGroupedHandler_Failure(t *testing.T) {
 	h := vaccinations.GroupedHandler{
 		Reporter: r,
 		Type:     vaccinations2.TypeBooster,
-		Scope:    vaccinations.ScopeAge,
+		Scope:    vaccinations.ByAge,
 	}
 
 	_, err := h.Endpoints().Query(context.Background(), query.Request{})
@@ -168,7 +168,7 @@ func BenchmarkVaccinationsGroupedHandler(b *testing.B) {
 	h := vaccinations.GroupedHandler{
 		Reporter: r,
 		Type:     vaccinations2.TypePartial,
-		Scope:    vaccinations.ScopeAge,
+		Scope:    vaccinations.ByAge,
 	}
 
 	b.ResetTimer()

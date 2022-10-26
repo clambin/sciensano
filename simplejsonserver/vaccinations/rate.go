@@ -26,6 +26,7 @@ func (r *RateHandler) Endpoints() simplejson.Endpoints {
 
 func (r *RateHandler) tableQuery(ctx context.Context, req query.Request) (response query.Response, err error) {
 	if r.helper == nil {
+		// FIXME: race condition
 		r.helper = &GroupedHandler{
 			Reporter:   r.Reporter,
 			Type:       r.Type,
@@ -45,9 +46,9 @@ func (r *RateHandler) tableQuery(ctx context.Context, req query.Request) (respon
 
 	var figures map[string]int
 	switch r.Scope {
-	case ScopeRegion:
+	case ByRegion:
 		figures = r.Fetcher.GetByRegion()
-	case ScopeAge:
+	case ByAge:
 		figures = make(map[string]int)
 		for _, column := range resp.Columns {
 			if column.Text == "time" {

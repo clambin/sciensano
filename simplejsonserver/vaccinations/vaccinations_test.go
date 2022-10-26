@@ -18,7 +18,7 @@ import (
 )
 
 func TestHandler(t *testing.T) {
-	f := &mocks.Fetcher{}
+	f := mocks.NewFetcher(t)
 	f.On("Fetch", mock.AnythingOfType("*context.emptyCtx"), sciensano.TypeVaccinations).Return(vaccinationTestData, nil)
 
 	r := reporter.NewWithOptions(time.Hour, client.Options{})
@@ -33,13 +33,30 @@ func TestHandler(t *testing.T) {
 	assert.Equal(t, &query.TableResponse{
 		Columns: []query.Column{
 			{Text: "time", Data: query.TimeColumn{time.Date(2020, time.January, 1, 0, 0, 0, 0, time.UTC), time.Date(2020, time.January, 2, 0, 0, 0, 0, time.UTC)}},
-			//{Text: "booster", Data: query.NumberColumn{1, 6}},
 			{Text: "full", Data: query.NumberColumn{3, 10}},
 			{Text: "partial", Data: query.NumberColumn{3, 8}},
 		},
 	}, response)
+}
 
-	mock.AssertExpectationsForObjects(t, f)
+func BenchmarkHandler(b *testing.B) {
+	f := &mocks.Fetcher{}
+	f.On("Fetch", mock.AnythingOfType("*context.emptyCtx"), sciensano.TypeVaccinations).Return(buildBigResponse(), nil)
+
+	r := reporter.NewWithOptions(time.Hour, client.Options{})
+	r.Vaccinations.APIClient = f
+	h := vaccinations.Handler{Reporter: r}
+
+	ctx := context.Background()
+	req := query.Request{Args: query.Args{Args: common.Args{Range: common.Range{To: timestamp.Add(24 * time.Hour)}}}}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_, err := h.Endpoints().Query(ctx, req)
+		if err != nil {
+			b.Fatal(err)
+		}
+	}
 }
 
 var (

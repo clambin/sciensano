@@ -6,14 +6,12 @@ import (
 	"fmt"
 	"github.com/clambin/sciensano/demographics"
 	"github.com/clambin/sciensano/reporter"
-	vaccinations2 "github.com/clambin/sciensano/reporter/vaccinations"
-	"github.com/clambin/sciensano/simplejsonserver/cases"
-	"github.com/clambin/sciensano/simplejsonserver/hospitalisations"
-	"github.com/clambin/sciensano/simplejsonserver/mortality"
-	"github.com/clambin/sciensano/simplejsonserver/testresults"
-	"github.com/clambin/sciensano/simplejsonserver/vaccinations"
-	vaccinesHandler "github.com/clambin/sciensano/simplejsonserver/vaccines"
+	"github.com/clambin/sciensano/reporter/vaccinations"
+	"github.com/clambin/sciensano/simplejsonserver/booster"
+	vaccinations2 "github.com/clambin/sciensano/simplejsonserver/vaccinations"
 	"github.com/clambin/simplejson/v3"
+	"github.com/clambin/simplejson/v3/data"
+	"github.com/clambin/simplejson/v3/query"
 	"net/http"
 )
 
@@ -29,37 +27,30 @@ func (s *Server) Initialize(ctx context.Context) {
 	// set up auto-refresh of demographics
 	go s.Demographics.Run(ctx)
 	// set up handler lookup table
+
+	b := booster.Handler{Reporter: s.Reporter}
+
 	s.Handlers = map[string]simplejson.Handler{
-		"cases":                     &cases.Handler{Reporter: s.Reporter, Scope: cases.ScopeAll},
-		"cases-province":            &cases.Handler{Reporter: s.Reporter, Scope: cases.ScopeProvince},
-		"cases-region":              &cases.Handler{Reporter: s.Reporter, Scope: cases.ScopeRegion},
-		"cases-age":                 &cases.Handler{Reporter: s.Reporter, Scope: cases.ScopeAge},
-		"hospitalisations":          &hospitalisations.Handler{Reporter: s.Reporter, Scope: hospitalisations.ScopeAll},
-		"hospitalisations-region":   &hospitalisations.Handler{Reporter: s.Reporter, Scope: hospitalisations.ScopeRegion},
-		"hospitalisations-province": &hospitalisations.Handler{Reporter: s.Reporter, Scope: hospitalisations.ScopeProvince},
-		"mortality":                 &mortality.Handler{Reporter: s.Reporter, Scope: mortality.ScopeAll},
-		"mortality-region":          &mortality.Handler{Reporter: s.Reporter, Scope: mortality.ScopeRegion},
-		"mortality-age":             &mortality.Handler{Reporter: s.Reporter, Scope: mortality.ScopeAge},
-		"tests":                     &testresults.Handler{Reporter: s.Reporter},
-		"vaccinations":              &vaccinations.Handler{Reporter: s.Reporter},
-		"vaccination-lag":           &vaccinations.LagHandler{Reporter: s.Reporter},
-		"vacc-age-partial":          &vaccinations.GroupedHandler{Reporter: s.Reporter, Scope: vaccinations.ScopeAge, Type: vaccinations2.TypePartial, Accumulate: true},
-		"vacc-age-full":             &vaccinations.GroupedHandler{Reporter: s.Reporter, Scope: vaccinations.ScopeAge, Type: vaccinations2.TypeFull, Accumulate: true},
-		"vacc-age-booster":          &vaccinations.GroupedHandler{Reporter: s.Reporter, Scope: vaccinations.ScopeAge, Type: vaccinations2.TypeBooster},
-		"vacc-region-partial":       &vaccinations.GroupedHandler{Reporter: s.Reporter, Scope: vaccinations.ScopeRegion, Type: vaccinations2.TypePartial, Accumulate: true},
-		"vacc-region-full":          &vaccinations.GroupedHandler{Reporter: s.Reporter, Scope: vaccinations.ScopeRegion, Type: vaccinations2.TypeFull, Accumulate: true},
-		"vacc-region-booster":       &vaccinations.GroupedHandler{Reporter: s.Reporter, Scope: vaccinations.ScopeRegion, Type: vaccinations2.TypeBooster},
-		"vacc-age-rate-partial":     &vaccinations.RateHandler{Reporter: s.Reporter, Scope: vaccinations.ScopeAge, Type: vaccinations2.TypePartial, Fetcher: s.Demographics},
-		"vacc-age-rate-full":        &vaccinations.RateHandler{Reporter: s.Reporter, Scope: vaccinations.ScopeAge, Type: vaccinations2.TypeFull, Fetcher: s.Demographics},
-		"vacc-age-rate-booster":     &vaccinations.RateHandler{Reporter: s.Reporter, Scope: vaccinations.ScopeAge, Type: vaccinations2.TypeBooster, Fetcher: s.Demographics},
-		"vacc-region-rate-partial":  &vaccinations.RateHandler{Reporter: s.Reporter, Scope: vaccinations.ScopeRegion, Type: vaccinations2.TypePartial, Fetcher: s.Demographics},
-		"vacc-region-rate-full":     &vaccinations.RateHandler{Reporter: s.Reporter, Scope: vaccinations.ScopeRegion, Type: vaccinations2.TypeFull, Fetcher: s.Demographics},
-		"vacc-region-rate-booster":  &vaccinations.RateHandler{Reporter: s.Reporter, Scope: vaccinations.ScopeRegion, Type: vaccinations2.TypeBooster, Fetcher: s.Demographics},
-		"vacc-manufacturer":         &vaccinations.ManufacturerHandler{Reporter: s.Reporter},
-		"vaccines":                  &vaccinesHandler.OverviewHandler{Reporter: s.Reporter},
-		"vaccines-manufacturer":     &vaccinesHandler.ManufacturerHandler{Reporter: s.Reporter},
-		"vaccines-stats":            &vaccinesHandler.StatsHandler{Reporter: s.Reporter},
-		"vaccines-time":             &vaccinesHandler.DelayHandler{Reporter: s.Reporter},
+		"cases":                     &Handler{Fetcher: s.Reporter.Cases.Get},
+		"cases-province":            &Handler{Fetcher: s.Reporter.Cases.GetByProvince},
+		"cases-region":              &Handler{Fetcher: s.Reporter.Cases.GetByRegion},
+		"cases-age":                 &Handler{Fetcher: s.Reporter.Cases.GetByAgeGroup},
+		"hospitalisations":          &Handler{Fetcher: s.Reporter.Hospitalisations.Get},
+		"hospitalisations-region":   &Handler{Fetcher: s.Reporter.Hospitalisations.GetByRegion},
+		"hospitalisations-province": &Handler{Fetcher: s.Reporter.Hospitalisations.GetByProvince},
+		"mortality":                 &Handler{Fetcher: s.Reporter.Mortality.Get},
+		"mortality-region":          &Handler{Fetcher: s.Reporter.Mortality.GetByRegion},
+		"mortality-age":             &Handler{Fetcher: s.Reporter.Mortality.GetByAgeGroup},
+		"tests":                     &Handler{Fetcher: s.Reporter.TestResults.Get},
+		"vaccinations":              &vaccinations2.Handler{Reporter: s.Reporter},
+		"vacc-age-rate-partial":     &vaccinations2.RateHandler{Reporter: s.Reporter, Scope: vaccinations2.ByAge, Type: vaccinations.TypePartial, Fetcher: s.Demographics},
+		"vacc-age-rate-full":        &vaccinations2.RateHandler{Reporter: s.Reporter, Scope: vaccinations2.ByAge, Type: vaccinations.TypeFull, Fetcher: s.Demographics},
+		"vacc-region-rate-partial":  &vaccinations2.RateHandler{Reporter: s.Reporter, Scope: vaccinations2.ByRegion, Type: vaccinations.TypePartial, Fetcher: s.Demographics},
+		"vacc-region-rate-full":     &vaccinations2.RateHandler{Reporter: s.Reporter, Scope: vaccinations2.ByRegion, Type: vaccinations.TypeFull, Fetcher: s.Demographics},
+		"vacc-age-booster":          &vaccinations2.GroupedHandler{Reporter: s.Reporter, Scope: vaccinations2.ByAge, Type: vaccinations.TypeBooster},
+		"vacc-region-booster":       &vaccinations2.GroupedHandler{Reporter: s.Reporter, Scope: vaccinations2.ByRegion, Type: vaccinations.TypeBooster},
+		"vacc-manufacturer":         &Handler{Fetcher: s.Reporter.Vaccinations.GetByManufacturer, Accumulate: true},
+		"boosters":                  &Handler{Fetcher: b.Fetch, Accumulate: true},
 	}
 }
 
@@ -83,4 +74,25 @@ func (s *Server) Health(w http.ResponseWriter, _ *http.Request) {
 	encoder := json.NewEncoder(w)
 	encoder.SetIndent("", "  ")
 	_ = encoder.Encode(response)
+}
+
+type Handler struct {
+	Fetcher    func() (*data.Table, error)
+	Accumulate bool
+}
+
+// Endpoints implements the grafana-json Endpoint function. It returns all supported endpoints
+func (h *Handler) Endpoints() simplejson.Endpoints {
+	return simplejson.Endpoints{
+		Query: func(_ context.Context, req query.Request) (query.Response, error) {
+			records, err := h.Fetcher()
+			if err != nil {
+				return nil, fmt.Errorf("fetch failed: %w", err)
+			}
+			if h.Accumulate {
+				records = records.Accumulate()
+			}
+			return records.Filter(req.Args).CreateTableResponse(), nil
+		},
+	}
 }

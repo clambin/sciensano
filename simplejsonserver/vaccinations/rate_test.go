@@ -27,7 +27,7 @@ func TestRateHandler(t *testing.T) {
 		expected *query.TableResponse
 	}{
 		{
-			Scope: vaccinations.ScopeRegion,
+			Scope: vaccinations.ByRegion,
 			Type:  vaccinations2.TypePartial,
 			expected: &query.TableResponse{
 				Columns: []query.Column{
@@ -38,7 +38,7 @@ func TestRateHandler(t *testing.T) {
 			},
 		},
 		{
-			Scope: vaccinations.ScopeRegion,
+			Scope: vaccinations.ByRegion,
 			Type:  vaccinations2.TypeFull,
 			expected: &query.TableResponse{
 				Columns: []query.Column{
@@ -49,7 +49,7 @@ func TestRateHandler(t *testing.T) {
 			},
 		},
 		{
-			Scope: vaccinations.ScopeRegion,
+			Scope: vaccinations.ByRegion,
 			Type:  vaccinations2.TypeBooster,
 			expected: &query.TableResponse{
 				Columns: []query.Column{
@@ -60,7 +60,7 @@ func TestRateHandler(t *testing.T) {
 			},
 		},
 		{
-			Scope: vaccinations.ScopeAge,
+			Scope: vaccinations.ByAge,
 			Type:  vaccinations2.TypePartial,
 			expected: &query.TableResponse{
 				Columns: []query.Column{
@@ -71,7 +71,7 @@ func TestRateHandler(t *testing.T) {
 			},
 		},
 		{
-			Scope: vaccinations.ScopeAge,
+			Scope: vaccinations.ByAge,
 			Type:  vaccinations2.TypeFull,
 			expected: &query.TableResponse{
 				Columns: []query.Column{
@@ -82,7 +82,7 @@ func TestRateHandler(t *testing.T) {
 			},
 		},
 		{
-			Scope: vaccinations.ScopeAge,
+			Scope: vaccinations.ByAge,
 			Type:  vaccinations2.TypeBooster,
 			expected: &query.TableResponse{
 				Columns: []query.Column{
@@ -149,7 +149,7 @@ func TestRateHandler_Failure(t *testing.T) {
 	h := vaccinations.RateHandler{
 		Reporter: r,
 		Type:     vaccinations2.TypeBooster,
-		Scope:    vaccinations.ScopeAge,
+		Scope:    vaccinations.ByAge,
 		Fetcher:  demographicsClient,
 	}
 
@@ -174,7 +174,7 @@ func BenchmarkVaccinationsRateHandler(b *testing.B) {
 	h := vaccinations.RateHandler{
 		Reporter: r,
 		Type:     vaccinations2.TypeBooster,
-		Scope:    vaccinations.ScopeRegion,
+		Scope:    vaccinations.ByRegion,
 		Fetcher:  demographicsClient,
 	}
 
