@@ -58,12 +58,16 @@ func TestRun(t *testing.T) {
 
 	wg := sync.WaitGroup{}
 	wg.Add(len(h.Server.Handlers))
+	var count int
 	for target, handler := range h.Server.Handlers {
-		go func(handler simplejson.Handler, target string) {
+		count++
+		go func(handler simplejson.Handler, target string, counter int) {
+			t.Logf("%2d: %s started", counter, target)
 			_, err := handler.Endpoints().Query(ctx, req)
+			t.Logf("%2d: %s done. err: %v", counter, target, err)
 			wg.Done()
 			assert.NoError(t, err, target, target)
-		}(handler, target)
+		}(handler, target, count)
 	}
 	wg.Wait()
 
