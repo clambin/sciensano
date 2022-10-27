@@ -39,3 +39,24 @@ func TestBoosterHandler(t *testing.T) {
 		},
 	}, response)
 }
+
+func BenchmarkBoosterHandler(b *testing.B) {
+	f := &mocks.Fetcher{}
+	f.On("Fetch", mock.AnythingOfType("*context.emptyCtx"), sciensano.TypeVaccinations).Return(buildBigResponse(), nil)
+
+	r := reporter.NewWithOptions(time.Hour, client.Options{})
+	r.Vaccinations.APIClient = f
+
+	//req := query.Request{Args: query.Args{Args: common.Args{Range: common.Range{To: timestamp.Add(24 * time.Hour)}}}}
+	var req query.Request
+	ctx := context.Background()
+
+	h := vaccinations.BoosterHandler{Reporter: r}
+
+	for i := 0; i < b.N; i++ {
+		_, err := h.Endpoints().Query(ctx, req)
+		if err != nil {
+			b.Fatal(err)
+		}
+	}
+}
