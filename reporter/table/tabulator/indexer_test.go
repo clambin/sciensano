@@ -2,7 +2,7 @@ package tabulator_test
 
 import (
 	"fmt"
-	"github.com/clambin/simplejson/v3/dataset"
+	"github.com/clambin/sciensano/reporter/table/tabulator"
 	"github.com/stretchr/testify/assert"
 	"math/rand"
 	"testing"
@@ -10,7 +10,7 @@ import (
 )
 
 func TestIndexer_Time(t *testing.T) {
-	idx := dataset.MakeIndexer[time.Time]()
+	idx := tabulator.MakeIndexer[time.Time]()
 	indices := make(map[time.Time]int)
 
 	const iterations = 100
@@ -33,7 +33,7 @@ func TestIndexer_Time(t *testing.T) {
 }
 
 func TestIndexer_String(t *testing.T) {
-	idx := dataset.MakeIndexer[string]()
+	idx := tabulator.MakeIndexer[string]()
 	indices := make(map[string]int)
 
 	const iterations = 100
@@ -57,7 +57,7 @@ func TestIndexer_String(t *testing.T) {
 
 func TestIndexer_Reorder(t *testing.T) {
 	input := []string{"C", "B", "A"}
-	idx := dataset.MakeIndexer[string]()
+	idx := tabulator.MakeIndexer[string]()
 
 	for index, value := range input {
 		i, added := idx.Add(value)
