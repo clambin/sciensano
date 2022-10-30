@@ -2,7 +2,7 @@ package vaccinations_test
 
 import (
 	"context"
-	"github.com/clambin/go-metrics/client"
+	"github.com/clambin/httpclient"
 	"github.com/clambin/sciensano/apiclient"
 	"github.com/clambin/sciensano/apiclient/fetcher/mocks"
 	"github.com/clambin/sciensano/apiclient/sciensano"
@@ -21,7 +21,7 @@ func TestHandler(t *testing.T) {
 	f := mocks.NewFetcher(t)
 	f.On("Fetch", mock.AnythingOfType("*context.emptyCtx"), sciensano.TypeVaccinations).Return(vaccinationTestData, nil)
 
-	r := reporter.NewWithOptions(time.Hour, client.Options{})
+	r := reporter.NewWithOptions(time.Hour, httpclient.Options{})
 	r.Vaccinations.APIClient = f
 	h := vaccinations.Handler{Reporter: r}
 
@@ -43,7 +43,7 @@ func BenchmarkHandler(b *testing.B) {
 	f := &mocks.Fetcher{}
 	f.On("Fetch", mock.AnythingOfType("*context.emptyCtx"), sciensano.TypeVaccinations).Return(buildBigResponse(), nil)
 
-	r := reporter.NewWithOptions(time.Hour, client.Options{})
+	r := reporter.NewWithOptions(time.Hour, httpclient.Options{})
 	r.Vaccinations.APIClient = f
 	h := vaccinations.Handler{Reporter: r}
 

@@ -1,8 +1,8 @@
 package reporter_test
 
 import (
-	"github.com/clambin/go-metrics/client"
 	"github.com/clambin/go-metrics/tools"
+	"github.com/clambin/httpclient"
 	"github.com/clambin/sciensano/reporter"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
@@ -11,8 +11,8 @@ import (
 )
 
 func TestReporterMetrics(t *testing.T) {
-	m := client.NewMetrics("foo", "")
-	r := reporter.NewWithOptions(time.Hour, client.Options{PrometheusMetrics: m})
+	m := httpclient.NewMetrics("foo", "")
+	r := reporter.NewWithOptions(time.Hour, httpclient.Options{PrometheusMetrics: m})
 
 	assert.Eventually(t, func() bool {
 		_, err := r.TestResults.Get()

@@ -62,8 +62,12 @@ github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e/go.mod h1:nSuG5e5P
 github.com/chzyer/test v0.0.0-20180213035817-a1ea475d72b1/go.mod h1:Q3SI9o4m/ZMnBNeIyt5eFwwo7qiLfzFZmjNmxjkiQlU=
 github.com/clambin/cache v0.0.5 h1:VqfQIEsuUFlk6n1NLUm5uSS1OIBgO8XXNQQjKSBwiFY=
 github.com/clambin/cache v0.0.5/go.mod h1:+BKmGZ4iIz30+yxq9gOD9ZLCBNPzu8dLyejefdkQQes=
-github.com/clambin/go-metrics v0.6.0 h1:ACBCD9tqDWdCV3xDSCYK249AKKh3oeCUbtpjhDvojpU=
-github.com/clambin/go-metrics v0.6.0/go.mod h1:v/FFsSZlvDqUIf1NgtYwthrOb5efirZONt62uLlv6hM=
+github.com/clambin/go-metrics v0.6.1 h1:S1pw2YdBxf3HggGlOOsq+rvvMKrwbgncSIxRONabUWc=
+github.com/clambin/go-metrics v0.6.1/go.mod h1:g8ttsd8Vm0qzz/NE/8v/vb57Ik6Q8AuQHqjOAyFB/h4=
+github.com/clambin/httpclient v0.0.0-20221030131440-67c7c98fe565 h1:8uZP3PidsO9Y6y/gi6/iwtGInqFD4s9wWZF+2S4mR+M=
+github.com/clambin/httpclient v0.0.0-20221030131440-67c7c98fe565/go.mod h1:WOofTu8IFGu7GXypAif+NV1fkP7VUWq7Idl+OWj/Qqo=
+github.com/clambin/httpclient v0.1.0 h1:ZyHqWMG9JhGSp1mVbhlpmPkesoum6apa2XZXOr7DUlI=
+github.com/clambin/httpclient v0.1.0/go.mod h1:MlXMg2vavcHOazUImQlFwsGQDjuLfl4MH7ihUZnFT6k=
 github.com/clambin/simplejson/v3 v3.6.2 h1:o0iradQpiZJ4leDNQ7xT/CyGmNVC5Y8rJNCregZRJn8=
 github.com/clambin/simplejson/v3 v3.6.2/go.mod h1:ddyLs3GfbOGF18n8HCL7Dkco3cEqMj1/THylq0FP+dk=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=

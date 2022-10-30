@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"flag"
-	"github.com/clambin/go-metrics/client"
+	"github.com/clambin/httpclient"
 	"github.com/clambin/sciensano/apiclient/sciensano"
 	"github.com/go-http-utils/headers"
 	"github.com/stretchr/testify/assert"
@@ -25,7 +25,7 @@ func TestClient_GetLastUpdates(t *testing.T) {
 	s := &server{}
 	testServer := httptest.NewServer(http.HandlerFunc(s.handle))
 
-	c := sciensano.Client{Caller: &client.InstrumentedClient{
+	c := sciensano.Client{Caller: &httpclient.InstrumentedClient{
 		Application: "test",
 	}}
 	c.URL = testServer.URL
@@ -48,7 +48,7 @@ func TestClient_Fetch(t *testing.T) {
 	testServer := httptest.NewServer(http.HandlerFunc(s.handle))
 	defer testServer.Close()
 
-	c := sciensano.Client{Caller: &client.InstrumentedClient{
+	c := sciensano.Client{Caller: &httpclient.InstrumentedClient{
 		Application: "test",
 	}}
 	c.URL = testServer.URL

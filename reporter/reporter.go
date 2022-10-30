@@ -2,7 +2,7 @@ package reporter
 
 import (
 	"context"
-	"github.com/clambin/go-metrics/client"
+	"github.com/clambin/httpclient"
 	"github.com/clambin/sciensano/apiclient/fetcher"
 	sciensanoClient "github.com/clambin/sciensano/apiclient/sciensano"
 	vaccinesClient "github.com/clambin/sciensano/apiclient/vaccines"
@@ -29,18 +29,18 @@ type Client struct {
 
 // New creates a new Client which caches results for duration interval
 func New(duration time.Duration) *Client {
-	return NewWithOptions(duration, client.Options{
-		PrometheusMetrics: client.NewMetrics("sciensano", ""),
+	return NewWithOptions(duration, httpclient.Options{
+		PrometheusMetrics: httpclient.NewMetrics("sciensano", ""),
 	})
 }
 
 // NewWithOptions creates a new Client with the provided Options
-func NewWithOptions(expiration time.Duration, options client.Options) *Client {
+func NewWithOptions(expiration time.Duration, options httpclient.Options) *Client {
 	reportsCache := cache.NewCache(expiration)
 	c1 := fetcher.NewCacher(
 		fetcher.NewLimiter(
 			&sciensanoClient.Client{
-				Caller: &client.InstrumentedClient{
+				Caller: &httpclient.InstrumentedClient{
 					Options:     options,
 					Application: "sciensano",
 				},
@@ -50,7 +50,7 @@ func NewWithOptions(expiration time.Duration, options client.Options) *Client {
 	go c1.AutoRefresh(context.Background(), time.Hour)
 
 	c2 := fetcher.NewCacher(&vaccinesClient.Client{
-		Caller: &client.InstrumentedClient{
+		Caller: &httpclient.InstrumentedClient{
 			Options:     options,
 			Application: "vaccines",
 		},

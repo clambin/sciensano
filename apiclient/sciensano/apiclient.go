@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/clambin/go-metrics/client"
+	"github.com/clambin/httpclient"
 	"github.com/clambin/sciensano/apiclient"
 	"github.com/clambin/sciensano/apiclient/fetcher"
 	"github.com/go-http-utils/headers"
@@ -26,7 +26,7 @@ const (
 
 // Client calls the different Sciensano APIs
 type Client struct {
-	client.Caller
+	httpclient.Caller
 	URL string
 }
 

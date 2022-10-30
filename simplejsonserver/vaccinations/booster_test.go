@@ -2,7 +2,7 @@ package vaccinations_test
 
 import (
 	"context"
-	"github.com/clambin/go-metrics/client"
+	"github.com/clambin/httpclient"
 	"github.com/clambin/sciensano/apiclient/fetcher/mocks"
 	"github.com/clambin/sciensano/apiclient/sciensano"
 	"github.com/clambin/sciensano/reporter"
@@ -19,7 +19,7 @@ func TestBoosterHandler(t *testing.T) {
 	f := mocks.NewFetcher(t)
 	f.On("Fetch", mock.AnythingOfType("*context.emptyCtx"), sciensano.TypeVaccinations).Return(vaccinationTestData, nil)
 
-	r := reporter.NewWithOptions(time.Hour, client.Options{})
+	r := reporter.NewWithOptions(time.Hour, httpclient.Options{})
 	r.Vaccinations.APIClient = f
 
 	//req := query.Request{Args: query.Args{Args: common.Args{Range: common.Range{To: timestamp.Add(24 * time.Hour)}}}}
@@ -44,7 +44,7 @@ func BenchmarkBoosterHandler(b *testing.B) {
 	f := &mocks.Fetcher{}
 	f.On("Fetch", mock.AnythingOfType("*context.emptyCtx"), sciensano.TypeVaccinations).Return(buildBigResponse(), nil)
 
-	r := reporter.NewWithOptions(time.Hour, client.Options{})
+	r := reporter.NewWithOptions(time.Hour, httpclient.Options{})
 	r.Vaccinations.APIClient = f
 
 	//req := query.Request{Args: query.Args{Args: common.Args{Range: common.Range{To: timestamp.Add(24 * time.Hour)}}}}

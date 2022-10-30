@@ -3,7 +3,7 @@ package vaccines_test
 import (
 	"context"
 	"encoding/json"
-	"github.com/clambin/go-metrics/client"
+	"github.com/clambin/httpclient"
 	"github.com/clambin/sciensano/apiclient/vaccines"
 	"github.com/go-http-utils/headers"
 	"github.com/stretchr/testify/assert"
@@ -19,7 +19,7 @@ func TestClient_GetLastUpdates(t *testing.T) {
 	s := &server{}
 	testServer := httptest.NewServer(http.HandlerFunc(s.handle))
 
-	c := vaccines.Client{Caller: &client.InstrumentedClient{Application: "test"}}
+	c := vaccines.Client{Caller: &httpclient.InstrumentedClient{Application: "test"}}
 	c.URL = testServer.URL
 
 	ctx := context.Background()
@@ -39,7 +39,7 @@ func TestClient_Fetch(t *testing.T) {
 	s := &server{}
 	testServer := httptest.NewServer(http.HandlerFunc(s.handle))
 
-	c := vaccines.Client{Caller: &client.InstrumentedClient{
+	c := vaccines.Client{Caller: &httpclient.InstrumentedClient{
 		Application: "test",
 	}}
 	c.URL = testServer.URL
