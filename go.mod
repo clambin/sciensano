@@ -16,9 +16,9 @@ require (
 
 require (
 	github.com/clambin/cache v0.0.5
-	github.com/clambin/go-metrics v0.6.1
+	github.com/clambin/go-metrics v0.6.3
 	github.com/clambin/httpclient v0.1.0
-	github.com/clambin/simplejson/v3 v3.6.2
+	github.com/clambin/simplejson/v3 v3.6.3
 	github.com/go-http-utils/headers v0.0.0-20181008091004-fed159eddc2a
 	github.com/grafana/grafana-plugin-sdk-go v0.141.0
 	github.com/json-iterator/go v1.1.12
