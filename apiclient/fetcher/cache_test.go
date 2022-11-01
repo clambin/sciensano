@@ -1,37 +1,102 @@
 package fetcher
 
 import (
+	"context"
+	"errors"
+	"github.com/clambin/sciensano/apiclient"
+	"github.com/clambin/sciensano/apiclient/fetcher/mocks"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+	"sync"
 	"testing"
 	"time"
 )
 
-func TestCacheEntry_ShouldPoll(t *testing.T) {
-	type testCase struct {
-		updated time.Duration
-		checked time.Duration
-		poll    bool
+func TestCache_Run(t *testing.T) {
+	f := mocks.NewFetcher(t)
+	f.On("Fetch", mock.AnythingOfType("*context.cancelCtx"), 1).Return([]apiclient.APIResponse{}, nil)
+	c := &cache{
+		dataType: 1,
+		fetcher:  f,
+		expiry:   time.Second,
 	}
+	ctx, cancel := context.WithCancel(context.Background())
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func() { c.Run(ctx, time.Hour); wg.Done() }()
 
-	const (
-		gracePeriod = 5 * time.Minute
-		expiration  = time.Hour
-	)
+	assert.Eventually(t, func() bool {
+		data := c.Get()
+		return data != nil
+	}, time.Second, 10*time.Millisecond)
 
-	testCases := []testCase{
-		{updated: time.Minute, checked: time.Minute, poll: false},
-		{updated: 30 * time.Minute, checked: time.Minute, poll: false},
-		{updated: 30 * time.Minute, checked: 10 * time.Minute, poll: true},
-		{updated: 2 * time.Hour, checked: time.Minute, poll: true},
+	cancel()
+	wg.Wait()
+}
+
+func TestCache_Refresh(t *testing.T) {
+	timestamp := time.Now()
+	f := mocks.NewFetcher(t)
+	c := &cache{
+		dataType: 1,
+		fetcher:  f,
+		expiry:   100 * time.Millisecond,
 	}
+	ctx := context.Background()
 
-	for idx, tc := range testCases {
-		now := time.Now()
-		entry := cacheEntry{
-			updated: now.Add(-tc.updated),
-			checked: now.Add(-tc.checked),
-		}
+	f.On("Fetch", mock.AnythingOfType("*context.emptyCtx"), 1).Return([]apiclient.APIResponse{}, nil).Once()
+	err := c.refresh(ctx)
+	require.NoError(t, err)
+	data := c.Get()
+	assert.NotNil(t, data)
 
-		assert.Equal(t, tc.poll, entry.shouldPoll(gracePeriod, expiration), idx)
+	err = c.refresh(ctx)
+	require.NoError(t, err)
+	data = c.Get()
+	assert.NotNil(t, data)
+
+	time.Sleep(200 * time.Millisecond)
+	f.On("GetLastUpdated", mock.AnythingOfType("*context.emptyCtx"), 1).Return(timestamp, nil).Once()
+	err = c.refresh(ctx)
+	require.NoError(t, err)
+	data = c.Get()
+	assert.NotNil(t, data)
+
+	time.Sleep(200 * time.Millisecond)
+	timestamp = time.Now()
+	f.On("GetLastUpdated", mock.AnythingOfType("*context.emptyCtx"), 1).Return(timestamp, nil).Once()
+	f.On("Fetch", mock.AnythingOfType("*context.emptyCtx"), 1).Return([]apiclient.APIResponse{}, nil).Once()
+	err = c.refresh(context.Background())
+	require.NoError(t, err)
+	data = c.Get()
+	assert.NotNil(t, data)
+}
+
+func TestCache_Refresh_Errors(t *testing.T) {
+	f := mocks.NewFetcher(t)
+	c := &cache{
+		dataType: 1,
+		fetcher:  f,
+		expiry:   100 * time.Millisecond,
 	}
+	ctx := context.Background()
+	timestamp := time.Now()
+
+	f.On("Fetch", mock.AnythingOfType("*context.emptyCtx"), 1).Return(nil, errors.New("fail")).Once()
+	err := c.refresh(ctx)
+	assert.Error(t, err)
+
+	f.On("Fetch", mock.AnythingOfType("*context.emptyCtx"), 1).Return([]apiclient.APIResponse{}, nil).Once()
+	err = c.refresh(ctx)
+	assert.NoError(t, err)
+
+	time.Sleep(200 * time.Millisecond)
+	f.On("GetLastUpdated", mock.AnythingOfType("*context.emptyCtx"), 1).Return(time.Time{}, errors.New("fail")).Once()
+	err = c.refresh(ctx)
+	assert.Error(t, err)
+
+	f.On("GetLastUpdated", mock.AnythingOfType("*context.emptyCtx"), 1).Return(timestamp, nil).Once()
+	err = c.refresh(ctx)
+	assert.NoError(t, err)
 }

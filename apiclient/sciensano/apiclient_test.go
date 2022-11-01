@@ -31,15 +31,15 @@ func TestClient_GetLastUpdates(t *testing.T) {
 	c.URL = testServer.URL
 
 	ctx := context.Background()
-	lastModified, err := c.GetLastUpdates(ctx, sciensano.TypeTestResults)
+	lastModified, err := c.GetLastUpdated(ctx, sciensano.TypeTestResults)
 	require.NoError(t, err)
 	assert.NotZero(t, lastModified)
 
-	_, err = c.GetLastUpdates(ctx, -1)
+	_, err = c.GetLastUpdated(ctx, -1)
 	require.Error(t, err)
 
 	testServer.Close()
-	_, err = c.GetLastUpdates(ctx, sciensano.TypeTestResults)
+	_, err = c.GetLastUpdated(ctx, sciensano.TypeTestResults)
 	require.Error(t, err)
 }
 

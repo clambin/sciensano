@@ -25,7 +25,7 @@ func TestLimiter(t *testing.T) {
 	for i := 0; i < 50; i++ {
 		wg.Add(1)
 		go func() {
-			_, err2 := l.GetLastUpdates(ctx, 0)
+			_, err2 := l.GetLastUpdated(ctx, 0)
 			require.NoError(t, err2)
 			wg.Done()
 		}()
@@ -52,7 +52,7 @@ func TestLimiter_Timeout(t *testing.T) {
 	cancel()
 
 	ctx, cancel = context.WithTimeout(context.Background(), 10*time.Millisecond)
-	_, err = l.GetLastUpdates(ctx, 0)
+	_, err = l.GetLastUpdated(ctx, 0)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "context deadline exceeded")
 	cancel()
@@ -72,7 +72,7 @@ func (c *Caller) Fetch(ctx context.Context, _ int) (results []apiclient.APIRespo
 	return
 }
 
-func (c *Caller) GetLastUpdates(ctx context.Context, _ int) (lastModified time.Time, err error) {
+func (c *Caller) GetLastUpdated(ctx context.Context, _ int) (lastModified time.Time, err error) {
 	c.wait(ctx)
 	return
 }

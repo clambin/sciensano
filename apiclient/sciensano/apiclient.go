@@ -32,26 +32,25 @@ type Client struct {
 
 var _ fetcher.Fetcher = &Client{}
 
-func (c Client) Fetch(ctx context.Context, dataType int) (results []apiclient.APIResponse, err error) {
-	var resp *http.Response
-	if resp, err = c.call(ctx, dataType, http.MethodGet); err != nil {
-		return
+func (c Client) Fetch(ctx context.Context, dataType int) ([]apiclient.APIResponse, error) {
+	resp, err := c.call(ctx, dataType, http.MethodGet)
+	if err != nil {
+		return nil, err
 	}
 	defer func() { _ = resp.Body.Close() }()
-
 	return c.parseResponse(dataType, resp.Body)
 }
 
-func (c Client) GetLastUpdates(ctx context.Context, dataType int) (lastModified time.Time, err error) {
-	var resp *http.Response
-	if resp, err = c.call(ctx, dataType, http.MethodHead); err != nil {
-		return
+func (c Client) GetLastUpdated(ctx context.Context, dataType int) (time.Time, error) {
+	var lastModified time.Time
+	resp, err := c.call(ctx, dataType, http.MethodHead)
+	if err == nil {
+		_ = resp.Body.Close()
+		if lastModified, err = time.Parse(time.RFC1123, resp.Header.Get(headers.LastModified)); err != nil {
+			err = fmt.Errorf("invalid timestamp %s: %w", headers.LastModified, err)
+		}
 	}
-	_ = resp.Body.Close()
-	if lastModified, err = time.Parse(time.RFC1123, resp.Header.Get(headers.LastModified)); err != nil {
-		err = fmt.Errorf("call failed: invalid %s timestamp: %w", headers.LastModified, err)
-	}
-	return
+	return lastModified, err
 }
 
 func (c Client) DataTypes() map[int]string {
@@ -99,7 +98,7 @@ func (c Client) call(ctx context.Context, dataType int, method string) (resp *ht
 	return
 }
 
-func (c Client) parseResponse(dataType int, body io.ReadCloser) (results []apiclient.APIResponse, err error) {
+func (c Client) parseResponse(dataType int, body io.Reader) (results []apiclient.APIResponse, err error) {
 	switch dataType {
 	case TypeHospitalisations:
 		var entries []*APIHospitalisationsResponse
@@ -124,17 +123,17 @@ func (c Client) parseResponse(dataType int, body io.ReadCloser) (results []apicl
 	return
 }
 
-func jsonDecode[T apiclient.APIResponse](body io.ReadCloser, entries []T) (results []apiclient.APIResponse, err error) {
+func jsonDecode[T apiclient.APIResponse](body io.Reader, entries []T) (results []apiclient.APIResponse, err error) {
 	if err = json.NewDecoder(body).Decode(&entries); err == nil {
 		results = copyMaybeSort(entries)
 	}
 	return
 }
 
-// copyMaybeSort accomplishes two goals: it recasts the individual API response type to the generic apiclient.APIResponse.
+// copyMaybeSort accomplishes two goals: it recasts the individual API response type to the generic APIResponse.
 // Secondly, it checks if the data is in order. If not, it sorts it.
-func copyMaybeSort[T apiclient.APIResponse](input []T) (output []apiclient.APIResponse) {
-	output = make([]apiclient.APIResponse, len(input))
+func copyMaybeSort[T apiclient.APIResponse](input []T) []apiclient.APIResponse {
+	output := make([]apiclient.APIResponse, len(input))
 	var timestamp time.Time
 	var mustSort bool
 	for idx, entry := range input {
@@ -149,5 +148,5 @@ func copyMaybeSort[T apiclient.APIResponse](input []T) (output []apiclient.APIRe
 		sort.Slice(output, func(i, j int) bool { return output[i].GetTimestamp().Before(output[j].GetTimestamp()) })
 		log.Debug("sorted")
 	}
-	return
+	return output
 }

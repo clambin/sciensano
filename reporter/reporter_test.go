@@ -1,11 +1,12 @@
 package reporter_test
 
 import (
-	"github.com/clambin/go-metrics/tools"
 	"github.com/clambin/httpclient"
 	"github.com/clambin/sciensano/reporter"
 	"github.com/prometheus/client_golang/prometheus"
+	pcg "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"testing"
 	"time"
 )
@@ -19,27 +20,24 @@ func TestReporterMetrics(t *testing.T) {
 		return err == nil
 	}, time.Minute, time.Second)
 
-	len1 := len(r.Cases.APIClient.DataTypes())
-	len2 := len(r.Vaccines.APIClient.DataTypes())
-	l := len1 + len2
-
-	ch := make(chan prometheus.Metric)
-	go m.Latency.Collect(ch)
-
-	for i := 0; i < l; i++ {
-		metric := <-ch
-		assert.Equal(t, "foo_api_latency", tools.MetricName(metric))
-		assert.Contains(t, []string{"sciensano", "vaccines"}, tools.MetricLabel(metric, "application"))
-		assert.Contains(t, []string{"GET", "HEAD"}, tools.MetricLabel(metric, "method"))
+	metrics, err := prometheus.DefaultGatherer.Gather()
+	require.NoError(t, err)
+	var latencyCount, errorCount int
+	for _, metric := range metrics {
+		for _, entry := range metric.Metric {
+			switch *metric.Name {
+			case "foo_api_latency":
+				assert.Equal(t, pcg.MetricType_SUMMARY, *metric.Type)
+				assert.Equal(t, uint64(1), entry.Summary.GetSampleCount())
+				assert.NotZero(t, entry.Summary.GetSampleSum())
+				latencyCount++
+			case "foo_api_errors_total":
+				assert.Equal(t, pcg.MetricType_COUNTER, *metric.Type)
+				assert.Zero(t, entry.Counter.GetValue())
+				errorCount++
+			}
+		}
 	}
-
-	ch = make(chan prometheus.Metric)
-	go m.Errors.Collect(ch)
-
-	for i := 0; i < l; i++ {
-		metric := <-ch
-		assert.Equal(t, "foo_api_errors_total", tools.MetricName(metric))
-		assert.Contains(t, []string{"sciensano", "vaccines"}, tools.MetricLabel(metric, "application"))
-		assert.Contains(t, []string{"GET", "HEAD"}, tools.MetricLabel(metric, "method"))
-	}
+	assert.NotZero(t, latencyCount)
+	assert.NotZero(t, errorCount)
 }

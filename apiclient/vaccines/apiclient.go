@@ -26,27 +26,25 @@ type Client struct {
 
 var _ fetcher.Fetcher = &Client{}
 
-func (c Client) Fetch(ctx context.Context, dataType int) (results []apiclient.APIResponse, err error) {
-	var resp *http.Response
-	if resp, err = c.call(ctx, dataType, http.MethodGet); err != nil {
-		return
+func (c Client) Fetch(ctx context.Context, dataType int) ([]apiclient.APIResponse, error) {
+	resp, err := c.call(ctx, dataType, http.MethodGet)
+	if err != nil {
+		return nil, err
 	}
 	defer func() { _ = resp.Body.Close() }()
-
 	return c.parseResponse(dataType, resp.Body)
 }
 
-func (c Client) GetLastUpdates(ctx context.Context, dataType int) (lastModified time.Time, err error) {
-	var resp *http.Response
-	if resp, err = c.call(ctx, dataType, http.MethodHead); err != nil {
-		return
+func (c Client) GetLastUpdated(ctx context.Context, dataType int) (time.Time, error) {
+	var lastModified time.Time
+	resp, err := c.call(ctx, dataType, http.MethodHead)
+	if err == nil {
+		_ = resp.Body.Close()
+		if lastModified, err = time.Parse(time.RFC1123, resp.Header.Get(headers.LastModified)); err != nil {
+			err = fmt.Errorf("invalid timestamp %s: %w", headers.LastModified, err)
+		}
 	}
-	_ = resp.Body.Close()
-
-	if lastModified, err = time.Parse(time.RFC1123, resp.Header.Get(headers.LastModified)); err != nil {
-		err = fmt.Errorf("call failed: invalid %s timestamp: %w", headers.LastModified, err)
-	}
-	return
+	return lastModified, err
 }
 
 func (c Client) DataTypes() map[int]string {
@@ -85,7 +83,7 @@ func (c Client) call(ctx context.Context, dataType int, method string) (resp *ht
 	return
 }
 
-func (c Client) parseResponse(dataType int, body io.ReadCloser) (results []apiclient.APIResponse, err error) {
+func (c Client) parseResponse(dataType int, body io.Reader) (results []apiclient.APIResponse, err error) {
 	switch dataType {
 	case TypeBatches:
 		results, err = c.parseBatches(body)
@@ -99,7 +97,7 @@ type apiBatchesResponse struct {
 	} `json:"result"`
 }
 
-func (c Client) parseBatches(body io.ReadCloser) (results []apiclient.APIResponse, err error) {
+func (c Client) parseBatches(body io.Reader) (results []apiclient.APIResponse, err error) {
 	var response apiBatchesResponse
 	if err = json.NewDecoder(body).Decode(&response); err != nil {
 		err = fmt.Errorf("decode failed: %w", err)

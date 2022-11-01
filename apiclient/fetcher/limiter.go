@@ -37,7 +37,7 @@ func (l *Limiter) Fetch(ctx context.Context, dataType int) (results []apiclient.
 	return
 }
 
-func (l *Limiter) GetLastUpdates(ctx context.Context, dataType int) (lastModified time.Time, err error) {
+func (l *Limiter) GetLastUpdated(ctx context.Context, dataType int) (lastUpdated time.Time, err error) {
 	log.Debugf("limiter-getlastupdates: attempting to call API for %s", l.DataTypes()[dataType])
 	err = l.limit.Acquire(ctx, 1)
 	if err != nil {
@@ -45,7 +45,7 @@ func (l *Limiter) GetLastUpdates(ctx context.Context, dataType int) (lastModifie
 	}
 	log.Debugf("limiter-getlastupdates: calling API for %s", l.DataTypes()[dataType])
 
-	lastModified, err = l.Fetcher.GetLastUpdates(ctx, dataType)
+	lastUpdated, err = l.Fetcher.GetLastUpdated(ctx, dataType)
 
 	l.limit.Release(1)
 	log.Debugf("limiter-getlastupdates: API called for %s", l.DataTypes()[dataType])

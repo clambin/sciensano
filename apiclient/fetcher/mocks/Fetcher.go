@@ -57,7 +57,7 @@ func (_m *Fetcher) Fetch(ctx context.Context, dataType int) ([]apiclient.APIResp
 }
 
 // GetLastUpdates provides a mock function with given fields: ctx, dataType
-func (_m *Fetcher) GetLastUpdates(ctx context.Context, dataType int) (time.Time, error) {
+func (_m *Fetcher) GetLastUpdated(ctx context.Context, dataType int) (time.Time, error) {
 	ret := _m.Called(ctx, dataType)
 
 	var r0 time.Time
