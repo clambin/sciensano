@@ -7,7 +7,7 @@ require (
 	github.com/clambin/httpclient v0.1.0
 	github.com/clambin/simplejson/v3 v3.6.3
 	github.com/go-http-utils/headers v0.0.0-20181008091004-fed159eddc2a
-	github.com/grafana/grafana-plugin-sdk-go v0.141.0
+	github.com/grafana/grafana-plugin-sdk-go v0.142.0
 	github.com/json-iterator/go v1.1.12
 	github.com/mailru/easyjson v0.7.7
 	github.com/prometheus/client_golang v1.13.0
