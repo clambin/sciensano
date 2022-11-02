@@ -47,7 +47,7 @@ func NewWithOptions(expiration time.Duration, options httpclient.Options) *Clien
 			}, 3,
 		),
 	)
-	go c1.AutoUpdate(context.Background(), time.Hour)
+	go c1.AutoUpdate(context.Background(), 15*time.Minute)
 
 	c2 := fetcher.NewCacher(&vaccinesClient.Client{
 		Caller: &httpclient.InstrumentedClient{
@@ -55,7 +55,7 @@ func NewWithOptions(expiration time.Duration, options httpclient.Options) *Clien
 			Application: "vaccines",
 		},
 	})
-	go c2.AutoUpdate(context.Background(), time.Hour)
+	go c2.AutoUpdate(context.Background(), 15*time.Minute)
 
 	return &Client{
 		ReportCache:      reportsCache,
