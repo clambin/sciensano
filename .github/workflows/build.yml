@@ -4,7 +4,7 @@ on:
   push:
     branches:
     - master
-    - cache
+    - jitter
     paths-ignore:
       - '**.md'
       - 'assets/grafana/dashboards/**'

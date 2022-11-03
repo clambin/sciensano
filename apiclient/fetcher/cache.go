@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/clambin/sciensano/apiclient"
 	log "github.com/sirupsen/logrus"
+	"math/rand"
 	"sync"
 	"time"
 )
@@ -22,7 +23,9 @@ func (c *cache) Run(ctx context.Context, interval time.Duration) {
 		log.WithError(err).Errorf("failed to get data for %s", c.fetcher.DataTypes()[c.dataType])
 	}
 
-	ticker := time.NewTicker(interval)
+	// add some jitter so all caches don't refresh at the same time
+	jitter := rand.Int63n(60) - 30
+	ticker := time.NewTicker(interval + time.Duration(jitter)*time.Second)
 	for running := true; running; {
 		select {
 		case <-ctx.Done():
