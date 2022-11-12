@@ -28,17 +28,17 @@ func New(port int, r *reporter.Client, f demographics.Fetcher) (s *Server, err e
 		Reporter:     r,
 		Demographics: f,
 		handlers: map[string]simplejson.Handler{
-			"cases":                     &Handler{Fetcher: r.Cases.Get},
-			"cases-province":            &Handler{Fetcher: r.Cases.GetByProvince},
-			"cases-region":              &Handler{Fetcher: r.Cases.GetByRegion},
-			"cases-age":                 &Handler{Fetcher: r.Cases.GetByAgeGroup},
-			"hospitalisations":          &Handler{Fetcher: r.Hospitalisations.Get},
-			"hospitalisations-region":   &Handler{Fetcher: r.Hospitalisations.GetByRegion},
-			"hospitalisations-province": &Handler{Fetcher: r.Hospitalisations.GetByProvince},
-			"mortality":                 &Handler{Fetcher: r.Mortality.Get},
-			"mortality-region":          &Handler{Fetcher: r.Mortality.GetByRegion},
-			"mortality-age":             &Handler{Fetcher: r.Mortality.GetByAgeGroup},
-			"tests":                     &Handler{Fetcher: r.TestResults.Get},
+			"cases":                     &Handler{Fetch: r.Cases.Get},
+			"cases-province":            &Handler{Fetch: r.Cases.GetByProvince},
+			"cases-region":              &Handler{Fetch: r.Cases.GetByRegion},
+			"cases-age":                 &Handler{Fetch: r.Cases.GetByAgeGroup},
+			"hospitalisations":          &Handler{Fetch: r.Hospitalisations.Get},
+			"hospitalisations-region":   &Handler{Fetch: r.Hospitalisations.GetByRegion},
+			"hospitalisations-province": &Handler{Fetch: r.Hospitalisations.GetByProvince},
+			"mortality":                 &Handler{Fetch: r.Mortality.Get},
+			"mortality-region":          &Handler{Fetch: r.Mortality.GetByRegion},
+			"mortality-age":             &Handler{Fetch: r.Mortality.GetByAgeGroup},
+			"tests":                     &Handler{Fetch: r.TestResults.Get},
 			"vaccinations":              &vaccinations2.Handler{Reporter: r},
 			"vacc-age-rate-partial":     &vaccinations2.RateHandler{Reporter: r, Scope: vaccinations2.ByAge, Type: vaccinations.TypePartial, Fetcher: f},
 			"vacc-age-rate-full":        &vaccinations2.RateHandler{Reporter: r, Scope: vaccinations2.ByAge, Type: vaccinations.TypeFull, Fetcher: f},
@@ -46,7 +46,7 @@ func New(port int, r *reporter.Client, f demographics.Fetcher) (s *Server, err e
 			"vacc-region-rate-full":     &vaccinations2.RateHandler{Reporter: r, Scope: vaccinations2.ByRegion, Type: vaccinations.TypeFull, Fetcher: f},
 			"vacc-age-booster":          &vaccinations2.GroupedHandler{Reporter: r, Scope: vaccinations2.ByAge, Type: vaccinations.TypeBooster},
 			"vacc-region-booster":       &vaccinations2.GroupedHandler{Reporter: r, Scope: vaccinations2.ByRegion, Type: vaccinations.TypeBooster},
-			"vacc-manufacturer":         &Handler{Fetcher: r.Vaccinations.GetByManufacturer, Accumulate: true},
+			"vacc-manufacturer":         &Handler{Fetch: r.Vaccinations.GetByManufacturer, Accumulate: true},
 			"boosters":                  &vaccinations2.BoosterHandler{Reporter: r},
 		},
 	}
@@ -83,7 +83,7 @@ func (s *Server) Health(w http.ResponseWriter, _ *http.Request) {
 }
 
 type Handler struct {
-	Fetcher    func() (*data.Table, error)
+	Fetch      func() (*data.Table, error)
 	Accumulate bool
 }
 
@@ -93,7 +93,7 @@ func (h *Handler) Endpoints() simplejson.Endpoints {
 }
 
 func (h *Handler) query(_ context.Context, req query.Request) (query.Response, error) {
-	records, err := h.Fetcher()
+	records, err := h.Fetch()
 	if err != nil {
 		return nil, fmt.Errorf("fetch failed: %w", err)
 	}

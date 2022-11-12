@@ -36,7 +36,6 @@ func TestCache_Run(t *testing.T) {
 }
 
 func TestCache_Refresh(t *testing.T) {
-	timestamp := time.Now()
 	f := mocks.NewFetcher(t)
 	c := &cache{
 		dataType: 1,
@@ -45,6 +44,8 @@ func TestCache_Refresh(t *testing.T) {
 	}
 	ctx := context.Background()
 
+	timestamp := time.Now()
+	f.On("GetLastUpdated", mock.AnythingOfType("*context.emptyCtx"), 1).Return(timestamp, nil).Once()
 	f.On("Fetch", mock.AnythingOfType("*context.emptyCtx"), 1).Return([]apiclient.APIResponse{}, nil).Once()
 	err := c.refresh(ctx)
 	require.NoError(t, err)
@@ -64,7 +65,7 @@ func TestCache_Refresh(t *testing.T) {
 	assert.NotNil(t, data)
 
 	time.Sleep(200 * time.Millisecond)
-	timestamp = time.Now()
+	timestamp = timestamp.Add(100 * time.Millisecond)
 	f.On("GetLastUpdated", mock.AnythingOfType("*context.emptyCtx"), 1).Return(timestamp, nil).Once()
 	f.On("Fetch", mock.AnythingOfType("*context.emptyCtx"), 1).Return([]apiclient.APIResponse{}, nil).Once()
 	err = c.refresh(context.Background())

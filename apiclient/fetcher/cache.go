@@ -10,12 +10,13 @@ import (
 )
 
 type cache struct {
-	fetcher   Fetcher
-	dataType  int
-	entries   []apiclient.APIResponse
-	timestamp time.Time
-	expiry    time.Duration
-	lock      sync.RWMutex
+	fetcher      Fetcher
+	dataType     int
+	entries      []apiclient.APIResponse
+	lastModified time.Time
+	lastChecked  time.Time
+	expiry       time.Duration
+	lock         sync.RWMutex
 }
 
 func (c *cache) Run(ctx context.Context, interval time.Duration) {
@@ -45,28 +46,28 @@ func (c *cache) Get() []apiclient.APIResponse {
 	return c.entries
 }
 
-func (c *cache) refresh(ctx context.Context) error {
+func (c *cache) refresh(ctx context.Context) (err error) {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 
-	if !c.timestamp.IsZero() {
-		if time.Since(c.timestamp) < c.expiry {
-			return nil
-		}
-		lastModified, err := c.fetcher.GetLastUpdated(ctx, c.dataType)
+	var serverTimestamp time.Time
+
+	if time.Since(c.lastChecked) > c.expiry {
+		serverTimestamp, err = c.fetcher.GetLastUpdated(ctx, c.dataType)
 		if err != nil {
 			return err
 		}
-		if !lastModified.After(c.timestamp) {
-			c.timestamp = time.Now()
-			return nil
-		}
+		c.lastChecked = time.Now()
 	}
 
-	entries, err := c.fetcher.Fetch(ctx, c.dataType)
-	if err == nil {
+	if serverTimestamp.After(c.lastModified) {
+		var entries []apiclient.APIResponse
+		if entries, err = c.fetcher.Fetch(ctx, c.dataType); err != nil {
+			return err
+		}
 		c.entries = entries
-		c.timestamp = time.Now()
+		c.lastModified = serverTimestamp
 	}
+
 	return err
 }
