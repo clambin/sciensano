@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/clambin/httpserver"
 	"github.com/clambin/sciensano/demographics"
 	"github.com/clambin/sciensano/reporter"
 	"github.com/clambin/sciensano/reporter/vaccinations"
@@ -16,47 +17,55 @@ import (
 
 // Server groups Grafana SimpleJson API handlers that retrieve Belgium COVID-19-related statistics
 type Server struct {
-	simplejson.Server
+	server       *simplejson.Server
+	handlers     map[string]simplejson.Handler
 	Reporter     *reporter.Client
 	Demographics demographics.Fetcher
 }
 
-// Initialize starts background tasks to support Server
-func (s *Server) Initialize(ctx context.Context) {
-	// set up auto-refresh of demographics
-	go s.Demographics.Run(ctx)
-
-	// set up handler lookup table
-	s.Handlers = map[string]simplejson.Handler{
-		"cases":                     &Handler{Fetcher: s.Reporter.Cases.Get},
-		"cases-province":            &Handler{Fetcher: s.Reporter.Cases.GetByProvince},
-		"cases-region":              &Handler{Fetcher: s.Reporter.Cases.GetByRegion},
-		"cases-age":                 &Handler{Fetcher: s.Reporter.Cases.GetByAgeGroup},
-		"hospitalisations":          &Handler{Fetcher: s.Reporter.Hospitalisations.Get},
-		"hospitalisations-region":   &Handler{Fetcher: s.Reporter.Hospitalisations.GetByRegion},
-		"hospitalisations-province": &Handler{Fetcher: s.Reporter.Hospitalisations.GetByProvince},
-		"mortality":                 &Handler{Fetcher: s.Reporter.Mortality.Get},
-		"mortality-region":          &Handler{Fetcher: s.Reporter.Mortality.GetByRegion},
-		"mortality-age":             &Handler{Fetcher: s.Reporter.Mortality.GetByAgeGroup},
-		"tests":                     &Handler{Fetcher: s.Reporter.TestResults.Get},
-		"vaccinations":              &vaccinations2.Handler{Reporter: s.Reporter},
-		"vacc-age-rate-partial":     &vaccinations2.RateHandler{Reporter: s.Reporter, Scope: vaccinations2.ByAge, Type: vaccinations.TypePartial, Fetcher: s.Demographics},
-		"vacc-age-rate-full":        &vaccinations2.RateHandler{Reporter: s.Reporter, Scope: vaccinations2.ByAge, Type: vaccinations.TypeFull, Fetcher: s.Demographics},
-		"vacc-region-rate-partial":  &vaccinations2.RateHandler{Reporter: s.Reporter, Scope: vaccinations2.ByRegion, Type: vaccinations.TypePartial, Fetcher: s.Demographics},
-		"vacc-region-rate-full":     &vaccinations2.RateHandler{Reporter: s.Reporter, Scope: vaccinations2.ByRegion, Type: vaccinations.TypeFull, Fetcher: s.Demographics},
-		"vacc-age-booster":          &vaccinations2.GroupedHandler{Reporter: s.Reporter, Scope: vaccinations2.ByAge, Type: vaccinations.TypeBooster},
-		"vacc-region-booster":       &vaccinations2.GroupedHandler{Reporter: s.Reporter, Scope: vaccinations2.ByRegion, Type: vaccinations.TypeBooster},
-		"vacc-manufacturer":         &Handler{Fetcher: s.Reporter.Vaccinations.GetByManufacturer, Accumulate: true},
-		"boosters":                  &vaccinations2.BoosterHandler{Reporter: s.Reporter},
+func New(port int, r *reporter.Client, f demographics.Fetcher) (s *Server, err error) {
+	s = &Server{
+		Reporter:     r,
+		Demographics: f,
+		handlers: map[string]simplejson.Handler{
+			"cases":                     &Handler{Fetcher: r.Cases.Get},
+			"cases-province":            &Handler{Fetcher: r.Cases.GetByProvince},
+			"cases-region":              &Handler{Fetcher: r.Cases.GetByRegion},
+			"cases-age":                 &Handler{Fetcher: r.Cases.GetByAgeGroup},
+			"hospitalisations":          &Handler{Fetcher: r.Hospitalisations.Get},
+			"hospitalisations-region":   &Handler{Fetcher: r.Hospitalisations.GetByRegion},
+			"hospitalisations-province": &Handler{Fetcher: r.Hospitalisations.GetByProvince},
+			"mortality":                 &Handler{Fetcher: r.Mortality.Get},
+			"mortality-region":          &Handler{Fetcher: r.Mortality.GetByRegion},
+			"mortality-age":             &Handler{Fetcher: r.Mortality.GetByAgeGroup},
+			"tests":                     &Handler{Fetcher: r.TestResults.Get},
+			"vaccinations":              &vaccinations2.Handler{Reporter: r},
+			"vacc-age-rate-partial":     &vaccinations2.RateHandler{Reporter: r, Scope: vaccinations2.ByAge, Type: vaccinations.TypePartial, Fetcher: f},
+			"vacc-age-rate-full":        &vaccinations2.RateHandler{Reporter: r, Scope: vaccinations2.ByAge, Type: vaccinations.TypeFull, Fetcher: f},
+			"vacc-region-rate-partial":  &vaccinations2.RateHandler{Reporter: r, Scope: vaccinations2.ByRegion, Type: vaccinations.TypePartial, Fetcher: f},
+			"vacc-region-rate-full":     &vaccinations2.RateHandler{Reporter: r, Scope: vaccinations2.ByRegion, Type: vaccinations.TypeFull, Fetcher: f},
+			"vacc-age-booster":          &vaccinations2.GroupedHandler{Reporter: r, Scope: vaccinations2.ByAge, Type: vaccinations.TypeBooster},
+			"vacc-region-booster":       &vaccinations2.GroupedHandler{Reporter: r, Scope: vaccinations2.ByRegion, Type: vaccinations.TypeBooster},
+			"vacc-manufacturer":         &Handler{Fetcher: r.Vaccinations.GetByManufacturer, Accumulate: true},
+			"boosters":                  &vaccinations2.BoosterHandler{Reporter: r},
+		},
 	}
+
+	s.server, err = simplejson.New("sciensano", s.handlers,
+		httpserver.WithPort{Port: port},
+		httpserver.WithHandlers{Handlers: []httpserver.Handler{{
+			Path:    "/health",
+			Handler: http.HandlerFunc(s.Health),
+			Methods: []string{http.MethodGet},
+		}}},
+	)
+	return s, err
 }
 
 // Run runs the API handler server
-func (s *Server) Run(port int) (err error) {
-	s.Initialize(context.Background())
-	r := s.Server.GetRouter()
-	r.HandleFunc("/health", s.Health)
-	return http.ListenAndServe(fmt.Sprintf(":%d", port), r)
+func (s *Server) Run(ctx context.Context) (err error) {
+	go s.Demographics.Run(ctx)
+	return s.server.Run()
 }
 
 func (s *Server) Health(w http.ResponseWriter, _ *http.Request) {
@@ -64,7 +73,7 @@ func (s *Server) Health(w http.ResponseWriter, _ *http.Request) {
 		Handlers      int
 		ReporterCache map[string]int
 	}{
-		Handlers:      len(s.Handlers),
+		Handlers:      len(s.handlers),
 		ReporterCache: s.Reporter.ReportCache.Stats(),
 	}
 
@@ -80,16 +89,16 @@ type Handler struct {
 
 // Endpoints implements the grafana-json Endpoint function. It returns all supported endpoints
 func (h *Handler) Endpoints() simplejson.Endpoints {
-	return simplejson.Endpoints{
-		Query: func(_ context.Context, req query.Request) (query.Response, error) {
-			records, err := h.Fetcher()
-			if err != nil {
-				return nil, fmt.Errorf("fetch failed: %w", err)
-			}
-			if h.Accumulate {
-				records = records.Accumulate()
-			}
-			return records.Filter(req.Args).CreateTableResponse(), nil
-		},
+	return simplejson.Endpoints{Query: h.query}
+}
+
+func (h *Handler) query(_ context.Context, req query.Request) (query.Response, error) {
+	records, err := h.Fetcher()
+	if err != nil {
+		return nil, fmt.Errorf("fetch failed: %w", err)
 	}
+	if h.Accumulate {
+		records = records.Accumulate()
+	}
+	return records.Filter(req.Args).CreateTableResponse(), nil
 }
