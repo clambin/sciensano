@@ -63,6 +63,7 @@ func (c *cache) refresh(ctx context.Context) (err error) {
 	if serverTimestamp.After(c.lastModified) {
 		var entries []apiclient.APIResponse
 		if entries, err = c.fetcher.Fetch(ctx, c.dataType); err != nil {
+			c.lastChecked = time.Time{}
 			return err
 		}
 		c.entries = entries

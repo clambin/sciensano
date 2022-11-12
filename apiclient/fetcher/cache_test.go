@@ -15,6 +15,7 @@ import (
 
 func TestCache_Run(t *testing.T) {
 	f := mocks.NewFetcher(t)
+	f.On("GetLastUpdated", mock.AnythingOfType("*context.cancelCtx"), 1).Return(time.Now(), nil)
 	f.On("Fetch", mock.AnythingOfType("*context.cancelCtx"), 1).Return([]apiclient.APIResponse{}, nil)
 	c := &cache{
 		dataType: 1,
@@ -26,7 +27,7 @@ func TestCache_Run(t *testing.T) {
 	wg.Add(1)
 	go func() { c.Run(ctx, time.Hour); wg.Done() }()
 
-	assert.Eventually(t, func() bool {
+	require.Eventually(t, func() bool {
 		data := c.Get()
 		return data != nil
 	}, time.Second, 10*time.Millisecond)
@@ -84,20 +85,17 @@ func TestCache_Refresh_Errors(t *testing.T) {
 	ctx := context.Background()
 	timestamp := time.Now()
 
-	f.On("Fetch", mock.AnythingOfType("*context.emptyCtx"), 1).Return(nil, errors.New("fail")).Once()
+	f.On("GetLastUpdated", mock.AnythingOfType("*context.emptyCtx"), 1).Return(time.Time{}, errors.New("fail")).Once()
 	err := c.refresh(ctx)
 	assert.Error(t, err)
 
-	f.On("Fetch", mock.AnythingOfType("*context.emptyCtx"), 1).Return([]apiclient.APIResponse{}, nil).Once()
-	err = c.refresh(ctx)
-	assert.NoError(t, err)
-
-	time.Sleep(200 * time.Millisecond)
-	f.On("GetLastUpdated", mock.AnythingOfType("*context.emptyCtx"), 1).Return(time.Time{}, errors.New("fail")).Once()
+	f.On("GetLastUpdated", mock.AnythingOfType("*context.emptyCtx"), 1).Return(timestamp, nil).Once()
+	f.On("Fetch", mock.AnythingOfType("*context.emptyCtx"), 1).Return(nil, errors.New("fail")).Once()
 	err = c.refresh(ctx)
 	assert.Error(t, err)
 
 	f.On("GetLastUpdated", mock.AnythingOfType("*context.emptyCtx"), 1).Return(timestamp, nil).Once()
+	f.On("Fetch", mock.AnythingOfType("*context.emptyCtx"), 1).Return([]apiclient.APIResponse{}, nil).Once()
 	err = c.refresh(ctx)
 	assert.NoError(t, err)
 }

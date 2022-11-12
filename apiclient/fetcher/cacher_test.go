@@ -20,11 +20,14 @@ func TestCacher_Fetch(t *testing.T) {
 	f.On("DataTypes").Return(map[int]string{1: "test"})
 
 	c := fetcher.NewCacher(f)
+	timestamp := time.Now()
 
+	f.On("GetLastUpdated", mock.AnythingOfType("*context.emptyCtx"), 1).Return(timestamp, nil).Once()
 	f.On("Fetch", mock.AnythingOfType("*context.emptyCtx"), 1).Return(nil, errors.New("fail")).Once()
 	_, err := c.Fetch(ctx, 1)
 	assert.Error(t, err)
 
+	f.On("GetLastUpdated", mock.AnythingOfType("*context.emptyCtx"), 1).Return(timestamp, nil).Once()
 	f.On("Fetch", mock.AnythingOfType("*context.emptyCtx"), 1).Return([]apiclient.APIResponse{}, nil).Once()
 	data, err := c.Fetch(ctx, 1)
 	require.NoError(t, err)
@@ -67,7 +70,9 @@ func TestCacher_AutoUpdate(t *testing.T) {
 	f.On("DataTypes").Return(map[int]string{1: "test"})
 
 	c := fetcher.NewCacher(f)
+	timestamp := time.Now()
 
+	f.On("GetLastUpdated", mock.AnythingOfType("*context.cancelCtx"), 1).Return(timestamp, nil).Once()
 	f.On("Fetch", mock.AnythingOfType("*context.cancelCtx"), 1).Return([]apiclient.APIResponse{}, nil).Once()
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -87,8 +92,10 @@ func TestCacher_AutoUpdate(t *testing.T) {
 func TestCacher_With_Limiter(t *testing.T) {
 	f := mocks.NewFetcher(t)
 	f.On("DataTypes").Return(map[int]string{1: "test"})
+	timestamp := time.Now()
 
 	c := fetcher.NewCacher(fetcher.NewLimiter(f, 1))
+	f.On("GetLastUpdated", mock.AnythingOfType("*context.cancelCtx"), 1).Return(timestamp, nil).Once()
 	f.On("Fetch", mock.AnythingOfType("*context.cancelCtx"), 1).Return([]apiclient.APIResponse{}, nil).Once()
 
 	ctx, cancel := context.WithCancel(context.Background())
