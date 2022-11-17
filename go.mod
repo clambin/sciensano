@@ -5,7 +5,7 @@ go 1.18
 require (
 	github.com/clambin/cache v0.0.5
 	github.com/clambin/httpclient v0.1.2
-	github.com/clambin/httpserver v0.3.2
+	github.com/clambin/httpserver v0.4.0
 	github.com/clambin/simplejson/v3 v3.7.2
 	github.com/go-http-utils/headers v0.0.0-20181008091004-fed159eddc2a
 	github.com/grafana/grafana-plugin-sdk-go v0.143.0
