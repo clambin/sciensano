@@ -11,7 +11,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"io"
 	"net/http"
-	"sync"
 	"testing"
 	"time"
 )
@@ -34,27 +33,19 @@ func TestCacher_Get(t *testing.T) {
 	c.On("Do", mock.AnythingOfType("*http.Request")).Return(resp, nil).Twice()
 
 	s := cacher[response]{
+		expiry:  time.Hour,
 		Fetcher: &fetcher[response]{client: c},
 	}
-
-	ctx, cancel := context.WithCancel(context.Background())
-	var wg sync.WaitGroup
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		s.AutoRefresh(ctx, time.Second)
-	}()
-
-	assert.Eventually(t, func() bool {
-		return len(s.Get()) > 0
-	}, time.Second, 10*time.Millisecond)
 
 	result := s.Get()
 	require.Len(t, result, 1)
 	assert.Equal(t, "foo", result[0].Name)
 
-	cancel()
-	wg.Wait()
+	result = s.Get()
+	require.Len(t, result, 1)
+	assert.Equal(t, "foo", result[0].Name)
+	//	cancel()
+	//	wg.Wait()
 }
 
 func TestCacher_Refresh(t *testing.T) {
@@ -74,12 +65,10 @@ func TestCacher_Refresh(t *testing.T) {
 	lastModified := time.Now()
 	f.On("GetLastModified", mock.AnythingOfType("*context.emptyCtx")).Return(lastModified, nil).Once()
 	f.On("Fetch", mock.AnythingOfType("*context.emptyCtx")).Return(responses{response{Name: "foo"}}, nil).Once()
-	err := s.refresh(ctx)
-	require.NoError(t, err)
 	assert.Equal(t, responses{response{Name: "foo"}}, s.Get())
 
 	// Next call: expiry hasn't passed, so no calls should be made
-	err = s.refresh(ctx)
+	err := s.refresh(ctx)
 	require.NoError(t, err)
 
 	// Fake expiry. GetLastModified should be called. lastModified isn't changed, so Fetch should not be called
@@ -93,7 +82,5 @@ func TestCacher_Refresh(t *testing.T) {
 	lastModified = time.Now()
 	f.On("GetLastModified", mock.AnythingOfType("*context.emptyCtx")).Return(lastModified, nil).Once()
 	f.On("Fetch", mock.AnythingOfType("*context.emptyCtx")).Return(responses{response{Name: "bar"}}, nil).Once()
-	err = s.refresh(ctx)
-	require.NoError(t, err)
 	assert.Equal(t, responses{response{Name: "bar"}}, s.Get())
 }

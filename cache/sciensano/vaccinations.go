@@ -3,7 +3,7 @@ package sciensano
 import (
 	"fmt"
 	"github.com/clambin/sciensano/pkg/set"
-	"github.com/clambin/sciensano/reporter/table/tabulator"
+	"github.com/clambin/sciensano/pkg/tabulator"
 )
 
 type Vaccination struct {
@@ -29,6 +29,24 @@ const (
 	Booster2
 	Booster3
 )
+
+func (d *DoseType) String() string {
+	switch *d {
+	case Partial:
+		return "partial"
+	case Full:
+		return "full"
+	case SingleDose:
+		return "single dose"
+	case Booster:
+		return "booster"
+	case Booster2:
+		return "booster 2"
+	case Booster3:
+		return "booster 3"
+	}
+	return "unknown"
+}
 
 func (d *DoseType) UnmarshalJSON(body []byte) (err error) {
 	switch string(body) {
@@ -88,6 +106,9 @@ func (v Vaccinations) Summarize(summaryColumn SummaryColumn) (*tabulator.Tabulat
 		default:
 			return nil, fmt.Errorf("vaccinations: invalid summary column: %s", summaryColumn.String())
 		}
+		if columnName == "" {
+			columnName = "(unknown)"
+		}
 		if columnNames.IsNew(columnName) {
 			t.RegisterColumn(columnName)
 		}
@@ -96,4 +117,27 @@ func (v Vaccinations) Summarize(summaryColumn SummaryColumn) (*tabulator.Tabulat
 	}
 
 	return t, nil
+}
+
+func (v Vaccinations) Categorize() *tabulator.Tabulator {
+	t := tabulator.New("partial", "full", "booster", "booster2", "booster3")
+
+	for _, vaccination := range v {
+		var columnName string
+		switch vaccination.Dose {
+		case Partial:
+			columnName = "partial"
+		case Full, SingleDose:
+			columnName = "full"
+		case Booster:
+			columnName = "booster"
+		case Booster2:
+			columnName = "booster2"
+		case Booster3:
+			columnName = "booster3"
+		}
+		t.Add(vaccination.TimeStamp.Time, columnName, float64(vaccination.Count))
+	}
+
+	return t
 }

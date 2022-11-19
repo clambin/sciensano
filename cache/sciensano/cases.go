@@ -3,7 +3,7 @@ package sciensano
 import (
 	"fmt"
 	"github.com/clambin/sciensano/pkg/set"
-	"github.com/clambin/sciensano/reporter/table/tabulator"
+	"github.com/clambin/sciensano/pkg/tabulator"
 )
 
 type Case struct {
@@ -33,6 +33,9 @@ func (cs Cases) Summarize(summaryColumn SummaryColumn) (*tabulator.Tabulator, er
 			columnName = c.AgeGroup
 		default:
 			return nil, fmt.Errorf("cases: invalid summary column: %s", summaryColumn.String())
+		}
+		if columnName == "" {
+			columnName = "(unknown)"
 		}
 		if columnNames.IsNew(columnName) {
 			t.RegisterColumn(columnName)

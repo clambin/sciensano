@@ -23,6 +23,17 @@ func TestVaccinations_Unmarshal(t *testing.T) {
 
 func TestVaccinations_Summarize(t *testing.T) {
 	vaccinations := makeVaccinations(1)
+
+	if *update {
+		f, err := os.OpenFile(filepath.Join("input", "vaccinations.json"), os.O_TRUNC|os.O_WRONLY, 0644)
+		require.NoError(t, err)
+		decoder := json.NewEncoder(f)
+		decoder.SetIndent("", "  ")
+		err = decoder.Encode(vaccinations)
+		require.NoError(t, err)
+		_ = f.Close()
+	}
+
 	testCases := []struct {
 		summaryColumn   sciensano.SummaryColumn
 		err             string
@@ -70,27 +81,27 @@ func BenchmarkVaccinations_Summarize_ByRegion(b *testing.B) {
 	}
 }
 
-func makeVaccinations(count int) sciensano.Vaccinations {
-	vaccinations := make(sciensano.Vaccinations, 0)
-	timestamp := sciensano.TimeStamp{Time: time.Date(2022, time.November, 19, 0, 0, 0, 0, time.UTC)}
-	for i := 0; i < count; i++ {
-		for _, region := range regions {
-			for _, manufacturer := range manufacturers {
-				for _, ageGroup := range ageGroups {
-					for _, dose := range doses {
-						vaccinations = append(vaccinations, sciensano.Vaccination{
-							TimeStamp:    timestamp,
-							Manufacturer: manufacturer,
-							Region:       region,
-							AgeGroup:     ageGroup,
-							Dose:         dose,
-							Count:        1,
-						})
-					}
-				}
-			}
-		}
-		timestamp.Time = timestamp.Time.Add(24 * time.Hour)
+func TestVaccinations_Categorize(t *testing.T) {
+	vaccinations := makeVaccinations(1)
+	c := vaccinations.Categorize()
+	assert.Equal(t, []string{"booster", "booster2", "booster3", "full", "partial"}, c.GetColumns())
+	records := len(c.GetTimestamps())
+	for _, col := range c.GetColumns() {
+		values, ok := c.GetValues(col)
+		require.True(t, ok)
+		assert.Len(t, values, records)
 	}
-	return vaccinations
+}
+
+func makeVaccinations(count int) sciensano.Vaccinations {
+	return makeResponse[sciensano.Vaccination](count, func(timestamp time.Time, region, province, ageGroup, manufacturer string, dose sciensano.DoseType) sciensano.Vaccination {
+		return sciensano.Vaccination{
+			TimeStamp:    sciensano.TimeStamp{Time: timestamp},
+			Manufacturer: manufacturer,
+			Region:       region,
+			AgeGroup:     ageGroup,
+			Dose:         dose,
+			Count:        1,
+		}
+	})
 }

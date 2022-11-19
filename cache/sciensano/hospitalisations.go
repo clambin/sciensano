@@ -3,7 +3,7 @@ package sciensano
 import (
 	"fmt"
 	"github.com/clambin/sciensano/pkg/set"
-	"github.com/clambin/sciensano/reporter/table/tabulator"
+	"github.com/clambin/sciensano/pkg/tabulator"
 )
 
 type Hospitalisation struct {
@@ -34,6 +34,9 @@ func (h Hospitalisations) Summarize(summaryColumn SummaryColumn) (*tabulator.Tab
 		default:
 			return nil, fmt.Errorf("hospitalisations: invalid summary column: %s", summaryColumn.String())
 		}
+		if columnName == "" {
+			columnName = "(unknown)"
+		}
 		if columnNames.IsNew(columnName) {
 			t.RegisterColumn(columnName)
 		}
@@ -42,4 +45,17 @@ func (h Hospitalisations) Summarize(summaryColumn SummaryColumn) (*tabulator.Tab
 	}
 
 	return t, nil
+}
+
+func (h Hospitalisations) Categorize() *tabulator.Tabulator {
+	t := tabulator.New("in", "inICU", "inResp", "inECMO")
+
+	for _, hospitalisation := range h {
+		t.Add(hospitalisation.TimeStamp.Time, "in", float64(hospitalisation.TotalIn))
+		t.Add(hospitalisation.TimeStamp.Time, "inICU", float64(hospitalisation.TotalInICU))
+		t.Add(hospitalisation.TimeStamp.Time, "inResp", float64(hospitalisation.TotalInResp))
+		t.Add(hospitalisation.TimeStamp.Time, "inECMO", float64(hospitalisation.TotalInECMO))
+	}
+
+	return t
 }

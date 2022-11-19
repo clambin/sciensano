@@ -2,7 +2,7 @@ package tabulator_test
 
 import (
 	"fmt"
-	"github.com/clambin/sciensano/reporter/table/tabulator"
+	"github.com/clambin/sciensano/pkg/tabulator"
 	"github.com/stretchr/testify/assert"
 	"math/rand"
 	"testing"

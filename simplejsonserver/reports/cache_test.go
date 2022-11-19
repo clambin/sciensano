@@ -1,11 +1,10 @@
-package cache_test
+package reports_test
 
 import (
 	"context"
 	"errors"
-	"github.com/clambin/sciensano/reporter/cache"
-	"github.com/clambin/simplejson/v3/data"
-	grafanaData "github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/clambin/sciensano/pkg/tabulator"
+	"github.com/clambin/sciensano/simplejsonserver/reports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/sync/semaphore"
@@ -16,7 +15,7 @@ import (
 )
 
 func TestCache(t *testing.T) {
-	c := cache.NewCache(15 * time.Minute)
+	c := reports.NewCache(15 * time.Minute)
 
 	var updates int
 	for i := 0; i < 10; i++ {
@@ -33,7 +32,7 @@ func TestCache(t *testing.T) {
 	assert.Equal(t, 1, updates)
 
 	e := c.Load("foo")
-	l := e.Data.Frame.Rows()
+	l := len(e.Data.GetTimestamps())
 	assert.Equal(t, 500, l)
 
 	stats := c.Stats()
@@ -41,7 +40,7 @@ func TestCache(t *testing.T) {
 }
 
 func TestCache_Stats(t *testing.T) {
-	c := cache.NewCache(100 * time.Millisecond)
+	c := reports.NewCache(100 * time.Millisecond)
 	e := c.Load("foo")
 	e.Once.Do(func() {
 		if e.Data == nil {
@@ -65,8 +64,8 @@ func TestCache_Stats(t *testing.T) {
 
 func TestCache_MaybeGenerate(t *testing.T) {
 	called := 0
-	c := cache.NewCache(time.Hour)
-	_, err := c.MaybeGenerate("foo", func() (*data.Table, error) {
+	c := reports.NewCache(time.Hour)
+	_, err := c.MaybeGenerate("foo", func() (*tabulator.Tabulator, error) {
 		d, _ := createBigDataSet()
 		called++
 		return d, nil
@@ -74,7 +73,7 @@ func TestCache_MaybeGenerate(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, 1, called)
 
-	_, err = c.MaybeGenerate("foo", func() (*data.Table, error) {
+	_, err = c.MaybeGenerate("foo", func() (*tabulator.Tabulator, error) {
 		d, _ := createBigDataSet()
 		called++
 		return d, nil
@@ -84,7 +83,7 @@ func TestCache_MaybeGenerate(t *testing.T) {
 }
 
 func TestCache_MaybeGenerate_Stress(t *testing.T) {
-	c := cache.NewCache(200 * time.Millisecond)
+	c := reports.NewCache(200 * time.Millisecond)
 
 	rand.Seed(time.Now().Unix())
 
@@ -95,15 +94,14 @@ func TestCache_MaybeGenerate_Stress(t *testing.T) {
 	for i := 0; i < 1e4; i++ {
 		_ = s.Acquire(ctx, 1)
 		go func(i int) {
-			report, err := c.MaybeGenerate("foo", func() (*data.Table, error) {
+			report, err := c.MaybeGenerate("foo", func() (*tabulator.Tabulator, error) {
 				if rand.Intn(10) < 1 {
 					return nil, errors.New("fail")
 				}
 				time.Sleep(time.Duration(rand.Intn(100)) * time.Millisecond)
-				return data.New(
-					data.Column{Name: "time", Values: []time.Time{time.Now()}},
-					data.Column{Name: "value", Values: []float64{float64(i)}},
-				), nil
+				d := tabulator.New("value")
+				d.Add(time.Now(), "value", float64(i))
+				return d, nil
 			})
 			assert.False(t, err == nil && report == nil)
 			s.Release(1)
@@ -114,7 +112,7 @@ func TestCache_MaybeGenerate_Stress(t *testing.T) {
 }
 
 func BenchmarkCache_MaybeGenerate(b *testing.B) {
-	c := cache.NewCache(time.Second)
+	c := reports.NewCache(time.Second)
 	_, err := c.MaybeGenerate("foo", createBigDataSet)
 	require.NoError(b, err)
 	b.ResetTimer()
@@ -127,15 +125,13 @@ func BenchmarkCache_MaybeGenerate(b *testing.B) {
 	}
 }
 
-func createBigDataSet() (d *data.Table, err error) {
-	var fields grafanaData.Fields
-	for c := 0; c < 10; c++ {
-		var values []float64
-		for r := 0; r < 500; r++ {
-			values = append(values, float64(r))
+func createBigDataSet() (d *tabulator.Tabulator, err error) {
+	d = tabulator.New("0", "1", "2", "3", "4", "5", "6", "7", "8", "9")
+	for r := 0; r < 500; r++ {
+		timestamp := time.Now()
+		for c := 0; c < 10; c++ {
+			d.Add(timestamp, strconv.Itoa(c), float64(r))
 		}
-		fields = append(fields, grafanaData.NewField(strconv.Itoa(c), nil, values))
 	}
-	d = &data.Table{Frame: grafanaData.NewFrame("frame", fields...)}
 	return
 }

@@ -3,7 +3,7 @@ package sciensano
 import (
 	"fmt"
 	"github.com/clambin/sciensano/pkg/set"
-	"github.com/clambin/sciensano/reporter/table/tabulator"
+	"github.com/clambin/sciensano/pkg/tabulator"
 )
 
 type TestResult struct {
@@ -32,6 +32,9 @@ func (r TestResults) Summarize(summaryColumn SummaryColumn) (*tabulator.Tabulato
 		default:
 			return nil, fmt.Errorf("testResults: invalid summary column: %s", summaryColumn.String())
 		}
+		if columnName == "" {
+			columnName = "(unknown)"
+		}
 		if columnNames.IsNew(columnName) {
 			t.RegisterColumn(columnName)
 		}
@@ -40,4 +43,23 @@ func (r TestResults) Summarize(summaryColumn SummaryColumn) (*tabulator.Tabulato
 	}
 
 	return t, nil
+}
+
+func (r TestResults) Categorize() *tabulator.Tabulator {
+	t := tabulator.New("positive", "total", "rate")
+
+	for _, testResult := range r {
+		t.Add(testResult.TimeStamp.Time, "positive", float64(testResult.Positive))
+		t.Add(testResult.TimeStamp.Time, "total", float64(testResult.Total))
+		//		t.Add(testResult.TimeStamp.Time, "rate", float64(testResult.Positive)/float64(testResult.Total))
+	}
+
+	positive, _ := t.GetValues("positive")
+	total, _ := t.GetValues("total")
+
+	for index, timestamp := range t.GetTimestamps() {
+		t.Add(timestamp, "rate", positive[index]/total[index])
+	}
+
+	return t
 }

@@ -3,7 +3,6 @@ package simplejsonserver
 import (
 	"context"
 	mockDemographics "github.com/clambin/sciensano/demographics/mocks"
-	"github.com/clambin/sciensano/reporter"
 	"github.com/clambin/simplejson/v3"
 	"github.com/clambin/simplejson/v3/common"
 	"github.com/clambin/simplejson/v3/query"
@@ -23,13 +22,12 @@ func TestNew(t *testing.T) {
 	demographicsClient.On("GetByAgeBracket", mock.AnythingOfType("bracket.Bracket")).Return(0)
 	//demographicsClient.On("Run", mock.AnythingOfType("*context.emptyCtx")).Return()
 
-	h, err := New(0, reporter.New(time.Hour), demographicsClient)
+	h, err := New(0, demographicsClient)
 	require.NoError(t, err)
 
 	ctx := context.Background()
 
 	assert.Equal(t, []string{
-		"boosters",
 		"cases",
 		"cases-age",
 		"cases-province",
@@ -41,11 +39,13 @@ func TestNew(t *testing.T) {
 		"mortality-age",
 		"mortality-region",
 		"tests",
-		"vacc-age-booster",
+		"vacc-age",
+		"vacc-age-rate",
 		"vacc-age-rate-full",
 		"vacc-age-rate-partial",
 		"vacc-manufacturer",
-		"vacc-region-booster",
+		"vacc-region",
+		"vacc-region-rate",
 		"vacc-region-rate-full",
 		"vacc-region-rate-partial",
 		"vaccinations",
@@ -57,14 +57,18 @@ func TestNew(t *testing.T) {
 	wg.Add(len(h.server.Handlers))
 	var count int
 	for target, handler := range h.server.Handlers {
-		count++
-		go func(handler simplejson.Handler, target string, counter int) {
-			t.Logf("%2d: %s started", counter, target)
-			_, err := handler.Endpoints().Query(ctx, req)
-			t.Logf("%2d: %s done. err: %v", counter, target, err)
-			assert.NoError(t, err, target, target)
-			wg.Done()
-		}(handler, target, count)
+		t.Run(target, func(t *testing.T) {
+			count++
+			go func(handler simplejson.Handler, target string, counter int) {
+				//t.Logf("%2d: %s started", count, target)
+				var resp query.Response
+				resp, err = handler.Endpoints().Query(ctx, req)
+				assert.NotZero(t, len(resp.(query.TableResponse).Columns[0].Data.(query.TimeColumn)))
+				//t.Logf("%2d: %s done. err: %v", count, target, err)
+				assert.NoError(t, err, target, target)
+				wg.Done()
+			}(handler, target, count)
+		})
 	}
 	wg.Wait()
 

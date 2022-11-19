@@ -24,6 +24,16 @@ func TestMortalities_Unmarshal(t *testing.T) {
 func TestMortalities_Summarize(t *testing.T) {
 	m := makeMortalities(1)
 
+	if *update {
+		f, err := os.OpenFile(filepath.Join("input", "mortalities.json"), os.O_TRUNC|os.O_WRONLY, 0644)
+		require.NoError(t, err)
+		decoder := json.NewEncoder(f)
+		decoder.SetIndent("", "  ")
+		err = decoder.Encode(m)
+		require.NoError(t, err)
+		_ = f.Close()
+	}
+
 	testCases := []struct {
 		summaryColumn   sciensano.SummaryColumn
 		err             string
@@ -71,21 +81,12 @@ func BenchmarkMortalities_Summarize_ByAgeGroup(b *testing.B) {
 }
 
 func makeMortalities(count int) sciensano.Mortalities {
-	mortalities := make(sciensano.Mortalities, 0)
-
-	timestamp := sciensano.TimeStamp{Time: time.Date(2022, time.November, 19, 0, 0, 0, 0, time.UTC)}
-	for i := 0; i < count; i++ {
-		for _, region := range regions {
-			for _, ageGroup := range ageGroups {
-				mortalities = append(mortalities, sciensano.Mortality{
-					TimeStamp: timestamp,
-					Region:    region,
-					AgeGroup:  ageGroup,
-					Deaths:    1,
-				})
-			}
+	return makeResponse[sciensano.Mortality](count, func(timestamp time.Time, region, province, ageGroup, manufacturer string, _ sciensano.DoseType) sciensano.Mortality {
+		return sciensano.Mortality{
+			TimeStamp: sciensano.TimeStamp{Time: timestamp},
+			Region:    region,
+			AgeGroup:  ageGroup,
+			Deaths:    1,
 		}
-		timestamp.Time = timestamp.Time.Add(24 * time.Hour)
-	}
-	return mortalities
+	})
 }
