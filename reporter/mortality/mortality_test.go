@@ -176,7 +176,7 @@ func BenchmarkClient_GetMortalityByRegion(b *testing.B) {
 	f.On("Fetch", mock.AnythingOfType("*context.emptyCtx"), sciensano.TypeMortality).Return(bigResponse, nil)
 
 	r := mortality.Reporter{
-		ReportCache: cache.NewCache(time.Hour),
+		ReportCache: cache.NewCache(0),
 		APIClient:   f,
 	}
 

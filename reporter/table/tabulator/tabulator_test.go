@@ -8,22 +8,14 @@ import (
 	"time"
 )
 
-//var update = flag.Bool("update", false, "update .golden files")
-
 func TestTabulator(t *testing.T) {
 	d := tabulator.New("B")
 	assert.NotNil(t, d)
-
-	added := d.Add(time.Now(), "foo", 1.0)
-	assert.False(t, added)
-
-	d.RegisterColumn("A", "B")
+	d.RegisterColumn("A")
 
 	for day := 1; day < 5; day++ {
-		added = d.Add(time.Date(2022, time.January, day, 0, 0, 0, 0, time.UTC), "A", float64(day))
-		assert.True(t, added)
-		added = d.Add(time.Date(2022, time.January, day, 0, 0, 0, 0, time.UTC), "B", -float64(day))
-		assert.True(t, added)
+		assert.True(t, d.Add(time.Date(2022, time.January, day, 0, 0, 0, 0, time.UTC), "A", float64(day)))
+		assert.True(t, d.Add(time.Date(2022, time.January, day, 0, 0, 0, 0, time.UTC), "B", -float64(day)))
 	}
 
 	assert.Equal(t, 4, d.Size())
