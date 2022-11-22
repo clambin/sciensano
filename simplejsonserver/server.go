@@ -137,18 +137,23 @@ func (s *Server) vaccinations(mode sciensano.SummaryColumn) (*tabulator.Tabulato
 }
 
 func (s *Server) vaccinationRate(mode sciensano.SummaryColumn) (*tabulator.Tabulator, error) {
-	vaccinations, err := s.vaccinations(mode)
-	if err != nil {
-		return nil, err
-	}
 	return s.reportsCache.MaybeGenerate("vaccinations-rate-"+mode.String(), func() (*tabulator.Tabulator, error) {
+		vaccinations := s.apiCache.Vaccinations.Get()
+		if mode == sciensano.Total {
+			return nil, fmt.Errorf("rate not supported for Total mode")
+		}
+		v, err := vaccinations.Summarize(mode)
+		if err != nil {
+			return nil, err
+		}
+
 		var figures map[string]int
 		switch mode {
 		case sciensano.ByRegion:
 			figures = s.Demographics.GetByRegion()
 		case sciensano.ByAgeGroup:
 			figures = make(map[string]int)
-			for _, column := range vaccinations.GetColumns() {
+			for _, column := range v.GetColumns() {
 				var b bracket.Bracket
 				b, err = bracket.FromString(column)
 				if err != nil {
@@ -157,7 +162,7 @@ func (s *Server) vaccinationRate(mode sciensano.SummaryColumn) (*tabulator.Tabul
 				figures[column] = s.Demographics.GetByAgeBracket(b)
 			}
 		}
-		return prorateFigures(vaccinations, figures), nil
+		return prorateFigures(v, figures), nil
 	})
 }
 
