@@ -11,6 +11,34 @@ import (
 	"time"
 )
 
+func TestDoseType_UnmarshalJSON(t *testing.T) {
+	tests := []struct {
+		input   sciensano.DoseType
+		encoded string
+	}{
+		{input: sciensano.Partial, encoded: `"A"`},
+		{input: sciensano.Full, encoded: `"B"`},
+		{input: sciensano.SingleDose, encoded: `"C"`},
+		{input: sciensano.Booster, encoded: `"E"`},
+		{input: sciensano.Booster2, encoded: `"E2"`},
+		{input: sciensano.Booster3, encoded: `"E3"`},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.input.String(), func(t *testing.T) {
+			body, err := json.Marshal(tt.input)
+			require.NoError(t, err)
+			assert.Equal(t, tt.encoded, string(body))
+
+			var d sciensano.DoseType
+			err = json.Unmarshal(body, &d)
+			require.NoError(t, err)
+
+			assert.Equal(t, tt.input, d)
+		})
+	}
+}
+
 func TestVaccinations_Unmarshal(t *testing.T) {
 	f, err := os.Open(filepath.Join("input", "vaccinations.json"))
 	require.NoError(t, err)

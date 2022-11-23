@@ -30,22 +30,21 @@ const (
 	Booster3
 )
 
+var doseTypeStrings = map[DoseType]string{
+	Partial:    "Partial",
+	Full:       "Full",
+	SingleDose: "SingleDose",
+	Booster:    "Booster",
+	Booster2:   "Booster 2",
+	Booster3:   "Booster 3",
+}
+
 func (d *DoseType) String() string {
-	switch *d {
-	case Partial:
-		return "partial"
-	case Full:
-		return "full"
-	case SingleDose:
-		return "single dose"
-	case Booster:
-		return "booster"
-	case Booster2:
-		return "booster 2"
-	case Booster3:
-		return "booster 3"
+	value, ok := doseTypeStrings[*d]
+	if !ok {
+		value = "(unknown)"
 	}
-	return "unknown"
+	return value
 }
 
 func (d *DoseType) UnmarshalJSON(body []byte) (err error) {
@@ -68,8 +67,8 @@ func (d *DoseType) UnmarshalJSON(body []byte) (err error) {
 	return
 }
 
-func (d *DoseType) MarshalJSON() (body []byte, err error) {
-	switch *d {
+func (d DoseType) MarshalJSON() (body []byte, err error) {
+	switch d {
 	case Partial:
 		body = []byte(`"A"`)
 	case Full:

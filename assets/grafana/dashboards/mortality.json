@@ -3,7 +3,10 @@
     "list": [
       {
         "builtIn": 1,
-        "datasource": "-- Grafana --",
+        "datasource": {
+          "type": "datasource",
+          "uid": "grafana"
+        },
         "enable": true,
         "hide": true,
         "iconColor": "rgba(0, 211, 255, 1)",
@@ -20,20 +23,24 @@
   },
   "editable": true,
   "fiscalYearStartMonth": 0,
-  "gnetId": null,
   "graphTooltip": 0,
-  "id": 481,
+  "id": 2346,
   "links": [],
   "liveNow": false,
   "panels": [
     {
-      "datasource": "sciensano",
+      "datasource": {
+        "type": "grafana-simple-json-datasource",
+        "uid": "PBB404699A8B1E379"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "palette-classic"
           },
           "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
@@ -89,14 +96,20 @@
         "legend": {
           "calcs": [],
           "displayMode": "list",
-          "placement": "bottom"
+          "placement": "bottom",
+          "showLegend": true
         },
         "tooltip": {
-          "mode": "single"
+          "mode": "single",
+          "sort": "none"
         }
       },
       "targets": [
         {
+          "datasource": {
+            "type": "grafana-simple-json-datasource",
+            "uid": "PBB404699A8B1E379"
+          },
           "refId": "A",
           "target": "mortality",
           "type": "table"
@@ -106,7 +119,10 @@
       "type": "timeseries"
     },
     {
-      "datasource": "sciensano",
+      "datasource": {
+        "type": "grafana-simple-json-datasource",
+        "uid": "PBB404699A8B1E379"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -133,7 +149,8 @@
       "options": {
         "legend": {
           "displayMode": "list",
-          "placement": "bottom"
+          "placement": "bottom",
+          "showLegend": true
         },
         "pieType": "pie",
         "reduceOptions": {
@@ -144,11 +161,16 @@
           "values": false
         },
         "tooltip": {
-          "mode": "single"
+          "mode": "single",
+          "sort": "none"
         }
       },
       "targets": [
         {
+          "datasource": {
+            "type": "grafana-simple-json-datasource",
+            "uid": "PBB404699A8B1E379"
+          },
           "refId": "A",
           "target": "mortality-age",
           "type": "table"
@@ -158,13 +180,18 @@
       "type": "piechart"
     },
     {
-      "datasource": "sciensano",
+      "datasource": {
+        "type": "grafana-simple-json-datasource",
+        "uid": "PBB404699A8B1E379"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "palette-classic"
           },
           "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
@@ -207,32 +234,7 @@
             ]
           }
         },
-        "overrides": [
-          {
-            "__systemRef": "hideSeriesFrom",
-            "matcher": {
-              "id": "byNames",
-              "options": {
-                "mode": "exclude",
-                "names": [
-                  "85+"
-                ],
-                "prefix": "All except:",
-                "readOnly": true
-              }
-            },
-            "properties": [
-              {
-                "id": "custom.hideFrom",
-                "value": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": true
-                }
-              }
-            ]
-          }
-        ]
+        "overrides": []
       },
       "gridPos": {
         "h": 8,
@@ -245,14 +247,20 @@
         "legend": {
           "calcs": [],
           "displayMode": "list",
-          "placement": "bottom"
+          "placement": "bottom",
+          "showLegend": true
         },
         "tooltip": {
-          "mode": "single"
+          "mode": "single",
+          "sort": "none"
         }
       },
       "targets": [
         {
+          "datasource": {
+            "type": "grafana-simple-json-datasource",
+            "uid": "PBB404699A8B1E379"
+          },
           "refId": "A",
           "target": "mortality-age",
           "type": "table"
@@ -262,7 +270,10 @@
       "type": "timeseries"
     },
     {
-      "datasource": "sciensano",
+      "datasource": {
+        "type": "grafana-simple-json-datasource",
+        "uid": "PBB404699A8B1E379"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -289,7 +300,8 @@
       "options": {
         "legend": {
           "displayMode": "list",
-          "placement": "bottom"
+          "placement": "bottom",
+          "showLegend": true
         },
         "pieType": "pie",
         "reduceOptions": {
@@ -300,11 +312,16 @@
           "values": false
         },
         "tooltip": {
-          "mode": "single"
+          "mode": "single",
+          "sort": "none"
         }
       },
       "targets": [
         {
+          "datasource": {
+            "type": "grafana-simple-json-datasource",
+            "uid": "PBB404699A8B1E379"
+          },
           "refId": "A",
           "target": "mortality-region",
           "type": "table"
@@ -314,13 +331,18 @@
       "type": "piechart"
     },
     {
-      "datasource": "sciensano",
+      "datasource": {
+        "type": "grafana-simple-json-datasource",
+        "uid": "PBB404699A8B1E379"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "palette-classic"
           },
           "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
@@ -376,14 +398,20 @@
         "legend": {
           "calcs": [],
           "displayMode": "list",
-          "placement": "bottom"
+          "placement": "bottom",
+          "showLegend": true
         },
         "tooltip": {
-          "mode": "single"
+          "mode": "single",
+          "sort": "none"
         }
       },
       "targets": [
         {
+          "datasource": {
+            "type": "grafana-simple-json-datasource",
+            "uid": "PBB404699A8B1E379"
+          },
           "refId": "A",
           "target": "mortality-region",
           "type": "table"
@@ -393,8 +421,8 @@
       "type": "timeseries"
     }
   ],
-  "refresh": "",
-  "schemaVersion": 31,
+  "refresh": "5m",
+  "schemaVersion": 37,
   "style": "dark",
   "tags": [],
   "templating": {
@@ -408,5 +436,6 @@
   "timezone": "",
   "title": "Sciensano - Mortality",
   "uid": "Q5QPJZFnk",
-  "version": 6
+  "version": 1,
+  "weekStart": ""
 }

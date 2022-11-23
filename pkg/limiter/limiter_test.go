@@ -37,8 +37,6 @@ func TestLimiter(t *testing.T) {
 	assert.LessOrEqual(t, c.GetMax(), maxParallel)
 }
 
-/*
-// TODO: this sometimes fails: no error is received?
 func TestLimiter_Timeout(t *testing.T) {
 	const maxParallel = 3
 	c := &Caller{Delay: time.Minute}
@@ -53,16 +51,11 @@ func TestLimiter_Timeout(t *testing.T) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Millisecond)
 	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, "", nil)
-	resp, err := l.Do(req)
-	if err == nil {
-		t.Log(resp.StatusCode)
-	}
+	_, err := l.Do(req)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "context deadline exceeded")
 	cancel()
 }
-
-*/
 
 type Caller struct {
 	Delay   time.Duration
@@ -74,7 +67,9 @@ type Caller struct {
 var _ httpclient.Caller = &Caller{}
 
 func (c *Caller) Do(req *http.Request) (*http.Response, error) {
-	c.wait(req.Context())
+	if err := c.wait(req.Context()); err != nil {
+		return nil, err
+	}
 	return &http.Response{
 		StatusCode: http.StatusOK,
 		Body:       io.NopCloser(bytes.NewBufferString("OK")),
@@ -111,13 +106,16 @@ func (c *Caller) GetMax() int {
 	return c.max
 }
 
-func (c *Caller) wait(ctx context.Context) {
+func (c *Caller) wait(ctx context.Context) error {
+	var err error
 	c.increase()
 	select {
 	case <-ctx.Done():
+		err = ctx.Err()
 		break
 	case <-time.After(c.getDelay()):
 		break
 	}
 	c.decrease()
+	return err
 }

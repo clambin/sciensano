@@ -24,7 +24,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 2269,
+  "id": 2347,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -123,11 +123,24 @@
             "uid": "PBB404699A8B1E379"
           },
           "refId": "A",
-          "target": "boosters",
+          "target": "vaccinations",
           "type": "timeserie"
         }
       ],
       "title": "Waves",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "full": true,
+              "partial": true
+            },
+            "indexByName": {},
+            "renameByName": {}
+          }
+        }
+      ],
       "type": "timeseries"
     },
     {
@@ -217,7 +230,7 @@
           },
           "hide": false,
           "refId": "A",
-          "target": "vacc-region-booster",
+          "target": "vacc-region",
           "type": "table"
         }
       ],
@@ -310,7 +323,7 @@
           },
           "hide": false,
           "refId": "A",
-          "target": "vacc-age-booster",
+          "target": "vacc-age",
           "type": "table"
         }
       ],
@@ -448,7 +461,15 @@
       "transformations": [
         {
           "id": "organize",
-          "options": {}
+          "options": {
+            "excludeByName": {
+              "booster": true,
+              "booster2": true,
+              "booster3": true
+            },
+            "indexByName": {},
+            "renameByName": {}
+          }
         }
       ],
       "type": "timeseries"
@@ -597,7 +618,7 @@
         "showUnfilled": true,
         "text": {}
       },
-      "pluginVersion": "9.2.2",
+      "pluginVersion": "9.2.5",
       "targets": [
         {
           "datasource": {
@@ -672,7 +693,7 @@
         "showUnfilled": true,
         "text": {}
       },
-      "pluginVersion": "9.2.2",
+      "pluginVersion": "9.2.5",
       "targets": [
         {
           "datasource": {
@@ -743,7 +764,7 @@
         "showUnfilled": true,
         "text": {}
       },
-      "pluginVersion": "9.2.2",
+      "pluginVersion": "9.2.5",
       "targets": [
         {
           "datasource": {
@@ -818,7 +839,7 @@
         "showUnfilled": true,
         "text": {}
       },
-      "pluginVersion": "9.2.2",
+      "pluginVersion": "9.2.5",
       "targets": [
         {
           "datasource": {
@@ -849,13 +870,13 @@
     "list": []
   },
   "time": {
-    "from": "now-2y",
+    "from": "now-6M",
     "to": "now"
   },
   "timepicker": {},
   "timezone": "",
   "title": "Sciensano - Vaccinations",
   "uid": "KU9aRfgRz",
-  "version": 5,
+  "version": 3,
   "weekStart": ""
 }

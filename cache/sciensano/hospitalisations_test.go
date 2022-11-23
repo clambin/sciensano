@@ -22,7 +22,8 @@ func TestHospitalisations_Unmarshal(t *testing.T) {
 }
 
 func TestHospitalisations_Summarize(t *testing.T) {
-	hospitalisations := makeHospitalisations(1)
+	const dayCount = 1
+	hospitalisations := makeHospitalisations(dayCount)
 
 	if *update {
 		f, err := os.OpenFile(filepath.Join("input", "hospitalisations.json"), os.O_TRUNC|os.O_WRONLY, 0644)
@@ -35,7 +36,59 @@ func TestHospitalisations_Summarize(t *testing.T) {
 		t.Log("updated")
 	}
 
-	// TODO
+	testCases := []struct {
+		summaryColumn   sciensano.SummaryColumn
+		pass            bool
+		expectedColumns int
+	}{
+		{
+			summaryColumn:   sciensano.Total,
+			pass:            true,
+			expectedColumns: 1,
+		},
+		{
+			summaryColumn: sciensano.ByAgeGroup,
+		},
+		{
+			summaryColumn:   sciensano.ByRegion,
+			pass:            true,
+			expectedColumns: len(regions),
+		},
+		{
+			summaryColumn:   sciensano.ByProvince,
+			pass:            true,
+			expectedColumns: len(provinces),
+		},
+		{
+			summaryColumn: sciensano.ByManufacturer,
+			pass:          false,
+		},
+	}
+
+	for _, tt := range testCases {
+		t.Run(tt.summaryColumn.String(), func(t *testing.T) {
+			d, err := hospitalisations.Summarize(tt.summaryColumn)
+			if !tt.pass {
+				assert.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			assert.Len(t, d.GetTimestamps(), dayCount)
+			assert.Len(t, d.GetColumns(), tt.expectedColumns)
+		})
+	}
+}
+
+func TestHospitalisations_Categorize(t *testing.T) {
+	hospitalisations := makeHospitalisations(1)
+	c := hospitalisations.Categorize()
+	assert.Equal(t, []string{"in", "inECMO", "inICU", "inResp"}, c.GetColumns())
+	records := len(c.GetTimestamps())
+	for _, col := range c.GetColumns() {
+		values, ok := c.GetValues(col)
+		require.True(t, ok)
+		assert.Len(t, values, records)
+	}
 }
 
 func makeHospitalisations(count int) sciensano.Hospitalisations {
