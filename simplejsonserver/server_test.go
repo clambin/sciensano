@@ -20,7 +20,6 @@ func TestNew(t *testing.T) {
 	demographicsClient := mockDemographics.NewFetcher(t)
 	demographicsClient.On("GetByRegion").Return(map[string]int{})
 	demographicsClient.On("GetByAgeBracket", mock.AnythingOfType("bracket.Bracket")).Return(0)
-	//demographicsClient.On("Run", mock.AnythingOfType("*context.emptyCtx")).Return()
 
 	h, err := New(0, demographicsClient)
 	require.NoError(t, err)

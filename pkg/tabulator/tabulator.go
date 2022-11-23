@@ -50,15 +50,13 @@ func (t *Tabulator) RegisterColumn(column ...string) {
 }
 
 func (t *Tabulator) ensureColumnExists(column string) {
-	_, added := t.columns.Add(column)
-	if !added {
-		return
-	}
+	if _, added := t.columns.Add(column); added {
+		// new column. add data for the new column to each row
+		for key, entry := range t.data {
+			entry = append(entry, 0)
+			t.data[key] = entry
+		}
 
-	// new column. add data for the new column to each row
-	for key, entry := range t.data {
-		entry = append(entry, 0)
-		t.data[key] = entry
 	}
 }
 
@@ -78,11 +76,9 @@ func (t *Tabulator) GetColumns() []string {
 }
 
 // GetValues returns the value for the specified column for each timestamp in the table. The values are sorted by timestamp.
-func (t *Tabulator) GetValues(columnName string) ([]float64, bool) {
-	column, ok := t.columns.GetIndex(columnName)
-
-	var values []float64
-	if ok {
+func (t *Tabulator) GetValues(columnName string) (values []float64, ok bool) {
+	var column int
+	if column, ok = t.columns.GetIndex(columnName); ok {
 		values = make([]float64, len(t.data))
 		for index, timestamp := range t.timestamps.List() {
 			row, _ := t.timestamps.GetIndex(timestamp)
