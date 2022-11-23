@@ -23,7 +23,6 @@ func NewSciensanoCache(target string) *SciensanoCache {
 		target = sciensano.BaseURL
 	}
 
-	// TODO: client should be a Limiter too
 	client := limiter.NewLimiter(&httpclient.InstrumentedClient{
 		BaseClient: httpclient.BaseClient{HTTPClient: http.DefaultClient},
 		// TODO: pass prometheus Registerer to metrics. Don't use promauto
