@@ -13,11 +13,9 @@ type populationRecord struct {
 }
 
 func groupPopulation(filename string) (byRegion map[string]int, byAge map[int]int, err error) {
-	var record populationRecord
 	var reader *csv.FileReader
-	reader, err = csv.NewFileReader(filename, '|', &record)
-
-	if err != nil {
+	var record populationRecord
+	if reader, err = csv.NewFileReader(filename, '|', &record); err != nil {
 		return
 	}
 
@@ -60,17 +58,16 @@ func groupPopulation(filename string) (byRegion map[string]int, byAge map[int]in
 	return
 }
 
-func translateRegion(input string) (output string) {
+func translateRegion(input string) string {
 	translation := map[string]string{
 		"Vlaams Gewest":                  "Flanders",
 		"Waals Gewest":                   "Wallonia",
 		"Brussels Hoofdstedelijk Gewest": "Brussels",
 	}
 
-	var ok bool
-	output, ok = translation[input]
+	output, ok := translation[input]
 	if !ok {
 		output = input
 	}
-	return
+	return output
 }

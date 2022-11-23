@@ -10,6 +10,7 @@ import (
 )
 
 // Fetcher interface for population data
+//
 //go:generate mockery --name Fetcher
 type Fetcher interface {
 	// GetByAgeBracket returns the demographics for the specified AgeBracket
@@ -35,8 +36,7 @@ var _ Fetcher = &Server{}
 // Run imports the latest demographics data on a regular basis
 func (s *Server) Run(ctx context.Context) {
 	log.Debug("first load of demographics file")
-	err := s.update()
-	if err != nil {
+	if err := s.update(); err != nil {
 		log.WithError(err).Fatal("failed to read demographics file")
 	}
 	log.Debug("first load of demographics file done")
@@ -48,8 +48,7 @@ func (s *Server) Run(ctx context.Context) {
 		case <-ctx.Done():
 			running = false
 		case <-ticker.C:
-			err = s.update()
-			if err != nil {
+			if err := s.update(); err != nil {
 				log.WithError(err).Error("failed to read demographics file")
 			}
 		}

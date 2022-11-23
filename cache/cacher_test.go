@@ -68,14 +68,12 @@ func TestCacher_Refresh(t *testing.T) {
 	assert.Equal(t, responses{response{Name: "foo"}}, s.Get())
 
 	// Next call: expiry hasn't passed, so no calls should be made
-	err := s.refresh(ctx)
-	require.NoError(t, err)
+	s.refresh(ctx)
 
 	// Fake expiry. GetLastModified should be called. lastModified isn't changed, so Fetch should not be called
 	s.lastChecked = time.Time{}
 	f.On("GetLastModified", mock.AnythingOfType("*context.emptyCtx")).Return(lastModified, nil).Once()
-	err = s.refresh(ctx)
-	require.NoError(t, err)
+	s.refresh(ctx)
 
 	// Fake expire + update lastModified. Both GetLastModified and Fetch should be called
 	s.lastChecked = time.Time{}

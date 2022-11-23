@@ -18,17 +18,14 @@ type cacher[T any] struct {
 }
 
 func (s *cacher[T]) Get() T {
-	_ = s.refresh(context.Background())
+	s.refresh(context.Background())
 	s.lock.RLock()
 	defer s.lock.RUnlock()
 	return s.entries
 }
 
 func (s *cacher[T]) AutoRefresh(ctx context.Context, interval time.Duration) {
-	err := s.refresh(ctx)
-	if err != nil {
-		log.WithError(err).WithField("target", s.GetTarget()).Error("failed to update cache")
-	}
+	s.refresh(ctx)
 
 	ticker := time.NewTicker(jitter(interval))
 	for running := true; running; {
@@ -36,10 +33,7 @@ func (s *cacher[T]) AutoRefresh(ctx context.Context, interval time.Duration) {
 		case <-ctx.Done():
 			running = false
 		case <-ticker.C:
-			err = s.refresh(ctx)
-			if err != nil {
-				log.WithError(err).WithField("target", s.GetTarget()).Error("failed to update cache")
-			}
+			s.refresh(ctx)
 		}
 	}
 	ticker.Stop()
@@ -55,29 +49,29 @@ func jitter(interval time.Duration) time.Duration {
 	return time.Duration(lowMark+j) * time.Second
 }
 
-func (s *cacher[T]) refresh(ctx context.Context) error {
+func (s *cacher[T]) refresh(ctx context.Context) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
 	var serverTimestamp time.Time
+	var err error
 
 	if time.Since(s.lastChecked) > s.expiry {
-		var err error
-		if serverTimestamp, err = s.GetLastModified(ctx); err != nil {
-			return err
+		if serverTimestamp, err = s.GetLastModified(ctx); err == nil {
+			s.lastChecked = time.Now()
 		}
-		s.lastChecked = time.Now()
 	}
 
 	if serverTimestamp.After(s.lastModified) {
-		entries, err := s.Fetch(ctx)
-		if err != nil {
-			s.lastChecked = time.Time{}
-			return err
+		var entries T
+		if entries, err = s.Fetch(ctx); err == nil {
+			s.entries = entries
+			s.lastModified = serverTimestamp
 		}
-		s.entries = entries
-		s.lastModified = serverTimestamp
 	}
 
-	return nil
+	if err != nil {
+		s.lastChecked = time.Time{}
+		log.WithError(err).WithField("target", s.GetTarget()).Error("failed to update cache")
+	}
 }

@@ -3,6 +3,7 @@ package cache
 import (
 	"context"
 	"github.com/clambin/sciensano/cache/sciensano"
+	"github.com/go-http-utils/headers"
 	"github.com/stretchr/testify/assert"
 	"io"
 	"net/http"
@@ -43,7 +44,7 @@ func TestNewSciensanoCache(t *testing.T) {
 
 func handler(w http.ResponseWriter, req *http.Request) {
 	if req.Method == http.MethodHead {
-		w.Header().Set("Last-Modified", time.Now().Format(time.RFC1123))
+		w.Header().Set(headers.LastModified, time.Now().Format(time.RFC1123))
 		return
 	}
 	if req.Method != http.MethodGet {
