@@ -69,8 +69,7 @@ func TestNew(t *testing.T) {
 			count++
 			go func(handler simplejson.Handler, target string, counter int) {
 				//t.Logf("%2d: %s started", count, target)
-				var resp query.Response
-				resp, err = handler.Endpoints().Query(ctx, req)
+				resp, err := handler.Endpoints().Query(ctx, req)
 				assert.NotZero(t, len(resp.(query.TableResponse).Columns[0].Data.(query.TimeColumn)))
 				//t.Logf("%2d: %s done. err: %v", count, target, err)
 				assert.NoError(t, err, target, target)
