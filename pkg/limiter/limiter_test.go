@@ -38,7 +38,7 @@ func TestLimiter(t *testing.T) {
 }
 
 /*
-TODO: this sometimes fails: no error is received?
+// TODO: this sometimes fails: no error is received?
 func TestLimiter_Timeout(t *testing.T) {
 	const maxParallel = 3
 	c := &Caller{Delay: time.Minute}
@@ -53,11 +53,15 @@ func TestLimiter_Timeout(t *testing.T) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Millisecond)
 	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, "", nil)
-	_, err := l.Do(req)
+	resp, err := l.Do(req)
+	if err == nil {
+		t.Log(resp.StatusCode)
+	}
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "context deadline exceeded")
 	cancel()
 }
+
 */
 
 type Caller struct {
