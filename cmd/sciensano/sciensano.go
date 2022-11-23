@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/clambin/sciensano/demographics"
-	"github.com/clambin/sciensano/reporter"
 	"github.com/clambin/sciensano/simplejsonserver"
 	"github.com/clambin/sciensano/version"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -58,7 +57,7 @@ func runPrometheusServer(port int) {
 }
 
 func runSimpleJSONServer(port int, demographicsPath string) {
-	s, err := simplejsonserver.New(port, reporter.New(15*time.Minute), &demographics.Server{
+	s, err := simplejsonserver.New(port, &demographics.Server{
 		Path:     demographicsPath,
 		Interval: 24 * time.Hour,
 	})

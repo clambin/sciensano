@@ -1,0 +1,137 @@
+[
+  {
+    "DATE": "2022-11-22",
+    "PROVINCE": "foo",
+    "REGION": "(unknown)",
+    "TOTAL_IN": 10,
+    "TOTAL_IN_ICU": 3,
+    "TOTAL_IN_RESP": 2,
+    "TOTAL_IN_ECMO": 1
+  },
+  {
+    "DATE": "2022-11-22",
+    "PROVINCE": "bar",
+    "REGION": "(unknown)",
+    "TOTAL_IN": 10,
+    "TOTAL_IN_ICU": 3,
+    "TOTAL_IN_RESP": 2,
+    "TOTAL_IN_ECMO": 1
+  },
+  {
+    "DATE": "2022-11-22",
+    "PROVINCE": "snafu",
+    "REGION": "(unknown)",
+    "TOTAL_IN": 10,
+    "TOTAL_IN_ICU": 3,
+    "TOTAL_IN_RESP": 2,
+    "TOTAL_IN_ECMO": 1
+  },
+  {
+    "DATE": "2022-11-22",
+    "PROVINCE": "foo",
+    "REGION": "Brussels",
+    "TOTAL_IN": 10,
+    "TOTAL_IN_ICU": 3,
+    "TOTAL_IN_RESP": 2,
+    "TOTAL_IN_ECMO": 1
+  },
+  {
+    "DATE": "2022-11-22",
+    "PROVINCE": "bar",
+    "REGION": "Brussels",
+    "TOTAL_IN": 10,
+    "TOTAL_IN_ICU": 3,
+    "TOTAL_IN_RESP": 2,
+    "TOTAL_IN_ECMO": 1
+  },
+  {
+    "DATE": "2022-11-22",
+    "PROVINCE": "snafu",
+    "REGION": "Brussels",
+    "TOTAL_IN": 10,
+    "TOTAL_IN_ICU": 3,
+    "TOTAL_IN_RESP": 2,
+    "TOTAL_IN_ECMO": 1
+  },
+  {
+    "DATE": "2022-11-22",
+    "PROVINCE": "foo",
+    "REGION": "Flanders",
+    "TOTAL_IN": 10,
+    "TOTAL_IN_ICU": 3,
+    "TOTAL_IN_RESP": 2,
+    "TOTAL_IN_ECMO": 1
+  },
+  {
+    "DATE": "2022-11-22",
+    "PROVINCE": "bar",
+    "REGION": "Flanders",
+    "TOTAL_IN": 10,
+    "TOTAL_IN_ICU": 3,
+    "TOTAL_IN_RESP": 2,
+    "TOTAL_IN_ECMO": 1
+  },
+  {
+    "DATE": "2022-11-22",
+    "PROVINCE": "snafu",
+    "REGION": "Flanders",
+    "TOTAL_IN": 10,
+    "TOTAL_IN_ICU": 3,
+    "TOTAL_IN_RESP": 2,
+    "TOTAL_IN_ECMO": 1
+  },
+  {
+    "DATE": "2022-11-22",
+    "PROVINCE": "foo",
+    "REGION": "Ostbelgien",
+    "TOTAL_IN": 10,
+    "TOTAL_IN_ICU": 3,
+    "TOTAL_IN_RESP": 2,
+    "TOTAL_IN_ECMO": 1
+  },
+  {
+    "DATE": "2022-11-22",
+    "PROVINCE": "bar",
+    "REGION": "Ostbelgien",
+    "TOTAL_IN": 10,
+    "TOTAL_IN_ICU": 3,
+    "TOTAL_IN_RESP": 2,
+    "TOTAL_IN_ECMO": 1
+  },
+  {
+    "DATE": "2022-11-22",
+    "PROVINCE": "snafu",
+    "REGION": "Ostbelgien",
+    "TOTAL_IN": 10,
+    "TOTAL_IN_ICU": 3,
+    "TOTAL_IN_RESP": 2,
+    "TOTAL_IN_ECMO": 1
+  },
+  {
+    "DATE": "2022-11-22",
+    "PROVINCE": "foo",
+    "REGION": "Wallonia",
+    "TOTAL_IN": 10,
+    "TOTAL_IN_ICU": 3,
+    "TOTAL_IN_RESP": 2,
+    "TOTAL_IN_ECMO": 1
+  },
+  {
+    "DATE": "2022-11-22",
+    "PROVINCE": "bar",
+    "REGION": "Wallonia",
+    "TOTAL_IN": 10,
+    "TOTAL_IN_ICU": 3,
+    "TOTAL_IN_RESP": 2,
+    "TOTAL_IN_ECMO": 1
+  },
+  {
+    "DATE": "2022-11-22",
+    "PROVINCE": "snafu",
+    "REGION": "Wallonia",
+    "TOTAL_IN": 10,
+    "TOTAL_IN_ICU": 3,
+    "TOTAL_IN_RESP": 2,
+    "TOTAL_IN_ECMO": 1
+  }
+]

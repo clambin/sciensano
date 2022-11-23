@@ -9,42 +9,30 @@ import (
 func (s *Server) update() (err error) {
 	var mtime time.Time
 	var updated bool
-	mtime, updated, err = s.isUpdated()
-	if err != nil || !updated {
+	if mtime, updated, err = s.isUpdated(); err != nil || !updated {
 		return
 	}
 
-	err = s.process()
-	if err != nil {
-		return
+	if err = s.process(); err == nil {
+		s.mtime = mtime
 	}
-
-	s.mtime = mtime
 	return
 }
 
 func (s *Server) isUpdated() (mtime time.Time, updated bool, err error) {
 	var stats os.FileInfo
-	stats, err = os.Stat(s.Path)
-	if err != nil {
-		return
+	if stats, err = os.Stat(s.Path); err == nil {
+		mtime = stats.ModTime()
+		updated = mtime.After(s.mtime)
 	}
-
-	mtime = stats.ModTime()
-	updated = mtime.After(s.mtime)
 	return
 }
 
 const ostbelgienPopulation = 78000
 
-func (s *Server) process() (err error) {
+func (s *Server) process() error {
 	log.Info("loading demographics")
-	var (
-		byRegion map[string]int
-		byAge    map[int]int
-	)
-
-	byRegion, byAge, err = groupPopulation(s.Path)
+	byRegion, byAge, err := groupPopulation(s.Path)
 	if err != nil {
 		return err
 	}
@@ -65,5 +53,5 @@ func (s *Server) process() (err error) {
 	s.byAge = byAge
 
 	log.Info("loaded demographics")
-	return
+	return nil
 }

@@ -8,14 +8,12 @@ require (
 	github.com/clambin/httpserver v0.4.0
 	github.com/clambin/simplejson/v3 v3.7.2
 	github.com/go-http-utils/headers v0.0.0-20181008091004-fed159eddc2a
-	github.com/grafana/grafana-plugin-sdk-go v0.143.0
-	github.com/json-iterator/go v1.1.12
-	github.com/mailru/easyjson v0.7.7
+	github.com/grafana/grafana-plugin-sdk-go v0.144.0
 	github.com/prometheus/client_golang v1.14.0
-	github.com/prometheus/client_model v0.3.0
 	github.com/rovaughn/fastcsv v0.0.0-20170331030356-1090019547fb
 	github.com/sirupsen/logrus v1.9.0
 	github.com/stretchr/testify v1.8.1
+	golang.org/x/exp v0.0.0-20200224162631-6cc2880d07d6
 	golang.org/x/sync v0.0.0-20220601150217-0de741cfad7f
 	gopkg.in/alecthomas/kingpin.v2 v2.2.6
 )
@@ -33,7 +31,7 @@ require (
 	github.com/google/flatbuffers v2.0.0+incompatible // indirect
 	github.com/google/go-cmp v0.5.8 // indirect
 	github.com/gorilla/mux v1.8.0 // indirect
-	github.com/josharian/intern v1.0.0 // indirect
+	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/compress v1.13.1 // indirect
 	github.com/mattetti/filebuffer v1.0.1 // indirect
 	github.com/mattn/go-runewidth v0.0.9 // indirect
@@ -43,6 +41,7 @@ require (
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
 	github.com/pierrec/lz4/v4 v4.1.8 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
+	github.com/prometheus/client_model v0.3.0 // indirect
 	github.com/prometheus/common v0.37.0 // indirect
 	github.com/prometheus/procfs v0.8.0 // indirect
 	github.com/stretchr/objx v0.5.0 // indirect

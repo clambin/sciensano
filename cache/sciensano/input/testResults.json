@@ -1,0 +1,107 @@
+[
+  {
+    "DATE": "2022-11-22",
+    "PROVINCE": "foo",
+    "REGION": "(unknown)",
+    "TESTS_ALL": 2,
+    "TESTS_ALL_POS": 1
+  },
+  {
+    "DATE": "2022-11-22",
+    "PROVINCE": "bar",
+    "REGION": "(unknown)",
+    "TESTS_ALL": 2,
+    "TESTS_ALL_POS": 1
+  },
+  {
+    "DATE": "2022-11-22",
+    "PROVINCE": "snafu",
+    "REGION": "(unknown)",
+    "TESTS_ALL": 2,
+    "TESTS_ALL_POS": 1
+  },
+  {
+    "DATE": "2022-11-22",
+    "PROVINCE": "foo",
+    "REGION": "Brussels",
+    "TESTS_ALL": 2,
+    "TESTS_ALL_POS": 1
+  },
+  {
+    "DATE": "2022-11-22",
+    "PROVINCE": "bar",
+    "REGION": "Brussels",
+    "TESTS_ALL": 2,
+    "TESTS_ALL_POS": 1
+  },
+  {
+    "DATE": "2022-11-22",
+    "PROVINCE": "snafu",
+    "REGION": "Brussels",
+    "TESTS_ALL": 2,
+    "TESTS_ALL_POS": 1
+  },
+  {
+    "DATE": "2022-11-22",
+    "PROVINCE": "foo",
+    "REGION": "Flanders",
+    "TESTS_ALL": 2,
+    "TESTS_ALL_POS": 1
+  },
+  {
+    "DATE": "2022-11-22",
+    "PROVINCE": "bar",
+    "REGION": "Flanders",
+    "TESTS_ALL": 2,
+    "TESTS_ALL_POS": 1
+  },
+  {
+    "DATE": "2022-11-22",
+    "PROVINCE": "snafu",
+    "REGION": "Flanders",
+    "TESTS_ALL": 2,
+    "TESTS_ALL_POS": 1
+  },
+  {
+    "DATE": "2022-11-22",
+    "PROVINCE": "foo",
+    "REGION": "Ostbelgien",
+    "TESTS_ALL": 2,
+    "TESTS_ALL_POS": 1
+  },
+  {
+    "DATE": "2022-11-22",
+    "PROVINCE": "bar",
+    "REGION": "Ostbelgien",
+    "TESTS_ALL": 2,
+    "TESTS_ALL_POS": 1
+  },
+  {
+    "DATE": "2022-11-22",
+    "PROVINCE": "snafu",
+    "REGION": "Ostbelgien",
+    "TESTS_ALL": 2,
+    "TESTS_ALL_POS": 1
+  },
+  {
+    "DATE": "2022-11-22",
+    "PROVINCE": "foo",
+    "REGION": "Wallonia",
+    "TESTS_ALL": 2,
+    "TESTS_ALL_POS": 1
+  },
+  {
+    "DATE": "2022-11-22",
+    "PROVINCE": "bar",
+    "REGION": "Wallonia",
+    "TESTS_ALL": 2,
+    "TESTS_ALL_POS": 1
+  },
+  {
+    "DATE": "2022-11-22",
+    "PROVINCE": "snafu",
+    "REGION": "Wallonia",
+    "TESTS_ALL": 2,
+    "TESTS_ALL_POS": 1
+  }
+]
