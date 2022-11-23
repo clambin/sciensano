@@ -635,7 +635,13 @@
       "transformations": [
         {
           "id": "organize",
-          "options": {}
+          "options": {
+            "excludeByName": {
+              "(unknown)": true
+            },
+            "indexByName": {},
+            "renameByName": {}
+          }
         }
       ],
       "type": "bargauge"
@@ -710,7 +716,13 @@
       "transformations": [
         {
           "id": "organize",
-          "options": {}
+          "options": {
+            "excludeByName": {
+              "(unknown)": true
+            },
+            "indexByName": {},
+            "renameByName": {}
+          }
         }
       ],
       "type": "bargauge"
@@ -877,6 +889,6 @@
   "timezone": "",
   "title": "Sciensano - Vaccinations",
   "uid": "KU9aRfgRz",
-  "version": 3,
+  "version": 4,
   "weekStart": ""
 }
