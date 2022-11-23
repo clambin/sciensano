@@ -84,3 +84,12 @@ func TestCacher_Refresh(t *testing.T) {
 	f.On("Fetch", mock.AnythingOfType("*context.emptyCtx")).Return(responses{response{Name: "bar"}}, nil).Once()
 	assert.Equal(t, responses{response{Name: "bar"}}, s.Get())
 }
+
+func TestJitter(t *testing.T) {
+	target := 100 * time.Minute
+	for i := 0; i < 1000; i++ {
+		realInterval := jitter(target)
+		require.GreaterOrEqual(t, realInterval, 99*time.Minute)
+		require.LessOrEqual(t, realInterval, 101*time.Minute)
+	}
+}

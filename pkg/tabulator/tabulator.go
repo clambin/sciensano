@@ -81,16 +81,15 @@ func (t *Tabulator) GetColumns() []string {
 func (t *Tabulator) GetValues(columnName string) ([]float64, bool) {
 	column, ok := t.columns.GetIndex(columnName)
 
-	if !ok {
-		return nil, false
+	var values []float64
+	if ok {
+		values = make([]float64, len(t.data))
+		for index, timestamp := range t.timestamps.List() {
+			row, _ := t.timestamps.GetIndex(timestamp)
+			values[index] = t.data[row][column]
+		}
 	}
-
-	values := make([]float64, len(t.data))
-	for index, timestamp := range t.timestamps.List() {
-		row, _ := t.timestamps.GetIndex(timestamp)
-		values[index] = t.data[row][column]
-	}
-	return values, true
+	return values, ok
 }
 
 // Accumulate increments the values in each column

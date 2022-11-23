@@ -7,7 +7,7 @@ import (
 )
 
 func TestSet_IsNew(t *testing.T) {
-	s := set.Set{}
+	var s set.Set
 	assert.True(t, s.IsNew("foo"))
 	assert.False(t, s.IsNew("foo"))
 	assert.True(t, s.IsNew("bar"))

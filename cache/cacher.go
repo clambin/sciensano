@@ -3,6 +3,7 @@ package cache
 import (
 	"context"
 	log "github.com/sirupsen/logrus"
+	"golang.org/x/exp/rand"
 	"sync"
 	"time"
 )
@@ -29,7 +30,7 @@ func (s *cacher[T]) AutoRefresh(ctx context.Context, interval time.Duration) {
 		log.WithError(err).WithField("target", s.GetTarget()).Error("failed to update cache")
 	}
 
-	ticker := time.NewTicker(interval)
+	ticker := time.NewTicker(jitter(interval))
 	for running := true; running; {
 		select {
 		case <-ctx.Done():
@@ -42,6 +43,16 @@ func (s *cacher[T]) AutoRefresh(ctx context.Context, interval time.Duration) {
 		}
 	}
 	ticker.Stop()
+}
+
+func jitter(interval time.Duration) time.Duration {
+	// randomize the interval (somewhat) so all caches don't try to update at the same time
+	const window = 0.02 // 1% on either side of the interval
+	seconds := interval.Seconds()
+	delta := seconds * window
+	lowMark := seconds - delta/2
+	j := float64(rand.Int63n(int64(delta)))
+	return time.Duration(lowMark+j) * time.Second
 }
 
 func (s *cacher[T]) refresh(ctx context.Context) error {
