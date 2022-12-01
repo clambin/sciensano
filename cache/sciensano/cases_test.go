@@ -23,8 +23,8 @@ func TestCases_Unmarshal(t *testing.T) {
 
 func TestCases_Summarize(t *testing.T) {
 	const dayCount = 1
-	cases := sciensano.Cases(makeResponse[sciensano.Case](1, func(timestamp time.Time, region, province, ageGroup, _ string, _ sciensano.DoseType) sciensano.Case {
-		return sciensano.Case{
+	cases := sciensano.Cases(makeResponse[sciensano.Case](1, func(timestamp time.Time, region, province, ageGroup, _ string, _ sciensano.DoseType) *sciensano.Case {
+		return &sciensano.Case{
 			TimeStamp: sciensano.TimeStamp{Time: timestamp},
 			Province:  province,
 			Region:    region,

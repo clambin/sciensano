@@ -16,7 +16,7 @@ type Hospitalisation struct {
 	TotalInECMO int       `json:"TOTAL_IN_ECMO"`
 }
 
-type Hospitalisations []Hospitalisation
+type Hospitalisations []*Hospitalisation
 
 func (h Hospitalisations) Summarize(summaryColumn SummaryColumn) (*tabulator.Tabulator, error) {
 	t := tabulator.New()

@@ -7,6 +7,7 @@ import (
 	"github.com/clambin/sciensano/demographics"
 	"github.com/clambin/sciensano/simplejsonserver"
 	"github.com/clambin/sciensano/version"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/alecthomas/kingpin.v2"
@@ -60,7 +61,7 @@ func runSimpleJSONServer(port int, demographicsPath string) {
 	s, err := simplejsonserver.New(port, &demographics.Server{
 		Path:     demographicsPath,
 		Interval: 24 * time.Hour,
-	})
+	}, prometheus.DefaultRegisterer)
 	if err != nil {
 		log.WithError(err).Fatal("failed to start SimpleJSON server")
 	}

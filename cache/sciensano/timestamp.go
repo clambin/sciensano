@@ -7,6 +7,8 @@ import (
 )
 
 // TimeStamp represents a timestamp in the API responder. Needed for parsing purposes
+//
+//easyjson:skip
 type TimeStamp struct {
 	time.Time
 }

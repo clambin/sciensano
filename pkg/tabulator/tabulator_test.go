@@ -41,6 +41,26 @@ func TestTabulator(t *testing.T) {
 	assert.Equal(t, []float64{0, 0, 0, 0}, values)
 }
 
+func TestTabulator_Set(t *testing.T) {
+	d := tabulator.New("A")
+
+	for day := 1; day < 5; day++ {
+		assert.True(t, d.Add(time.Date(2022, time.January, day, 0, 0, 0, 0, time.UTC), "A", float64(day)))
+	}
+
+	values, ok := d.GetValues("A")
+	require.True(t, ok)
+	assert.Equal(t, []float64{1, 2, 3, 4}, values)
+
+	for day := 1; day < 5; day++ {
+		assert.True(t, d.Set(time.Date(2022, time.January, day, 0, 0, 0, 0, time.UTC), "A", -1.0))
+	}
+
+	values, ok = d.GetValues("A")
+	require.True(t, ok)
+	assert.Equal(t, []float64{-1, -1, -1, -1}, values)
+}
+
 func TestTabulator_Add_OutOfOrder(t *testing.T) {
 	d := tabulator.New("A")
 
@@ -173,6 +193,20 @@ func BenchmarkTabulator_Add_OutOfOrder(b *testing.B) {
 			timestamp = timestamp.Add(-24 * time.Hour)
 		}
 	}
+}
+
+func BenchmarkTabulator_Add_Same_Timestamp(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		tab := tabulator.New("A")
+		timestamp := time.Date(2020, time.January, 1, 0, 0, 0, 0, time.UTC)
+		for j := 0; j < 10; j++ {
+			for k := 0; k < 100; k++ {
+				tab.Add(timestamp, "A", float64(i))
+			}
+			timestamp = timestamp.Add(24 * time.Hour)
+		}
+	}
+	//b.Log(tab.Skips())
 }
 
 func BenchmarkTabulator_Accumulate(b *testing.B) {

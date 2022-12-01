@@ -13,7 +13,7 @@ type Mortality struct {
 	Deaths    int       `json:"DEATHS"`
 }
 
-type Mortalities []Mortality
+type Mortalities []*Mortality
 
 func (m Mortalities) Summarize(summaryColumn SummaryColumn) (*tabulator.Tabulator, error) {
 	t := tabulator.New()

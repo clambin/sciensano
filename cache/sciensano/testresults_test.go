@@ -72,8 +72,8 @@ func TestTestResults_Categorize(t *testing.T) {
 }
 
 func makeTestResults(count int) sciensano.TestResults {
-	return makeResponse[sciensano.TestResult](count, func(timestamp time.Time, region, province, ageGroup, _ string, _ sciensano.DoseType) sciensano.TestResult {
-		return sciensano.TestResult{
+	return makeResponse[sciensano.TestResult](count, func(timestamp time.Time, region, province, ageGroup, _ string, _ sciensano.DoseType) *sciensano.TestResult {
+		return &sciensano.TestResult{
 			TimeStamp: sciensano.TimeStamp{Time: timestamp},
 			Province:  province,
 			Region:    region,

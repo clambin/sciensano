@@ -4,11 +4,12 @@ go 1.18
 
 require (
 	github.com/clambin/cache v0.0.5
-	github.com/clambin/httpclient v0.1.2
+	github.com/clambin/httpclient v0.2.0
 	github.com/clambin/httpserver v0.4.0
-	github.com/clambin/simplejson/v3 v3.7.2
+	github.com/clambin/simplejson/v4 v4.0.0
 	github.com/go-http-utils/headers v0.0.0-20181008091004-fed159eddc2a
 	github.com/grafana/grafana-plugin-sdk-go v0.144.0
+	github.com/mailru/easyjson v0.7.7
 	github.com/prometheus/client_golang v1.14.0
 	github.com/rovaughn/fastcsv v0.0.0-20170331030356-1090019547fb
 	github.com/sirupsen/logrus v1.9.0
@@ -31,6 +32,7 @@ require (
 	github.com/google/flatbuffers v2.0.0+incompatible // indirect
 	github.com/google/go-cmp v0.5.8 // indirect
 	github.com/gorilla/mux v1.8.0 // indirect
+	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/compress v1.13.1 // indirect
 	github.com/mattetti/filebuffer v1.0.1 // indirect

@@ -37,15 +37,12 @@ func TestCacher_Get(t *testing.T) {
 		Fetcher: &fetcher[response]{client: c},
 	}
 
-	result := s.Get()
-	require.Len(t, result, 1)
-	assert.Equal(t, "foo", result[0].Name)
+	ctx := context.Background()
+	s.refresh(ctx)
 
-	result = s.Get()
+	result := s.Get(ctx)
 	require.Len(t, result, 1)
 	assert.Equal(t, "foo", result[0].Name)
-	//	cancel()
-	//	wg.Wait()
 }
 
 func TestCacher_Refresh(t *testing.T) {
@@ -61,13 +58,14 @@ func TestCacher_Refresh(t *testing.T) {
 	}
 	ctx := context.Background()
 
-	// First call: cacher should check last modified data & fetch new data
+	// First refresh: cacher should check last modified data & fetch new data
 	lastModified := time.Now()
 	f.On("GetLastModified", mock.AnythingOfType("*context.emptyCtx")).Return(lastModified, nil).Once()
 	f.On("Fetch", mock.AnythingOfType("*context.emptyCtx")).Return(responses{response{Name: "foo"}}, nil).Once()
-	assert.Equal(t, responses{response{Name: "foo"}}, s.Get())
+	s.refresh(ctx)
+	assert.Equal(t, responses{response{Name: "foo"}}, s.Get(ctx))
 
-	// Next call: expiry hasn't passed, so no calls should be made
+	// Next refresh: expiry hasn't passed, so no calls should be made
 	s.refresh(ctx)
 
 	// Fake expiry. GetLastModified should be called. lastModified isn't changed, so Fetch should not be called
@@ -80,7 +78,8 @@ func TestCacher_Refresh(t *testing.T) {
 	lastModified = time.Now()
 	f.On("GetLastModified", mock.AnythingOfType("*context.emptyCtx")).Return(lastModified, nil).Once()
 	f.On("Fetch", mock.AnythingOfType("*context.emptyCtx")).Return(responses{response{Name: "bar"}}, nil).Once()
-	assert.Equal(t, responses{response{Name: "bar"}}, s.Get())
+	s.refresh(ctx)
+	assert.Equal(t, responses{response{Name: "bar"}}, s.Get(ctx))
 }
 
 func TestJitter(t *testing.T) {

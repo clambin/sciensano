@@ -11,7 +11,8 @@ import (
 	"github.com/clambin/sciensano/demographics/bracket"
 	"github.com/clambin/sciensano/pkg/tabulator"
 	"github.com/clambin/sciensano/simplejsonserver/reports"
-	"github.com/clambin/simplejson/v3"
+	"github.com/clambin/simplejson/v4"
+	"github.com/prometheus/client_golang/prometheus"
 	"net/http"
 	"time"
 )
@@ -22,13 +23,12 @@ type Server struct {
 	handlers     map[string]simplejson.Handler
 	apiCache     *cache.SciensanoCache
 	reportsCache *reports.Cache
-	//Reporter     *reporter.Client
 	Demographics demographics.Fetcher
 }
 
-func New(port int, f demographics.Fetcher) (s *Server, err error) {
+func New(port int, f demographics.Fetcher, r prometheus.Registerer) (s *Server, err error) {
 	s = &Server{
-		apiCache:     cache.NewSciensanoCache(""),
+		apiCache:     cache.NewSciensanoCache("", r),
 		reportsCache: reports.NewCache(15 * time.Minute),
 		Demographics: f,
 	}
@@ -61,13 +61,14 @@ func New(port int, f demographics.Fetcher) (s *Server, err error) {
 		*/
 	}
 
-	s.server, err = simplejson.New("sciensano", s.handlers,
+	s.server, err = simplejson.NewWithRegisterer("sciensano", s.handlers, r,
 		httpserver.WithPort{Port: port},
 		httpserver.WithHandlers{Handlers: []httpserver.Handler{{
 			Path:    "/health",
 			Handler: http.HandlerFunc(s.Health),
 			Methods: []string{http.MethodGet},
 		}}},
+		httpserver.WithMetrics{Metrics: httpserver.NewSLOMetrics("sciensano", r)},
 	)
 	return s, err
 }
@@ -93,32 +94,32 @@ func (s *Server) Health(w http.ResponseWriter, _ *http.Request) {
 	_ = encoder.Encode(response)
 }
 
-func (s *Server) cases(mode sciensano.SummaryColumn) (*tabulator.Tabulator, error) {
+func (s *Server) cases(ctx context.Context, mode sciensano.SummaryColumn) (*tabulator.Tabulator, error) {
 	return s.reportsCache.MaybeGenerate("cases-"+mode.String(), func() (*tabulator.Tabulator, error) {
-		cases := s.apiCache.Cases.Get()
+		cases := s.apiCache.Cases.Get(ctx)
 		return cases.Summarize(mode)
 	})
 }
 
-func (s *Server) hospitalisations(mode sciensano.SummaryColumn) (*tabulator.Tabulator, error) {
+func (s *Server) hospitalisations(ctx context.Context, mode sciensano.SummaryColumn) (*tabulator.Tabulator, error) {
 	return s.reportsCache.MaybeGenerate("hospitalisations-"+mode.String(), func() (*tabulator.Tabulator, error) {
-		hospitalisations := s.apiCache.Hospitalisations.Get()
+		hospitalisations := s.apiCache.Hospitalisations.Get(ctx)
 		if mode == sciensano.Total {
 			return hospitalisations.Categorize(), nil
 		}
 		return hospitalisations.Summarize(mode)
 	})
 }
-func (s *Server) mortalities(mode sciensano.SummaryColumn) (*tabulator.Tabulator, error) {
+func (s *Server) mortalities(ctx context.Context, mode sciensano.SummaryColumn) (*tabulator.Tabulator, error) {
 	return s.reportsCache.MaybeGenerate("mortalities-"+mode.String(), func() (*tabulator.Tabulator, error) {
-		mortalities := s.apiCache.Mortalities.Get()
+		mortalities := s.apiCache.Mortalities.Get(ctx)
 		return mortalities.Summarize(mode)
 	})
 }
 
-func (s *Server) testResults(mode sciensano.SummaryColumn) (*tabulator.Tabulator, error) {
+func (s *Server) testResults(ctx context.Context, mode sciensano.SummaryColumn) (*tabulator.Tabulator, error) {
 	return s.reportsCache.MaybeGenerate("testResults-"+mode.String(), func() (*tabulator.Tabulator, error) {
-		testResults := s.apiCache.TestResults.Get()
+		testResults := s.apiCache.TestResults.Get(ctx)
 		if mode == sciensano.Total {
 			return testResults.Categorize(), nil
 		}
@@ -126,9 +127,9 @@ func (s *Server) testResults(mode sciensano.SummaryColumn) (*tabulator.Tabulator
 	})
 }
 
-func (s *Server) vaccinations(mode sciensano.SummaryColumn) (*tabulator.Tabulator, error) {
+func (s *Server) vaccinations(ctx context.Context, mode sciensano.SummaryColumn) (*tabulator.Tabulator, error) {
 	return s.reportsCache.MaybeGenerate("vaccinations-"+mode.String(), func() (*tabulator.Tabulator, error) {
-		vaccinations := s.apiCache.Vaccinations.Get()
+		vaccinations := s.apiCache.Vaccinations.Get(ctx)
 		if mode == sciensano.Total {
 			return vaccinations.Categorize(), nil
 		}
@@ -136,9 +137,9 @@ func (s *Server) vaccinations(mode sciensano.SummaryColumn) (*tabulator.Tabulato
 	})
 }
 
-func (s *Server) vaccinationRate(mode sciensano.SummaryColumn) (*tabulator.Tabulator, error) {
+func (s *Server) vaccinationRate(ctx context.Context, mode sciensano.SummaryColumn) (*tabulator.Tabulator, error) {
 	return s.reportsCache.MaybeGenerate("vaccinations-rate-"+mode.String(), func() (*tabulator.Tabulator, error) {
-		vaccinations := s.apiCache.Vaccinations.Get()
+		vaccinations := s.apiCache.Vaccinations.Get(ctx)
 		if mode == sciensano.Total {
 			return nil, fmt.Errorf("rate not supported for Total mode")
 		}
@@ -166,9 +167,9 @@ func (s *Server) vaccinationRate(mode sciensano.SummaryColumn) (*tabulator.Tabul
 	})
 }
 
-func (s *Server) vaccinationFilteredRate(mode sciensano.SummaryColumn, doseType sciensano.DoseType) (*tabulator.Tabulator, error) {
+func (s *Server) vaccinationFilteredRate(ctx context.Context, mode sciensano.SummaryColumn, doseType sciensano.DoseType) (*tabulator.Tabulator, error) {
 	return s.reportsCache.MaybeGenerate("vaccinations-filtered-rate-"+mode.String()+"-"+doseType.String(), func() (*tabulator.Tabulator, error) {
-		vaccinations := s.apiCache.Vaccinations.Get()
+		vaccinations := s.apiCache.Vaccinations.Get(ctx)
 		if mode == sciensano.Total {
 			return vaccinations.Categorize(), nil
 		}
@@ -198,38 +199,32 @@ func (s *Server) vaccinationFilteredRate(mode sciensano.SummaryColumn, doseType 
 }
 
 func prorateFigures(d *tabulator.Tabulator, groups map[string]int) *tabulator.Tabulator {
+	// old: Benchmark_Vaccinations-16    	  276972	      3710 ns/op
+	// new: Benchmark_Vaccinations-16    	  283011	      3598 ns/op
 	timestamps := d.GetTimestamps()
-	proratedValues := make(map[string][]float64)
 	for _, column := range d.GetColumns() {
-		oldValues, _ := d.GetValues(column)
-		newValues := make([]float64, len(oldValues))
-
-		for index, oldValue := range oldValues {
+		values, _ := d.GetValues(column)
+		for index, oldValue := range values {
 			var newValue float64
 			figure, ok := groups[column]
 			if ok {
 				newValue = oldValue / float64(figure)
 			}
-			newValues[index] = newValue
-		}
-		proratedValues[column] = newValues
-	}
-
-	newData := tabulator.New(d.GetColumns()...)
-	for column, values := range proratedValues {
-		for index, value := range values {
-			newData.Add(timestamps[index], column, value)
+			d.Set(timestamps[index], column, newValue)
 		}
 	}
-	return newData
+	return d
 }
 
 func filterVaccinations(vaccinations sciensano.Vaccinations, doseType sciensano.DoseType) sciensano.Vaccinations {
-	filtered := make(sciensano.Vaccinations, 0, len(vaccinations))
+	filtered := make(sciensano.Vaccinations, len(vaccinations))
+	var index int
 	for _, vaccination := range vaccinations {
 		if vaccination.Dose == doseType || (doseType == sciensano.Full && vaccination.Dose == sciensano.SingleDose) {
-			filtered = append(filtered, vaccination)
+			filtered[index] = vaccination
+			index++
 		}
 	}
+	filtered = filtered[:index]
 	return filtered
 }

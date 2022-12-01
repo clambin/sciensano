@@ -5,6 +5,7 @@ import (
 	"github.com/clambin/httpclient"
 	"github.com/clambin/sciensano/cache/sciensano"
 	"github.com/clambin/sciensano/pkg/limiter"
+	"github.com/prometheus/client_golang/prometheus"
 	"net/http"
 	"sync"
 	"time"
@@ -18,7 +19,7 @@ type SciensanoCache struct {
 	Vaccinations     cacher[sciensano.Vaccinations]
 }
 
-func NewSciensanoCache(target string) *SciensanoCache {
+func NewSciensanoCache(target string, r prometheus.Registerer) *SciensanoCache {
 	if target == "" {
 		target = sciensano.BaseURL
 	}
@@ -26,8 +27,8 @@ func NewSciensanoCache(target string) *SciensanoCache {
 	client := limiter.NewLimiter(&httpclient.InstrumentedClient{
 		BaseClient: httpclient.BaseClient{HTTPClient: http.DefaultClient},
 		// TODO: pass prometheus Registerer to metrics. Don't use promauto
-		Options:     httpclient.Options{PrometheusMetrics: httpclient.NewMetrics("sciensano", "")},
-		Application: "sciendano",
+		Options:     httpclient.Options{PrometheusMetrics: httpclient.NewMetrics("sciensano", "", r)},
+		Application: "sciensano",
 	}, 3)
 
 	return &SciensanoCache{

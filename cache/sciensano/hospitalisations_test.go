@@ -92,8 +92,8 @@ func TestHospitalisations_Categorize(t *testing.T) {
 }
 
 func makeHospitalisations(count int) sciensano.Hospitalisations {
-	return makeResponse[sciensano.Hospitalisation](count, func(timestamp time.Time, region, province, ageGroup, _ string, _ sciensano.DoseType) sciensano.Hospitalisation {
-		return sciensano.Hospitalisation{
+	return makeResponse[sciensano.Hospitalisation](count, func(timestamp time.Time, region, province, ageGroup, _ string, _ sciensano.DoseType) *sciensano.Hospitalisation {
+		return &sciensano.Hospitalisation{
 			TimeStamp:   sciensano.TimeStamp{Time: timestamp},
 			Province:    province,
 			Region:      region,

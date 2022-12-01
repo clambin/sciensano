@@ -14,7 +14,7 @@ type TestResult struct {
 	Positive  int       `json:"TESTS_ALL_POS"`
 }
 
-type TestResults []TestResult
+type TestResults []*TestResult
 
 func (r TestResults) Summarize(summaryColumn SummaryColumn) (*tabulator.Tabulator, error) {
 	t := tabulator.New()
@@ -51,7 +51,6 @@ func (r TestResults) Categorize() *tabulator.Tabulator {
 	for _, testResult := range r {
 		t.Add(testResult.TimeStamp.Time, "positive", float64(testResult.Positive))
 		t.Add(testResult.TimeStamp.Time, "total", float64(testResult.Total))
-		//		t.Add(testResult.TimeStamp.Time, "rate", float64(testResult.Positive)/float64(testResult.Total))
 	}
 
 	positive, _ := t.GetValues("positive")

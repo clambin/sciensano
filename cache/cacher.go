@@ -17,8 +17,8 @@ type cacher[T any] struct {
 	lastModified time.Time
 }
 
-func (s *cacher[T]) Get() T {
-	s.refresh(context.Background())
+func (s *cacher[T]) Get(_ context.Context) T {
+	//s.refresh(ctx)
 	s.lock.RLock()
 	defer s.lock.RUnlock()
 	return s.entries
@@ -42,11 +42,11 @@ func (s *cacher[T]) AutoRefresh(ctx context.Context, interval time.Duration) {
 func jitter(interval time.Duration) time.Duration {
 	// randomize the interval (somewhat) so all caches don't try to update at the same time
 	const window = 0.02 // 1% on either side of the interval
-	seconds := interval.Seconds()
-	delta := seconds * window
+	seconds := interval.Microseconds()
+	delta := int64(float64(seconds) * window)
 	lowMark := seconds - delta/2
-	j := float64(rand.Int63n(int64(delta)))
-	return time.Duration(lowMark+j) * time.Second
+	j := rand.Int63n(delta)
+	return time.Duration(lowMark+j) * time.Microsecond
 }
 
 func (s *cacher[T]) refresh(ctx context.Context) {

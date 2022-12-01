@@ -3,6 +3,7 @@ package sciensano_test
 import (
 	"encoding/json"
 	"github.com/clambin/sciensano/cache/sciensano"
+	"github.com/mailru/easyjson"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"os"
@@ -47,6 +48,32 @@ func TestVaccinations_Unmarshal(t *testing.T) {
 	err = json.NewDecoder(f).Decode(&input)
 	require.NoError(t, err)
 	assert.NotZero(t, len(input))
+}
+
+func BenchmarkVaccinations_Unmarshal_Json(b *testing.B) {
+	content, err := os.ReadFile(filepath.Join("input", "vaccinations.json"))
+	require.NoError(b, err)
+
+	for i := 0; i < b.N; i++ {
+		var vaccinations sciensano.Vaccinations
+		err = json.Unmarshal(content, &vaccinations)
+		if err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+func BenchmarkVaccinations_Unmarshal_Easyjson(b *testing.B) {
+	content, err := os.ReadFile(filepath.Join("input", "vaccinations.json"))
+	require.NoError(b, err)
+
+	for i := 0; i < b.N; i++ {
+		var vaccinations sciensano.Vaccinations
+		err = easyjson.Unmarshal(content, &vaccinations)
+		if err != nil {
+			b.Fatal(err)
+		}
+	}
 }
 
 func TestVaccinations_Summarize(t *testing.T) {
@@ -122,8 +149,8 @@ func TestVaccinations_Categorize(t *testing.T) {
 }
 
 func makeVaccinations(count int) sciensano.Vaccinations {
-	return makeResponse[sciensano.Vaccination](count, func(timestamp time.Time, region, province, ageGroup, manufacturer string, dose sciensano.DoseType) sciensano.Vaccination {
-		return sciensano.Vaccination{
+	return makeResponse[sciensano.Vaccination](count, func(timestamp time.Time, region, province, ageGroup, manufacturer string, dose sciensano.DoseType) *sciensano.Vaccination {
+		return &sciensano.Vaccination{
 			TimeStamp:    sciensano.TimeStamp{Time: timestamp},
 			Manufacturer: manufacturer,
 			Region:       region,

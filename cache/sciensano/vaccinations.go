@@ -6,6 +6,7 @@ import (
 	"github.com/clambin/sciensano/pkg/tabulator"
 )
 
+//easyjson:json
 type Vaccination struct {
 	TimeStamp    TimeStamp `json:"DATE"`
 	Manufacturer string    `json:"BRAND"`
@@ -16,7 +17,8 @@ type Vaccination struct {
 	Count        int       `json:"COUNT"`
 }
 
-type Vaccinations []Vaccination
+//easyjson:json
+type Vaccinations []*Vaccination
 
 // DoseType is the type of vaccination: first, full, singledose, booster, etc.
 type DoseType int

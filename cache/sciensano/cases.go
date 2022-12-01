@@ -6,6 +6,7 @@ import (
 	"github.com/clambin/sciensano/pkg/tabulator"
 )
 
+//easyjson:json
 type Case struct {
 	TimeStamp TimeStamp `json:"DATE"`
 	Province  string    `json:"PROVINCE"`
@@ -14,7 +15,8 @@ type Case struct {
 	Cases     int       `json:"CASES"`
 }
 
-type Cases []Case
+//easyjson:json
+type Cases []*Case
 
 func (cs Cases) Summarize(summaryColumn SummaryColumn) (*tabulator.Tabulator, error) {
 	t := tabulator.New()

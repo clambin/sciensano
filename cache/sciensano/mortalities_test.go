@@ -81,8 +81,8 @@ func BenchmarkMortalities_Summarize_ByAgeGroup(b *testing.B) {
 }
 
 func makeMortalities(count int) sciensano.Mortalities {
-	return makeResponse[sciensano.Mortality](count, func(timestamp time.Time, region, province, ageGroup, manufacturer string, _ sciensano.DoseType) sciensano.Mortality {
-		return sciensano.Mortality{
+	return makeResponse[sciensano.Mortality](count, func(timestamp time.Time, region, province, ageGroup, manufacturer string, _ sciensano.DoseType) *sciensano.Mortality {
+		return &sciensano.Mortality{
 			TimeStamp: sciensano.TimeStamp{Time: timestamp},
 			Region:    region,
 			AgeGroup:  ageGroup,

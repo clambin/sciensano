@@ -1,7 +1,7 @@
 package tabulator
 
 import (
-	"github.com/clambin/simplejson/v3/data"
+	"github.com/clambin/simplejson/v4/pkg/data"
 	grafanaData "github.com/grafana/grafana-plugin-sdk-go/data"
 	"time"
 )
@@ -9,9 +9,12 @@ import (
 // Tabulator tabulates a set of entries in rows by timestamp and columns by label.  For performance reasons, data must
 // be added sequentially.
 type Tabulator struct {
-	timestamps *Indexer[time.Time]
-	columns    *Indexer[string]
+	timestamps Indexer[time.Time]
+	columns    Indexer[string]
 	data       [][]float64
+
+	lastTimestamp time.Time
+	lastRow       int
 }
 
 // New creates a new Tabulator
@@ -34,12 +37,39 @@ func (t *Tabulator) Add(timestamp time.Time, column string, value float64) bool 
 		return false
 	}
 
+	var row int
+	// perf tweak: if data is mostly added in order, with many records for the same timestamp, cache the lastRow
+	// to avoid map lookups in Indexer.Add
+	if timestamp.Equal(t.lastTimestamp) {
+		row = t.lastRow
+	} else {
+		var added bool
+		if row, added = t.timestamps.Add(timestamp); added {
+			t.data = append(t.data, make([]float64, t.columns.Count()))
+		}
+		t.lastTimestamp = timestamp
+		t.lastRow = row
+	}
+
+	t.data[row][col] += value
+	return true
+}
+
+// Set sets the value for a specified timestamp and column to the table.
+//
+// Returns false if the column does not exist. Use RegisterColumn to add it first.
+func (t *Tabulator) Set(timestamp time.Time, column string, value float64) bool {
+	col, found := t.columns.GetIndex(column)
+	if !found {
+		return false
+	}
+
 	row, added := t.timestamps.Add(timestamp)
 	if added {
 		t.data = append(t.data, make([]float64, t.columns.Count()))
 	}
 
-	t.data[row][col] += value
+	t.data[row][col] = value
 	return true
 }
 
@@ -56,7 +86,6 @@ func (t *Tabulator) ensureColumnExists(column string) {
 			entry = append(entry, 0)
 			t.data[key] = entry
 		}
-
 	}
 }
 
@@ -76,9 +105,10 @@ func (t *Tabulator) GetColumns() []string {
 }
 
 // GetValues returns the value for the specified column for each timestamp in the table. The values are sorted by timestamp.
-func (t *Tabulator) GetValues(columnName string) (values []float64, ok bool) {
-	var column int
-	if column, ok = t.columns.GetIndex(columnName); ok {
+func (t *Tabulator) GetValues(columnName string) ([]float64, bool) {
+	var values []float64
+	column, ok := t.columns.GetIndex(columnName)
+	if ok {
 		values = make([]float64, len(t.data))
 		for index, timestamp := range t.timestamps.List() {
 			row, _ := t.timestamps.GetIndex(timestamp)
@@ -90,15 +120,15 @@ func (t *Tabulator) GetValues(columnName string) (values []float64, ok bool) {
 
 // Accumulate increments the values in each column
 func (t *Tabulator) Accumulate() {
-	accumulated := make([]float64, len(t.GetColumns()))
+	columns := len(t.GetColumns())
+	accumulated := make([]float64, columns)
 
 	for _, timestamp := range t.GetTimestamps() {
 		row, _ := t.timestamps.GetIndex(timestamp)
-		for i, name := range t.columns.List() {
-			column, _ := t.columns.GetIndex(name)
-			t.data[row][column] += accumulated[i]
-			accumulated[i] = t.data[row][column]
+		for idx, value := range t.data[row] {
+			accumulated[idx] += value
 		}
+		copy(t.data[row], accumulated)
 	}
 }
 
@@ -124,17 +154,16 @@ func (t *Tabulator) Filter(from, to time.Time) {
 }
 
 func (t *Tabulator) Copy() *Tabulator {
-	t2 := New(t.GetColumns()...)
-
-	timestamps := t.GetTimestamps()
-	for _, column := range t.GetColumns() {
-		values, _ := t.GetValues(column)
-		for index, value := range values {
-			t2.Add(timestamps[index], column, value)
-		}
+	result := &Tabulator{
+		timestamps: t.timestamps.Copy(),
+		columns:    t.columns.Copy(),
+		data:       make([][]float64, len(t.data)),
 	}
-
-	return t2
+	for idx, row := range t.data {
+		result.data[idx] = make([]float64, len(row))
+		copy(result.data[idx], row)
+	}
+	return result
 }
 
 // MakeTable creates a simplejson Table from a Tabulator

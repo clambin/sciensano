@@ -5,7 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/clambin/httpclient"
+	"github.com/clambin/sciensano/cache/sciensano"
 	"github.com/go-http-utils/headers"
+	"github.com/mailru/easyjson"
+	"io"
 	"net/http"
 	"time"
 )
@@ -48,10 +51,27 @@ func (f *fetcher[T]) Fetch(ctx context.Context) (T, error) {
 	if resp.StatusCode != http.StatusOK {
 		return records, fmt.Errorf("%s: GET failed: %s", f.target, resp.Status)
 	}
-	err = json.NewDecoder(resp.Body).Decode(&records)
-	return records, err
+	return unmarshal[T](resp.Body)
 }
 
 func (f *fetcher[T]) GetTarget() string {
 	return f.target
+}
+
+func unmarshal[T any](r io.Reader) (v T, err error) {
+	switch interface{}(v).(type) {
+	case sciensano.Vaccinations:
+		var v2 sciensano.Vaccinations
+		if err = easyjson.UnmarshalFromReader(r, &v2); err == nil {
+			v = interface{}(v2).(T)
+		}
+	case sciensano.Cases:
+		var v2 sciensano.Cases
+		if err = easyjson.UnmarshalFromReader(r, &v2); err == nil {
+			v = interface{}(v2).(T)
+		}
+	default:
+		err = json.NewDecoder(r).Decode(&v)
+	}
+	return v, err
 }

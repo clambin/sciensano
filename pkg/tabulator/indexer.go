@@ -18,8 +18,8 @@ type Indexer[T ordered] struct {
 }
 
 // MakeIndexer returns a new indexer
-func MakeIndexer[T ordered]() *Indexer[T] {
-	return &Indexer[T]{
+func MakeIndexer[T ordered]() Indexer[T] {
+	return Indexer[T]{
 		values:  make([]T, 0),
 		indices: make(map[T]int),
 		inOrder: true,
@@ -77,4 +77,20 @@ func isLessThan[T ordered](a, b T) (isLess bool) {
 		isLess = x.(time.Time).Before(y.(time.Time))
 	}
 	return
+}
+
+func (idx *Indexer[T]) Copy() Indexer[T] {
+	values := make([]T, len(idx.values))
+	copy(values, idx.values)
+
+	indices := make(map[T]int)
+	for key, value := range idx.indices {
+		indices[key] = value
+	}
+
+	return Indexer[T]{
+		values:  values,
+		indices: indices,
+		inOrder: idx.inOrder,
+	}
 }

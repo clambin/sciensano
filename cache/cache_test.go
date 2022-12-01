@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/clambin/sciensano/cache/sciensano"
 	"github.com/go-http-utils/headers"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"io"
 	"net/http"
@@ -19,7 +20,8 @@ func TestNewSciensanoCache(t *testing.T) {
 	s := httptest.NewServer(http.HandlerFunc(handler))
 	defer s.Close()
 
-	c := NewSciensanoCache(s.URL)
+	r := prometheus.NewRegistry()
+	c := NewSciensanoCache(s.URL, r)
 	ctx, cancel := context.WithCancel(context.Background())
 	var wg sync.WaitGroup
 	wg.Add(1)
@@ -29,14 +31,14 @@ func TestNewSciensanoCache(t *testing.T) {
 	}()
 
 	assert.Eventually(t, func() bool {
-		return len(c.Vaccinations.Get()) > 0
+		return len(c.Vaccinations.Get(ctx)) > 0
 	}, time.Minute, 100*time.Millisecond)
 
-	assert.NotZero(t, len(c.Cases.Get()))
-	assert.NotZero(t, len(c.Hospitalisations.Get()))
-	assert.NotZero(t, len(c.Mortalities.Get()))
-	assert.NotZero(t, len(c.TestResults.Get()))
-	assert.NotZero(t, len(c.Vaccinations.Get()))
+	assert.NotZero(t, len(c.Cases.Get(ctx)))
+	assert.NotZero(t, len(c.Hospitalisations.Get(ctx)))
+	assert.NotZero(t, len(c.Mortalities.Get(ctx)))
+	assert.NotZero(t, len(c.TestResults.Get(ctx)))
+	assert.NotZero(t, len(c.Vaccinations.Get(ctx)))
 
 	cancel()
 	wg.Wait()

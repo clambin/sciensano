@@ -101,10 +101,7 @@ func (cache *Cache) Stats() (stats map[string]int) {
 		entries, ok := cache.Get(name)
 		var count int
 		if ok && entries != nil && entries.Data != nil {
-			if cols := entries.Data.GetColumns(); len(cols) > 0 {
-				values, _ := entries.Data.GetValues(cols[0])
-				count = len(values)
-			}
+			count = len(entries.Data.GetTimestamps())
 		}
 		stats[name] = count
 	}
