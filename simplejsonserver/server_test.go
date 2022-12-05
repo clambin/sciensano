@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"github.com/clambin/sciensano/cache/sciensano"
 	mockDemographics "github.com/clambin/sciensano/demographics/mocks"
-	"github.com/clambin/simplejson/v4"
+	"github.com/clambin/simplejson/v5"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"

@@ -11,7 +11,7 @@ import (
 	"github.com/clambin/sciensano/demographics"
 	"github.com/clambin/sciensano/demographics/bracket"
 	"github.com/clambin/sciensano/simplejsonserver/reports"
-	"github.com/clambin/simplejson/v4"
+	"github.com/clambin/simplejson/v5"
 	"github.com/prometheus/client_golang/prometheus"
 	"net/http"
 	"time"
@@ -54,21 +54,21 @@ func New(port int, f demographics.Fetcher, r prometheus.Registerer) (s *Server, 
 		"vacc-age-rate-full":        Handler2{Fetch: s.vaccinationFilteredRate, Mode: sciensano.ByAgeGroup, DoseType: sciensano.Full, Accumulate: true},
 		"vacc-region-rate-partial":  Handler2{Fetch: s.vaccinationFilteredRate, Mode: sciensano.ByRegion, DoseType: sciensano.Partial, Accumulate: true},
 		"vacc-region-rate-full":     Handler2{Fetch: s.vaccinationFilteredRate, Mode: sciensano.ByRegion, DoseType: sciensano.Full, Accumulate: true},
-
-		/*
-			"vacc-age-booster":          &vaccinations2.GroupedHandler{Reporter: r, Scope: vaccinations2.ByAge, Type: vaccinations.TypeBooster},
-			"vacc-region-booster":       &vaccinations2.GroupedHandler{Reporter: r, Scope: vaccinations2.ByRegion, Type: vaccinations.TypeBooster},
-		*/
 	}
 
-	s.server, err = simplejson.NewWithRegisterer("sciensano", s.handlers, r,
-		httpserver.WithPort{Port: port},
-		httpserver.WithHandlers{Handlers: []httpserver.Handler{{
+	simplejsonMetrics := simplejson.NewQueryMetrics("sciensano")
+	httpMetrics := httpserver.NewSLOMetrics("sciensano", nil)
+	r.MustRegister(simplejsonMetrics, httpMetrics)
+
+	s.server, err = simplejson.New(s.handlers,
+		simplejson.WithQueryMetrics{QueryMetrics: simplejsonMetrics},
+		simplejson.WithHTTPServerOption{Option: httpserver.WithPort{Port: port}},
+		simplejson.WithHTTPServerOption{Option: httpserver.WithHandlers{Handlers: []httpserver.Handler{{
 			Path:    "/health",
 			Handler: http.HandlerFunc(s.Health),
 			Methods: []string{http.MethodGet},
-		}}},
-		httpserver.WithMetrics{Metrics: httpserver.NewSLOMetrics("sciensano", r)},
+		}}}},
+		simplejson.WithHTTPServerOption{Option: httpserver.WithMetrics{Metrics: httpMetrics}},
 	)
 	return s, err
 }
