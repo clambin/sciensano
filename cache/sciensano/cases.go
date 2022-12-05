@@ -2,8 +2,8 @@ package sciensano
 
 import (
 	"fmt"
-	"github.com/clambin/sciensano/pkg/set"
-	"github.com/clambin/sciensano/pkg/tabulator"
+	"github.com/clambin/go-common/set"
+	"github.com/clambin/go-common/tabulator"
 )
 
 //easyjson:json
@@ -21,7 +21,7 @@ type Cases []*Case
 func (cs Cases) Summarize(summaryColumn SummaryColumn) (*tabulator.Tabulator, error) {
 	t := tabulator.New()
 
-	var columnNames set.Set
+	columnNames := set.Create([]string{})
 	for _, c := range cs {
 		var columnName string
 		switch summaryColumn {
@@ -39,8 +39,9 @@ func (cs Cases) Summarize(summaryColumn SummaryColumn) (*tabulator.Tabulator, er
 		if columnName == "" {
 			columnName = "(unknown)"
 		}
-		if columnNames.IsNew(columnName) {
+		if !columnNames.Has(columnName) {
 			t.RegisterColumn(columnName)
+			columnNames.Add(columnName)
 		}
 
 		t.Add(c.TimeStamp.Time, columnName, float64(c.Cases))

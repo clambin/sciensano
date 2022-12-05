@@ -2,8 +2,8 @@ package sciensano
 
 import (
 	"fmt"
-	"github.com/clambin/sciensano/pkg/set"
-	"github.com/clambin/sciensano/pkg/tabulator"
+	"github.com/clambin/go-common/set"
+	"github.com/clambin/go-common/tabulator"
 )
 
 type TestResult struct {
@@ -19,7 +19,7 @@ type TestResults []*TestResult
 func (r TestResults) Summarize(summaryColumn SummaryColumn) (*tabulator.Tabulator, error) {
 	t := tabulator.New()
 
-	var columnNames set.Set
+	columnNames := set.Create([]string{})
 	for _, testResult := range r {
 		var columnName string
 		switch summaryColumn {
@@ -35,8 +35,9 @@ func (r TestResults) Summarize(summaryColumn SummaryColumn) (*tabulator.Tabulato
 		if columnName == "" {
 			columnName = "(unknown)"
 		}
-		if columnNames.IsNew(columnName) {
+		if !columnNames.Has(columnName) {
 			t.RegisterColumn(columnName)
+			columnNames.Add(columnName)
 		}
 
 		t.Add(testResult.TimeStamp.Time, columnName, float64(testResult.Total))

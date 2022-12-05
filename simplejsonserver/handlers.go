@@ -3,8 +3,8 @@ package simplejsonserver
 import (
 	"context"
 	"fmt"
+	"github.com/clambin/go-common/tabulator"
 	"github.com/clambin/sciensano/cache/sciensano"
-	"github.com/clambin/sciensano/pkg/tabulator"
 	"github.com/clambin/simplejson/v4"
 )
 

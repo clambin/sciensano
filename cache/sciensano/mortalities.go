@@ -2,8 +2,8 @@ package sciensano
 
 import (
 	"fmt"
-	"github.com/clambin/sciensano/pkg/set"
-	"github.com/clambin/sciensano/pkg/tabulator"
+	"github.com/clambin/go-common/set"
+	"github.com/clambin/go-common/tabulator"
 )
 
 type Mortality struct {
@@ -18,7 +18,7 @@ type Mortalities []*Mortality
 func (m Mortalities) Summarize(summaryColumn SummaryColumn) (*tabulator.Tabulator, error) {
 	t := tabulator.New()
 
-	var columnNames set.Set
+	columnNames := set.Create([]string{})
 	for _, mortality := range m {
 		var columnName string
 		switch summaryColumn {
@@ -34,8 +34,9 @@ func (m Mortalities) Summarize(summaryColumn SummaryColumn) (*tabulator.Tabulato
 		if columnName == "" {
 			columnName = "(unknown)"
 		}
-		if columnNames.IsNew(columnName) {
+		if !columnNames.Has(columnName) {
 			t.RegisterColumn(columnName)
+			columnNames.Add(columnName)
 		}
 
 		t.Add(mortality.TimeStamp.Time, columnName, float64(mortality.Deaths))

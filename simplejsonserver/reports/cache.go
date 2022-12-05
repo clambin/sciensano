@@ -3,7 +3,7 @@ package reports
 import (
 	"errors"
 	"github.com/clambin/cache"
-	"github.com/clambin/sciensano/pkg/tabulator"
+	"github.com/clambin/go-common/tabulator"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	log "github.com/sirupsen/logrus"

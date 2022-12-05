@@ -3,7 +3,7 @@ package reports_test
 import (
 	"context"
 	"errors"
-	"github.com/clambin/sciensano/pkg/tabulator"
+	"github.com/clambin/go-common/tabulator"
 	"github.com/clambin/sciensano/simplejsonserver/reports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
