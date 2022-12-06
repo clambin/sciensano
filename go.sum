@@ -55,8 +55,8 @@ github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e/go.mod h1:nSuG5e5P
 github.com/chzyer/test v0.0.0-20180213035817-a1ea475d72b1/go.mod h1:Q3SI9o4m/ZMnBNeIyt5eFwwo7qiLfzFZmjNmxjkiQlU=
 github.com/clambin/cache v0.0.5 h1:VqfQIEsuUFlk6n1NLUm5uSS1OIBgO8XXNQQjKSBwiFY=
 github.com/clambin/cache v0.0.5/go.mod h1:+BKmGZ4iIz30+yxq9gOD9ZLCBNPzu8dLyejefdkQQes=
-github.com/clambin/go-common/set v0.1.1 h1:VXP3GUA8iVS3M+sH4Gsqb4x84n1rbwKMKPHChPHZ4rM=
-github.com/clambin/go-common/set v0.1.1/go.mod h1:GFjAZynNo4BNjlx2hzDMHIU4ays7QjpJUSHXB/3b1ZE=
+github.com/clambin/go-common/set v0.1.2 h1:Pr0FXPVJsH4dc/OelhjXYo0xVmOLIUurg3saMh8KTz8=
+github.com/clambin/go-common/set v0.1.2/go.mod h1:GFjAZynNo4BNjlx2hzDMHIU4ays7QjpJUSHXB/3b1ZE=
 github.com/clambin/go-common/tabulator v0.1.1 h1:Ce5tfGNdRSxAPw7rBXURszeh/mVTX7Mb11xFvEz7fXc=
 github.com/clambin/go-common/tabulator v0.1.1/go.mod h1:2hz38OAS/JNndcOxbkm9/k5tjwQjhGtqVqjhmjeVeN0=
 github.com/clambin/httpclient v0.2.0 h1:4zUc9lTXI+ZeaiBw24mxcyPCBvgP1Ng6TtbVlHEM4/0=
