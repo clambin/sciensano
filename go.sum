@@ -55,6 +55,8 @@ github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e/go.mod h1:nSuG5e5P
 github.com/chzyer/test v0.0.0-20180213035817-a1ea475d72b1/go.mod h1:Q3SI9o4m/ZMnBNeIyt5eFwwo7qiLfzFZmjNmxjkiQlU=
 github.com/clambin/cache v0.0.5 h1:VqfQIEsuUFlk6n1NLUm5uSS1OIBgO8XXNQQjKSBwiFY=
 github.com/clambin/cache v0.0.5/go.mod h1:+BKmGZ4iIz30+yxq9gOD9ZLCBNPzu8dLyejefdkQQes=
+github.com/clambin/go-common/cache v0.1.1 h1:aX6v3sYaaQy8WIwP7II1UTyH2z7/cRfl40/1poULgxo=
+github.com/clambin/go-common/cache v0.1.1/go.mod h1:7eT02BszXnBRDG0MIJ5penXQeEXRQRfmC0hNCmZqMCU=
 github.com/clambin/go-common/set v0.1.2 h1:Pr0FXPVJsH4dc/OelhjXYo0xVmOLIUurg3saMh8KTz8=
 github.com/clambin/go-common/set v0.1.2/go.mod h1:GFjAZynNo4BNjlx2hzDMHIU4ays7QjpJUSHXB/3b1ZE=
 github.com/clambin/go-common/tabulator v0.1.2 h1:0rsrwUmL60yj3c4Y8vP6UV5CEtM1DiQ5hZIWMU+EcrA=

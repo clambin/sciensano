@@ -2,7 +2,7 @@ package reports
 
 import (
 	"errors"
-	"github.com/clambin/cache"
+	"github.com/clambin/go-common/cache"
 	"github.com/clambin/go-common/tabulator"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
