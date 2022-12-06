@@ -5,7 +5,7 @@ go 1.18
 require (
 	github.com/clambin/cache v0.0.5
 	github.com/clambin/go-common/set v0.1.2
-	github.com/clambin/go-common/tabulator v0.1.1
+	github.com/clambin/go-common/tabulator v0.1.2
 	github.com/clambin/httpclient v0.2.0
 	github.com/clambin/httpserver v0.5.0
 	github.com/clambin/simplejson/v5 v5.0.0
