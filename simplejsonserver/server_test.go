@@ -6,7 +6,6 @@ import (
 	"github.com/clambin/sciensano/cache/sciensano"
 	mockDemographics "github.com/clambin/sciensano/demographics/mocks"
 	"github.com/clambin/simplejson/v5"
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -24,7 +23,7 @@ func TestNew(t *testing.T) {
 	demographicsClient.On("GetByRegion").Return(map[string]int{})
 	demographicsClient.On("GetByAgeBracket", mock.AnythingOfType("bracket.Bracket")).Return(0)
 
-	h, err := New(0, demographicsClient, prometheus.NewRegistry())
+	h, err := New(0, demographicsClient)
 	require.NoError(t, err)
 	h.apiCache.Cases.Fetcher = &fetcher[sciensano.Cases]{}
 	h.apiCache.Hospitalisations.Fetcher = &fetcher[sciensano.Hospitalisations]{}
@@ -90,7 +89,7 @@ func Benchmark_Vaccinations(b *testing.B) {
 	demographicsClient := &mockDemographics.Fetcher{}
 	demographicsClient.On("GetByAgeBracket", mock.AnythingOfType("bracket.Bracket")).Return(0)
 
-	h, err := New(0, demographicsClient, prometheus.NewRegistry())
+	h, err := New(0, demographicsClient)
 	require.NoError(b, err)
 	h.apiCache.Cases.Fetcher = &fetcher[sciensano.Cases]{}
 	h.apiCache.Hospitalisations.Fetcher = &fetcher[sciensano.Hospitalisations]{}

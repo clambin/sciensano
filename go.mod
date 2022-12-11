@@ -5,10 +5,10 @@ go 1.18
 require (
 	github.com/clambin/go-common/cache v0.1.1
 	github.com/clambin/go-common/httpclient v0.2.0
+	github.com/clambin/go-common/httpserver v0.2.0
 	github.com/clambin/go-common/set v0.1.2
 	github.com/clambin/go-common/tabulator v0.1.2
-	github.com/clambin/httpserver v0.5.0
-	github.com/clambin/simplejson/v5 v5.0.0
+	github.com/clambin/simplejson/v5 v5.1.0
 	github.com/go-http-utils/headers v0.0.0-20181008091004-fed159eddc2a
 	github.com/mailru/easyjson v0.7.7
 	github.com/prometheus/client_golang v1.14.0

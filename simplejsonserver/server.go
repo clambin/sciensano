@@ -4,8 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/clambin/go-common/httpserver"
 	"github.com/clambin/go-common/tabulator"
-	"github.com/clambin/httpserver"
 	"github.com/clambin/sciensano/cache"
 	"github.com/clambin/sciensano/cache/sciensano"
 	"github.com/clambin/sciensano/demographics"
@@ -28,7 +28,7 @@ type Server struct {
 
 var _ prometheus.Collector = &Server{}
 
-func New(port int, f demographics.Fetcher, r prometheus.Registerer) (s *Server, err error) {
+func New(port int, f demographics.Fetcher) (s *Server, err error) {
 	s = &Server{
 		apiCache:     cache.NewSciensanoCache(""),
 		reportsCache: reports.NewCache(15 * time.Minute),
@@ -58,28 +58,24 @@ func New(port int, f demographics.Fetcher, r prometheus.Registerer) (s *Server, 
 		"vacc-region-rate-full":     Handler2{Fetch: s.vaccinationFilteredRate, Mode: sciensano.ByRegion, DoseType: sciensano.Full, Accumulate: true},
 	}
 
-	simplejsonMetrics := simplejson.NewQueryMetrics("sciensano")
-	httpMetrics := httpserver.NewSLOMetrics("sciensano", nil)
-	r.MustRegister(simplejsonMetrics, httpMetrics)
-
 	s.server, err = simplejson.New(s.handlers,
-		simplejson.WithQueryMetrics{QueryMetrics: simplejsonMetrics},
+		simplejson.WithQueryMetrics{Name: "sciensano"},
 		simplejson.WithHTTPServerOption{Option: httpserver.WithPort{Port: port}},
 		simplejson.WithHTTPServerOption{Option: httpserver.WithHandlers{Handlers: []httpserver.Handler{{
 			Path:    "/health",
 			Handler: http.HandlerFunc(s.Health),
 			Methods: []string{http.MethodGet},
 		}}}},
-		simplejson.WithHTTPServerOption{Option: httpserver.WithMetrics{Metrics: httpMetrics}},
+		simplejson.WithHTTPServerOption{Option: httpserver.WithMetrics{Application: "sciensano", MetricsType: httpserver.Histogram}},
 	)
 	return s, err
 }
 
-// Run runs the API handler server
-func (s *Server) Run(ctx context.Context) (err error) {
+// Serve runs the API handler server
+func (s *Server) Serve(ctx context.Context) (err error) {
 	go s.Demographics.Run(ctx)
 	go s.apiCache.AutoRefresh(ctx, time.Hour)
-	return s.server.Run()
+	return s.server.Serve()
 }
 
 func (s *Server) Health(w http.ResponseWriter, _ *http.Request) {
@@ -233,8 +229,10 @@ func filterVaccinations(vaccinations sciensano.Vaccinations, doseType sciensano.
 
 func (s *Server) Describe(descs chan<- *prometheus.Desc) {
 	s.apiCache.Describe(descs)
+	s.server.Describe(descs)
 }
 
 func (s *Server) Collect(metrics chan<- prometheus.Metric) {
 	s.apiCache.Collect(metrics)
+	s.server.Collect(metrics)
 }
