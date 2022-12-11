@@ -61,8 +61,8 @@ github.com/clambin/go-common/set v0.1.2 h1:Pr0FXPVJsH4dc/OelhjXYo0xVmOLIUurg3saM
 github.com/clambin/go-common/set v0.1.2/go.mod h1:GFjAZynNo4BNjlx2hzDMHIU4ays7QjpJUSHXB/3b1ZE=
 github.com/clambin/go-common/tabulator v0.1.2 h1:0rsrwUmL60yj3c4Y8vP6UV5CEtM1DiQ5hZIWMU+EcrA=
 github.com/clambin/go-common/tabulator v0.1.2/go.mod h1:2hz38OAS/JNndcOxbkm9/k5tjwQjhGtqVqjhmjeVeN0=
-github.com/clambin/httpclient v0.2.0 h1:4zUc9lTXI+ZeaiBw24mxcyPCBvgP1Ng6TtbVlHEM4/0=
-github.com/clambin/httpclient v0.2.0/go.mod h1:CSzKiH7Wt+2ZcejyBxPG5nz3fdeE+6jGZvsy4tWbqlc=
+github.com/clambin/httpclient v0.3.0 h1:xYPku9nMlcl0a+Ydx0YcCKISJvWferjt1KOdYe6i7EY=
+github.com/clambin/httpclient v0.3.0/go.mod h1:CSzKiH7Wt+2ZcejyBxPG5nz3fdeE+6jGZvsy4tWbqlc=
 github.com/clambin/httpserver v0.5.0 h1:plVkkZiTbYnQESyeLP8NH+sYG54Z2kB+4zYGhL8+bCE=
 github.com/clambin/httpserver v0.5.0/go.mod h1:QfashUAIoGpaUtNMUIv4JBLk+4V3v/pEJc0dpc6KpZ8=
 github.com/clambin/simplejson/v5 v5.0.0 h1:yq3s0tEEw2cXIF5JXGlFuoeeFfhslGbK+VzZHNrDwao=
