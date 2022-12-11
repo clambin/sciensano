@@ -6,6 +6,7 @@ import (
 	"github.com/go-http-utils/headers"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -21,7 +22,8 @@ func TestNewSciensanoCache(t *testing.T) {
 	defer s.Close()
 
 	r := prometheus.NewRegistry()
-	c := NewSciensanoCache(s.URL, r)
+	c := NewSciensanoCache(s.URL)
+	r.MustRegister(c)
 	ctx, cancel := context.WithCancel(context.Background())
 	var wg sync.WaitGroup
 	wg.Add(1)
@@ -42,6 +44,10 @@ func TestNewSciensanoCache(t *testing.T) {
 
 	cancel()
 	wg.Wait()
+
+	metrics, err := r.Gather()
+	require.NoError(t, err)
+	assert.Len(t, metrics, 2)
 }
 
 func handler(w http.ResponseWriter, req *http.Request) {

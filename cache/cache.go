@@ -2,7 +2,7 @@ package cache
 
 import (
 	"context"
-	"github.com/clambin/httpclient"
+	"github.com/clambin/go-common/httpclient"
 	"github.com/clambin/sciensano/cache/sciensano"
 	"github.com/clambin/sciensano/pkg/limiter"
 	"github.com/prometheus/client_golang/prometheus"
@@ -17,19 +17,21 @@ type SciensanoCache struct {
 	Mortalities      cacher[sciensano.Mortalities]
 	TestResults      cacher[sciensano.TestResults]
 	Vaccinations     cacher[sciensano.Vaccinations]
+	transport        *httpclient.RoundTripper
 }
 
-func NewSciensanoCache(target string, r prometheus.Registerer) *SciensanoCache {
+var _ prometheus.Collector = &SciensanoCache{}
+
+func NewSciensanoCache(target string) *SciensanoCache {
 	if target == "" {
 		target = sciensano.BaseURL
 	}
 
-	client := limiter.NewLimiter(&httpclient.InstrumentedClient{
-		BaseClient: httpclient.BaseClient{HTTPClient: http.DefaultClient},
-		// TODO: pass prometheus Registerer to metrics. Don't use promauto
-		Options:     httpclient.Options{PrometheusMetrics: httpclient.NewMetrics("sciensano", "", r)},
+	transport := httpclient.NewRoundTripper(httpclient.WithRoundTripperMetrics{
+		Namespace:   "sciensano",
 		Application: "sciensano",
-	}, 3)
+	})
+	client := &http.Client{Transport: limiter.NewLimiter(transport, 3)}
 
 	return &SciensanoCache{
 		Cases: cacher[sciensano.Cases]{
@@ -62,6 +64,7 @@ func NewSciensanoCache(target string, r prometheus.Registerer) *SciensanoCache {
 				target: target + sciensano.Routes["vaccinations"],
 			},
 		},
+		transport: transport,
 	}
 }
 
@@ -74,4 +77,12 @@ func (c *SciensanoCache) AutoRefresh(ctx context.Context, interval time.Duration
 	go func() { defer wg.Done(); c.TestResults.AutoRefresh(ctx, interval) }()
 	go func() { defer wg.Done(); c.Vaccinations.AutoRefresh(ctx, interval) }()
 	wg.Wait()
+}
+
+func (c *SciensanoCache) Describe(descs chan<- *prometheus.Desc) {
+	c.transport.Describe(descs)
+}
+
+func (c *SciensanoCache) Collect(metrics chan<- prometheus.Metric) {
+	c.transport.Collect(metrics)
 }

@@ -65,6 +65,7 @@ func runSimpleJSONServer(port int, demographicsPath string) {
 	if err != nil {
 		log.WithError(err).Fatal("failed to start SimpleJSON server")
 	}
+	prometheus.DefaultRegisterer.MustRegister(s)
 
 	if err = s.Run(context.Background()); err != nil {
 		log.WithError(err).Fatal("failed to start SimpleJSON server")

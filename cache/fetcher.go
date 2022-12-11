@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/clambin/httpclient"
 	"github.com/clambin/sciensano/cache/sciensano"
 	"github.com/go-http-utils/headers"
 	"github.com/mailru/easyjson"
@@ -21,7 +20,7 @@ type Fetcher[T any] interface {
 }
 
 type fetcher[T any] struct {
-	client httpclient.Caller
+	client *http.Client
 	target string
 }
 

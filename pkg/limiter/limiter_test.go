@@ -3,7 +3,6 @@ package limiter_test
 import (
 	"bytes"
 	"context"
-	"github.com/clambin/httpclient"
 	"github.com/clambin/sciensano/pkg/limiter"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -20,7 +19,7 @@ func TestLimiter(t *testing.T) {
 	l := limiter.NewLimiter(c, maxParallel)
 
 	req, _ := http.NewRequest(http.MethodGet, "", nil)
-	_, err := l.Do(req)
+	_, err := l.RoundTrip(req)
 	require.NoError(t, err)
 
 	var wg sync.WaitGroup
@@ -29,7 +28,7 @@ func TestLimiter(t *testing.T) {
 		go func() {
 			defer wg.Done()
 			req2, _ := http.NewRequest(http.MethodGet, "", nil)
-			_, err2 := l.Do(req2)
+			_, err2 := l.RoundTrip(req2)
 			require.NoError(t, err2)
 		}()
 	}
@@ -45,13 +44,13 @@ func TestLimiter_Timeout(t *testing.T) {
 	for i := 0; i < 50; i++ {
 		go func() {
 			req, _ := http.NewRequest(http.MethodGet, "", nil)
-			_, _ = l.Do(req)
+			_, _ = l.RoundTrip(req)
 		}()
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Millisecond)
 	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, "", nil)
-	_, err := l.Do(req)
+	_, err := l.RoundTrip(req)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "context deadline exceeded")
 	cancel()
@@ -64,9 +63,7 @@ type Caller struct {
 	max     int
 }
 
-var _ httpclient.Caller = &Caller{}
-
-func (c *Caller) Do(req *http.Request) (*http.Response, error) {
+func (c *Caller) RoundTrip(req *http.Request) (*http.Response, error) {
 	if err := c.wait(req.Context()); err != nil {
 		return nil, err
 	}

@@ -26,9 +26,11 @@ type Server struct {
 	Demographics demographics.Fetcher
 }
 
+var _ prometheus.Collector = &Server{}
+
 func New(port int, f demographics.Fetcher, r prometheus.Registerer) (s *Server, err error) {
 	s = &Server{
-		apiCache:     cache.NewSciensanoCache("", r),
+		apiCache:     cache.NewSciensanoCache(""),
 		reportsCache: reports.NewCache(15 * time.Minute),
 		Demographics: f,
 	}
@@ -227,4 +229,12 @@ func filterVaccinations(vaccinations sciensano.Vaccinations, doseType sciensano.
 	}
 	filtered = filtered[:index]
 	return filtered
+}
+
+func (s *Server) Describe(descs chan<- *prometheus.Desc) {
+	s.apiCache.Describe(descs)
+}
+
+func (s *Server) Collect(metrics chan<- prometheus.Metric) {
+	s.apiCache.Collect(metrics)
 }

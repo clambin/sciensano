@@ -18,7 +18,6 @@ type cacher[T any] struct {
 }
 
 func (s *cacher[T]) Get(_ context.Context) T {
-	//s.refresh(ctx)
 	s.lock.RLock()
 	defer s.lock.RUnlock()
 	return s.entries

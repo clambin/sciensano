@@ -1,50 +1,46 @@
 package cache
 
 import (
-	"bytes"
 	"context"
-	"github.com/clambin/httpclient/mocks"
 	mockFetcher "github.com/clambin/sciensano/cache/mocks"
-	"github.com/go-http-utils/headers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"io"
-	"net/http"
 	"testing"
 	"time"
 )
 
-func TestCacher_Get(t *testing.T) {
-	type response []struct {
-		Name string
+/*
+	func TestCacher_Get(t *testing.T) {
+		type response []struct {
+			Name string
+		}
+
+		body := `[ { "name": "foo" } ]`
+		resp := &http.Response{
+			Status:        "OK",
+			StatusCode:    http.StatusOK,
+			Header:        map[string][]string{headers.LastModified: {time.Now().Format(time.RFC1123)}},
+			Body:          io.NopCloser(bytes.NewBufferString(body)),
+			ContentLength: int64(len(body)),
+		}
+
+		c := mocks.NewCaller(t)
+		c.On("Do", mock.AnythingOfType("*http.Request")).Return(resp, nil).Twice()
+
+		s := cacher[response]{
+			expiry:  time.Hour,
+			Fetcher: &fetcher[response]{client: c},
+		}
+
+		ctx := context.Background()
+		s.refresh(ctx)
+
+		result := s.Get(ctx)
+		require.Len(t, result, 1)
+		assert.Equal(t, "foo", result[0].Name)
 	}
-
-	body := `[ { "name": "foo" } ]`
-	resp := &http.Response{
-		Status:        "OK",
-		StatusCode:    http.StatusOK,
-		Header:        map[string][]string{headers.LastModified: {time.Now().Format(time.RFC1123)}},
-		Body:          io.NopCloser(bytes.NewBufferString(body)),
-		ContentLength: int64(len(body)),
-	}
-
-	c := mocks.NewCaller(t)
-	c.On("Do", mock.AnythingOfType("*http.Request")).Return(resp, nil).Twice()
-
-	s := cacher[response]{
-		expiry:  time.Hour,
-		Fetcher: &fetcher[response]{client: c},
-	}
-
-	ctx := context.Background()
-	s.refresh(ctx)
-
-	result := s.Get(ctx)
-	require.Len(t, result, 1)
-	assert.Equal(t, "foo", result[0].Name)
-}
-
+*/
 func TestCacher_Refresh(t *testing.T) {
 	type response struct {
 		Name string
