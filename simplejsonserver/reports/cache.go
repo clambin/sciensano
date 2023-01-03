@@ -6,7 +6,7 @@ import (
 	"github.com/clambin/go-common/tabulator"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
-	log "github.com/sirupsen/logrus"
+	"golang.org/x/exp/slog"
 	"sync"
 	"time"
 )
@@ -73,14 +73,14 @@ func (cache *Cache) MaybeGenerate(name string, generate func() (*tabulator.Tabul
 	entry := cache.Load(name)
 	entry.Once.Do(func() {
 		start := time.Now()
-		log.WithField("report", name).Debug("generating report")
+		slog.Debug("generating report", "report", name)
 		entry.Data, err = generate()
 		if err != nil {
-			log.WithError(err).Warningf("failed to generate report '%s'", name)
+			slog.Error("failed to generate report", err, "report", name)
 			entry = nil
 		}
 		cache.Save(name, entry)
-		log.WithFields(log.Fields{"report": name, "duration": time.Since(start)}).Debug("generated report")
+		slog.Debug("generated report", "report", name, "duration", time.Since(start))
 	})
 	if err == nil {
 		report = entry.Data

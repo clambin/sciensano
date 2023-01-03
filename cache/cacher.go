@@ -2,7 +2,7 @@ package cache
 
 import (
 	"context"
-	log "github.com/sirupsen/logrus"
+	"golang.org/x/exp/slog"
 	"math/rand"
 	"sync"
 	"time"
@@ -71,6 +71,6 @@ func (s *cacher[T]) refresh(ctx context.Context) {
 
 	if err != nil {
 		s.lastChecked = time.Time{}
-		log.WithError(err).WithField("target", s.GetTarget()).Error("failed to update cache")
+		slog.Error("failed to update cache", err, "target", s.GetTarget())
 	}
 }

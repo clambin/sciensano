@@ -1,7 +1,7 @@
 package demographics
 
 import (
-	log "github.com/sirupsen/logrus"
+	"golang.org/x/exp/slog"
 	"os"
 	"time"
 )
@@ -31,7 +31,8 @@ func (s *Server) isUpdated() (mtime time.Time, updated bool, err error) {
 const ostbelgienPopulation = 78000
 
 func (s *Server) process() error {
-	log.Info("loading demographics")
+	slog.Info("loading demographics")
+	start := time.Now()
 	byRegion, byAge, err := groupPopulation(s.Path)
 	if err != nil {
 		return err
@@ -52,6 +53,6 @@ func (s *Server) process() error {
 	s.byRegion = byRegion
 	s.byAge = byAge
 
-	log.Info("loaded demographics")
+	slog.Info("loaded demographics", "duration", time.Since(start))
 	return nil
 }

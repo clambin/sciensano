@@ -3,7 +3,7 @@ package demographics
 import (
 	"context"
 	"github.com/clambin/sciensano/demographics/bracket"
-	log "github.com/sirupsen/logrus"
+	"golang.org/x/exp/slog"
 	"math"
 	"sync"
 	"time"
@@ -35,11 +35,11 @@ var _ Fetcher = &Server{}
 
 // Run imports the latest demographics data on a regular basis
 func (s *Server) Run(ctx context.Context) {
-	log.Debug("first load of demographics file")
+	slog.Debug("first load of demographics file")
 	if err := s.update(); err != nil {
-		log.WithError(err).Fatal("failed to read demographics file")
+		slog.Error("failed to read demographics file", err)
 	}
-	log.Debug("first load of demographics file done")
+	slog.Debug("first load of demographics file done")
 
 	ticker := time.NewTicker(s.Interval)
 
@@ -49,7 +49,7 @@ func (s *Server) Run(ctx context.Context) {
 			running = false
 		case <-ticker.C:
 			if err := s.update(); err != nil {
-				log.WithError(err).Error("failed to read demographics file")
+				slog.Error("failed to read demographics file", err)
 			}
 		}
 	}

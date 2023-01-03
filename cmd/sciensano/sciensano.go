@@ -9,7 +9,7 @@ import (
 	"github.com/clambin/sciensano/version"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	log "github.com/sirupsen/logrus"
+	"golang.org/x/exp/slog"
 	"gopkg.in/alecthomas/kingpin.v2"
 	"net/http"
 	_ "net/http/pprof"
@@ -26,7 +26,6 @@ func main() {
 		demographicsPath string
 	)
 
-	log.WithField("version", version.BuildVersion).Info("Reporter API starting")
 	a := kingpin.New(filepath.Base(os.Args[0]), "reporter")
 	a.Version(version.BuildVersion)
 	a.HelpFlag.Short('h')
@@ -41,9 +40,14 @@ func main() {
 		os.Exit(1)
 	}
 
+	var ops slog.HandlerOptions
 	if debug {
-		log.SetLevel(log.DebugLevel)
+		ops.Level = slog.LevelDebug
+		ops.AddSource = true
 	}
+	slog.SetDefault(slog.New(ops.NewTextHandler(os.Stdout)))
+
+	slog.Info("Reporter API starting", "version", version.BuildVersion)
 
 	go runPrometheusServer(prometheusPort)
 
@@ -53,7 +57,7 @@ func main() {
 func runPrometheusServer(port int) {
 	http.Handle("/metrics", promhttp.Handler())
 	if err := http.ListenAndServe(fmt.Sprintf(":%d", port), nil); !errors.Is(err, http.ErrServerClosed) {
-		log.WithError(err).Fatal("failed to start Prometheus listener")
+		slog.Error("failed to start Prometheus listener", err)
 	}
 }
 
@@ -63,11 +67,13 @@ func runSimpleJSONServer(port int, demographicsPath string) {
 		Interval: 24 * time.Hour,
 	})
 	if err != nil {
-		log.WithError(err).Fatal("failed to start SimpleJSON server")
+		slog.Error("failed to start SimpleJSON server", err)
+		panic(err)
 	}
 	prometheus.DefaultRegisterer.MustRegister(s)
 
 	if err = s.Serve(context.Background()); !errors.Is(err, http.ErrServerClosed) {
-		log.WithError(err).Fatal("failed to start SimpleJSON server")
+		slog.Error("failed to start SimpleJSON server", err)
+		panic(err)
 	}
 }
