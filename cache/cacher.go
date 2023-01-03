@@ -3,7 +3,7 @@ package cache
 import (
 	"context"
 	log "github.com/sirupsen/logrus"
-	"golang.org/x/exp/rand"
+	"math/rand"
 	"sync"
 	"time"
 )
