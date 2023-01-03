@@ -12,8 +12,8 @@ github.com/clambin/go-common/cache v0.1.1 h1:aX6v3sYaaQy8WIwP7II1UTyH2z7/cRfl40/
 github.com/clambin/go-common/cache v0.1.1/go.mod h1:7eT02BszXnBRDG0MIJ5penXQeEXRQRfmC0hNCmZqMCU=
 github.com/clambin/go-common/httpclient v0.3.2 h1:EKa0cSlsZ4dilNYFn+tRia2ObLdNW9QYtintjI9t+v8=
 github.com/clambin/go-common/httpclient v0.3.2/go.mod h1:w0RUxYpmTu+TiWx4F+pfeYhOcKaHxI/Q9OrAlIaz3Lk=
-github.com/clambin/go-common/httpserver v0.3.0 h1:UtlvBrlw/gWkTOhkZhbXz+b0FIFLsQp44xtV5R8bPAU=
-github.com/clambin/go-common/httpserver v0.3.0/go.mod h1:DQrnJehMlHai3Y/l9mF53evzCRfiXVc2O8+WqBLLhHQ=
+github.com/clambin/go-common/httpserver v0.4.0 h1:t9wH0W9P/mMHacWSdDqRdOrxhNRV58o5pLK5fF8630s=
+github.com/clambin/go-common/httpserver v0.4.0/go.mod h1:DQrnJehMlHai3Y/l9mF53evzCRfiXVc2O8+WqBLLhHQ=
 github.com/clambin/go-common/set v0.1.2 h1:Pr0FXPVJsH4dc/OelhjXYo0xVmOLIUurg3saMh8KTz8=
 github.com/clambin/go-common/set v0.1.2/go.mod h1:GFjAZynNo4BNjlx2hzDMHIU4ays7QjpJUSHXB/3b1ZE=
 github.com/clambin/go-common/tabulator v0.1.2 h1:0rsrwUmL60yj3c4Y8vP6UV5CEtM1DiQ5hZIWMU+EcrA=
