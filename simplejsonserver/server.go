@@ -4,14 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/clambin/go-common/httpserver"
+	"github.com/clambin/go-common/httpserver/middleware"
 	"github.com/clambin/go-common/tabulator"
 	"github.com/clambin/sciensano/cache"
 	"github.com/clambin/sciensano/cache/sciensano"
 	"github.com/clambin/sciensano/demographics"
 	"github.com/clambin/sciensano/demographics/bracket"
 	"github.com/clambin/sciensano/simplejsonserver/reports"
-	"github.com/clambin/simplejson/v5"
+	"github.com/clambin/simplejson/v6"
 	"github.com/prometheus/client_golang/prometheus"
 	"net/http"
 	"time"
@@ -28,7 +28,7 @@ type Server struct {
 
 var _ prometheus.Collector = &Server{}
 
-func New(port int, f demographics.Fetcher) (s *Server, err error) {
+func New(f demographics.Fetcher) (s *Server, err error) {
 	s = &Server{
 		apiCache:     cache.NewSciensanoCache(""),
 		reportsCache: reports.NewCache(15 * time.Minute),
@@ -58,24 +58,21 @@ func New(port int, f demographics.Fetcher) (s *Server, err error) {
 		"vacc-region-rate-full":     Handler2{Fetch: s.vaccinationFilteredRate, Mode: sciensano.ByRegion, DoseType: sciensano.Full, Accumulate: true},
 	}
 
-	s.server, err = simplejson.New(s.handlers,
+	r := simplejson.New(s.handlers,
 		simplejson.WithQueryMetrics{Name: "sciensano"},
-		simplejson.WithHTTPServerOption{Option: httpserver.WithPort{Port: port}},
-		simplejson.WithHTTPServerOption{Option: httpserver.WithHandlers{Handlers: []httpserver.Handler{{
-			Path:    "/health",
-			Handler: http.HandlerFunc(s.Health),
-			Methods: []string{http.MethodGet},
-		}}}},
-		simplejson.WithHTTPServerOption{Option: httpserver.WithMetrics{Application: "sciensano", MetricsType: httpserver.Histogram}},
+		simplejson.WithHTTPMetrics{Option: middleware.PrometheusMetricsOptions{Application: "sciensano", MetricsType: middleware.Histogram}},
 	)
+	r.Get("/health", s.Health)
+	s.server = r
+
 	return s, err
 }
 
 // Serve runs the API handler server
-func (s *Server) Serve(ctx context.Context) (err error) {
+func (s *Server) Serve(ctx context.Context, port int) (err error) {
 	go s.Demographics.Run(ctx)
 	go s.apiCache.AutoRefresh(ctx, time.Hour)
-	return s.server.Serve()
+	return http.ListenAndServe(fmt.Sprintf(":%d", port), s.server)
 }
 
 func (s *Server) Health(w http.ResponseWriter, _ *http.Request) {

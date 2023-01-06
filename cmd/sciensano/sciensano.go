@@ -62,7 +62,7 @@ func runPrometheusServer(port int) {
 }
 
 func runSimpleJSONServer(port int, demographicsPath string) {
-	s, err := simplejsonserver.New(port, &demographics.Server{
+	s, err := simplejsonserver.New(&demographics.Server{
 		Path:     demographicsPath,
 		Interval: 24 * time.Hour,
 	})
@@ -72,7 +72,7 @@ func runSimpleJSONServer(port int, demographicsPath string) {
 	}
 	prometheus.DefaultRegisterer.MustRegister(s)
 
-	if err = s.Serve(context.Background()); !errors.Is(err, http.ErrServerClosed) {
+	if err = s.Serve(context.Background(), port); !errors.Is(err, http.ErrServerClosed) {
 		slog.Error("failed to start SimpleJSON server", err)
 		panic(err)
 	}

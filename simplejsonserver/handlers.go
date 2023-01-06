@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/clambin/go-common/tabulator"
 	"github.com/clambin/sciensano/cache/sciensano"
-	"github.com/clambin/simplejson/v5"
+	"github.com/clambin/simplejson/v6"
 )
 
 type Handler struct {
