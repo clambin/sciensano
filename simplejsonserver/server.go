@@ -60,7 +60,12 @@ func New(f demographics.Fetcher) (s *Server, err error) {
 
 	r := simplejson.New(s.handlers,
 		simplejson.WithQueryMetrics{Name: "sciensano"},
-		simplejson.WithHTTPMetrics{Option: middleware.PrometheusMetricsOptions{Application: "sciensano", MetricsType: middleware.Histogram}},
+		simplejson.WithHTTPMetrics{Option: middleware.PrometheusMetricsOptions{
+			Namespace:   "sciensano",
+			Subsystem:   "simplejson",
+			Application: "sciensano",
+			MetricsType: middleware.Histogram,
+		}},
 	)
 	r.Get("/health", s.Health)
 	s.server = r
