@@ -8,13 +8,13 @@ require (
 	github.com/clambin/go-common/httpserver v0.4.1
 	github.com/clambin/go-common/set v0.1.2
 	github.com/clambin/go-common/tabulator v0.1.2
-	github.com/clambin/simplejson/v6 v6.0.0
+	github.com/clambin/simplejson/v6 v6.0.1
 	github.com/go-http-utils/headers v0.0.0-20181008091004-fed159eddc2a
 	github.com/mailru/easyjson v0.7.7
 	github.com/prometheus/client_golang v1.14.0
 	github.com/rovaughn/fastcsv v0.0.0-20170331030356-1090019547fb
 	github.com/stretchr/testify v1.8.1
-	golang.org/x/exp v0.0.0-20230105202349-8879d0199aa3
+	golang.org/x/exp v0.0.0-20230108222341-4b8118a2686a
 	golang.org/x/sync v0.1.0
 	gopkg.in/alecthomas/kingpin.v2 v2.2.6
 )
