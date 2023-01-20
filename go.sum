@@ -8,16 +8,14 @@ github.com/cespare/xxhash/v2 v2.2.0 h1:DC2CZ1Ep5Y4k3ZQ899DldepgrayRUGE6BBZ/cd9Cj
 github.com/cespare/xxhash/v2 v2.2.0/go.mod h1:VGX0DQ3Q6kWi7AoAeZDth3/j3BFtOZR5XLFGgcrjCOs=
 github.com/clambin/go-common/cache v0.1.1 h1:aX6v3sYaaQy8WIwP7II1UTyH2z7/cRfl40/1poULgxo=
 github.com/clambin/go-common/cache v0.1.1/go.mod h1:7eT02BszXnBRDG0MIJ5penXQeEXRQRfmC0hNCmZqMCU=
-github.com/clambin/go-common/httpclient v0.3.2 h1:EKa0cSlsZ4dilNYFn+tRia2ObLdNW9QYtintjI9t+v8=
-github.com/clambin/go-common/httpclient v0.3.2/go.mod h1:w0RUxYpmTu+TiWx4F+pfeYhOcKaHxI/Q9OrAlIaz3Lk=
+github.com/clambin/go-common/httpclient v0.3.3 h1:M3L3HsPH8Bb5m8NOIvIlhZ75Cg9Hx3DjHuXIxb6Z6PY=
+github.com/clambin/go-common/httpclient v0.3.3/go.mod h1:w0RUxYpmTu+TiWx4F+pfeYhOcKaHxI/Q9OrAlIaz3Lk=
 github.com/clambin/go-common/httpserver v0.4.1 h1:TIHswNcj5hVbrAIrSPVvkTWqTU4M2770qZctvR6jQGE=
 github.com/clambin/go-common/httpserver v0.4.1/go.mod h1:qCWVjj3pASnqGTmLJhLrMKCxw7AcVANug3a0kC4qW6c=
 github.com/clambin/go-common/set v0.1.2 h1:Pr0FXPVJsH4dc/OelhjXYo0xVmOLIUurg3saMh8KTz8=
 github.com/clambin/go-common/set v0.1.2/go.mod h1:GFjAZynNo4BNjlx2hzDMHIU4ays7QjpJUSHXB/3b1ZE=
 github.com/clambin/go-common/tabulator v0.1.2 h1:0rsrwUmL60yj3c4Y8vP6UV5CEtM1DiQ5hZIWMU+EcrA=
 github.com/clambin/go-common/tabulator v0.1.2/go.mod h1:2hz38OAS/JNndcOxbkm9/k5tjwQjhGtqVqjhmjeVeN0=
-github.com/clambin/simplejson/v6 v6.0.0 h1:M4AB9cZ8tbfZljI+FK51xFyBLxCMr+yle3CBxdEWRO4=
-github.com/clambin/simplejson/v6 v6.0.0/go.mod h1:42Znz3kBiNLRIXjhkjPhJMqzfNHTTEqQa4FF9dBtop8=
 github.com/clambin/simplejson/v6 v6.0.1 h1:6fEnfjohZucA0+HPsz4+azYA50Y7DIi2LHm1kqgO6M0=
 github.com/clambin/simplejson/v6 v6.0.1/go.mod h1:42Znz3kBiNLRIXjhkjPhJMqzfNHTTEqQa4FF9dBtop8=
 github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ33E=
@@ -69,8 +67,6 @@ github.com/stretchr/testify v1.7.1/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/
 github.com/stretchr/testify v1.8.0/go.mod h1:yNjHg4UonilssWZ8iaSj1OCr/vHnekPRkoO+kdMU+MU=
 github.com/stretchr/testify v1.8.1 h1:w7B6lhMri9wdJUVmEZPGGhZzrYTPvgJArz7wNPgYKsk=
 github.com/stretchr/testify v1.8.1/go.mod h1:w2LPCIKwWwSfY2zedu0+kehJoqGctiVI29o6fzry7u4=
-golang.org/x/exp v0.0.0-20230105202349-8879d0199aa3 h1:fJwx88sMf5RXwDwziL0/Mn9Wqs+efMSo/RYcL+37W9c=
-golang.org/x/exp v0.0.0-20230105202349-8879d0199aa3/go.mod h1:CxIveKay+FTh1D0yPZemJVgC/95VzuuOLq5Qi4xnoYc=
 golang.org/x/exp v0.0.0-20230108222341-4b8118a2686a h1:tlXy25amD5A7gOfbXdqCGN5k8ESEed/Ee1E5RcrYnqU=
 golang.org/x/exp v0.0.0-20230108222341-4b8118a2686a/go.mod h1:CxIveKay+FTh1D0yPZemJVgC/95VzuuOLq5Qi4xnoYc=
 golang.org/x/sync v0.0.0-20181221193216-37e7f081c4d4/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=
