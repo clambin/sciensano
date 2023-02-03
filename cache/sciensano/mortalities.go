@@ -18,7 +18,7 @@ type Mortalities []*Mortality
 func (m Mortalities) Summarize(summaryColumn SummaryColumn) (*tabulator.Tabulator, error) {
 	t := tabulator.New()
 
-	columnNames := set.Create([]string{})
+	columnNames := set.Create[string]()
 	for _, mortality := range m {
 		var columnName string
 		switch summaryColumn {
@@ -34,7 +34,7 @@ func (m Mortalities) Summarize(summaryColumn SummaryColumn) (*tabulator.Tabulato
 		if columnName == "" {
 			columnName = "(unknown)"
 		}
-		if !columnNames.Has(columnName) {
+		if !columnNames.Contains(columnName) {
 			t.RegisterColumn(columnName)
 			columnNames.Add(columnName)
 		}

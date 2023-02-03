@@ -92,7 +92,7 @@ func (d DoseType) MarshalJSON() (body []byte, err error) {
 func (v Vaccinations) Summarize(summaryColumn SummaryColumn) (*tabulator.Tabulator, error) {
 	t := tabulator.New()
 
-	columnNames := set.Create([]string{})
+	columnNames := set.Create[string]()
 	for _, vaccination := range v {
 		var columnName string
 		switch summaryColumn {
@@ -110,7 +110,7 @@ func (v Vaccinations) Summarize(summaryColumn SummaryColumn) (*tabulator.Tabulat
 		if columnName == "" {
 			columnName = "(unknown)"
 		}
-		if !columnNames.Has(columnName) {
+		if !columnNames.Contains(columnName) {
 			t.RegisterColumn(columnName)
 			columnNames.Add(columnName)
 		}
