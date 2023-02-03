@@ -199,8 +199,6 @@ func (s *Server) vaccinationFilteredRate(ctx context.Context, mode sciensano.Sum
 }
 
 func prorateFigures(d *tabulator.Tabulator, groups map[string]int) *tabulator.Tabulator {
-	// old: Benchmark_Vaccinations-16    	  276972	      3710 ns/op
-	// new: Benchmark_Vaccinations-16    	  283011	      3598 ns/op
 	timestamps := d.GetTimestamps()
 	for _, column := range d.GetColumns() {
 		values, _ := d.GetValues(column)
@@ -217,15 +215,12 @@ func prorateFigures(d *tabulator.Tabulator, groups map[string]int) *tabulator.Ta
 }
 
 func filterVaccinations(vaccinations sciensano.Vaccinations, doseType sciensano.DoseType) sciensano.Vaccinations {
-	filtered := make(sciensano.Vaccinations, len(vaccinations))
-	var index int
+	filtered := make(sciensano.Vaccinations, 0, len(vaccinations))
 	for _, vaccination := range vaccinations {
 		if vaccination.Dose == doseType || (doseType == sciensano.Full && vaccination.Dose == sciensano.SingleDose) {
-			filtered[index] = vaccination
-			index++
+			filtered = append(filtered, vaccination)
 		}
 	}
-	filtered = filtered[:index]
 	return filtered
 }
 

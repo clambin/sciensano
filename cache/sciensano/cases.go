@@ -21,7 +21,7 @@ type Cases []*Case
 func (cs Cases) Summarize(summaryColumn SummaryColumn) (*tabulator.Tabulator, error) {
 	t := tabulator.New()
 
-	columnNames := set.Create([]string{})
+	columnNames := set.Create[string]()
 	for _, c := range cs {
 		var columnName string
 		switch summaryColumn {
@@ -39,7 +39,7 @@ func (cs Cases) Summarize(summaryColumn SummaryColumn) (*tabulator.Tabulator, er
 		if columnName == "" {
 			columnName = "(unknown)"
 		}
-		if !columnNames.Has(columnName) {
+		if !columnNames.Contains(columnName) {
 			t.RegisterColumn(columnName)
 			columnNames.Add(columnName)
 		}

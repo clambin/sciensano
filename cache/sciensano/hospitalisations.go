@@ -21,7 +21,7 @@ type Hospitalisations []*Hospitalisation
 func (h Hospitalisations) Summarize(summaryColumn SummaryColumn) (*tabulator.Tabulator, error) {
 	t := tabulator.New()
 
-	columnNames := set.Create([]string{})
+	columnNames := set.Create[string]()
 	for _, hospitalisation := range h {
 		var columnName string
 		switch summaryColumn {
@@ -37,7 +37,7 @@ func (h Hospitalisations) Summarize(summaryColumn SummaryColumn) (*tabulator.Tab
 		if columnName == "" {
 			columnName = "(unknown)"
 		}
-		if !columnNames.Has(columnName) {
+		if !columnNames.Contains(columnName) {
 			t.RegisterColumn(columnName)
 			columnNames.Add(columnName)
 		}

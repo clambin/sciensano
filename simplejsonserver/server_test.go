@@ -44,14 +44,14 @@ func TestNew(t *testing.T) {
 	for target, handler := range h.server.Handlers {
 		t.Run(target, func(t *testing.T) {
 			count++
-			go func(handler simplejson.Handler, target string, counter int) {
-				//t.Logf("%2d: %s started", count, target)
-				resp, err := handler.Endpoints().Query(ctx, req)
-				assert.NotZero(t, len(resp.(simplejson.TableResponse).Columns[0].Data.(simplejson.TimeColumn)))
-				//t.Logf("%2d: %s done. err: %v", count, target, err)
-				assert.NoError(t, err, target, target)
-				wg.Done()
-			}(handler, target, count)
+			//go func(handler simplejson.Handler, target string, counter int) {
+			//t.Logf("%2d: %s started", count, target)
+			resp, err := handler.Endpoints().Query(ctx, req)
+			assert.NotZero(t, len(resp.(simplejson.TableResponse).Columns[0].Data.(simplejson.TimeColumn)))
+			//t.Logf("%2d: %s done. err: %v", count, target, err)
+			assert.NoError(t, err, target, target)
+			wg.Done()
+			//}(handler, target, count)
 		})
 	}
 	wg.Wait()
@@ -63,17 +63,17 @@ func TestNew(t *testing.T) {
 	assert.Contains(t, b.Body.String(), `"ReporterCache": `)
 }
 
-func Benchmark_Vaccinations(b *testing.B) {
-	demographicsClient := &mockDemographics.Fetcher{}
+func BenchmarkVaccinations(b *testing.B) {
+	demographicsClient := mockDemographics.Fetcher{}
 	demographicsClient.On("GetByAgeBracket", mock.AnythingOfType("bracket.Bracket")).Return(0)
 
-	h, err := New(demographicsClient)
+	h, err := New(&demographicsClient)
 	require.NoError(b, err)
-	h.apiCache.Cases.Fetcher = &fetcher[sciensano.Cases]{}
-	h.apiCache.Hospitalisations.Fetcher = &fetcher[sciensano.Hospitalisations]{}
-	h.apiCache.Mortalities.Fetcher = &fetcher[sciensano.Mortalities]{}
-	h.apiCache.TestResults.Fetcher = &fetcher[sciensano.TestResults]{}
-	h.apiCache.Vaccinations.Fetcher = &fetcher[sciensano.Vaccinations]{}
+	h.apiCache.Cases.Fetcher = fetcher[sciensano.Cases]{}
+	h.apiCache.Hospitalisations.Fetcher = fetcher[sciensano.Hospitalisations]{}
+	h.apiCache.Mortalities.Fetcher = fetcher[sciensano.Mortalities]{}
+	h.apiCache.TestResults.Fetcher = fetcher[sciensano.TestResults]{}
+	h.apiCache.Vaccinations.Fetcher = fetcher[sciensano.Vaccinations]{}
 
 	req := simplejson.QueryRequest{QueryArgs: simplejson.QueryArgs{Args: simplejson.Args{Range: simplejson.Range{To: time.Now()}}}}
 	ctx := context.Background()
@@ -121,9 +121,17 @@ func (f fetcher[T]) GetTarget() (target string) {
 	return target
 }
 
+func TestFilterVaccinations(t *testing.T) {
+	var f fetcher[sciensano.Vaccinations]
+	vaccinations, _ := f.Fetch(context.Background())
+	filtered := filterVaccinations(vaccinations, sciensano.Full)
+	assert.Len(t, filtered, 720)
+}
+
 func BenchmarkFilterVaccinations(b *testing.B) {
 	var f fetcher[sciensano.Vaccinations]
 	vaccinations, _ := f.Fetch(context.Background())
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		filterVaccinations(vaccinations, sciensano.Full)
 	}
