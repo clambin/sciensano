@@ -71,6 +71,6 @@ func (s *cacher[T]) refresh(ctx context.Context) {
 
 	if err != nil {
 		s.lastChecked = time.Time{}
-		slog.Error("failed to update cache", err, "target", s.GetTarget())
+		slog.Error("failed to update cache", "err", err, "target", s.GetTarget())
 	}
 }

@@ -76,7 +76,7 @@ func (cache *Cache) MaybeGenerate(name string, generate func() (*tabulator.Tabul
 		slog.Debug("generating report", "report", name)
 		entry.Data, err = generate()
 		if err != nil {
-			slog.Error("failed to generate report", err, "report", name)
+			slog.Error("failed to generate report", "err", err, "report", name)
 			entry = nil
 		}
 		cache.Save(name, entry)

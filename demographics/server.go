@@ -37,7 +37,7 @@ var _ Fetcher = &Server{}
 func (s *Server) Run(ctx context.Context) {
 	slog.Debug("first load of demographics file")
 	if err := s.update(); err != nil {
-		slog.Error("failed to read demographics file", err)
+		slog.Error("failed to read demographics file", "err", err)
 	}
 	slog.Debug("first load of demographics file done")
 
@@ -49,7 +49,7 @@ func (s *Server) Run(ctx context.Context) {
 			running = false
 		case <-ticker.C:
 			if err := s.update(); err != nil {
-				slog.Error("failed to read demographics file", err)
+				slog.Error("failed to read demographics file", "err", err)
 			}
 		}
 	}
