@@ -3,6 +3,7 @@ package simplejsonserver
 import (
 	"context"
 	"encoding/json"
+	"github.com/clambin/go-common/cache"
 	"github.com/clambin/sciensano/cache/sciensano"
 	mockDemographics "github.com/clambin/sciensano/demographics/mocks"
 	"github.com/clambin/simplejson/v6"
@@ -69,11 +70,11 @@ func BenchmarkVaccinations(b *testing.B) {
 
 	h, err := New(&demographicsClient)
 	require.NoError(b, err)
-	h.apiCache.Cases.Fetcher = fetcher[sciensano.Cases]{}
-	h.apiCache.Hospitalisations.Fetcher = fetcher[sciensano.Hospitalisations]{}
-	h.apiCache.Mortalities.Fetcher = fetcher[sciensano.Mortalities]{}
-	h.apiCache.TestResults.Fetcher = fetcher[sciensano.TestResults]{}
-	h.apiCache.Vaccinations.Fetcher = fetcher[sciensano.Vaccinations]{}
+	h.apiCache.Cases.Fetcher = &fetcher[sciensano.Cases]{}
+	h.apiCache.Hospitalisations.Fetcher = &fetcher[sciensano.Hospitalisations]{}
+	h.apiCache.Mortalities.Fetcher = &fetcher[sciensano.Mortalities]{}
+	h.apiCache.TestResults.Fetcher = &fetcher[sciensano.TestResults]{}
+	h.apiCache.Vaccinations.Fetcher = &fetcher[sciensano.Vaccinations]{}
 
 	req := simplejson.QueryRequest{QueryArgs: simplejson.QueryArgs{Args: simplejson.Args{Range: simplejson.Range{To: time.Now()}}}}
 	ctx := context.Background()
@@ -88,23 +89,39 @@ func BenchmarkVaccinations(b *testing.B) {
 }
 
 type fetcher[T any] struct {
+	cache *cache.Cache[string, T]
+	lock  sync.RWMutex
 }
 
-func (f fetcher[T]) GetLastModified(_ context.Context) (time.Time, error) {
+func (f *fetcher[T]) GetLastModified(_ context.Context) (time.Time, error) {
 	return time.Now(), nil
 }
 
-func (f fetcher[T]) Fetch(_ context.Context) (T, error) {
+func (f *fetcher[T]) Fetch(_ context.Context) (T, error) {
+	f.lock.RLock()
+	if f.cache == nil {
+		f.cache = cache.New[string, T](time.Minute, 0)
+	}
+	e, ok := f.cache.Get(f.GetTarget())
+	f.lock.RUnlock()
+	if ok {
+		return e, nil
+	}
 	var t T
 	input, err := os.Open(filepath.Join("..", "cache", "sciensano", "input", f.GetTarget()+".json"))
 	if err == nil {
 		err = json.NewDecoder(input).Decode(&t)
 		_ = input.Close()
 	}
+	if err == nil {
+		f.lock.Lock()
+		f.cache.Add(f.GetTarget(), t)
+		f.lock.Unlock()
+	}
 	return t, err
 }
 
-func (f fetcher[T]) GetTarget() (target string) {
+func (f *fetcher[T]) GetTarget() (target string) {
 	var t T
 	switch interface{}(t).(type) {
 	case sciensano.Cases:

@@ -74,10 +74,10 @@ func New(f demographics.Fetcher) (s *Server, err error) {
 }
 
 // Serve runs the API handler server
-func (s *Server) Serve(ctx context.Context, port int) (err error) {
+func (s *Server) Serve(ctx context.Context, addr string) (err error) {
 	go s.Demographics.Run(ctx)
 	go s.apiCache.AutoRefresh(ctx, time.Hour)
-	return http.ListenAndServe(fmt.Sprintf(":%d", port), s.server)
+	return http.ListenAndServe(addr, s.server)
 }
 
 func (s *Server) Health(w http.ResponseWriter, _ *http.Request) {

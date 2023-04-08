@@ -67,6 +67,7 @@ func BenchmarkVaccinations_Unmarshal_Easyjson(b *testing.B) {
 	content, err := os.ReadFile(filepath.Join("input", "vaccinations.json"))
 	require.NoError(b, err)
 
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		var vaccinations sciensano.Vaccinations
 		err = easyjson.Unmarshal(content, &vaccinations)
