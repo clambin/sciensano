@@ -27,10 +27,7 @@ func NewSciensanoCache(target string) *SciensanoCache {
 		target = sciensano.BaseURL
 	}
 
-	transport := httpclient.NewRoundTripper(httpclient.WithRoundTripperMetrics{
-		Namespace:   "sciensano",
-		Application: "sciensano",
-	})
+	transport := httpclient.NewRoundTripper(httpclient.WithMetrics("sciensano", "", "sciensano"))
 	client := &http.Client{Transport: limiter.NewLimiter(transport, 3)}
 
 	return &SciensanoCache{
