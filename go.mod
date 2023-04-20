@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/clambin/go-common/cache v0.1.1
-	github.com/clambin/go-common/httpclient v0.3.3
+	github.com/clambin/go-common/httpclient v0.4.0
 	github.com/clambin/go-common/httpserver v0.5.0
 	github.com/clambin/go-common/set v0.2.0
 	github.com/clambin/go-common/tabulator v0.1.3
@@ -30,7 +30,6 @@ require (
 	github.com/prometheus/client_model v0.3.0 // indirect
 	github.com/prometheus/common v0.42.0 // indirect
 	github.com/prometheus/procfs v0.9.0 // indirect
-	github.com/rogpeppe/go-internal v1.9.0 // indirect
 	github.com/stretchr/objx v0.5.0 // indirect
 	golang.org/x/sys v0.6.0 // indirect
 	google.golang.org/protobuf v1.30.0 // indirect
