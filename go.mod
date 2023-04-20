@@ -1,6 +1,6 @@
 module github.com/clambin/sciensano
 
-go 1.18
+go 1.20
 
 require (
 	github.com/clambin/go-common/cache v0.1.1
