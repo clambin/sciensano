@@ -12,8 +12,8 @@ github.com/clambin/go-common/set v0.2.0 h1:s4wXxKns3sb2VPCtAmmLEDs4KiHNIiot+LcKg
 github.com/clambin/go-common/set v0.2.0/go.mod h1:GFjAZynNo4BNjlx2hzDMHIU4ays7QjpJUSHXB/3b1ZE=
 github.com/clambin/go-common/tabulator v0.1.3 h1:tDHoeX1ckMo9NBEpQbKRnJa0nXrjFRGgU6oZaPsTE7Q=
 github.com/clambin/go-common/tabulator v0.1.3/go.mod h1:2hz38OAS/JNndcOxbkm9/k5tjwQjhGtqVqjhmjeVeN0=
-github.com/clambin/simplejson/v6 v6.0.3 h1:tTZzCVYPAo5aCSkIg3eQS43BA0Ry3VprCz3LFCC50Qo=
-github.com/clambin/simplejson/v6 v6.0.3/go.mod h1:gB+Ys/JLTjSoMzDhnPhSYzYxRMbdCbjfk+nPnK2vETQ=
+github.com/clambin/simplejson/v6 v6.0.4 h1:1/S6QNgKF0Tve5DAfFdZDqB3jOHn3H8AIFxGe72yl84=
+github.com/clambin/simplejson/v6 v6.0.4/go.mod h1:gB+Ys/JLTjSoMzDhnPhSYzYxRMbdCbjfk+nPnK2vETQ=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=

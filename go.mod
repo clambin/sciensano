@@ -8,7 +8,7 @@ require (
 	github.com/clambin/go-common/httpserver v0.5.0
 	github.com/clambin/go-common/set v0.2.0
 	github.com/clambin/go-common/tabulator v0.1.3
-	github.com/clambin/simplejson/v6 v6.0.3
+	github.com/clambin/simplejson/v6 v6.0.4
 	github.com/go-http-utils/headers v0.0.0-20181008091004-fed159eddc2a
 	github.com/mailru/easyjson v0.7.7
 	github.com/prometheus/client_golang v1.15.0
