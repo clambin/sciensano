@@ -3,8 +3,8 @@ module github.com/clambin/sciensano
 go 1.20
 
 require (
-	github.com/clambin/go-common/cache v0.2.0
-	github.com/clambin/go-common/httpclient v0.4.4
+	github.com/clambin/go-common/cache v0.2.2
+	github.com/clambin/go-common/httpclient v0.4.5
 	github.com/clambin/go-common/httpserver v0.5.0
 	github.com/clambin/go-common/set v0.2.0
 	github.com/clambin/go-common/tabulator v0.1.3
