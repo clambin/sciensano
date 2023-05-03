@@ -11,7 +11,7 @@ require (
 	github.com/clambin/simplejson/v6 v6.0.4
 	github.com/go-http-utils/headers v0.0.0-20181008091004-fed159eddc2a
 	github.com/mailru/easyjson v0.7.7
-	github.com/prometheus/client_golang v1.15.0
+	github.com/prometheus/client_golang v1.15.1
 	github.com/rovaughn/fastcsv v0.0.0-20170331030356-1090019547fb
 	github.com/stretchr/testify v1.8.2
 	golang.org/x/exp v0.0.0-20230420155640-133eef4313cb
