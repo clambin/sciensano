@@ -26,12 +26,11 @@ var (
 func main() {
 	flag.Parse()
 
-	var ops slog.HandlerOptions
+	var opts slog.HandlerOptions
 	if *debug {
-		ops.Level = slog.LevelDebug
-		ops.AddSource = true
+		opts.Level = slog.LevelDebug
 	}
-	slog.SetDefault(slog.New(ops.NewTextHandler(os.Stdout)))
+	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stderr, &opts)))
 
 	slog.Info("Reporter API starting", "version", version.BuildVersion)
 
