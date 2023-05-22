@@ -9,7 +9,6 @@ import (
 	"github.com/clambin/simplejson/v6"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -24,8 +23,7 @@ func TestNew(t *testing.T) {
 	demographicsClient.On("GetByRegion").Return(map[string]int{})
 	demographicsClient.On("GetByAgeBracket", mock.AnythingOfType("bracket.Bracket")).Return(0)
 
-	h, err := New(demographicsClient)
-	require.NoError(t, err)
+	h := New(demographicsClient)
 	h.apiCache.Cases.Fetcher = &fetcher[sciensano.Cases]{}
 	h.apiCache.Hospitalisations.Fetcher = &fetcher[sciensano.Hospitalisations]{}
 	h.apiCache.Mortalities.Fetcher = &fetcher[sciensano.Mortalities]{}
@@ -40,9 +38,9 @@ func TestNew(t *testing.T) {
 	req := simplejson.QueryRequest{QueryArgs: simplejson.QueryArgs{Args: simplejson.Args{Range: simplejson.Range{To: time.Now()}}}}
 
 	wg := sync.WaitGroup{}
-	wg.Add(len(h.server.Handlers))
+	wg.Add(len(h.Server.Handlers))
 	var count int
-	for target, handler := range h.server.Handlers {
+	for target, handler := range h.Server.Handlers {
 		t.Run(target, func(t *testing.T) {
 			count++
 			//go func(handler simplejson.Handler, target string, counter int) {
@@ -68,8 +66,7 @@ func BenchmarkVaccinations(b *testing.B) {
 	demographicsClient := mockDemographics.Fetcher{}
 	demographicsClient.On("GetByAgeBracket", mock.AnythingOfType("bracket.Bracket")).Return(0)
 
-	h, err := New(&demographicsClient)
-	require.NoError(b, err)
+	h := New(&demographicsClient)
 	h.apiCache.Cases.Fetcher = &fetcher[sciensano.Cases]{}
 	h.apiCache.Hospitalisations.Fetcher = &fetcher[sciensano.Hospitalisations]{}
 	h.apiCache.Mortalities.Fetcher = &fetcher[sciensano.Mortalities]{}
@@ -81,7 +78,7 @@ func BenchmarkVaccinations(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, err = h.handlers["vacc-age-rate-full"].Endpoints().Query(ctx, req)
+		_, err := h.handlers["vacc-age-rate-full"].Endpoints().Query(ctx, req)
 		if err != nil {
 			b.Fatal(err)
 		}

@@ -19,7 +19,7 @@ import (
 
 // Server groups Grafana SimpleJson API handlers that retrieve Belgium COVID-19-related statistics
 type Server struct {
-	server       *simplejson.Server
+	Server       *simplejson.Server
 	handlers     map[string]simplejson.Handler
 	apiCache     *cache.SciensanoCache
 	reportsCache *reports.Cache
@@ -28,8 +28,8 @@ type Server struct {
 
 var _ prometheus.Collector = &Server{}
 
-func New(f demographics.Fetcher) (s *Server, err error) {
-	s = &Server{
+func New(f demographics.Fetcher) *Server {
+	s := &Server{
 		apiCache:     cache.NewSciensanoCache(""),
 		reportsCache: reports.NewCache(15 * time.Minute),
 		Demographics: f,
@@ -68,16 +68,16 @@ func New(f demographics.Fetcher) (s *Server, err error) {
 		}},
 	)
 	r.Get("/health", s.Health)
-	s.server = r
+	s.Server = r
 
-	return s, err
+	return s
 }
 
 // Serve runs the API handler server
 func (s *Server) Serve(ctx context.Context, addr string) (err error) {
 	go s.Demographics.Run(ctx)
 	go s.apiCache.AutoRefresh(ctx, time.Hour)
-	return http.ListenAndServe(addr, s.server)
+	return http.ListenAndServe(addr, s.Server)
 }
 
 func (s *Server) Health(w http.ResponseWriter, _ *http.Request) {
@@ -226,10 +226,10 @@ func filterVaccinations(vaccinations sciensano.Vaccinations, doseType sciensano.
 
 func (s *Server) Describe(descs chan<- *prometheus.Desc) {
 	s.apiCache.Describe(descs)
-	s.server.Describe(descs)
+	s.Server.Describe(descs)
 }
 
 func (s *Server) Collect(metrics chan<- prometheus.Metric) {
 	s.apiCache.Collect(metrics)
-	s.server.Collect(metrics)
+	s.Server.Collect(metrics)
 }

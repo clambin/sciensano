@@ -2,8 +2,9 @@ package main
 
 import (
 	"context"
-	"errors"
 	"flag"
+	"github.com/clambin/go-common/taskmanager"
+	"github.com/clambin/go-common/taskmanager/httpserver"
 	"github.com/clambin/sciensano/demographics"
 	"github.com/clambin/sciensano/simplejsonserver"
 	"github.com/clambin/sciensano/version"
@@ -13,6 +14,7 @@ import (
 	"net/http"
 	_ "net/http/pprof"
 	"os"
+	"os/signal"
 	"time"
 )
 
@@ -34,31 +36,30 @@ func main() {
 
 	slog.Info("Reporter API starting", "version", version.BuildVersion)
 
-	go runPrometheusServer(*prometheusAddr)
+	promHandler := http.NewServeMux()
+	promHandler.Handle("/metrics", promhttp.Handler())
 
-	runSimpleJSONServer(*simpleJSONAddr, *demographicsPath)
-}
+	tm := taskmanager.New(
+		httpserver.New(*prometheusAddr, promHandler),
+		getSimpleJSONServer(*simpleJSONAddr, *demographicsPath),
+	)
 
-func runPrometheusServer(addr string) {
-	http.Handle("/metrics", promhttp.Handler())
-	if err := http.ListenAndServe(addr, nil); !errors.Is(err, http.ErrServerClosed) {
-		slog.Error("failed to start Prometheus listener", "err", err)
+	ctx, done := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer done()
+
+	err := tm.Run(ctx)
+	if err != nil {
+		slog.Error("failed to start", "err", err)
+		os.Exit(1)
 	}
 }
 
-func runSimpleJSONServer(addr string, demographicsPath string) {
-	s, err := simplejsonserver.New(&demographics.Server{
+func getSimpleJSONServer(addr string, demographicsPath string) *httpserver.HTTPServer {
+	s := simplejsonserver.New(&demographics.Server{
 		Path:     demographicsPath,
 		Interval: 24 * time.Hour,
 	})
-	if err != nil {
-		slog.Error("failed to start SimpleJSON server", "err", err)
-		panic(err)
-	}
 	prometheus.DefaultRegisterer.MustRegister(s)
 
-	if err = s.Serve(context.Background(), addr); !errors.Is(err, http.ErrServerClosed) {
-		slog.Error("failed to start SimpleJSON server", "err", err)
-		panic(err)
-	}
+	return httpserver.New(addr, s.Server)
 }
