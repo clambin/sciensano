@@ -10,8 +10,8 @@ github.com/clambin/go-common/httpserver v0.5.0 h1:t24hD6l7sGdK+8N4TDH9i7opNBZHmO
 github.com/clambin/go-common/httpserver v0.5.0/go.mod h1:xrvqa7N/Nn2xojPZzWlHui6PTcEybQ8uh+YGHuB38+4=
 github.com/clambin/go-common/set v0.2.0 h1:s4wXxKns3sb2VPCtAmmLEDs4KiHNIiot+LcKgKcdPdw=
 github.com/clambin/go-common/set v0.2.0/go.mod h1:GFjAZynNo4BNjlx2hzDMHIU4ays7QjpJUSHXB/3b1ZE=
-github.com/clambin/go-common/tabulator v0.1.3 h1:tDHoeX1ckMo9NBEpQbKRnJa0nXrjFRGgU6oZaPsTE7Q=
-github.com/clambin/go-common/tabulator v0.1.3/go.mod h1:2hz38OAS/JNndcOxbkm9/k5tjwQjhGtqVqjhmjeVeN0=
+github.com/clambin/go-common/tabulator v0.2.0 h1:r7kG//YEkBsiDgL60/Ma4hmHxzZ3OzktXriiPSKpzPU=
+github.com/clambin/go-common/tabulator v0.2.0/go.mod h1:dYiD12PMbEHLp8iMGgUQlnzPgHqzxCqi/Iq77fr6dfU=
 github.com/clambin/simplejson/v6 v6.0.4 h1:1/S6QNgKF0Tve5DAfFdZDqB3jOHn3H8AIFxGe72yl84=
 github.com/clambin/simplejson/v6 v6.0.4/go.mod h1:gB+Ys/JLTjSoMzDhnPhSYzYxRMbdCbjfk+nPnK2vETQ=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
