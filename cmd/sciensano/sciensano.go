@@ -5,13 +5,12 @@ import (
 	"flag"
 	"github.com/clambin/go-common/taskmanager"
 	"github.com/clambin/go-common/taskmanager/httpserver"
+	promserver "github.com/clambin/go-common/taskmanager/prometheus"
 	"github.com/clambin/sciensano/demographics"
 	"github.com/clambin/sciensano/simplejsonserver"
 	"github.com/clambin/sciensano/version"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"golang.org/x/exp/slog"
-	"net/http"
 	_ "net/http/pprof"
 	"os"
 	"os/signal"
@@ -36,12 +35,16 @@ func main() {
 
 	slog.Info("Reporter API starting", "version", version.BuildVersion)
 
-	promHandler := http.NewServeMux()
-	promHandler.Handle("/metrics", promhttp.Handler())
+	s := simplejsonserver.New(&demographics.Server{
+		Path:     *demographicsPath,
+		Interval: 24 * time.Hour,
+	})
+	prometheus.DefaultRegisterer.MustRegister(s)
 
 	tm := taskmanager.New(
-		httpserver.New(*prometheusAddr, promHandler),
-		getSimpleJSONServer(*simpleJSONAddr, *demographicsPath),
+		promserver.New(promserver.WithAddr(*prometheusAddr)),
+		s,
+		httpserver.New(*simpleJSONAddr, s.Server),
 	)
 
 	ctx, done := signal.NotifyContext(context.Background(), os.Interrupt)
@@ -52,14 +55,4 @@ func main() {
 		slog.Error("failed to start", "err", err)
 		os.Exit(1)
 	}
-}
-
-func getSimpleJSONServer(addr string, demographicsPath string) *httpserver.HTTPServer {
-	s := simplejsonserver.New(&demographics.Server{
-		Path:     demographicsPath,
-		Interval: 24 * time.Hour,
-	})
-	prometheus.DefaultRegisterer.MustRegister(s)
-
-	return httpserver.New(addr, s.Server)
 }
