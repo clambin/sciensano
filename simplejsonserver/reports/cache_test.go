@@ -85,8 +85,6 @@ func TestCache_MaybeGenerate(t *testing.T) {
 func TestCache_MaybeGenerate_Stress(t *testing.T) {
 	c := reports.NewCache(200 * time.Millisecond)
 
-	rand.Seed(time.Now().Unix())
-
 	const maxParallel = 1e2
 	s := semaphore.NewWeighted(maxParallel)
 	ctx := context.Background()
