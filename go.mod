@@ -14,7 +14,7 @@ require (
 	github.com/mailru/easyjson v0.7.7
 	github.com/prometheus/client_golang v1.15.1
 	github.com/rovaughn/fastcsv v0.0.0-20170331030356-1090019547fb
-	github.com/stretchr/testify v1.8.3
+	github.com/stretchr/testify v1.8.4
 	golang.org/x/exp v0.0.0-20230510235704-dd950f8aeaea
 	golang.org/x/sync v0.2.0
 )
