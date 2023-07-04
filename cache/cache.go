@@ -4,7 +4,6 @@ import (
 	"context"
 	"github.com/clambin/go-common/httpclient"
 	"github.com/clambin/sciensano/cache/sciensano"
-	"github.com/clambin/sciensano/pkg/limiter"
 	"github.com/prometheus/client_golang/prometheus"
 	"net/http"
 	"sync"
@@ -27,8 +26,10 @@ func NewSciensanoCache(target string) *SciensanoCache {
 		target = sciensano.BaseURL
 	}
 
-	transport := httpclient.NewRoundTripper(httpclient.WithMetrics("sciensano", "", "sciensano"))
-	client := &http.Client{Transport: limiter.NewLimiter(transport, 3)}
+	transport := httpclient.NewRoundTripper(
+		httpclient.WithInstrumentedLimiter(3, "sciensano", "", "sciensano"),
+		httpclient.WithMetrics("sciensano", "", "sciensano"))
+	client := &http.Client{Transport: transport}
 
 	return &SciensanoCache{
 		Cases: cacher[sciensano.Cases]{

@@ -1,12 +1,13 @@
 package cache
 
 import (
+	"bytes"
 	"context"
 	"github.com/clambin/sciensano/cache/sciensano"
 	"github.com/go-http-utils/headers"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -45,9 +46,23 @@ func TestNewSciensanoCache(t *testing.T) {
 	cancel()
 	wg.Wait()
 
-	metrics, err := r.Gather()
-	require.NoError(t, err)
-	assert.Len(t, metrics, 2)
+	assert.NoError(t, testutil.CollectAndCompare(c, bytes.NewBufferString(`
+# HELP sciensano_api_errors_total Number of failed Reporter API calls
+# TYPE sciensano_api_errors_total counter
+sciensano_api_errors_total{application="sciensano",method="GET",path="/Data/COVID19BE_CASES_AGESEX.json"} 0
+sciensano_api_errors_total{application="sciensano",method="GET",path="/Data/COVID19BE_HOSP.json"} 0
+sciensano_api_errors_total{application="sciensano",method="GET",path="/Data/COVID19BE_MORT.json"} 0
+sciensano_api_errors_total{application="sciensano",method="GET",path="/Data/COVID19BE_VACC.json"} 0
+sciensano_api_errors_total{application="sciensano",method="GET",path="/Data/COVID19BE_tests.json"} 0
+sciensano_api_errors_total{application="sciensano",method="HEAD",path="/Data/COVID19BE_CASES_AGESEX.json"} 0
+sciensano_api_errors_total{application="sciensano",method="HEAD",path="/Data/COVID19BE_HOSP.json"} 0
+sciensano_api_errors_total{application="sciensano",method="HEAD",path="/Data/COVID19BE_MORT.json"} 0
+sciensano_api_errors_total{application="sciensano",method="HEAD",path="/Data/COVID19BE_VACC.json"} 0
+sciensano_api_errors_total{application="sciensano",method="HEAD",path="/Data/COVID19BE_tests.json"} 0
+# HELP sciensano_api_max_inflight Maximum number of requests in flight
+# TYPE sciensano_api_max_inflight gauge
+sciensano_api_max_inflight{application="sciensano"} 3
+`), "sciensano_api_errors_total", "sciensano_api_max_inflight"))
 }
 
 func handler(w http.ResponseWriter, req *http.Request) {
