@@ -1,15 +1,14 @@
 package reports_test
 
 import (
-	"context"
 	"errors"
 	"github.com/clambin/go-common/tabulator"
 	"github.com/clambin/sciensano/simplejsonserver/reports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"golang.org/x/sync/semaphore"
 	"math/rand"
 	"strconv"
+	"sync"
 	"testing"
 	"time"
 )
@@ -86,12 +85,15 @@ func TestCache_MaybeGenerate_Stress(t *testing.T) {
 	c := reports.NewCache(200 * time.Millisecond)
 
 	const maxParallel = 1e2
-	s := semaphore.NewWeighted(maxParallel)
-	ctx := context.Background()
+	sem := make(chan struct{}, maxParallel)
 
-	for i := 0; i < 1e4; i++ {
-		_ = s.Acquire(ctx, 1)
+	var wg sync.WaitGroup
+
+	for i := 0; i < 1e5; i++ {
+		wg.Add(1)
+		sem <- struct{}{}
 		go func(i int) {
+			defer wg.Done()
 			report, err := c.MaybeGenerate("foo", func() (*tabulator.Tabulator, error) {
 				if rand.Intn(10) < 1 {
 					return nil, errors.New("fail")
@@ -101,12 +103,12 @@ func TestCache_MaybeGenerate_Stress(t *testing.T) {
 				d.Add(time.Now(), "value", float64(i))
 				return d, nil
 			})
-			assert.False(t, err == nil && report == nil)
-			s.Release(1)
+			assert.True(t, report != nil || err != nil)
+			<-sem
 		}(i)
 	}
 
-	_ = s.Acquire(ctx, maxParallel)
+	wg.Wait()
 }
 
 func BenchmarkCache_MaybeGenerate(b *testing.B) {

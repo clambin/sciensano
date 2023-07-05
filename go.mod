@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	github.com/clambin/go-common/cache v0.2.2
-	github.com/clambin/go-common/httpclient v0.5.0
+	github.com/clambin/go-common/httpclient v0.5.1
 	github.com/clambin/go-common/httpserver v0.5.0
 	github.com/clambin/go-common/set v0.2.0
 	github.com/clambin/go-common/tabulator v0.2.1
@@ -16,7 +16,6 @@ require (
 	github.com/rovaughn/fastcsv v0.0.0-20170331030356-1090019547fb
 	github.com/stretchr/testify v1.8.4
 	golang.org/x/exp v0.0.0-20230510235704-dd950f8aeaea
-	golang.org/x/sync v0.3.0
 )
 
 require (
