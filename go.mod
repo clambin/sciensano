@@ -5,7 +5,7 @@ go 1.20
 require (
 	github.com/clambin/go-common/cache v0.2.2
 	github.com/clambin/go-common/httpclient v0.5.1
-	github.com/clambin/go-common/httpserver v0.5.0
+	github.com/clambin/go-common/httpserver v0.7.0
 	github.com/clambin/go-common/set v0.2.0
 	github.com/clambin/go-common/tabulator v0.2.1
 	github.com/clambin/go-common/taskmanager v0.2.1
@@ -15,14 +15,14 @@ require (
 	github.com/prometheus/client_golang v1.16.0
 	github.com/rovaughn/fastcsv v0.0.0-20170331030356-1090019547fb
 	github.com/stretchr/testify v1.8.4
-	golang.org/x/exp v0.0.0-20230510235704-dd950f8aeaea
+	golang.org/x/exp v0.0.0-20230713183714-613f0c0eb8a1
 )
 
 require (
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/go-chi/chi/v5 v5.0.8 // indirect
+	github.com/go-chi/chi/v5 v5.0.10 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
