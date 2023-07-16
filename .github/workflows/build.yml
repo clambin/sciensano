@@ -4,7 +4,7 @@ on:
   push:
     branches:
     - master
-    - httpclient
+    - json
     paths-ignore:
       - '**.md'
       - 'assets/grafana/dashboards/**'

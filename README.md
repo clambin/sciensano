@@ -5,7 +5,7 @@
 ![Go Report Card](https://goreportcard.com/badge/github.com/clambin/sciensano)
 ![GitHub](https://img.shields.io/github/license/clambin/sciensano?style=plastic)
 
-Grafana SimpleJson API server for BE Sciensano Covid19 data
+Grafana JSON API server for BE Sciensano Covid19 data
 
 ![vaccinations](assets/screenshots/vaccinations.png?raw=true) 
 ![cases](assets/screenshots/cases.png?raw=true)

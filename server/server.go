@@ -1,29 +1,32 @@
-package simplejsonserver
+package server
 
 import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/clambin/go-common/httpserver/middleware"
 	"github.com/clambin/go-common/tabulator"
+	grafanaJSONServer "github.com/clambin/grafana-json-server"
 	"github.com/clambin/sciensano/cache"
 	"github.com/clambin/sciensano/cache/sciensano"
 	"github.com/clambin/sciensano/demographics"
 	"github.com/clambin/sciensano/demographics/bracket"
-	"github.com/clambin/sciensano/simplejsonserver/reports"
-	"github.com/clambin/simplejson/v6"
+	"github.com/clambin/sciensano/server/reports"
 	"github.com/prometheus/client_golang/prometheus"
 	"net/http"
 	"time"
 )
 
-// Server groups Grafana SimpleJson API handlers that retrieve Belgium COVID-19-related statistics
+// Server groups Grafana JSON API handlers that retrieve Belgium COVID-19-related statistics
 type Server struct {
-	Server       *simplejson.Server
-	handlers     map[string]simplejson.Handler
+	JSONServer   *grafanaJSONServer.Server
+	handlers     map[string]handler
 	apiCache     *cache.SciensanoCache
 	reportsCache *reports.Cache
 	Demographics demographics.Fetcher
+}
+
+type handler interface {
+	query(ctx context.Context, target string, request grafanaJSONServer.QueryRequest) (grafanaJSONServer.QueryResponse, error)
 }
 
 var _ prometheus.Collector = &Server{}
@@ -34,7 +37,8 @@ func New(f demographics.Fetcher) *Server {
 		reportsCache: reports.NewCache(15 * time.Minute),
 		Demographics: f,
 	}
-	s.handlers = map[string]simplejson.Handler{
+
+	s.handlers = map[string]handler{
 		"cases":                     Handler{Fetch: s.cases, Mode: sciensano.Total},
 		"cases-province":            Handler{Fetch: s.cases, Mode: sciensano.ByProvince},
 		"cases-region":              Handler{Fetch: s.cases, Mode: sciensano.ByRegion},
@@ -58,17 +62,18 @@ func New(f demographics.Fetcher) *Server {
 		"vacc-region-rate-full":     Handler2{Fetch: s.vaccinationFilteredRate, Mode: sciensano.ByRegion, DoseType: sciensano.Full, Accumulate: true},
 	}
 
-	r := simplejson.New(s.handlers,
-		simplejson.WithQueryMetrics{Name: "sciensano"},
-		simplejson.WithHTTPMetrics{Option: middleware.PrometheusMetricsOptions{
-			Namespace:   "sciensano",
-			Subsystem:   "simplejson",
-			Application: "sciensano",
-			MetricsType: middleware.Histogram,
-		}},
-	)
-	r.Get("/health", s.Health)
-	s.Server = r
+	options := []grafanaJSONServer.Option{
+		grafanaJSONServer.WithHandlerFunc(http.MethodGet, "/health", s.Health),
+		grafanaJSONServer.WithPrometheusQueryMetrics("sciensano", "", "sciensano"),
+	}
+
+	for metric, h := range s.handlers {
+		options = append(options,
+			grafanaJSONServer.WithMetric(grafanaJSONServer.Metric{Value: metric}, h.query, nil),
+		)
+	}
+
+	s.JSONServer = grafanaJSONServer.NewServer(options...)
 
 	return s
 }
@@ -227,10 +232,10 @@ func filterVaccinations(vaccinations sciensano.Vaccinations, doseType sciensano.
 
 func (s *Server) Describe(descs chan<- *prometheus.Desc) {
 	s.apiCache.Describe(descs)
-	s.Server.Describe(descs)
+	s.JSONServer.Describe(descs)
 }
 
 func (s *Server) Collect(metrics chan<- prometheus.Metric) {
 	s.apiCache.Collect(metrics)
-	s.Server.Collect(metrics)
+	s.JSONServer.Collect(metrics)
 }
