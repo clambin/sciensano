@@ -10,7 +10,7 @@
         "enable": true,
         "hide": true,
         "iconColor": "rgba(0, 211, 255, 1)",
-        "name": "Annotations & Alerts",
+        "name": "Annotations \u0026 Alerts",
         "target": {
           "limit": 100,
           "matchAny": false,
@@ -24,7 +24,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 2345,
+  "id": 3839,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -132,6 +132,19 @@
           "interval": "",
           "legendFormat": "{{target}}",
           "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
+          "editorMode": "code",
+          "expr": "sum by (target) (rate(sciensano_json_query_duration_seconds_count{application=\"sciensano\"}[$__rate_interval]))",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "B"
         }
       ],
       "title": "Handler request rate",
@@ -196,8 +209,8 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
-        "w": 9,
+        "h": 16,
+        "w": 8,
         "x": 9,
         "y": 1
       },
@@ -220,11 +233,26 @@
             "type": "prometheus",
             "uid": "PBFA97CFB590B2093"
           },
+          "editorMode": "code",
           "exemplar": true,
           "expr": "sum by (target) (simplejson_query_duration_seconds_sum{app=\"sciensano\"} / simplejson_query_duration_seconds_count{app=\"sciensano\"})",
           "interval": "",
           "legendFormat": "{{target}}",
+          "range": true,
           "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
+          "editorMode": "code",
+          "expr": "sum by (target) (sciensano_json_query_duration_seconds_sum{application=\"sciensano\"} / sciensano_json_query_duration_seconds_count{app=\"sciensano\"})",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "B"
         }
       ],
       "title": "Handler request duration",
@@ -292,8 +320,8 @@
       },
       "gridPos": {
         "h": 16,
-        "w": 6,
-        "x": 18,
+        "w": 7,
+        "x": 17,
         "y": 1
       },
       "id": 16,
@@ -325,101 +353,6 @@
         }
       ],
       "title": "Reports Cache hit rate",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 0,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": true,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "s"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 9,
-        "x": 9,
-        "y": 9
-      },
-      "id": 19,
-      "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "none"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
-          },
-          "editorMode": "code",
-          "exemplar": true,
-          "expr": "histogram_quantile(0.95, rate(simplejson_query_duration_seconds_bucket{app=\"sciensano\"}[$__rate_interval]))",
-          "interval": "",
-          "legendFormat": "{{target}}",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "SLO (95%)",
       "type": "timeseries"
     },
     {
@@ -522,9 +455,9 @@
           },
           "editorMode": "code",
           "exemplar": true,
-          "expr": "sum by (application,endpoint) (rate(sciensano_api_latency_count{method=\"GET\"}[$__rate_interval]))",
+          "expr": "sum by (application,path) (rate(sciensano_api_latency_count{method=\"GET\"}[$__rate_interval]))",
           "interval": "",
-          "legendFormat": "{{application}}:{{endpoint}}",
+          "legendFormat": "{{application}}:{{path}}",
           "queryType": "randomWalk",
           "range": true,
           "refId": "A"
@@ -619,9 +552,9 @@
           },
           "editorMode": "code",
           "exemplar": true,
-          "expr": "sum by (application,endpoint) (sciensano_api_latency_sum{method=\"GET\"} / sciensano_api_latency_count{method=\"GET\"})",
+          "expr": "sum by (application,path) (sciensano_api_latency_sum{method=\"GET\"} / sciensano_api_latency_count{method=\"GET\"})",
           "interval": "",
-          "legendFormat": "{{application}}:{{endpoint}}",
+          "legendFormat": "{{application}}:{{path}}",
           "queryType": "randomWalk",
           "range": true,
           "refId": "A"
@@ -718,9 +651,9 @@
           },
           "editorMode": "code",
           "exemplar": true,
-          "expr": "sum by (application,endpoint) (increase(sciensano_api_errors_total[$__rate_interval]))",
+          "expr": "sum by (application,path) (increase(sciensano_api_errors_total[$__rate_interval]))",
           "interval": "",
-          "legendFormat": "{{application}}:{{endpoint}}",
+          "legendFormat": "{{application}}:{{path}}",
           "queryType": "randomWalk",
           "range": true,
           "refId": "A"
@@ -774,7 +707,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               },
               {
                 "color": "red",
@@ -813,9 +747,9 @@
           },
           "editorMode": "code",
           "exemplar": true,
-          "expr": "sum by (application,endpoint) (rate(sciensano_api_latency_count{method=\"HEAD\"}[$__rate_interval]))",
+          "expr": "sum by (application,path) (rate(sciensano_api_latency_count{method=\"HEAD\"}[$__rate_interval]))",
           "interval": "",
-          "legendFormat": "{{application}}:{{endpoint}}",
+          "legendFormat": "{{application}}:{{path}}",
           "queryType": "randomWalk",
           "range": true,
           "refId": "A"
@@ -870,7 +804,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               },
               {
                 "color": "red",
@@ -909,9 +844,9 @@
           },
           "editorMode": "code",
           "exemplar": true,
-          "expr": "sum by (application,endpoint) (sciensano_api_latency_sum{method=\"HEAD\"} / sciensano_api_latency_count{method=\"HEAD\"})",
+          "expr": "sum by (application,path) (sciensano_api_latency_sum{method=\"HEAD\"} / sciensano_api_latency_count{method=\"HEAD\"})",
           "interval": "",
-          "legendFormat": "{{application}}:{{endpoint}}",
+          "legendFormat": "{{application}}:{{path}}",
           "queryType": "randomWalk",
           "range": true,
           "refId": "A"
@@ -922,7 +857,7 @@
     }
   ],
   "refresh": "30s",
-  "schemaVersion": 37,
+  "schemaVersion": 38,
   "style": "dark",
   "tags": [],
   "templating": {
@@ -936,6 +871,6 @@
   "timezone": "",
   "title": "Sciensano - internal",
   "uid": "PTQPklInk",
-  "version": 1,
+  "version": 9,
   "weekStart": ""
 }

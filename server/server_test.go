@@ -1,12 +1,12 @@
-package simplejsonserver
+package server
 
 import (
 	"context"
 	"encoding/json"
 	"github.com/clambin/go-common/cache"
+	grafanaJSONServer "github.com/clambin/grafana-json-server"
 	"github.com/clambin/sciensano/cache/sciensano"
 	mockDemographics "github.com/clambin/sciensano/demographics/mocks"
-	"github.com/clambin/simplejson/v6"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"net/http"
@@ -35,18 +35,18 @@ func TestNew(t *testing.T) {
 	// TODO: fix race condition
 	time.Sleep(1 * time.Second)
 
-	req := simplejson.QueryRequest{QueryArgs: simplejson.QueryArgs{Args: simplejson.Args{Range: simplejson.Range{To: time.Now()}}}}
+	req := grafanaJSONServer.QueryRequest{Range: grafanaJSONServer.Range{To: time.Now()}}
 
 	wg := sync.WaitGroup{}
-	wg.Add(len(h.Server.Handlers))
+	wg.Add(len(h.handlers))
 	var count int
-	for target, handler := range h.Server.Handlers {
+	for target, h := range h.handlers {
 		t.Run(target, func(t *testing.T) {
 			count++
 			//go func(handler simplejson.Handler, target string, counter int) {
 			//t.Logf("%2d: %s started", count, target)
-			resp, err := handler.Endpoints().Query(ctx, req)
-			assert.NotZero(t, len(resp.(simplejson.TableResponse).Columns[0].Data.(simplejson.TimeColumn)))
+			resp, err := h.query(ctx, target, req)
+			assert.NotZero(t, len(resp.(grafanaJSONServer.TableResponse).Columns[0].Data.(grafanaJSONServer.TimeColumn)))
 			//t.Logf("%2d: %s done. err: %v", count, target, err)
 			assert.NoError(t, err, target, target)
 			wg.Done()
@@ -73,12 +73,13 @@ func BenchmarkVaccinations(b *testing.B) {
 	h.apiCache.TestResults.Fetcher = &fetcher[sciensano.TestResults]{}
 	h.apiCache.Vaccinations.Fetcher = &fetcher[sciensano.Vaccinations]{}
 
-	req := simplejson.QueryRequest{QueryArgs: simplejson.QueryArgs{Args: simplejson.Args{Range: simplejson.Range{To: time.Now()}}}}
+	req := grafanaJSONServer.QueryRequest{Range: grafanaJSONServer.Range{To: time.Now()}}
+
 	ctx := context.Background()
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, err := h.handlers["vacc-age-rate-full"].Endpoints().Query(ctx, req)
+		_, err := h.handlers["vacc-age-rate-full"].query(ctx, "", req)
 		if err != nil {
 			b.Fatal(err)
 		}

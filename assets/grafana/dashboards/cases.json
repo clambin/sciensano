@@ -10,7 +10,7 @@
         "enable": true,
         "hide": true,
         "iconColor": "rgba(0, 211, 255, 1)",
-        "name": "Annotations & Alerts",
+        "name": "Annotations \u0026 Alerts",
         "target": {
           "limit": 100,
           "matchAny": false,
@@ -24,25 +24,278 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 2347,
+  "id": 3837,
   "links": [],
   "liveNow": false,
   "panels": [
     {
+      "datasource": {
+        "type": "simpod-json-datasource",
+        "uid": "b04cf133-e1c4-4678-975f-6448401f73c1"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
       "gridPos": {
-        "h": 1,
-        "w": 24,
+        "h": 9,
+        "w": 12,
         "x": 0,
         "y": 0
       },
-      "id": 44,
-      "title": "Boosters",
-      "type": "row"
+      "id": 4,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "simpod-json-datasource",
+            "uid": "b04cf133-e1c4-4678-975f-6448401f73c1"
+          },
+          "editorMode": "builder",
+          "payload": {},
+          "refId": "A",
+          "target": "cases"
+        }
+      ],
+      "title": "New Cases",
+      "type": "timeseries"
     },
     {
       "datasource": {
-        "type": "grafana-simple-json-datasource",
-        "uid": "PBB404699A8B1E379"
+        "type": "simpod-json-datasource",
+        "uid": "b04cf133-e1c4-4678-975f-6448401f73c1"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "axisSoftMin": 0,
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "rate"
+            },
+            "properties": [
+              {
+                "id": "custom.axisPlacement",
+                "value": "right"
+              },
+              {
+                "id": "unit",
+                "value": "percentunit"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "simpod-json-datasource",
+            "uid": "b04cf133-e1c4-4678-975f-6448401f73c1"
+          },
+          "editorMode": "code",
+          "payload": "",
+          "refId": "A",
+          "target": "tests"
+        }
+      ],
+      "title": "Tests",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "simpod-json-datasource",
+        "uid": "b04cf133-e1c4-4678-975f-6448401f73c1"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            }
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 3,
+        "x": 0,
+        "y": 9
+      },
+      "id": 7,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "pieType": "pie",
+        "reduceOptions": {
+          "calcs": [
+            "sum"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "simpod-json-datasource",
+            "uid": "b04cf133-e1c4-4678-975f-6448401f73c1"
+          },
+          "editorMode": "code",
+          "payload": "",
+          "refId": "A",
+          "target": "cases-region"
+        }
+      ],
+      "title": "Total cases by Region",
+      "type": "piechart"
+    },
+    {
+      "datasource": {
+        "type": "simpod-json-datasource",
+        "uid": "b04cf133-e1c4-4678-975f-6448401f73c1"
       },
       "fieldConfig": {
         "defaults": {
@@ -99,278 +352,104 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 8,
-        "x": 0,
-        "y": 1
-      },
-      "id": 46,
-      "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "grafana-simple-json-datasource",
-            "uid": "PBB404699A8B1E379"
-          },
-          "refId": "A",
-          "target": "vaccinations",
-          "type": "timeserie"
-        }
-      ],
-      "title": "Waves",
-      "transformations": [
-        {
-          "id": "organize",
-          "options": {
-            "excludeByName": {
-              "full": true,
-              "partial": true
-            },
-            "indexByName": {},
-            "renameByName": {}
-          }
-        }
-      ],
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "grafana-simple-json-datasource",
-        "uid": "PBB404699A8B1E379"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 46,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": true,
-            "stacking": {
-              "group": "A",
-              "mode": "normal"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "short"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 8,
-        "x": 8,
-        "y": 1
-      },
-      "id": 37,
-      "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "pluginVersion": "8.0.6",
-      "targets": [
-        {
-          "datasource": {
-            "type": "grafana-simple-json-datasource",
-            "uid": "PBB404699A8B1E379"
-          },
-          "hide": false,
-          "refId": "A",
-          "target": "vacc-region",
-          "type": "table"
-        }
-      ],
-      "title": "By Region",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "grafana-simple-json-datasource",
-        "uid": "PBB404699A8B1E379"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 45,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": true,
-            "stacking": {
-              "group": "A",
-              "mode": "normal"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "short"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 8,
-        "x": 16,
-        "y": 1
-      },
-      "id": 36,
-      "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "pluginVersion": "8.0.6",
-      "targets": [
-        {
-          "datasource": {
-            "type": "grafana-simple-json-datasource",
-            "uid": "PBB404699A8B1E379"
-          },
-          "hide": false,
-          "refId": "A",
-          "target": "vacc-age",
-          "type": "table"
-        }
-      ],
-      "title": "By Age",
-      "transformations": [
-        {
-          "id": "spatial",
-          "options": {
-            "action": "prepare",
-            "source": {
-              "mode": "auto"
-            }
-          }
-        }
-      ],
-      "type": "timeseries"
-    },
-    {
-      "collapsed": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
-      },
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
+        "w": 9,
+        "x": 3,
         "y": 9
       },
-      "id": 27,
-      "panels": [],
+      "id": 6,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
       "targets": [
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "type": "simpod-json-datasource",
+            "uid": "b04cf133-e1c4-4678-975f-6448401f73c1"
           },
-          "refId": "A"
+          "editorMode": "code",
+          "payload": "",
+          "refId": "A",
+          "target": "cases-region"
         }
       ],
-      "title": "Initial vaccinations",
-      "type": "row"
+      "title": "New cases by Region",
+      "type": "timeseries"
     },
     {
       "datasource": {
-        "type": "grafana-simple-json-datasource",
-        "uid": "PBB404699A8B1E379"
+        "type": "simpod-json-datasource",
+        "uid": "b04cf133-e1c4-4678-975f-6448401f73c1"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            }
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 3,
+        "x": 12,
+        "y": 9
+      },
+      "id": 8,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "pieType": "pie",
+        "reduceOptions": {
+          "calcs": [
+            "sum"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "simpod-json-datasource",
+            "uid": "b04cf133-e1c4-4678-975f-6448401f73c1"
+          },
+          "editorMode": "code",
+          "payload": "",
+          "refId": "A",
+          "target": "cases-province"
+        }
+      ],
+      "title": "New cases by Province",
+      "type": "piechart"
+    },
+    {
+      "datasource": {
+        "type": "simpod-json-datasource",
+        "uid": "b04cf133-e1c4-4678-975f-6448401f73c1"
       },
       "fieldConfig": {
         "defaults": {
@@ -384,7 +463,7 @@
             "axisPlacement": "auto",
             "barAlignment": 0,
             "drawStyle": "line",
-            "fillOpacity": 10,
+            "fillOpacity": 0,
             "gradientMode": "none",
             "hideFrom": {
               "legend": false,
@@ -397,8 +476,8 @@
             "scaleDistribution": {
               "type": "linear"
             },
-            "showPoints": "never",
-            "spanNulls": true,
+            "showPoints": "auto",
+            "spanNulls": false,
             "stacking": {
               "group": "A",
               "mode": "none"
@@ -426,12 +505,12 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 9,
-        "w": 19,
-        "x": 0,
-        "y": 10
+        "h": 8,
+        "w": 9,
+        "x": 15,
+        "y": 9
       },
-      "id": 2,
+      "id": 9,
       "options": {
         "legend": {
           "calcs": [],
@@ -444,40 +523,87 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "8.0.6",
       "targets": [
         {
           "datasource": {
-            "type": "grafana-simple-json-datasource",
-            "uid": "PBB404699A8B1E379"
+            "type": "simpod-json-datasource",
+            "uid": "b04cf133-e1c4-4678-975f-6448401f73c1"
           },
-          "hide": false,
+          "editorMode": "code",
+          "payload": "",
           "refId": "A",
-          "target": "vaccinations",
-          "type": "table"
+          "target": "cases-province"
         }
       ],
-      "title": "Vaccinations",
-      "transformations": [
-        {
-          "id": "organize",
-          "options": {
-            "excludeByName": {
-              "booster": true,
-              "booster2": true,
-              "booster3": true
-            },
-            "indexByName": {},
-            "renameByName": {}
-          }
-        }
-      ],
+      "title": "New cases by Province",
       "type": "timeseries"
     },
     {
       "datasource": {
-        "type": "grafana-simple-json-datasource",
-        "uid": "PBB404699A8B1E379"
+        "type": "simpod-json-datasource",
+        "uid": "b04cf133-e1c4-4678-975f-6448401f73c1"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            }
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 3,
+        "x": 0,
+        "y": 17
+      },
+      "id": 11,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "pieType": "pie",
+        "reduceOptions": {
+          "calcs": [
+            "sum"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "simpod-json-datasource",
+            "uid": "b04cf133-e1c4-4678-975f-6448401f73c1"
+          },
+          "editorMode": "code",
+          "payload": "",
+          "refId": "A",
+          "target": "cases-age"
+        }
+      ],
+      "title": "Total cases by Age Group",
+      "type": "piechart"
+    },
+    {
+      "datasource": {
+        "type": "simpod-json-datasource",
+        "uid": "b04cf133-e1c4-4678-975f-6448401f73c1"
       },
       "fieldConfig": {
         "defaults": {
@@ -491,7 +617,7 @@
             "axisPlacement": "auto",
             "barAlignment": 0,
             "drawStyle": "line",
-            "fillOpacity": 32,
+            "fillOpacity": 0,
             "gradientMode": "none",
             "hideFrom": {
               "legend": false,
@@ -504,11 +630,11 @@
             "scaleDistribution": {
               "type": "linear"
             },
-            "showPoints": "never",
+            "showPoints": "auto",
             "spanNulls": false,
             "stacking": {
               "group": "A",
-              "mode": "normal"
+              "mode": "none"
             },
             "thresholdsStyle": {
               "mode": "off"
@@ -533,12 +659,12 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 9,
-        "w": 5,
-        "x": 19,
-        "y": 10
+        "h": 8,
+        "w": 9,
+        "x": 3,
+        "y": 17
       },
-      "id": 42,
+      "id": 10,
       "options": {
         "legend": {
           "calcs": [],
@@ -554,329 +680,34 @@
       "targets": [
         {
           "datasource": {
-            "type": "grafana-simple-json-datasource",
-            "uid": "PBB404699A8B1E379"
+            "type": "simpod-json-datasource",
+            "uid": "b04cf133-e1c4-4678-975f-6448401f73c1"
           },
+          "editorMode": "code",
+          "payload": "",
           "refId": "A",
-          "target": "vacc-manufacturer",
-          "type": "table"
+          "target": "cases-age"
         }
       ],
-      "title": "Vaccinations by Manufacturer",
+      "title": "New cases by Age Group",
       "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "grafana-simple-json-datasource",
-        "uid": "PBB404699A8B1E379"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "decimals": 1,
-          "mappings": [],
-          "max": 1,
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "percentunit"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 6,
-        "x": 0,
-        "y": 19
-      },
-      "id": 18,
-      "options": {
-        "displayMode": "gradient",
-        "minVizHeight": 10,
-        "minVizWidth": 0,
-        "orientation": "horizontal",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showUnfilled": true,
-        "text": {}
-      },
-      "pluginVersion": "9.2.5",
-      "targets": [
-        {
-          "datasource": {
-            "type": "grafana-simple-json-datasource",
-            "uid": "PBB404699A8B1E379"
-          },
-          "hide": false,
-          "refId": "A",
-          "target": "vacc-region-rate-partial",
-          "type": "table"
-        }
-      ],
-      "title": "By Region - Partial",
-      "transformations": [
-        {
-          "id": "organize",
-          "options": {}
-        }
-      ],
-      "type": "bargauge"
-    },
-    {
-      "datasource": {
-        "type": "grafana-simple-json-datasource",
-        "uid": "PBB404699A8B1E379"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "decimals": 1,
-          "mappings": [],
-          "max": 1,
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "percentunit"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 6,
-        "x": 6,
-        "y": 19
-      },
-      "id": 19,
-      "options": {
-        "displayMode": "gradient",
-        "minVizHeight": 10,
-        "minVizWidth": 0,
-        "orientation": "horizontal",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showUnfilled": true,
-        "text": {}
-      },
-      "pluginVersion": "9.2.5",
-      "targets": [
-        {
-          "datasource": {
-            "type": "grafana-simple-json-datasource",
-            "uid": "PBB404699A8B1E379"
-          },
-          "hide": false,
-          "refId": "A",
-          "target": "vacc-region-rate-full",
-          "type": "table"
-        }
-      ],
-      "title": "By Region - Full",
-      "transformations": [
-        {
-          "id": "organize",
-          "options": {}
-        }
-      ],
-      "type": "bargauge"
-    },
-    {
-      "datasource": {
-        "type": "grafana-simple-json-datasource",
-        "uid": "PBB404699A8B1E379"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "decimals": 1,
-          "mappings": [],
-          "max": 1,
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          },
-          "unit": "percentunit"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 6,
-        "x": 12,
-        "y": 19
-      },
-      "id": 16,
-      "options": {
-        "displayMode": "gradient",
-        "minVizHeight": 10,
-        "minVizWidth": 0,
-        "orientation": "horizontal",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showUnfilled": true,
-        "text": {}
-      },
-      "pluginVersion": "9.2.5",
-      "targets": [
-        {
-          "datasource": {
-            "type": "grafana-simple-json-datasource",
-            "uid": "PBB404699A8B1E379"
-          },
-          "hide": false,
-          "refId": "A",
-          "target": "vacc-age-rate-partial",
-          "type": "table"
-        }
-      ],
-      "title": "By Age - Partial",
-      "transformations": [
-        {
-          "id": "organize",
-          "options": {}
-        }
-      ],
-      "type": "bargauge"
-    },
-    {
-      "datasource": {
-        "type": "grafana-simple-json-datasource",
-        "uid": "PBB404699A8B1E379"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "decimals": 1,
-          "mappings": [],
-          "max": 1,
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "percentunit"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 6,
-        "x": 18,
-        "y": 19
-      },
-      "id": 17,
-      "options": {
-        "displayMode": "gradient",
-        "minVizHeight": 10,
-        "minVizWidth": 0,
-        "orientation": "horizontal",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showUnfilled": true,
-        "text": {}
-      },
-      "pluginVersion": "9.2.5",
-      "targets": [
-        {
-          "datasource": {
-            "type": "grafana-simple-json-datasource",
-            "uid": "PBB404699A8B1E379"
-          },
-          "hide": false,
-          "refId": "A",
-          "target": "vacc-age-rate-full",
-          "type": "table"
-        }
-      ],
-      "title": "By Age - Full",
-      "transformations": [
-        {
-          "id": "organize",
-          "options": {}
-        }
-      ],
-      "type": "bargauge"
     }
   ],
   "refresh": "5m",
-  "schemaVersion": 37,
+  "schemaVersion": 38,
   "style": "dark",
   "tags": [],
   "templating": {
     "list": []
   },
   "time": {
-    "from": "now-6M",
+    "from": "now-2y",
     "to": "now"
   },
   "timepicker": {},
   "timezone": "",
-  "title": "Sciensano - Vaccinations",
-  "uid": "KU9aRfgRz",
-  "version": 3,
+  "title": "Sciensano - Cases",
+  "uid": "6lJUW_O7k",
+  "version": 8,
   "weekStart": ""
 }

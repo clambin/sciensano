@@ -7,7 +7,7 @@ import (
 	"github.com/clambin/go-common/taskmanager/httpserver"
 	promserver "github.com/clambin/go-common/taskmanager/prometheus"
 	"github.com/clambin/sciensano/demographics"
-	"github.com/clambin/sciensano/simplejsonserver"
+	"github.com/clambin/sciensano/server"
 	"github.com/clambin/sciensano/version"
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/exp/slog"
@@ -35,7 +35,7 @@ func main() {
 
 	slog.Info("Reporter API starting", "version", version.BuildVersion)
 
-	s := simplejsonserver.New(&demographics.Server{
+	s := server.New(&demographics.Server{
 		Path:     *demographicsPath,
 		Interval: 24 * time.Hour,
 	})
@@ -44,7 +44,7 @@ func main() {
 	tm := taskmanager.New(
 		promserver.New(promserver.WithAddr(*prometheusAddr)),
 		s,
-		httpserver.New(*simpleJSONAddr, s.Server),
+		httpserver.New(*simpleJSONAddr, s.JSONServer),
 	)
 
 	ctx, done := signal.NotifyContext(context.Background(), os.Interrupt)
