@@ -10,7 +10,7 @@
         "enable": true,
         "hide": true,
         "iconColor": "rgba(0, 211, 255, 1)",
-        "name": "Annotations & Alerts",
+        "name": "Annotations \u0026 Alerts",
         "target": {
           "limit": 100,
           "matchAny": false,
@@ -24,14 +24,14 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 2346,
+  "id": 3840,
   "links": [],
   "liveNow": false,
   "panels": [
     {
       "datasource": {
-        "type": "grafana-simple-json-datasource",
-        "uid": "PBB404699A8B1E379"
+        "type": "simpod-json-datasource",
+        "uid": "b04cf133-e1c4-4678-975f-6448401f73c1"
       },
       "fieldConfig": {
         "defaults": {
@@ -107,12 +107,13 @@
       "targets": [
         {
           "datasource": {
-            "type": "grafana-simple-json-datasource",
-            "uid": "PBB404699A8B1E379"
+            "type": "simpod-json-datasource",
+            "uid": "b04cf133-e1c4-4678-975f-6448401f73c1"
           },
+          "editorMode": "code",
+          "payload": "",
           "refId": "A",
-          "target": "mortality",
-          "type": "table"
+          "target": "mortality"
         }
       ],
       "title": "New Deaths",
@@ -120,8 +121,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-simple-json-datasource",
-        "uid": "PBB404699A8B1E379"
+        "type": "simpod-json-datasource",
+        "uid": "b04cf133-e1c4-4678-975f-6448401f73c1"
       },
       "fieldConfig": {
         "defaults": {
@@ -168,12 +169,13 @@
       "targets": [
         {
           "datasource": {
-            "type": "grafana-simple-json-datasource",
-            "uid": "PBB404699A8B1E379"
+            "type": "simpod-json-datasource",
+            "uid": "b04cf133-e1c4-4678-975f-6448401f73c1"
           },
+          "editorMode": "code",
+          "payload": "",
           "refId": "A",
-          "target": "mortality-age",
-          "type": "table"
+          "target": "mortality-age"
         }
       ],
       "title": "Total deaths by Age Group",
@@ -181,8 +183,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-simple-json-datasource",
-        "uid": "PBB404699A8B1E379"
+        "type": "simpod-json-datasource",
+        "uid": "b04cf133-e1c4-4678-975f-6448401f73c1"
       },
       "fieldConfig": {
         "defaults": {
@@ -258,12 +260,13 @@
       "targets": [
         {
           "datasource": {
-            "type": "grafana-simple-json-datasource",
-            "uid": "PBB404699A8B1E379"
+            "type": "simpod-json-datasource",
+            "uid": "b04cf133-e1c4-4678-975f-6448401f73c1"
           },
+          "editorMode": "code",
+          "payload": "",
           "refId": "A",
-          "target": "mortality-age",
-          "type": "table"
+          "target": "mortality-age"
         }
       ],
       "title": "New deaths by Age Group",
@@ -271,8 +274,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-simple-json-datasource",
-        "uid": "PBB404699A8B1E379"
+        "type": "simpod-json-datasource",
+        "uid": "b04cf133-e1c4-4678-975f-6448401f73c1"
       },
       "fieldConfig": {
         "defaults": {
@@ -319,12 +322,13 @@
       "targets": [
         {
           "datasource": {
-            "type": "grafana-simple-json-datasource",
-            "uid": "PBB404699A8B1E379"
+            "type": "simpod-json-datasource",
+            "uid": "b04cf133-e1c4-4678-975f-6448401f73c1"
           },
+          "editorMode": "code",
+          "payload": "",
           "refId": "A",
-          "target": "mortality-region",
-          "type": "table"
+          "target": "mortality-region"
         }
       ],
       "title": "Total deaths by Region",
@@ -332,8 +336,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-simple-json-datasource",
-        "uid": "PBB404699A8B1E379"
+        "type": "simpod-json-datasource",
+        "uid": "b04cf133-e1c4-4678-975f-6448401f73c1"
       },
       "fieldConfig": {
         "defaults": {
@@ -409,12 +413,13 @@
       "targets": [
         {
           "datasource": {
-            "type": "grafana-simple-json-datasource",
-            "uid": "PBB404699A8B1E379"
+            "type": "simpod-json-datasource",
+            "uid": "b04cf133-e1c4-4678-975f-6448401f73c1"
           },
+          "editorMode": "code",
+          "payload": "",
           "refId": "A",
-          "target": "mortality-region",
-          "type": "table"
+          "target": "mortality-region"
         }
       ],
       "title": "New deaths by Region",
@@ -422,7 +427,7 @@
     }
   ],
   "refresh": "5m",
-  "schemaVersion": 37,
+  "schemaVersion": 38,
   "style": "dark",
   "tags": [],
   "templating": {
@@ -436,6 +441,6 @@
   "timezone": "",
   "title": "Sciensano - Mortality",
   "uid": "Q5QPJZFnk",
-  "version": 1,
+  "version": 9,
   "weekStart": ""
 }

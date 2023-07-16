@@ -10,7 +10,7 @@
         "enable": true,
         "hide": true,
         "iconColor": "rgba(0, 211, 255, 1)",
-        "name": "Annotations & Alerts",
+        "name": "Annotations \u0026 Alerts",
         "target": {
           "limit": 100,
           "matchAny": false,
@@ -24,7 +24,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 2347,
+  "id": 3841,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -41,8 +41,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-simple-json-datasource",
-        "uid": "PBB404699A8B1E379"
+        "type": "simpod-json-datasource",
+        "uid": "b04cf133-e1c4-4678-975f-6448401f73c1"
       },
       "fieldConfig": {
         "defaults": {
@@ -119,12 +119,13 @@
       "targets": [
         {
           "datasource": {
-            "type": "grafana-simple-json-datasource",
-            "uid": "PBB404699A8B1E379"
+            "type": "simpod-json-datasource",
+            "uid": "b04cf133-e1c4-4678-975f-6448401f73c1"
           },
+          "editorMode": "code",
+          "payload": "",
           "refId": "A",
-          "target": "vaccinations",
-          "type": "timeserie"
+          "target": "vaccinations"
         }
       ],
       "title": "Waves",
@@ -145,8 +146,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-simple-json-datasource",
-        "uid": "PBB404699A8B1E379"
+        "type": "simpod-json-datasource",
+        "uid": "b04cf133-e1c4-4678-975f-6448401f73c1"
       },
       "fieldConfig": {
         "defaults": {
@@ -225,13 +226,13 @@
       "targets": [
         {
           "datasource": {
-            "type": "grafana-simple-json-datasource",
-            "uid": "PBB404699A8B1E379"
+            "type": "simpod-json-datasource",
+            "uid": "b04cf133-e1c4-4678-975f-6448401f73c1"
           },
-          "hide": false,
+          "editorMode": "code",
+          "payload": "",
           "refId": "A",
-          "target": "vacc-region",
-          "type": "table"
+          "target": "vacc-region"
         }
       ],
       "title": "By Region",
@@ -239,8 +240,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-simple-json-datasource",
-        "uid": "PBB404699A8B1E379"
+        "type": "simpod-json-datasource",
+        "uid": "b04cf133-e1c4-4678-975f-6448401f73c1"
       },
       "fieldConfig": {
         "defaults": {
@@ -318,13 +319,13 @@
       "targets": [
         {
           "datasource": {
-            "type": "grafana-simple-json-datasource",
-            "uid": "PBB404699A8B1E379"
+            "type": "simpod-json-datasource",
+            "uid": "b04cf133-e1c4-4678-975f-6448401f73c1"
           },
-          "hide": false,
+          "editorMode": "code",
+          "payload": "",
           "refId": "A",
-          "target": "vacc-age",
-          "type": "table"
+          "target": "vacc-age"
         }
       ],
       "title": "By Age",
@@ -369,8 +370,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-simple-json-datasource",
-        "uid": "PBB404699A8B1E379"
+        "type": "simpod-json-datasource",
+        "uid": "b04cf133-e1c4-4678-975f-6448401f73c1"
       },
       "fieldConfig": {
         "defaults": {
@@ -427,7 +428,7 @@
       },
       "gridPos": {
         "h": 9,
-        "w": 19,
+        "w": 14,
         "x": 0,
         "y": 10
       },
@@ -448,13 +449,13 @@
       "targets": [
         {
           "datasource": {
-            "type": "grafana-simple-json-datasource",
-            "uid": "PBB404699A8B1E379"
+            "type": "simpod-json-datasource",
+            "uid": "b04cf133-e1c4-4678-975f-6448401f73c1"
           },
-          "hide": false,
+          "editorMode": "code",
+          "payload": "",
           "refId": "A",
-          "target": "vaccinations",
-          "type": "table"
+          "target": "vaccinations"
         }
       ],
       "title": "Vaccinations",
@@ -476,8 +477,70 @@
     },
     {
       "datasource": {
-        "type": "grafana-simple-json-datasource",
-        "uid": "PBB404699A8B1E379"
+        "type": "simpod-json-datasource",
+        "uid": "b04cf133-e1c4-4678-975f-6448401f73c1"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            }
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 5,
+        "x": 14,
+        "y": 10
+      },
+      "id": 48,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "pieType": "pie",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "simpod-json-datasource",
+            "uid": "b04cf133-e1c4-4678-975f-6448401f73c1"
+          },
+          "editorMode": "code",
+          "payload": "",
+          "refId": "A",
+          "target": "vacc-manufacturer"
+        }
+      ],
+      "title": "Vaccinations By Manufacturer",
+      "type": "piechart"
+    },
+    {
+      "datasource": {
+        "type": "simpod-json-datasource",
+        "uid": "b04cf133-e1c4-4678-975f-6448401f73c1"
       },
       "fieldConfig": {
         "defaults": {
@@ -554,12 +617,13 @@
       "targets": [
         {
           "datasource": {
-            "type": "grafana-simple-json-datasource",
-            "uid": "PBB404699A8B1E379"
+            "type": "simpod-json-datasource",
+            "uid": "b04cf133-e1c4-4678-975f-6448401f73c1"
           },
+          "editorMode": "code",
+          "payload": "",
           "refId": "A",
-          "target": "vacc-manufacturer",
-          "type": "table"
+          "target": "vacc-manufacturer"
         }
       ],
       "title": "Vaccinations by Manufacturer",
@@ -567,8 +631,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-simple-json-datasource",
-        "uid": "PBB404699A8B1E379"
+        "type": "simpod-json-datasource",
+        "uid": "b04cf133-e1c4-4678-975f-6448401f73c1"
       },
       "fieldConfig": {
         "defaults": {
@@ -616,19 +680,20 @@
           "values": false
         },
         "showUnfilled": true,
-        "text": {}
+        "text": {},
+        "valueMode": "color"
       },
-      "pluginVersion": "9.2.5",
+      "pluginVersion": "10.0.2",
       "targets": [
         {
           "datasource": {
-            "type": "grafana-simple-json-datasource",
-            "uid": "PBB404699A8B1E379"
+            "type": "simpod-json-datasource",
+            "uid": "b04cf133-e1c4-4678-975f-6448401f73c1"
           },
-          "hide": false,
+          "editorMode": "code",
+          "payload": "",
           "refId": "A",
-          "target": "vacc-region-rate-partial",
-          "type": "table"
+          "target": "vacc-region-rate-partial"
         }
       ],
       "title": "By Region - Partial",
@@ -648,8 +713,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-simple-json-datasource",
-        "uid": "PBB404699A8B1E379"
+        "type": "simpod-json-datasource",
+        "uid": "b04cf133-e1c4-4678-975f-6448401f73c1"
       },
       "fieldConfig": {
         "defaults": {
@@ -697,19 +762,20 @@
           "values": false
         },
         "showUnfilled": true,
-        "text": {}
+        "text": {},
+        "valueMode": "color"
       },
-      "pluginVersion": "9.2.5",
+      "pluginVersion": "10.0.2",
       "targets": [
         {
           "datasource": {
-            "type": "grafana-simple-json-datasource",
-            "uid": "PBB404699A8B1E379"
+            "type": "simpod-json-datasource",
+            "uid": "b04cf133-e1c4-4678-975f-6448401f73c1"
           },
-          "hide": false,
+          "editorMode": "code",
+          "payload": "",
           "refId": "A",
-          "target": "vacc-region-rate-full",
-          "type": "table"
+          "target": "vacc-region-rate-full"
         }
       ],
       "title": "By Region - Full",
@@ -729,8 +795,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-simple-json-datasource",
-        "uid": "PBB404699A8B1E379"
+        "type": "simpod-json-datasource",
+        "uid": "b04cf133-e1c4-4678-975f-6448401f73c1"
       },
       "fieldConfig": {
         "defaults": {
@@ -774,19 +840,20 @@
           "values": false
         },
         "showUnfilled": true,
-        "text": {}
+        "text": {},
+        "valueMode": "color"
       },
-      "pluginVersion": "9.2.5",
+      "pluginVersion": "10.0.2",
       "targets": [
         {
           "datasource": {
-            "type": "grafana-simple-json-datasource",
-            "uid": "PBB404699A8B1E379"
+            "type": "simpod-json-datasource",
+            "uid": "b04cf133-e1c4-4678-975f-6448401f73c1"
           },
-          "hide": false,
+          "editorMode": "code",
+          "payload": "",
           "refId": "A",
-          "target": "vacc-age-rate-partial",
-          "type": "table"
+          "target": "vacc-age-rate-partial"
         }
       ],
       "title": "By Age - Partial",
@@ -800,8 +867,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-simple-json-datasource",
-        "uid": "PBB404699A8B1E379"
+        "type": "simpod-json-datasource",
+        "uid": "b04cf133-e1c4-4678-975f-6448401f73c1"
       },
       "fieldConfig": {
         "defaults": {
@@ -849,19 +916,20 @@
           "values": false
         },
         "showUnfilled": true,
-        "text": {}
+        "text": {},
+        "valueMode": "color"
       },
-      "pluginVersion": "9.2.5",
+      "pluginVersion": "10.0.2",
       "targets": [
         {
           "datasource": {
-            "type": "grafana-simple-json-datasource",
-            "uid": "PBB404699A8B1E379"
+            "type": "simpod-json-datasource",
+            "uid": "b04cf133-e1c4-4678-975f-6448401f73c1"
           },
-          "hide": false,
+          "editorMode": "code",
+          "payload": "",
           "refId": "A",
-          "target": "vacc-age-rate-full",
-          "type": "table"
+          "target": "vacc-age-rate-full"
         }
       ],
       "title": "By Age - Full",
@@ -875,7 +943,7 @@
     }
   ],
   "refresh": "5m",
-  "schemaVersion": 37,
+  "schemaVersion": 38,
   "style": "dark",
   "tags": [],
   "templating": {
@@ -889,6 +957,6 @@
   "timezone": "",
   "title": "Sciensano - Vaccinations",
   "uid": "KU9aRfgRz",
-  "version": 4,
+  "version": 10,
   "weekStart": ""
 }
