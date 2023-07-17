@@ -19,14 +19,10 @@ import (
 // Server groups Grafana JSON API handlers that retrieve Belgium COVID-19-related statistics
 type Server struct {
 	JSONServer   *grafanaJSONServer.Server
-	handlers     map[string]handler
+	dataSources  map[string]grafanaJSONServer.DataSource
 	apiCache     *cache.SciensanoCache
 	reportsCache *reports.Cache
 	Demographics demographics.Fetcher
-}
-
-type handler interface {
-	query(ctx context.Context, target string, request grafanaJSONServer.QueryRequest) (grafanaJSONServer.QueryResponse, error)
 }
 
 var _ prometheus.Collector = &Server{}
@@ -38,7 +34,26 @@ func New(f demographics.Fetcher) *Server {
 		Demographics: f,
 	}
 
-	s.handlers = map[string]handler{
+	s.dataSources = s.buildDataSources()
+
+	options := []grafanaJSONServer.Option{
+		grafanaJSONServer.WithHandlerFunc(http.MethodGet, "/health", s.Health),
+		grafanaJSONServer.WithPrometheusQueryMetrics("sciensano", "", "sciensano"),
+	}
+
+	for _, dataSource := range s.dataSources {
+		options = append(options,
+			grafanaJSONServer.WithDatasource(dataSource),
+		)
+	}
+
+	s.JSONServer = grafanaJSONServer.NewServer(options...)
+
+	return s
+}
+
+func (s *Server) buildDataSources() map[string]grafanaJSONServer.DataSource {
+	handlers := map[string]grafanaJSONServer.Query{
 		"cases":                     Handler{Fetch: s.cases, Mode: sciensano.Total},
 		"cases-province":            Handler{Fetch: s.cases, Mode: sciensano.ByProvince},
 		"cases-region":              Handler{Fetch: s.cases, Mode: sciensano.ByRegion},
@@ -62,20 +77,11 @@ func New(f demographics.Fetcher) *Server {
 		"vacc-region-rate-full":     Handler2{Fetch: s.vaccinationFilteredRate, Mode: sciensano.ByRegion, DoseType: sciensano.Full, Accumulate: true},
 	}
 
-	options := []grafanaJSONServer.Option{
-		grafanaJSONServer.WithHandlerFunc(http.MethodGet, "/health", s.Health),
-		grafanaJSONServer.WithPrometheusQueryMetrics("sciensano", "", "sciensano"),
+	dataSources := make(map[string]grafanaJSONServer.DataSource)
+	for name, handler := range handlers {
+		dataSources[name] = grafanaJSONServer.DataSource{Metric: grafanaJSONServer.Metric{Value: name}, Query: handler}
 	}
-
-	for metric, h := range s.handlers {
-		options = append(options,
-			grafanaJSONServer.WithMetric(grafanaJSONServer.Metric{Value: metric}, h.query, nil),
-		)
-	}
-
-	s.JSONServer = grafanaJSONServer.NewServer(options...)
-
-	return s
+	return dataSources
 }
 
 // Run starts the supporting components
@@ -88,10 +94,10 @@ func (s *Server) Run(ctx context.Context) (err error) {
 
 func (s *Server) Health(w http.ResponseWriter, _ *http.Request) {
 	response := struct {
-		Handlers      int
+		DataSources   int
 		ReporterCache map[string]int
 	}{
-		Handlers:      len(s.handlers),
+		DataSources:   len(s.dataSources),
 		ReporterCache: s.reportsCache.Stats(),
 	}
 

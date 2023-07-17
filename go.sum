@@ -18,6 +18,8 @@ github.com/clambin/grafana-json-server v0.1.1 h1:uourPc7EFtMdQIqrxAk8wHay8wSWXwJ
 github.com/clambin/grafana-json-server v0.1.1/go.mod h1:FGs9umneZDbTOsElly/bNmaUsduuITrxDv1K82u27rQ=
 github.com/clambin/grafana-json-server v0.2.0 h1:qPzZGkq7PUG4APHoIz6mMJ5zfPLdlRBCHJ/X1+j2g68=
 github.com/clambin/grafana-json-server v0.2.0/go.mod h1:ucDge03RFSaJBHwV1UDjNEZloVDe8zEJJuGcU6Uz574=
+github.com/clambin/grafana-json-server v0.2.1 h1:1BMfnUV42hvf6om1BZh6cKALzJJy1D/L2yUmDm2w5Y8=
+github.com/clambin/grafana-json-server v0.2.1/go.mod h1:ucDge03RFSaJBHwV1UDjNEZloVDe8zEJJuGcU6Uz574=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=

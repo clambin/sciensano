@@ -8,7 +8,7 @@ import (
 	"github.com/clambin/sciensano/cache/sciensano"
 )
 
-var _ handler = Handler{}
+var _ grafanaJSONServer.Query = Handler{}
 
 type Handler struct {
 	Fetch      func(context.Context, sciensano.SummaryColumn) (*tabulator.Tabulator, error)
@@ -16,7 +16,7 @@ type Handler struct {
 	Accumulate bool
 }
 
-func (h Handler) query(ctx context.Context, _ string, req grafanaJSONServer.QueryRequest) (grafanaJSONServer.QueryResponse, error) {
+func (h Handler) Query(ctx context.Context, _ string, req grafanaJSONServer.QueryRequest) (grafanaJSONServer.QueryResponse, error) {
 	records, err := h.Fetch(ctx, h.Mode)
 	if err != nil {
 		return nil, fmt.Errorf("fetch failed: %w", err)
@@ -29,7 +29,7 @@ func (h Handler) query(ctx context.Context, _ string, req grafanaJSONServer.Quer
 	return createTableResponse(records), nil
 }
 
-var _ handler = Handler2{}
+var _ grafanaJSONServer.Query = Handler2{}
 
 type Handler2 struct {
 	Fetch      func(context.Context, sciensano.SummaryColumn, sciensano.DoseType) (*tabulator.Tabulator, error)
@@ -38,7 +38,7 @@ type Handler2 struct {
 	Accumulate bool
 }
 
-func (h Handler2) query(ctx context.Context, _ string, req grafanaJSONServer.QueryRequest) (grafanaJSONServer.QueryResponse, error) {
+func (h Handler2) Query(ctx context.Context, _ string, req grafanaJSONServer.QueryRequest) (grafanaJSONServer.QueryResponse, error) {
 	records, err := h.Fetch(ctx, h.Mode, h.DoseType)
 	if err != nil {
 		return nil, fmt.Errorf("fetch failed: %w", err)

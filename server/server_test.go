@@ -38,14 +38,14 @@ func TestNew(t *testing.T) {
 	req := grafanaJSONServer.QueryRequest{Range: grafanaJSONServer.Range{To: time.Now()}}
 
 	wg := sync.WaitGroup{}
-	wg.Add(len(h.handlers))
+	wg.Add(len(h.dataSources))
 	var count int
-	for target, h := range h.handlers {
+	for target, h := range h.dataSources {
 		t.Run(target, func(t *testing.T) {
 			count++
 			//go func(handler simplejson.Handler, target string, counter int) {
 			//t.Logf("%2d: %s started", count, target)
-			resp, err := h.query(ctx, target, req)
+			resp, err := h.Query.Query(ctx, target, req)
 			assert.NotZero(t, len(resp.(grafanaJSONServer.TableResponse).Columns[0].Data.(grafanaJSONServer.TimeColumn)))
 			//t.Logf("%2d: %s done. err: %v", count, target, err)
 			assert.NoError(t, err, target, target)
@@ -58,7 +58,7 @@ func TestNew(t *testing.T) {
 	b := httptest.NewRecorder()
 	h.Health(b, nil)
 	assert.Equal(t, http.StatusOK, b.Code)
-	assert.Contains(t, b.Body.String(), `"Handlers": `)
+	assert.Contains(t, b.Body.String(), `"DataSources": `)
 	assert.Contains(t, b.Body.String(), `"ReporterCache": `)
 }
 
@@ -79,7 +79,7 @@ func BenchmarkVaccinations(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, err := h.handlers["vacc-age-rate-full"].query(ctx, "", req)
+		_, err := h.dataSources["vacc-age-rate-full"].Query.Query(ctx, "", req)
 		if err != nil {
 			b.Fatal(err)
 		}
