@@ -29,53 +29,39 @@ var _ prometheus.Collector = &Server{}
 
 func New(f demographics.Fetcher) *Server {
 	s := &Server{
+		handlers:     make(map[string]grafanaJSONServer.Handler),
 		apiCache:     cache.NewSciensanoCache(""),
 		reportsCache: reports.NewCache(15 * time.Minute),
 		Demographics: f,
 	}
-
-	s.handlers = s.buildHandlers()
 
 	options := []grafanaJSONServer.Option{
 		grafanaJSONServer.WithHTTPHandler(http.MethodGet, "/health", http.HandlerFunc(s.Health)),
 		grafanaJSONServer.WithPrometheusQueryMetrics("sciensano", "", "sciensano"),
 	}
 
-	for target, handlers := range s.handlers {
-		options = append(options,
-			grafanaJSONServer.WithHandler(target, handlers),
-		)
+	for _, h := range []*Handler{
+		{Fetch: s.cases, Metric: newMetric("cases", total, byProvince, byRegion, byAgeGroup)},
+		{Fetch: s.hospitalisations, Metric: newMetric("hospitalisations", total, byRegion, byProvince, byRegion)},
+		{Fetch: s.mortalities, Metric: newMetric("mortality", total, byRegion, byAgeGroup)},
+		{Fetch: s.testResults, Metric: newMetric("tests", total)},
+		{Fetch: s.vaccinations, Accumulate: true, Metric: newMetric("vaccinations", total, byAgeGroup, byRegion, byManufacturer)},
+		{Fetch: s.vaccinationRate, Accumulate: true, Metric: newMetric("vaccinations-rate", byAgeGroup, byRegion)},
+	} {
+		s.handlers[h.Metric.Value] = h
+		options = append(options, grafanaJSONServer.WithMetric(h.Metric, h, nil))
+
+	}
+	for _, h := range []*Handler2{
+		{Fetch: s.vaccinationFilteredRate, Accumulate: true, DoseType: sciensano.Partial, Metric: newMetric("vaccinations-rate-partial", byAgeGroup, byRegion)},
+		{Fetch: s.vaccinationFilteredRate, Accumulate: true, DoseType: sciensano.Full, Metric: newMetric("vaccinations-rate-full", byAgeGroup, byRegion)},
+	} {
+		s.handlers[h.Metric.Value] = h
+		options = append(options, grafanaJSONServer.WithMetric(h.Metric, h, nil))
 	}
 
 	s.JSONServer = grafanaJSONServer.NewServer(options...)
-
 	return s
-}
-
-func (s *Server) buildHandlers() map[string]grafanaJSONServer.Handler {
-	return map[string]grafanaJSONServer.Handler{
-		"cases":                     Handler{Fetch: s.cases, Mode: sciensano.Total},
-		"cases-province":            Handler{Fetch: s.cases, Mode: sciensano.ByProvince},
-		"cases-region":              Handler{Fetch: s.cases, Mode: sciensano.ByRegion},
-		"cases-age":                 Handler{Fetch: s.cases, Mode: sciensano.ByAgeGroup},
-		"hospitalisations":          Handler{Fetch: s.hospitalisations, Mode: sciensano.Total},
-		"hospitalisations-region":   Handler{Fetch: s.hospitalisations, Mode: sciensano.ByRegion},
-		"hospitalisations-province": Handler{Fetch: s.hospitalisations, Mode: sciensano.ByProvince},
-		"mortality":                 Handler{Fetch: s.mortalities, Mode: sciensano.Total},
-		"mortality-region":          Handler{Fetch: s.mortalities, Mode: sciensano.ByRegion},
-		"mortality-age":             Handler{Fetch: s.mortalities, Mode: sciensano.ByAgeGroup},
-		"tests":                     Handler{Fetch: s.testResults, Mode: sciensano.Total},
-		"vaccinations":              Handler{Fetch: s.vaccinations, Mode: sciensano.Total, Accumulate: true},
-		"vacc-age":                  Handler{Fetch: s.vaccinations, Mode: sciensano.ByAgeGroup, Accumulate: false},
-		"vacc-region":               Handler{Fetch: s.vaccinations, Mode: sciensano.ByRegion, Accumulate: false},
-		"vacc-manufacturer":         Handler{Fetch: s.vaccinations, Mode: sciensano.ByManufacturer, Accumulate: true},
-		"vacc-region-rate":          Handler{Fetch: s.vaccinationRate, Mode: sciensano.ByRegion, Accumulate: true},
-		"vacc-age-rate":             Handler{Fetch: s.vaccinationRate, Mode: sciensano.ByAgeGroup, Accumulate: true},
-		"vacc-age-rate-partial":     Handler2{Fetch: s.vaccinationFilteredRate, Mode: sciensano.ByAgeGroup, DoseType: sciensano.Partial, Accumulate: true},
-		"vacc-age-rate-full":        Handler2{Fetch: s.vaccinationFilteredRate, Mode: sciensano.ByAgeGroup, DoseType: sciensano.Full, Accumulate: true},
-		"vacc-region-rate-partial":  Handler2{Fetch: s.vaccinationFilteredRate, Mode: sciensano.ByRegion, DoseType: sciensano.Partial, Accumulate: true},
-		"vacc-region-rate-full":     Handler2{Fetch: s.vaccinationFilteredRate, Mode: sciensano.ByRegion, DoseType: sciensano.Full, Accumulate: true},
-	}
 }
 
 // Run starts the supporting components
@@ -211,7 +197,7 @@ func prorateFigures(d *tabulator.Tabulator, groups map[string]int) *tabulator.Ta
 		for index, oldValue := range values {
 			var newValue float64
 			figure, ok := groups[column]
-			if ok {
+			if ok && figure != 0 {
 				newValue = oldValue / float64(figure)
 			}
 			d.Set(timestamps[index], column, newValue)

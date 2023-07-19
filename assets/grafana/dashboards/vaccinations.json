@@ -10,7 +10,7 @@
         "enable": true,
         "hide": true,
         "iconColor": "rgba(0, 211, 255, 1)",
-        "name": "Annotations \u0026 Alerts",
+        "name": "Annotations & Alerts",
         "target": {
           "limit": 100,
           "matchAny": false,
@@ -122,8 +122,10 @@
             "type": "simpod-json-datasource",
             "uid": "b04cf133-e1c4-4678-975f-6448401f73c1"
           },
-          "editorMode": "code",
-          "payload": "",
+          "editorMode": "builder",
+          "payload": {
+            "summary": "Total"
+          },
           "refId": "A",
           "target": "vaccinations"
         }
@@ -229,10 +231,12 @@
             "type": "simpod-json-datasource",
             "uid": "b04cf133-e1c4-4678-975f-6448401f73c1"
           },
-          "editorMode": "code",
-          "payload": "",
+          "editorMode": "builder",
+          "payload": {
+            "summary": "ByRegion"
+          },
           "refId": "A",
-          "target": "vacc-region"
+          "target": "vaccinations"
         }
       ],
       "title": "By Region",
@@ -322,10 +326,12 @@
             "type": "simpod-json-datasource",
             "uid": "b04cf133-e1c4-4678-975f-6448401f73c1"
           },
-          "editorMode": "code",
-          "payload": "",
+          "editorMode": "builder",
+          "payload": {
+            "summary": "ByAgeGroup"
+          },
           "refId": "A",
-          "target": "vacc-age"
+          "target": "vaccinations"
         }
       ],
       "title": "By Age",
@@ -452,8 +458,10 @@
             "type": "simpod-json-datasource",
             "uid": "b04cf133-e1c4-4678-975f-6448401f73c1"
           },
-          "editorMode": "code",
-          "payload": "",
+          "editorMode": "builder",
+          "payload": {
+            "summary": "Total"
+          },
           "refId": "A",
           "target": "vaccinations"
         }
@@ -528,10 +536,12 @@
             "type": "simpod-json-datasource",
             "uid": "b04cf133-e1c4-4678-975f-6448401f73c1"
           },
-          "editorMode": "code",
-          "payload": "",
+          "editorMode": "builder",
+          "payload": {
+            "summary": "ByManufacturer"
+          },
           "refId": "A",
-          "target": "vacc-manufacturer"
+          "target": "vaccinations"
         }
       ],
       "title": "Vaccinations By Manufacturer",
@@ -620,10 +630,12 @@
             "type": "simpod-json-datasource",
             "uid": "b04cf133-e1c4-4678-975f-6448401f73c1"
           },
-          "editorMode": "code",
-          "payload": "",
+          "editorMode": "builder",
+          "payload": {
+            "summary": "ByManufacturer"
+          },
           "refId": "A",
-          "target": "vacc-manufacturer"
+          "target": "vaccinations"
         }
       ],
       "title": "Vaccinations by Manufacturer",
@@ -690,10 +702,12 @@
             "type": "simpod-json-datasource",
             "uid": "b04cf133-e1c4-4678-975f-6448401f73c1"
           },
-          "editorMode": "code",
-          "payload": "",
+          "editorMode": "builder",
+          "payload": {
+            "summary": "ByRegion"
+          },
           "refId": "A",
-          "target": "vacc-region-rate-partial"
+          "target": "vaccinations-rate-partial"
         }
       ],
       "title": "By Region - Partial",
@@ -772,10 +786,12 @@
             "type": "simpod-json-datasource",
             "uid": "b04cf133-e1c4-4678-975f-6448401f73c1"
           },
-          "editorMode": "code",
-          "payload": "",
+          "editorMode": "builder",
+          "payload": {
+            "summary": "ByRegion"
+          },
           "refId": "A",
-          "target": "vacc-region-rate-full"
+          "target": "vaccinations-rate-full"
         }
       ],
       "title": "By Region - Full",
@@ -850,10 +866,12 @@
             "type": "simpod-json-datasource",
             "uid": "b04cf133-e1c4-4678-975f-6448401f73c1"
           },
-          "editorMode": "code",
-          "payload": "",
+          "editorMode": "builder",
+          "payload": {
+            "summary": "ByAgeGroup"
+          },
           "refId": "A",
-          "target": "vacc-age-rate-partial"
+          "target": "vaccinations-rate-partial"
         }
       ],
       "title": "By Age - Partial",
@@ -926,10 +944,12 @@
             "type": "simpod-json-datasource",
             "uid": "b04cf133-e1c4-4678-975f-6448401f73c1"
           },
-          "editorMode": "code",
-          "payload": "",
+          "editorMode": "builder",
+          "payload": {
+            "summary": "ByAgeGroup"
+          },
           "refId": "A",
-          "target": "vacc-age-rate-full"
+          "target": "vaccinations-rate-full"
         }
       ],
       "title": "By Age - Full",
@@ -957,6 +977,6 @@
   "timezone": "",
   "title": "Sciensano - Vaccinations",
   "uid": "KU9aRfgRz",
-  "version": 10,
+  "version": 15,
   "weekStart": ""
 }

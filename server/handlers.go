@@ -11,13 +11,17 @@ import (
 var _ grafanaJSONServer.Handler = Handler{}
 
 type Handler struct {
-	Fetch      func(context.Context, sciensano.SummaryColumn) (*tabulator.Tabulator, error)
-	Mode       sciensano.SummaryColumn
+	Fetch func(context.Context, sciensano.SummaryColumn) (*tabulator.Tabulator, error)
+	grafanaJSONServer.Metric
 	Accumulate bool
 }
 
-func (h Handler) Query(ctx context.Context, _ string, req grafanaJSONServer.QueryRequest) (grafanaJSONServer.QueryResponse, error) {
-	records, err := h.Fetch(ctx, h.Mode)
+func (h Handler) Query(ctx context.Context, target string, request grafanaJSONServer.QueryRequest) (grafanaJSONServer.QueryResponse, error) {
+	mode, err := getSummaryMode(target, request)
+	if err != nil {
+		return nil, err
+	}
+	records, err := h.Fetch(ctx, mode)
 	if err != nil {
 		return nil, fmt.Errorf("fetch failed: %w", err)
 	}
@@ -25,21 +29,25 @@ func (h Handler) Query(ctx context.Context, _ string, req grafanaJSONServer.Quer
 	if h.Accumulate {
 		records.Accumulate()
 	}
-	records.Filter(req.Range.From, req.Range.To)
+	records.Filter(request.Range.From, request.Range.To)
 	return createTableResponse(records), nil
 }
 
 var _ grafanaJSONServer.Handler = Handler2{}
 
 type Handler2 struct {
-	Fetch      func(context.Context, sciensano.SummaryColumn, sciensano.DoseType) (*tabulator.Tabulator, error)
-	Mode       sciensano.SummaryColumn
+	Fetch func(context.Context, sciensano.SummaryColumn, sciensano.DoseType) (*tabulator.Tabulator, error)
+	grafanaJSONServer.Metric
 	DoseType   sciensano.DoseType
 	Accumulate bool
 }
 
-func (h Handler2) Query(ctx context.Context, _ string, req grafanaJSONServer.QueryRequest) (grafanaJSONServer.QueryResponse, error) {
-	records, err := h.Fetch(ctx, h.Mode, h.DoseType)
+func (h Handler2) Query(ctx context.Context, target string, request grafanaJSONServer.QueryRequest) (grafanaJSONServer.QueryResponse, error) {
+	mode, err := getSummaryMode(target, request)
+	if err != nil {
+		return nil, err
+	}
+	records, err := h.Fetch(ctx, mode, h.DoseType)
 	if err != nil {
 		return nil, fmt.Errorf("fetch failed: %w", err)
 	}
@@ -47,7 +55,7 @@ func (h Handler2) Query(ctx context.Context, _ string, req grafanaJSONServer.Que
 	if h.Accumulate {
 		records.Accumulate()
 	}
-	records.Filter(req.Range.From, req.Range.To)
+	records.Filter(request.Range.From, request.Range.To)
 	return createTableResponse(records), nil
 }
 
