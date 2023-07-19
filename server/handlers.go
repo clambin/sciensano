@@ -8,7 +8,7 @@ import (
 	"github.com/clambin/sciensano/cache/sciensano"
 )
 
-var _ grafanaJSONServer.Query = Handler{}
+var _ grafanaJSONServer.Handler = Handler{}
 
 type Handler struct {
 	Fetch      func(context.Context, sciensano.SummaryColumn) (*tabulator.Tabulator, error)
@@ -29,7 +29,7 @@ func (h Handler) Query(ctx context.Context, _ string, req grafanaJSONServer.Quer
 	return createTableResponse(records), nil
 }
 
-var _ grafanaJSONServer.Query = Handler2{}
+var _ grafanaJSONServer.Handler = Handler2{}
 
 type Handler2 struct {
 	Fetch      func(context.Context, sciensano.SummaryColumn, sciensano.DoseType) (*tabulator.Tabulator, error)

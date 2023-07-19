@@ -19,7 +19,7 @@ import (
 // Server groups Grafana JSON API handlers that retrieve Belgium COVID-19-related statistics
 type Server struct {
 	JSONServer   *grafanaJSONServer.Server
-	dataSources  map[string]grafanaJSONServer.Query
+	handlers     map[string]grafanaJSONServer.Handler
 	apiCache     *cache.SciensanoCache
 	reportsCache *reports.Cache
 	Demographics demographics.Fetcher
@@ -34,16 +34,16 @@ func New(f demographics.Fetcher) *Server {
 		Demographics: f,
 	}
 
-	s.dataSources = s.buildDataSources()
+	s.handlers = s.buildHandlers()
 
 	options := []grafanaJSONServer.Option{
-		grafanaJSONServer.WithHandlerFunc(http.MethodGet, "/health", s.Health),
+		grafanaJSONServer.WithHTTPHandler(http.MethodGet, "/health", http.HandlerFunc(s.Health)),
 		grafanaJSONServer.WithPrometheusQueryMetrics("sciensano", "", "sciensano"),
 	}
 
-	for target, dataSource := range s.dataSources {
+	for target, handlers := range s.handlers {
 		options = append(options,
-			grafanaJSONServer.WithQuery(target, dataSource.Query),
+			grafanaJSONServer.WithHandler(target, handlers),
 		)
 	}
 
@@ -52,8 +52,8 @@ func New(f demographics.Fetcher) *Server {
 	return s
 }
 
-func (s *Server) buildDataSources() map[string]grafanaJSONServer.Query {
-	return map[string]grafanaJSONServer.Query{
+func (s *Server) buildHandlers() map[string]grafanaJSONServer.Handler {
+	return map[string]grafanaJSONServer.Handler{
 		"cases":                     Handler{Fetch: s.cases, Mode: sciensano.Total},
 		"cases-province":            Handler{Fetch: s.cases, Mode: sciensano.ByProvince},
 		"cases-region":              Handler{Fetch: s.cases, Mode: sciensano.ByRegion},
@@ -91,7 +91,7 @@ func (s *Server) Health(w http.ResponseWriter, _ *http.Request) {
 		DataSources   int
 		ReporterCache map[string]int
 	}{
-		DataSources:   len(s.dataSources),
+		DataSources:   len(s.handlers),
 		ReporterCache: s.reportsCache.Stats(),
 	}
 
