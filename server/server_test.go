@@ -3,7 +3,6 @@ package server
 import (
 	"context"
 	"encoding/json"
-	"github.com/clambin/go-common/cache"
 	grafanaJSONServer "github.com/clambin/grafana-json-server"
 	"github.com/clambin/sciensano/cache/sciensano"
 	mockDemographics "github.com/clambin/sciensano/demographics/mocks"
@@ -34,8 +33,25 @@ func TestNew(t *testing.T) {
 
 	ctx := context.Background()
 	go h.apiCache.AutoRefresh(ctx, time.Second)
-	// TODO: fix race condition
-	time.Sleep(1 * time.Second)
+
+	assert.Eventually(t, func() bool {
+		if resp := h.apiCache.Cases.Get(ctx); resp == nil {
+			return false
+		}
+		if resp := h.apiCache.Hospitalisations.Get(ctx); resp == nil {
+			return false
+		}
+		if resp := h.apiCache.Mortalities.Get(ctx); resp == nil {
+			return false
+		}
+		if resp := h.apiCache.TestResults.Get(ctx); resp == nil {
+			return false
+		}
+		if resp := h.apiCache.Vaccinations.Get(ctx); resp == nil {
+			return false
+		}
+		return true
+	}, time.Second, 100*time.Millisecond)
 
 	for target, handler := range h.handlers {
 		t.Run(target, func(t *testing.T) {
@@ -73,13 +89,18 @@ func BenchmarkVaccinations(b *testing.B) {
 	h.apiCache.TestResults.Fetcher = &fetcher[sciensano.TestResults]{}
 	h.apiCache.Vaccinations.Fetcher = &fetcher[sciensano.Vaccinations]{}
 
-	req := grafanaJSONServer.QueryRequest{Range: grafanaJSONServer.Range{To: time.Now()}}
+	req := grafanaJSONServer.QueryRequest{
+		Targets: []grafanaJSONServer.QueryRequestTarget{
+			{Target: "vaccinations-rate-full", Payload: []byte(`{"summary":"ByAgeGroup"}`)},
+		},
+		Range: grafanaJSONServer.Range{To: time.Now()},
+	}
 
 	ctx := context.Background()
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, err := h.handlers["vacc-age-rate-full"].Query(ctx, "", req)
+		_, err := h.handlers["vaccinations-rate-full"].Query(ctx, "vaccinations-rate-full", req)
 		if err != nil {
 			b.Fatal(err)
 		}
@@ -87,8 +108,9 @@ func BenchmarkVaccinations(b *testing.B) {
 }
 
 type fetcher[T any] struct {
-	cache *cache.Cache[string, T]
-	lock  sync.RWMutex
+	cache  T
+	loaded bool
+	lock   sync.Mutex
 }
 
 func (f *fetcher[T]) GetLastModified(_ context.Context) (time.Time, error) {
@@ -96,27 +118,25 @@ func (f *fetcher[T]) GetLastModified(_ context.Context) (time.Time, error) {
 }
 
 func (f *fetcher[T]) Fetch(_ context.Context) (T, error) {
-	f.lock.RLock()
-	if f.cache == nil {
-		f.cache = cache.New[string, T](time.Minute, 0)
+	f.lock.Lock()
+	defer f.lock.Unlock()
+	if f.loaded {
+		return f.cache, nil
 	}
-	e, ok := f.cache.Get(f.GetTarget())
-	f.lock.RUnlock()
-	if ok {
-		return e, nil
-	}
-	var t T
+
 	input, err := os.Open(filepath.Join("..", "cache", "sciensano", "input", f.GetTarget()+".json"))
-	if err == nil {
-		err = json.NewDecoder(input).Decode(&t)
+	if err != nil {
+		return f.cache, err
+	}
+
+	defer func() {
 		_ = input.Close()
+	}()
+
+	if err = json.NewDecoder(input).Decode(&f.cache); err == nil {
+		f.loaded = true
 	}
-	if err == nil {
-		f.lock.Lock()
-		f.cache.Add(f.GetTarget(), t)
-		f.lock.Unlock()
-	}
-	return t, err
+	return f.cache, err
 }
 
 func (f *fetcher[T]) GetTarget() (target string) {
