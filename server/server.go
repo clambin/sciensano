@@ -19,7 +19,7 @@ import (
 // Server groups Grafana JSON API handlers that retrieve Belgium COVID-19-related statistics
 type Server struct {
 	JSONServer   *grafanaJSONServer.Server
-	dataSources  map[string]grafanaJSONServer.DataSource
+	dataSources  map[string]grafanaJSONServer.Query
 	apiCache     *cache.SciensanoCache
 	reportsCache *reports.Cache
 	Demographics demographics.Fetcher
@@ -41,9 +41,9 @@ func New(f demographics.Fetcher) *Server {
 		grafanaJSONServer.WithPrometheusQueryMetrics("sciensano", "", "sciensano"),
 	}
 
-	for _, dataSource := range s.dataSources {
+	for target, dataSource := range s.dataSources {
 		options = append(options,
-			grafanaJSONServer.WithDatasource(dataSource),
+			grafanaJSONServer.WithQuery(target, dataSource.Query),
 		)
 	}
 
@@ -52,8 +52,8 @@ func New(f demographics.Fetcher) *Server {
 	return s
 }
 
-func (s *Server) buildDataSources() map[string]grafanaJSONServer.DataSource {
-	handlers := map[string]grafanaJSONServer.Query{
+func (s *Server) buildDataSources() map[string]grafanaJSONServer.Query {
+	return map[string]grafanaJSONServer.Query{
 		"cases":                     Handler{Fetch: s.cases, Mode: sciensano.Total},
 		"cases-province":            Handler{Fetch: s.cases, Mode: sciensano.ByProvince},
 		"cases-region":              Handler{Fetch: s.cases, Mode: sciensano.ByRegion},
@@ -76,12 +76,6 @@ func (s *Server) buildDataSources() map[string]grafanaJSONServer.DataSource {
 		"vacc-region-rate-partial":  Handler2{Fetch: s.vaccinationFilteredRate, Mode: sciensano.ByRegion, DoseType: sciensano.Partial, Accumulate: true},
 		"vacc-region-rate-full":     Handler2{Fetch: s.vaccinationFilteredRate, Mode: sciensano.ByRegion, DoseType: sciensano.Full, Accumulate: true},
 	}
-
-	dataSources := make(map[string]grafanaJSONServer.DataSource)
-	for name, handler := range handlers {
-		dataSources[name] = grafanaJSONServer.DataSource{Metric: grafanaJSONServer.Metric{Value: name}, Query: handler}
-	}
-	return dataSources
 }
 
 // Run starts the supporting components

@@ -40,12 +40,12 @@ func TestNew(t *testing.T) {
 	wg := sync.WaitGroup{}
 	wg.Add(len(h.dataSources))
 	var count int
-	for target, h := range h.dataSources {
+	for target, handler := range h.dataSources {
 		t.Run(target, func(t *testing.T) {
 			count++
 			//go func(handler simplejson.Handler, target string, counter int) {
 			//t.Logf("%2d: %s started", count, target)
-			resp, err := h.Query.Query(ctx, target, req)
+			resp, err := handler.Query(ctx, target, req)
 			assert.NotZero(t, len(resp.(grafanaJSONServer.TableResponse).Columns[0].Data.(grafanaJSONServer.TimeColumn)))
 			//t.Logf("%2d: %s done. err: %v", count, target, err)
 			assert.NoError(t, err, target, target)
@@ -79,7 +79,7 @@ func BenchmarkVaccinations(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, err := h.dataSources["vacc-age-rate-full"].Query.Query(ctx, "", req)
+		_, err := h.dataSources["vacc-age-rate-full"].Query(ctx, "", req)
 		if err != nil {
 			b.Fatal(err)
 		}
