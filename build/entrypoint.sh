@@ -5,7 +5,7 @@ if [ -z "$MOUNTPOINT" ]; then
 fi
 
 if [ -z "$FILENAME" ]; then
-  FILENAME=TF_SOC_POP_STRUCT_2021
+  FILENAME=TF_SOC_POP_STRUCT_2023
 fi
 
 
