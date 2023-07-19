@@ -45,16 +45,16 @@ func New(f demographics.Fetcher) *Server {
 		{Fetch: s.hospitalisations, Metric: newMetric("hospitalisations", total, byRegion, byProvince, byRegion)},
 		{Fetch: s.mortalities, Metric: newMetric("mortality", total, byRegion, byAgeGroup)},
 		{Fetch: s.testResults, Metric: newMetric("tests", total)},
-		{Fetch: s.vaccinations, Metric: newMetric("vaccinations", total, byAgeGroup, byRegion, byManufacturer), Accumulate: true},
-		{Fetch: s.vaccinationRate, Metric: newMetric("vaccinations-rate", byAgeGroup, byRegion), Accumulate: true},
+		{Fetch: s.vaccinations, Accumulate: true, Metric: newMetric("vaccinations", total, byAgeGroup, byRegion, byManufacturer)},
+		{Fetch: s.vaccinationRate, Accumulate: true, Metric: newMetric("vaccinations-rate", byAgeGroup, byRegion)},
 	} {
 		s.handlers[h.Metric.Value] = h
 		options = append(options, grafanaJSONServer.WithMetric(h.Metric, h, nil))
 
 	}
 	for _, h := range []*Handler2{
-		{Fetch: s.vaccinationFilteredRate, DoseType: sciensano.Partial, Metric: newMetric("vaccinations-rate-partial", byAgeGroup, byRegion)},
-		{Fetch: s.vaccinationFilteredRate, DoseType: sciensano.Full, Metric: newMetric("vaccinations-rate-full", byAgeGroup, byRegion)},
+		{Fetch: s.vaccinationFilteredRate, Accumulate: true, DoseType: sciensano.Partial, Metric: newMetric("vaccinations-rate-partial", byAgeGroup, byRegion)},
+		{Fetch: s.vaccinationFilteredRate, Accumulate: true, DoseType: sciensano.Full, Metric: newMetric("vaccinations-rate-full", byAgeGroup, byRegion)},
 	} {
 		s.handlers[h.Metric.Value] = h
 		options = append(options, grafanaJSONServer.WithMetric(h.Metric, h, nil))
