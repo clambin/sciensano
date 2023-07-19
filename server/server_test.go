@@ -9,10 +9,12 @@ import (
 	mockDemographics "github.com/clambin/sciensano/demographics/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -20,7 +22,7 @@ import (
 
 func TestNew(t *testing.T) {
 	demographicsClient := mockDemographics.NewFetcher(t)
-	demographicsClient.On("GetByRegion").Return(map[string]int{})
+	//demographicsClient.On("GetByRegion").Return(map[string]int{})
 	demographicsClient.On("GetByAgeBracket", mock.AnythingOfType("bracket.Bracket")).Return(0)
 
 	h := New(demographicsClient)
@@ -35,25 +37,23 @@ func TestNew(t *testing.T) {
 	// TODO: fix race condition
 	time.Sleep(1 * time.Second)
 
-	req := grafanaJSONServer.QueryRequest{Range: grafanaJSONServer.Range{To: time.Now()}}
-
-	wg := sync.WaitGroup{}
-	wg.Add(len(h.handlers))
-	var count int
 	for target, handler := range h.handlers {
 		t.Run(target, func(t *testing.T) {
-			count++
-			//go func(handler simplejson.Handler, target string, counter int) {
-			//t.Logf("%2d: %s started", count, target)
+			payload := `{"summary":"Total"}`
+			if strings.HasPrefix(target, "vaccinations-rate") {
+				payload = `{"summary":"ByAgeGroup"}`
+			}
+
+			req := grafanaJSONServer.QueryRequest{Targets: []grafanaJSONServer.QueryRequestTarget{
+				{Target: target, Payload: []byte(payload)},
+			}, Range: grafanaJSONServer.Range{To: time.Now()}}
+
 			resp, err := handler.Query(ctx, target, req)
+			require.NoError(t, err)
 			assert.NotZero(t, len(resp.(grafanaJSONServer.TableResponse).Columns[0].Data.(grafanaJSONServer.TimeColumn)))
-			//t.Logf("%2d: %s done. err: %v", count, target, err)
-			assert.NoError(t, err, target, target)
-			wg.Done()
-			//}(handler, target, count)
 		})
 	}
-	wg.Wait()
+	//wg.Wait()
 
 	b := httptest.NewRecorder()
 	h.Health(b, nil)
