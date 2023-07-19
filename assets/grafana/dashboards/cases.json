@@ -10,7 +10,7 @@
         "enable": true,
         "hide": true,
         "iconColor": "rgba(0, 211, 255, 1)",
-        "name": "Annotations \u0026 Alerts",
+        "name": "Annotations & Alerts",
         "target": {
           "limit": 100,
           "matchAny": false,
@@ -112,7 +112,9 @@
             "uid": "b04cf133-e1c4-4678-975f-6448401f73c1"
           },
           "editorMode": "builder",
-          "payload": {},
+          "payload": {
+            "summary": "Total"
+          },
           "refId": "A",
           "target": "cases"
         }
@@ -221,8 +223,10 @@
             "type": "simpod-json-datasource",
             "uid": "b04cf133-e1c4-4678-975f-6448401f73c1"
           },
-          "editorMode": "code",
-          "payload": "",
+          "editorMode": "builder",
+          "payload": {
+            "summary": "Total"
+          },
           "refId": "A",
           "target": "tests"
         }
@@ -283,10 +287,12 @@
             "type": "simpod-json-datasource",
             "uid": "b04cf133-e1c4-4678-975f-6448401f73c1"
           },
-          "editorMode": "code",
-          "payload": "",
+          "editorMode": "builder",
+          "payload": {
+            "summary": "ByRegion"
+          },
           "refId": "A",
-          "target": "cases-region"
+          "target": "cases"
         }
       ],
       "title": "Total cases by Region",
@@ -375,10 +381,12 @@
             "type": "simpod-json-datasource",
             "uid": "b04cf133-e1c4-4678-975f-6448401f73c1"
           },
-          "editorMode": "code",
-          "payload": "",
+          "editorMode": "builder",
+          "payload": {
+            "summary": "ByRegion"
+          },
           "refId": "A",
-          "target": "cases-region"
+          "target": "cases"
         }
       ],
       "title": "New cases by Region",
@@ -437,10 +445,12 @@
             "type": "simpod-json-datasource",
             "uid": "b04cf133-e1c4-4678-975f-6448401f73c1"
           },
-          "editorMode": "code",
-          "payload": "",
+          "editorMode": "builder",
+          "payload": {
+            "summary": "ByProvince"
+          },
           "refId": "A",
-          "target": "cases-province"
+          "target": "cases"
         }
       ],
       "title": "New cases by Province",
@@ -529,10 +539,12 @@
             "type": "simpod-json-datasource",
             "uid": "b04cf133-e1c4-4678-975f-6448401f73c1"
           },
-          "editorMode": "code",
-          "payload": "",
+          "editorMode": "builder",
+          "payload": {
+            "summary": "ByProvince"
+          },
           "refId": "A",
-          "target": "cases-province"
+          "target": "cases"
         }
       ],
       "title": "New cases by Province",
@@ -591,10 +603,12 @@
             "type": "simpod-json-datasource",
             "uid": "b04cf133-e1c4-4678-975f-6448401f73c1"
           },
-          "editorMode": "code",
-          "payload": "",
+          "editorMode": "builder",
+          "payload": {
+            "summary": "ByAgeGroup"
+          },
           "refId": "A",
-          "target": "cases-age"
+          "target": "cases"
         }
       ],
       "title": "Total cases by Age Group",
@@ -683,10 +697,12 @@
             "type": "simpod-json-datasource",
             "uid": "b04cf133-e1c4-4678-975f-6448401f73c1"
           },
-          "editorMode": "code",
-          "payload": "",
+          "editorMode": "builder",
+          "payload": {
+            "summary": "ByAgeGroup"
+          },
           "refId": "A",
-          "target": "cases-age"
+          "target": "cases"
         }
       ],
       "title": "New cases by Age Group",
@@ -708,6 +724,6 @@
   "timezone": "",
   "title": "Sciensano - Cases",
   "uid": "6lJUW_O7k",
-  "version": 8,
+  "version": 13,
   "weekStart": ""
 }
