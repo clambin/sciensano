@@ -33,7 +33,7 @@ func main() {
 	}
 	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stderr, &opts)))
 
-	slog.Info("Reporter API starting", "version", version.BuildVersion)
+	slog.Info("Sciensano API server starting", "version", version.BuildVersion)
 
 	s := server.New(&demographics.Server{
 		Path:     *demographicsPath,

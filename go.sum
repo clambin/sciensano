@@ -8,6 +8,10 @@ github.com/clambin/go-common/httpclient v0.5.1 h1:KQpqm5TnD2zzXJKCH4X1AuL7yvJTKg
 github.com/clambin/go-common/httpclient v0.5.1/go.mod h1:77y+6LzAKdenkU+vwQFdNKyxs2HhUXEiqYwzS7Q9FKI=
 github.com/clambin/go-common/httpserver v0.7.0 h1:L4C1x2TC6wqOdmdv35MEPiqmBcCi97eNnyvd1+/QozQ=
 github.com/clambin/go-common/httpserver v0.7.0/go.mod h1:xTa/4zcbaJfa0Re2txNRGBfhq30e53LeouIOfxqa8c4=
+github.com/clambin/go-common/httpserver v0.8.3 h1:LNDvcLtcIsyJtXm3BPerh3gOztQS5M0ZlokBDvbOJPQ=
+github.com/clambin/go-common/httpserver v0.8.3/go.mod h1:b5cHmhWknlw4IJhoVIKgl0ZUH+XT9K2Y2sK+ob2bPto=
+github.com/clambin/go-common/httpserver v0.9.0 h1:AxLZ8ARbqNsVw36fJEh1ALYZRfFEUPXoRKcl7PI9qng=
+github.com/clambin/go-common/httpserver v0.9.0/go.mod h1:b5cHmhWknlw4IJhoVIKgl0ZUH+XT9K2Y2sK+ob2bPto=
 github.com/clambin/go-common/set v0.2.0 h1:s4wXxKns3sb2VPCtAmmLEDs4KiHNIiot+LcKgKcdPdw=
 github.com/clambin/go-common/set v0.2.0/go.mod h1:GFjAZynNo4BNjlx2hzDMHIU4ays7QjpJUSHXB/3b1ZE=
 github.com/clambin/go-common/tabulator v0.2.1 h1:/UQuHVMmhLRDCF7GoIj3mZrjwvdUUwUl2LFE6J45KWA=
@@ -26,6 +30,10 @@ github.com/clambin/grafana-json-server v0.2.3 h1:odPcX1H5boS5q7MrN+xft4vskxqHpdr
 github.com/clambin/grafana-json-server v0.2.3/go.mod h1:WoMW1hRsZ4rmtIR/N8GGz3IQ1Z1URn8CYO44335TVps=
 github.com/clambin/grafana-json-server v0.3.0 h1:fr3BiQPJLnmR8xzmVb3b77Edm5Fr2Jof2jpyFUy/xHE=
 github.com/clambin/grafana-json-server v0.3.0/go.mod h1:WoMW1hRsZ4rmtIR/N8GGz3IQ1Z1URn8CYO44335TVps=
+github.com/clambin/grafana-json-server v0.3.1-0.20230720231829-2253c2d89215 h1:/o+B287MSYzQC5XlA2CkImFg164aL+KJiJc5g0og5f0=
+github.com/clambin/grafana-json-server v0.3.1-0.20230720231829-2253c2d89215/go.mod h1:FqlqM2krJ9Q+5Odl01ISG7mvIT5BMxEYGIpJV59kiko=
+github.com/clambin/grafana-json-server v0.3.1 h1:uH4bhRNCT6crD6fM1N/eEawZgb2giMZPEkbOTDYTGu4=
+github.com/clambin/grafana-json-server v0.3.1/go.mod h1:i2YAihmXCr/zSF8wh6GDqHI4wJjdIq+oZTTZqeIR34w=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=

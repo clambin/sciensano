@@ -12,6 +12,7 @@ import (
 	"github.com/clambin/sciensano/demographics/bracket"
 	"github.com/clambin/sciensano/server/reports"
 	"github.com/prometheus/client_golang/prometheus"
+	"golang.org/x/exp/slog"
 	"net/http"
 	"time"
 )
@@ -36,6 +37,7 @@ func New(f demographics.Fetcher) *Server {
 	}
 
 	options := []grafanaJSONServer.Option{
+		grafanaJSONServer.WithLogger(slog.Default().With("component", "grafana-json-server")),
 		grafanaJSONServer.WithHTTPHandler(http.MethodGet, "/health", http.HandlerFunc(s.Health)),
 		grafanaJSONServer.WithPrometheusQueryMetrics("sciensano", "", "sciensano"),
 	}
