@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	github.com/clambin/go-common/cache v0.2.2
-	github.com/clambin/go-common/httpclient v0.5.1
+	github.com/clambin/go-common/httpclient v0.6.0
 	github.com/clambin/go-common/httpserver v0.11.0
 	github.com/clambin/go-common/set v0.2.0
 	github.com/clambin/go-common/tabulator v0.2.1
