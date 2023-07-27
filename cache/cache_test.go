@@ -47,7 +47,7 @@ func TestNewSciensanoCache(t *testing.T) {
 	wg.Wait()
 
 	assert.NoError(t, testutil.CollectAndCompare(c, bytes.NewBufferString(`
-# HELP sciensano_api_errors_total Number of failed Reporter API calls
+# HELP sciensano_api_errors_total Number of failed HTTP calls
 # TYPE sciensano_api_errors_total counter
 sciensano_api_errors_total{application="sciensano",method="GET",path="/Data/COVID19BE_CASES_AGESEX.json"} 0
 sciensano_api_errors_total{application="sciensano",method="GET",path="/Data/COVID19BE_HOSP.json"} 0
