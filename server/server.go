@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/bradfitz/gomemcache/memcache"
 	"github.com/clambin/go-common/httpserver/middleware"
 	"github.com/clambin/go-common/tabulator"
 	grafanaJSONServer "github.com/clambin/grafana-json-server"
@@ -23,7 +24,7 @@ type Server struct {
 	JSONServer   *grafanaJSONServer.Server
 	handlers     map[string]grafanaJSONServer.Handler
 	apiCache     *cache.SciensanoCache
-	reportsCache *reports.Cache
+	reportsCache reports.ReportCache
 	Demographics demographics.Fetcher
 }
 
@@ -33,7 +34,7 @@ func New(f demographics.Fetcher) *Server {
 	s := &Server{
 		handlers:     make(map[string]grafanaJSONServer.Handler),
 		apiCache:     cache.NewSciensanoCache(""),
-		reportsCache: reports.NewCache(15 * time.Minute),
+		reportsCache: reports.ReportCache{Cache: reports.NewMemCache(memcache.New("localhost:11211"), 15*time.Minute)},
 		Demographics: f,
 	}
 
