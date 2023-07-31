@@ -31,10 +31,19 @@ type Server struct {
 var _ prometheus.Collector = &Server{}
 
 func New(f demographics.Fetcher) *Server {
+	var reportsCache reports.Cache
+	memCacheClient := memcache.New("localhost:11211")
+	if err := memCacheClient.Ping(); err == nil {
+		reportsCache = reports.ReportCache{Cache: reports.NewMemCache(memCacheClient, 15*time.Minute)}
+	} else {
+		slog.Warn("could not reach memcached. using local cache", "err", err)
+		reportsCache = reports.ReportCache{Cache: reports.NewLocalCache(15 * time.Minute)}
+	}
+
 	s := &Server{
 		handlers:     make(map[string]grafanaJSONServer.Handler),
 		apiCache:     cache.NewSciensanoCache(""),
-		reportsCache: reports.ReportCache{Cache: reports.NewMemCache(memcache.New("localhost:11211"), 15*time.Minute)},
+		reportsCache: reports.ReportCache{Cache: reportsCache},
 		Demographics: f,
 	}
 
