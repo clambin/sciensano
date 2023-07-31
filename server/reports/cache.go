@@ -29,14 +29,18 @@ var (
 
 type ReportCache struct {
 	Cache
-	lock sync.RWMutex
-	keys set.Set[string]
+	lock    sync.RWMutex
+	keys    set.Set[string]
+	keyLock keyLock
 }
 
 var ErrMissedCache = errors.New("not in cache")
 
 // MaybeGenerate loads a report from LocalCache, or generates it if the report does not exist or is expired
 func (c *ReportCache) MaybeGenerate(key string, generate func() (*tabulator.Tabulator, error)) (*tabulator.Tabulator, error) {
+	c.keyLock.Lock(key)
+	defer c.keyLock.Unlock(key)
+
 	metricCacheCall.WithLabelValues(key).Add(1)
 
 	report, err := c.Get(key)
@@ -78,4 +82,27 @@ func (c *ReportCache) Stats() map[string]int {
 		stats[key] = count
 	}
 	return stats
+}
+
+type keyLock struct {
+	keys map[string]*sync.Mutex
+	lock sync.Mutex
+}
+
+func (kl *keyLock) Lock(key string) {
+	kl.lock.Lock()
+	if kl.keys == nil {
+		kl.keys = make(map[string]*sync.Mutex)
+	}
+	if _, ok := kl.keys[key]; !ok {
+		kl.keys[key] = new(sync.Mutex)
+	}
+	kl.lock.Unlock()
+	kl.keys[key].Lock()
+}
+
+func (kl *keyLock) Unlock(key string) {
+	kl.lock.Lock()
+	defer kl.lock.Unlock()
+	kl.keys[key].Unlock()
 }
