@@ -34,6 +34,8 @@ func New(f demographics.Fetcher) *Server {
 	var reportsCache reports.Cache
 	memCacheClient := memcache.New("localhost:11211")
 	if err := memCacheClient.Ping(); err == nil {
+		memCacheClient.Timeout = time.Second
+		memCacheClient.MaxIdleConns = 50
 		reportsCache = reports.ReportCache{Cache: reports.NewMemCache(memCacheClient, 15*time.Minute)}
 	} else {
 		slog.Warn("could not reach memcached. using local cache", "err", err)
