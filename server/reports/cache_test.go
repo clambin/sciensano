@@ -26,7 +26,7 @@ func TestReportCache_MaybeGenerate(t *testing.T) {
 				defer tracker.Dec()
 
 				time.Sleep(time.Duration(75+rand.Intn(50)) * time.Millisecond)
-				return createSimpleDataSet()
+				return createSimpleDataSet(), nil
 			})
 			require.NoError(t, err)
 		}()
@@ -71,10 +71,10 @@ func createBigDataSet() (*tabulator.Tabulator, error) {
 	return d, nil
 }
 
-func createSimpleDataSet() (*tabulator.Tabulator, error) {
+func createSimpleDataSet() *tabulator.Tabulator {
 	d := tabulator.New("A", "B", "C")
 	d.Add(time.Date(2023, time.July, 31, 0, 0, 0, 0, time.UTC), "C", 3)
 	d.Add(time.Date(2023, time.July, 30, 0, 0, 0, 0, time.UTC), "C", 2)
 	d.Add(time.Date(2023, time.July, 29, 0, 0, 0, 0, time.UTC), "C", 1)
-	return d, nil
+	return d
 }

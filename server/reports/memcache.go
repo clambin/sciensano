@@ -1,7 +1,8 @@
 package reports
 
 import (
-	"encoding/json"
+	bytes2 "bytes"
+	"encoding/gob"
 	"errors"
 	"fmt"
 	"github.com/bradfitz/gomemcache/memcache"
@@ -28,29 +29,30 @@ func NewMemCache(m MemCacheClient, expiration time.Duration) *MemCache {
 
 func (m *MemCache) Get(key string) (*tabulator.Tabulator, error) {
 	item, err := m.cache.Get(key)
-	if err == nil {
-		var report tabulator.Tabulator
-		err = json.Unmarshal(item.Value, &report)
-		return &report, err
+	if err != nil {
+		if errors.Is(err, memcache.ErrCacheMiss) {
+			err = ErrMissedCache
+		}
+		return nil, err
 	}
 
-	if errors.Is(err, memcache.ErrCacheMiss) {
-		err = ErrMissedCache
-	}
-	return nil, err
+	var report tabulator.Tabulator
+	err = gob.NewDecoder(bytes2.NewBuffer(item.Value)).Decode(&report)
+	return &report, err
 }
 
 func (m *MemCache) Set(key string, table *tabulator.Tabulator) error {
-	bytes, err := json.Marshal(table)
-	if err == nil {
-		err = m.cache.Set(&memcache.Item{
-			Key:        key,
-			Value:      bytes,
-			Expiration: int32(m.expiration.Seconds()),
-		})
+	var body bytes2.Buffer
+	if err := gob.NewEncoder(&body).Encode(table); err != nil {
+		return fmt.Errorf("memcache set: encode: %w", err)
 	}
-	if err != nil {
-		err = fmt.Errorf("memcache set: %w", err)
+	if err := m.cache.Set(&memcache.Item{
+		Key:        key,
+		Value:      body.Bytes(),
+		Expiration: int32(m.expiration.Seconds()),
+	}); err != nil {
+		return fmt.Errorf("memcache set: %w", err)
 	}
-	return err
+
+	return nil
 }

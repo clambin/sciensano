@@ -1,6 +1,8 @@
 package reports_test
 
 import (
+	"bytes"
+	"encoding/gob"
 	"github.com/bradfitz/gomemcache/memcache"
 	"github.com/clambin/go-common/tabulator"
 	"github.com/clambin/sciensano/server/reports"
@@ -13,21 +15,22 @@ import (
 )
 
 func TestMemCache(t *testing.T) {
-	const encodedItem = `{"Timestamps":["2023-07-29T00:00:00Z","2023-07-30T00:00:00Z","2023-07-31T00:00:00Z"],"Columns":["A","B","C"],"Data":[[1,0,0],[0,2,0],[0,0,3]]}`
+	var encoded bytes.Buffer
+	require.NoError(t, gob.NewEncoder(&encoded).Encode(createSimpleDataSet()))
 
 	m := mocks.NewMemCacheClient(t)
 	m.On("Get", "foo").Return(nil, memcache.ErrCacheMiss).Once()
-	m.On("Get", "foo").Return(&memcache.Item{Value: []byte(encodedItem)}, nil)
+	m.On("Get", "foo").Return(&memcache.Item{Value: encoded.Bytes()}, nil)
 	m.On("Set", mock.AnythingOfType("*memcache.Item")).Return(nil).Once()
 
 	c := reports.ReportCache{Cache: reports.NewMemCache(m, 15*time.Minute)}
-	refTable, _ := createSimpleDataSet()
+	refTable := createSimpleDataSet()
 
 	var updates int
 	for i := 0; i < 10; i++ {
 		fromCache, err := c.MaybeGenerate("foo", func() (*tabulator.Tabulator, error) {
 			updates++
-			return createSimpleDataSet()
+			return createSimpleDataSet(), nil
 		})
 		require.NoError(t, err)
 		assert.Equal(t, refTable.Size(), fromCache.Size(), i)

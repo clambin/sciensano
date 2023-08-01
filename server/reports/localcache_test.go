@@ -14,13 +14,13 @@ import (
 
 func TestLocalCache(t *testing.T) {
 	c := reports.ReportCache{Cache: reports.NewLocalCache(15 * time.Minute)}
-	refTable, _ := createSimpleDataSet()
+	refTable := createSimpleDataSet()
 
 	var updates int
 	for i := 0; i < 10; i++ {
 		fromCache, err := c.MaybeGenerate("foo", func() (*tabulator.Tabulator, error) {
 			updates++
-			return createSimpleDataSet()
+			return createSimpleDataSet(), nil
 		})
 		require.NoError(t, err)
 		assert.Equal(t, refTable.Size(), fromCache.Size())
@@ -47,7 +47,10 @@ func BenchmarkLocalCache(b *testing.B) {
 func TestCache_Stats(t *testing.T) {
 	c := reports.ReportCache{Cache: reports.NewLocalCache(100 * time.Millisecond)}
 	_ = c.Stats()
-	_, err := c.MaybeGenerate("foo", createSimpleDataSet)
+	_, err := c.MaybeGenerate("foo", func() (*tabulator.Tabulator, error) {
+		return createSimpleDataSet(), nil
+	})
+
 	require.NoError(t, err)
 
 	stats := c.Stats()
