@@ -30,9 +30,9 @@ type Server struct {
 
 var _ prometheus.Collector = &Server{}
 
-func New(f demographics.Fetcher) *Server {
+func New(f demographics.Fetcher, memcacheAddr string) *Server {
 	var reportsCache reports.Cache
-	memCacheClient := memcache.New("localhost:11211")
+	memCacheClient := memcache.New(memcacheAddr)
 	if err := memCacheClient.Ping(); err == nil {
 		memCacheClient.Timeout = time.Second
 		memCacheClient.MaxIdleConns = 50

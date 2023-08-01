@@ -24,7 +24,7 @@ func TestNew(t *testing.T) {
 	//demographicsClient.On("GetByRegion").Return(map[string]int{})
 	demographicsClient.On("GetByAgeBracket", mock.AnythingOfType("bracket.Bracket")).Return(0)
 
-	h := New(demographicsClient)
+	h := New(demographicsClient, "")
 	h.apiCache.Cases.Fetcher = &fetcher[sciensano.Cases]{}
 	h.apiCache.Hospitalisations.Fetcher = &fetcher[sciensano.Hospitalisations]{}
 	h.apiCache.Mortalities.Fetcher = &fetcher[sciensano.Mortalities]{}
@@ -82,7 +82,7 @@ func BenchmarkVaccinations(b *testing.B) {
 	demographicsClient := mockDemographics.Fetcher{}
 	demographicsClient.On("GetByAgeBracket", mock.AnythingOfType("bracket.Bracket")).Return(0)
 
-	h := New(&demographicsClient)
+	h := New(&demographicsClient, "")
 	h.apiCache.Cases.Fetcher = &fetcher[sciensano.Cases]{}
 	h.apiCache.Hospitalisations.Fetcher = &fetcher[sciensano.Hospitalisations]{}
 	h.apiCache.Mortalities.Fetcher = &fetcher[sciensano.Mortalities]{}

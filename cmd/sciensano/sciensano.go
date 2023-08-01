@@ -22,6 +22,7 @@ var (
 	simpleJSONAddr   = flag.String("addr", ":8080", "Server address")
 	prometheusAddr   = flag.String("prometheus", ":9090", "Prometheus metrics port")
 	demographicsPath = flag.String("demographics", "/data/population/TF_SOC_POP_STRUCT_2021.txt", "Path of the demographics server")
+	memcacheAddr     = flag.String("memcache", "localhost:11211", "address of memcached")
 )
 
 func main() {
@@ -35,10 +36,7 @@ func main() {
 
 	slog.Info("Sciensano API server starting", "version", version.BuildVersion)
 
-	s := server.New(&demographics.Server{
-		Path:     *demographicsPath,
-		Interval: 24 * time.Hour,
-	})
+	s := server.New(&demographics.Server{Path: *demographicsPath, Interval: 24 * time.Hour}, *memcacheAddr)
 	prometheus.DefaultRegisterer.MustRegister(s)
 
 	tm := taskmanager.New(

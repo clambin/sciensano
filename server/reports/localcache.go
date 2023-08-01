@@ -18,11 +18,10 @@ func NewLocalCache(expiration time.Duration) *LocalCache {
 }
 
 func (cache *LocalCache) Get(key string) (*tabulator.Tabulator, error) {
-	entry, ok := cache.Cache.Get(key)
-	if !ok {
-		return nil, ErrMissedCache
+	if entry, ok := cache.Cache.Get(key); ok {
+		return entry, nil
 	}
-	return entry, nil
+	return nil, ErrMissedCache
 }
 
 func (cache *LocalCache) Set(key string, table *tabulator.Tabulator) error {
