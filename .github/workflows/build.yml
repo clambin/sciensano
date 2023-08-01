@@ -4,7 +4,7 @@ on:
   push:
     branches:
     - master
-    - json
+    - memcached
     paths-ignore:
       - '**.md'
       - 'assets/grafana/dashboards/**'

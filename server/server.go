@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/bradfitz/gomemcache/memcache"
 	"github.com/clambin/go-common/httpserver/middleware"
 	"github.com/clambin/go-common/tabulator"
 	grafanaJSONServer "github.com/clambin/grafana-json-server"
@@ -23,17 +24,28 @@ type Server struct {
 	JSONServer   *grafanaJSONServer.Server
 	handlers     map[string]grafanaJSONServer.Handler
 	apiCache     *cache.SciensanoCache
-	reportsCache *reports.Cache
+	reportsCache reports.ReportCache
 	Demographics demographics.Fetcher
 }
 
 var _ prometheus.Collector = &Server{}
 
-func New(f demographics.Fetcher) *Server {
+func New(f demographics.Fetcher, memcacheAddr string) *Server {
+	var reportsCache reports.Cache
+	memCacheClient := memcache.New(memcacheAddr)
+	if err := memCacheClient.Ping(); err == nil {
+		memCacheClient.Timeout = time.Second
+		memCacheClient.MaxIdleConns = 50
+		reportsCache = reports.ReportCache{Cache: reports.NewMemCache(memCacheClient, 15*time.Minute)}
+	} else {
+		slog.Warn("could not reach memcached. using local cache", "err", err)
+		reportsCache = reports.ReportCache{Cache: reports.NewLocalCache(15 * time.Minute)}
+	}
+
 	s := &Server{
 		handlers:     make(map[string]grafanaJSONServer.Handler),
 		apiCache:     cache.NewSciensanoCache(""),
-		reportsCache: reports.NewCache(15 * time.Minute),
+		reportsCache: reports.ReportCache{Cache: reportsCache},
 		Demographics: f,
 	}
 
