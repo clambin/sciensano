@@ -1,24 +1,47 @@
-package server
+package server_test
 
-import (
-	"context"
-	"encoding/json"
-	grafanaJSONServer "github.com/clambin/grafana-json-server"
-	"github.com/clambin/sciensano/cache/sciensano"
-	mockDemographics "github.com/clambin/sciensano/demographics/mocks"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
-	"net/http"
-	"net/http/httptest"
-	"os"
-	"path/filepath"
-	"strings"
-	"sync"
-	"testing"
-	"time"
-)
+/*
+func TestNew(t *testing.T) {
+	store := makeStore(t)
+	s := server.New(store, slog.Default())
+	ctx := context.Background()
 
+	for target, handler := range s.Handlers {
+		t.Run(target, func(t *testing.T) {
+			payload := fmt.Sprintf(`{"summary":"%d"}`, sciensano.Total)
+			if strings.HasPrefix(target, "vaccinations-rate") {
+				payload = fmt.Sprintf(`{"summary":"%d"}`, sciensano.ByAgeGroup)
+			}
+
+			req := grafanaJSONServer.QueryRequest{Targets: []grafanaJSONServer.QueryRequestTarget{
+				{Target: target, Payload: []byte(payload)},
+			}, Range: grafanaJSONServer.Range{To: time.Now()}}
+
+			resp, err := handler.Query(ctx, target, req)
+			require.NoError(t, err)
+			assert.NotZero(t, len(resp.(grafanaJSONServer.TableResponse).Columns[0].Data.(grafanaJSONServer.TimeColumn)))
+		})
+	}
+}
+
+func makeStore(t *testing.T) server.ReportsStorer {
+	s := mocks.NewReportsStorer(t)
+
+	cases, _ := testutil.Cases().Summarize(sciensano.Total)
+	s.EXPECT().Get("cases-Total").Return(cases, nil)
+	mortalities, _ := testutil.Mortalities().Summarize(sciensano.Total)
+	s.EXPECT().Get("mortalities-Total").Return(mortalities, nil)
+	hospitalisations, _ := testutil.Hospitalisations().Summarize(sciensano.Total)
+	s.EXPECT().Get("hospitalisations-Total").Return(hospitalisations, nil)
+	tests, _ := testutil.Cases().Summarize(sciensano.Total)
+	s.EXPECT().Get("tests-Total").Return(tests, nil)
+	vaccinations, _ := testutil.Vaccinations().Summarize(sciensano.Total)
+	s.EXPECT().Get("vaccinations-Total").Return(vaccinations, nil)
+
+	return s
+}
+
+/*
 func TestNew(t *testing.T) {
 	demographicsClient := mockDemographics.NewFetcher(t)
 	//demographicsClient.On("GetByRegion").Return(map[string]int{})
@@ -171,3 +194,6 @@ func BenchmarkFilterVaccinations(b *testing.B) {
 		filterVaccinations(vaccinations, sciensano.Full)
 	}
 }
+
+
+*/

@@ -7,6 +7,9 @@ import (
 	"github.com/clambin/go-common/taskmanager/httpserver"
 	promserver "github.com/clambin/go-common/taskmanager/prometheus"
 	"github.com/clambin/sciensano/demographics"
+	"github.com/clambin/sciensano/internal/reports/datasource"
+	"github.com/clambin/sciensano/internal/reports/reporter"
+	"github.com/clambin/sciensano/internal/reports/store"
 	"github.com/clambin/sciensano/server"
 	"github.com/clambin/sciensano/version"
 	"github.com/prometheus/client_golang/prometheus"
@@ -22,7 +25,6 @@ var (
 	simpleJSONAddr   = flag.String("addr", ":8080", "Server address")
 	prometheusAddr   = flag.String("prometheus", ":9090", "Prometheus metrics port")
 	demographicsPath = flag.String("demographics", "/data/population/TF_SOC_POP_STRUCT_2021.txt", "Path of the demographics server")
-	memcacheAddr     = flag.String("memcache", "localhost:11211", "address of memcached")
 )
 
 func main() {
@@ -36,14 +38,26 @@ func main() {
 
 	slog.Info("Sciensano API server starting", "version", version.BuildVersion)
 
-	s := server.New(&demographics.Server{Path: *demographicsPath, Interval: 24 * time.Hour}, *memcacheAddr)
+	popStore := demographics.Server{Path: *demographicsPath, Interval: 24 * time.Hour}
+
+	reportsStore := store.Store{Logger: slog.Default().With("component", "reportsStore")}
+	ds := datasource.NewSciensanoDatastore("", 15*time.Minute, slog.Default().With("component", "datasource"))
+	reporters := reporter.NewSciensanoReporters(ds, &reportsStore, &popStore, slog.Default().With("component", "reporters"))
+
+	var tasks []taskmanager.Task
+	tasks = append(tasks, ds)
+	tasks = append(tasks, &popStore)
+	tasks = append(tasks, reporters...)
+
+	s := server.New(&reportsStore, slog.Default())
 	prometheus.DefaultRegisterer.MustRegister(s)
 
-	tm := taskmanager.New(
-		promserver.New(promserver.WithAddr(*prometheusAddr)),
+	tasks = append(
+		tasks, promserver.New(promserver.WithAddr(*prometheusAddr)),
 		s,
 		httpserver.New(*simpleJSONAddr, s.JSONServer),
 	)
+	tm := taskmanager.New(tasks...)
 
 	ctx, done := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer done()

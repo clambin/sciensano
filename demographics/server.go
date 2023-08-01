@@ -18,7 +18,7 @@ type Fetcher interface {
 	// GetByRegion returns the demographics grouped by region
 	GetByRegion() (figures map[string]int)
 	// Run updates demographics and refreshes them on a periodic basis
-	Run(ctx context.Context)
+	Run(ctx context.Context) error
 }
 
 // Server imports the demographics data on a regular basis and exposes data APIs to callers
@@ -34,7 +34,7 @@ type Server struct {
 var _ Fetcher = &Server{}
 
 // Run imports the latest demographics data on a regular basis
-func (s *Server) Run(ctx context.Context) {
+func (s *Server) Run(ctx context.Context) error {
 	slog.Debug("first load of demographics file")
 	if err := s.update(); err != nil {
 		slog.Error("failed to read demographics file", "err", err)
@@ -42,18 +42,18 @@ func (s *Server) Run(ctx context.Context) {
 	slog.Debug("first load of demographics file done")
 
 	ticker := time.NewTicker(s.Interval)
+	defer ticker.Stop()
 
-	for running := true; running; {
+	for {
 		select {
 		case <-ctx.Done():
-			running = false
+			return nil
 		case <-ticker.C:
 			if err := s.update(); err != nil {
 				slog.Error("failed to read demographics file", "err", err)
 			}
 		}
 	}
-	ticker.Stop()
 }
 
 // GetByRegion returns the number of people in each region

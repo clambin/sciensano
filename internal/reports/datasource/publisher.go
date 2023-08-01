@@ -1,0 +1,26 @@
+package datasource
+
+import (
+	"sync"
+	"time"
+)
+
+type Publisher[T any] struct {
+	lock    sync.RWMutex
+	clients map[chan T]time.Time
+}
+
+func (p *Publisher[T]) Register(ch chan T) {
+	p.lock.Lock()
+	defer p.lock.Unlock()
+	if p.clients == nil {
+		p.clients = make(map[chan T]time.Time)
+	}
+	p.clients[ch] = time.Time{}
+}
+
+func (p *Publisher[T]) Unregister(ch chan T) {
+	p.lock.Lock()
+	defer p.lock.Unlock()
+	delete(p.clients, ch)
+}
