@@ -58,6 +58,8 @@ func (d *DataSource[T]) Run(ctx context.Context) error {
 }
 
 func (d *DataSource[T]) fetchData(ctx context.Context) error {
+	d.lock.Lock()
+	defer d.lock.Unlock()
 	timestamp, err := d.Fetcher.GetLastModified(ctx)
 	if !timestamp.After(d.currentAge) || err != nil {
 		return err
@@ -73,6 +75,8 @@ func (d *DataSource[T]) fetchData(ctx context.Context) error {
 func (d *DataSource[T]) sendData() {
 	d.Publisher.lock.RLock()
 	defer d.Publisher.lock.RUnlock()
+	//d.lock.Lock()
+	//defer d.lock.Unlock()
 
 	for ch, lastSent := range d.Publisher.clients {
 		if lastSent.Before(d.currentAge) {
