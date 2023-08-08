@@ -67,6 +67,7 @@ func TestStore_Run(t *testing.T) {
 	wg := sync.WaitGroup{}
 	wg.Add(1)
 	go func() {
+		s.Load()
 		s.Run(ctx)
 		wg.Done()
 	}()

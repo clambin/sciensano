@@ -9,12 +9,11 @@ import (
 )
 
 type Summary[T summarizer] struct {
-	Name       string
-	Source     Publisher[T]
-	Mode       sciensano.SummaryColumn
-	Accumulate bool
-	Store      *store.Store
-	Logger     *slog.Logger
+	Name   string
+	Source Publisher[T]
+	Mode   sciensano.SummaryColumn
+	Store  *store.Store
+	Logger *slog.Logger
 }
 
 //go:generate mockery --name Publisher --with-expecter=true
@@ -51,9 +50,6 @@ func (s *Summary[T]) createReport(data T) {
 	if err != nil {
 		s.Logger.Error("failed to generate report", "err", err)
 		return
-	}
-	if s.Accumulate {
-		summarized.Accumulate()
 	}
 	s.Store.Put(s.Name, summarized)
 	s.Logger.Debug("report stored")

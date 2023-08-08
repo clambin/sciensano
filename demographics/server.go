@@ -2,6 +2,7 @@ package demographics
 
 import (
 	"context"
+	"fmt"
 	"github.com/clambin/sciensano/demographics/bracket"
 	"golang.org/x/exp/slog"
 	"math"
@@ -33,14 +34,15 @@ type Server struct {
 
 var _ Fetcher = &Server{}
 
+func (s *Server) Load() error {
+	if err := s.update(); err != nil {
+		return fmt.Errorf("population load failed: %w", err)
+	}
+	return nil
+}
+
 // Run imports the latest demographics data on a regular basis
 func (s *Server) Run(ctx context.Context) error {
-	slog.Debug("first load of demographics file")
-	if err := s.update(); err != nil {
-		slog.Error("failed to read demographics file", "err", err)
-	}
-	slog.Debug("first load of demographics file done")
-
 	ticker := time.NewTicker(s.Interval)
 	defer ticker.Stop()
 

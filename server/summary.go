@@ -17,7 +17,7 @@ type ReportsStore interface {
 type SummaryHandler struct {
 	ReportsStore
 	grafanaJSONServer.Metric
-	Accumulate bool // TODO: here or in reporter?
+	Accumulate bool // TODO: get from payload
 	metricProcessor
 }
 

@@ -10,12 +10,13 @@ func buildHandlers(s ReportsStore) []*SummaryHandler {
 	summaryHandlers := []struct {
 		name           string
 		summaryColumns set.Set[sciensano.SummaryColumn]
+		accumulate     bool
 	}{
 		{name: "cases", summaryColumns: sciensano.CasesValidSummaryModes()},
 		{name: "hospitalisations", summaryColumns: sciensano.HospitalisationsValidSummaryModes()},
 		{name: "mortalities", summaryColumns: sciensano.MortalitiesValidSummaryModes()},
 		{name: "tests", summaryColumns: sciensano.TestResultsValidSummaryModes()},
-		{name: "vaccinations", summaryColumns: sciensano.VaccinationsValidSummaryModes()},
+		{name: "vaccinations", summaryColumns: sciensano.VaccinationsValidSummaryModes(), accumulate: true},
 	}
 
 	var handlers []*SummaryHandler
@@ -24,6 +25,7 @@ func buildHandlers(s ReportsStore) []*SummaryHandler {
 		handlers = append(handlers, &SummaryHandler{
 			ReportsStore:    s,
 			Metric:          grafanaJSONServer.Metric{Label: h.name, Value: h.name, Payloads: processor.makeMetricPayload()},
+			Accumulate:      h.accumulate,
 			metricProcessor: processor,
 		})
 	}

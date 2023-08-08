@@ -20,10 +20,9 @@ const (
 
 func NewSciensanoReporters(datasources *datasource.SciensanoSources, store *store.Store, popStore Fetcher, logger *slog.Logger) []taskmanager.Task {
 	summarizers := []struct {
-		dsType     datasourceType
-		basename   string
-		modes      []sciensano.SummaryColumn
-		accumulate bool
+		dsType   datasourceType
+		basename string
+		modes    []sciensano.SummaryColumn
 	}{
 		{dsType: casesDatasource, basename: "cases", modes: []sciensano.SummaryColumn{sciensano.Total, sciensano.ByProvince, sciensano.ByRegion, sciensano.ByAgeGroup}},
 		{dsType: hospitalisationsDatasource, basename: "hospitalisations", modes: []sciensano.SummaryColumn{sciensano.Total, sciensano.ByProvince, sciensano.ByRegion, sciensano.ByCategory}},
@@ -41,15 +40,15 @@ func NewSciensanoReporters(datasources *datasource.SciensanoSources, store *stor
 			var task taskmanager.Task
 			switch option.dsType {
 			case casesDatasource:
-				task = &Summary[sciensano.Cases]{Name: fullName, Source: &datasources.Cases, Mode: mode, Accumulate: option.accumulate, Store: store, Logger: l}
+				task = &Summary[sciensano.Cases]{Name: fullName, Source: &datasources.Cases, Mode: mode, Store: store, Logger: l}
 			case hospitalisationsDatasource:
-				task = &Summary[sciensano.Hospitalisations]{Name: fullName, Source: &datasources.Hospitalisations, Mode: mode, Accumulate: option.accumulate, Store: store, Logger: l}
+				task = &Summary[sciensano.Hospitalisations]{Name: fullName, Source: &datasources.Hospitalisations, Mode: mode, Store: store, Logger: l}
 			case mortalitiesDatasource:
-				task = &Summary[sciensano.Mortalities]{Name: fullName, Source: &datasources.Mortalities, Mode: mode, Accumulate: option.accumulate, Store: store, Logger: l}
+				task = &Summary[sciensano.Mortalities]{Name: fullName, Source: &datasources.Mortalities, Mode: mode, Store: store, Logger: l}
 			case testResultsDatasource:
-				task = &Summary[sciensano.TestResults]{Name: fullName, Source: &datasources.TestResults, Mode: mode, Accumulate: option.accumulate, Store: store, Logger: l}
+				task = &Summary[sciensano.TestResults]{Name: fullName, Source: &datasources.TestResults, Mode: mode, Store: store, Logger: l}
 			case vaccinationsDatasource:
-				task = &Summary[sciensano.Vaccinations]{Name: fullName, Source: &datasources.Vaccinations, Mode: mode, Accumulate: option.accumulate, Store: store, Logger: l}
+				task = &Summary[sciensano.Vaccinations]{Name: fullName, Source: &datasources.Vaccinations, Mode: mode, Store: store, Logger: l}
 			default:
 				panic("invalid mode")
 			}
@@ -58,14 +57,13 @@ func NewSciensanoReporters(datasources *datasource.SciensanoSources, store *stor
 	}
 
 	raters := []struct {
-		dsType     datasourceType
-		basename   string
-		modes      []sciensano.SummaryColumn
-		doseType   sciensano.DoseType
-		accumulate bool
+		dsType   datasourceType
+		basename string
+		modes    []sciensano.SummaryColumn
+		doseType sciensano.DoseType
 	}{
-		{dsType: vaccinationsDatasource, basename: "vaccinations-rate", modes: []sciensano.SummaryColumn{sciensano.ByRegion, sciensano.ByAgeGroup}, doseType: sciensano.Partial, accumulate: true},
-		{dsType: vaccinationsDatasource, basename: "vaccinations-rate", modes: []sciensano.SummaryColumn{sciensano.ByRegion, sciensano.ByAgeGroup}, doseType: sciensano.Full, accumulate: true},
+		{dsType: vaccinationsDatasource, basename: "vaccinations-rate", modes: []sciensano.SummaryColumn{sciensano.ByRegion, sciensano.ByAgeGroup}, doseType: sciensano.Partial},
+		{dsType: vaccinationsDatasource, basename: "vaccinations-rate", modes: []sciensano.SummaryColumn{sciensano.ByRegion, sciensano.ByAgeGroup}, doseType: sciensano.Full},
 	}
 
 	for _, rater := range raters {
@@ -74,14 +72,13 @@ func NewSciensanoReporters(datasources *datasource.SciensanoSources, store *stor
 			l := logger.With("reporter", fullName)
 
 			reporters = append(reporters, &ProRater{
-				Name:       fullName,
-				Source:     &datasources.Vaccinations,
-				PopStore:   popStore,
-				Mode:       mode,
-				DoseType:   rater.doseType,
-				Accumulate: true,
-				Store:      store,
-				Logger:     l,
+				Name:     fullName,
+				Source:   &datasources.Vaccinations,
+				PopStore: popStore,
+				Mode:     mode,
+				DoseType: rater.doseType,
+				Store:    store,
+				Logger:   l,
 			})
 		}
 

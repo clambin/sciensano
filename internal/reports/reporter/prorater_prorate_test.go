@@ -56,7 +56,7 @@ func TestProRater_Prorate(t *testing.T) {
 			mode:        sciensano.ByRegion,
 			doseType:    sciensano.Full,
 			wantColumns: []string{"Brussels", "Flanders", "Wallonia"},
-			wantValues:  []float64{1, 2, 3},
+			wantValues:  []float64{1, 1, 1},
 		},
 		{
 			name:        "Partial-ByAgeGroup",
@@ -78,13 +78,12 @@ func TestProRater_Prorate(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			s := &store.Store{Logger: l}
 			r := ProRater{
-				Name:       tt.name,
-				PopStore:   f,
-				Mode:       tt.mode,
-				DoseType:   tt.doseType,
-				Accumulate: true,
-				Store:      s,
-				Logger:     l,
+				Name:     tt.name,
+				PopStore: f,
+				Mode:     tt.mode,
+				DoseType: tt.doseType,
+				Store:    s,
+				Logger:   l,
 			}
 			r.createReport(vaccinations)
 

@@ -55,19 +55,11 @@ func (r TestResults) Summarize(summaryColumn SummaryColumn) (*tabulator.Tabulato
 }
 
 func (r TestResults) Categorize() *tabulator.Tabulator {
-	t := tabulator.New("positive", "total", "rate")
+	t := tabulator.New("positive", "total")
 
 	for _, testResult := range r {
 		t.Add(testResult.TimeStamp.Time, "positive", float64(testResult.Positive))
 		t.Add(testResult.TimeStamp.Time, "total", float64(testResult.Total))
 	}
-
-	positive, _ := t.GetValues("positive")
-	total, _ := t.GetValues("total")
-
-	for index, timestamp := range t.GetTimestamps() {
-		t.Add(timestamp, "rate", positive[index]/total[index])
-	}
-
 	return t
 }

@@ -39,6 +39,10 @@ func main() {
 	slog.Info("Sciensano API server starting", "version", version.BuildVersion)
 
 	popStore := demographics.Server{Path: *demographicsPath, Interval: 24 * time.Hour}
+	if err := popStore.Load(); err != nil {
+		slog.Error("failed to load population figures", "err", err)
+		os.Exit(1)
+	}
 
 	reportsStore := store.Store{Logger: slog.Default().With("component", "reportsStore")}
 	ds := datasource.NewSciensanoDatastore("", 15*time.Minute, slog.Default().With("component", "datasource"))

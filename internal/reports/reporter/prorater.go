@@ -11,14 +11,13 @@ import (
 )
 
 type ProRater struct {
-	Name       string
-	Source     Publisher[sciensano.Vaccinations] //*datasource.DataSource[sciensano.Vaccinations]
-	PopStore   Fetcher
-	Mode       sciensano.SummaryColumn
-	DoseType   sciensano.DoseType
-	Accumulate bool
-	Store      *store.Store
-	Logger     *slog.Logger
+	Name     string
+	Source   Publisher[sciensano.Vaccinations] //*datasource.DataSource[sciensano.Vaccinations]
+	PopStore Fetcher
+	Mode     sciensano.SummaryColumn
+	DoseType sciensano.DoseType
+	Store    *store.Store
+	Logger   *slog.Logger
 }
 
 //go:generate mockery --name Fetcher --with-expecter=true
@@ -59,9 +58,6 @@ func (r *ProRater) createReport(vaccinations sciensano.Vaccinations) {
 	if err != nil {
 		r.Logger.Error("failed to generate report", "err", err)
 		return
-	}
-	if r.Accumulate {
-		summarized.Accumulate()
 	}
 	summarized, err = proRate(summarized, r.Mode, r.PopStore)
 	if err != nil {

@@ -53,7 +53,7 @@ func TestTestResults_Summarize(t *testing.T) {
 		{
 			summaryColumn: sciensano.ByCategory,
 			wantErr:       assert.NoError,
-			want:          []string{"positive", "rate", "total"},
+			want:          []string{"positive", "total"},
 		},
 	}
 

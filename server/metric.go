@@ -39,12 +39,23 @@ func (f summaryMetricProcessor) makeMetricPayload() []grafanaJSONServer.MetricPa
 			Width:   40,
 			Options: options,
 		},
+		{
+			Label: "Accumulate",
+			Name:  "accumulate",
+			Type:  "select",
+			Width: 40,
+			Options: []grafanaJSONServer.MetricPayloadOption{
+				{Label: "Yes", Value: "yes"},
+				{Label: "No", Value: "no"},
+			},
+		},
 	}
 }
 
 func (f summaryMetricProcessor) getKey(target string, req grafanaJSONServer.QueryRequest) (string, error) {
 	var summaryOption struct {
-		Summary string
+		Summary    string
+		Accumulate string
 	}
 	if err := req.GetPayload(target, &summaryOption); err != nil {
 		return "", fmt.Errorf("invalid payload: %w", err)

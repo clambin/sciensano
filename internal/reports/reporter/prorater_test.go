@@ -34,14 +34,13 @@ func TestRater(t *testing.T) {
 	}
 
 	r := reporter.ProRater{
-		Name:       "vaccinations-rate-Full-ByRegion",
-		Source:     d,
-		PopStore:   p,
-		Mode:       sciensano.ByRegion,
-		DoseType:   sciensano.Full,
-		Accumulate: true,
-		Store:      s,
-		Logger:     slog.Default().With("component", "rate"),
+		Name:     "vaccinations-rate-Full-ByRegion",
+		Source:   d,
+		PopStore: p,
+		Mode:     sciensano.ByRegion,
+		DoseType: sciensano.Full,
+		Store:    s,
+		Logger:   slog.Default().With("component", "rate"),
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
