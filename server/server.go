@@ -5,7 +5,6 @@ import (
 	"github.com/clambin/go-common/httpserver/middleware"
 	"github.com/clambin/go-common/tabulator"
 	grafanaJSONServer "github.com/clambin/grafana-json-server"
-	"github.com/clambin/sciensano/internal/queryhandlers"
 	"github.com/clambin/sciensano/internal/sciensano"
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/exp/slog"
@@ -39,38 +38,21 @@ func New(reportsStore ReportsStorer, logger *slog.Logger) *Server {
 		grafanaJSONServer.WithPrometheusQueryMetrics("sciensano", "", "sciensano"),
 	}
 
-	queryHandler := queryhandlers.SummaryHandler{ReportsStore: reportsStore}
-	for _, m := range []grafanaJSONServer.Metric{
-		newMetric("cases", sciensano.CasesValidSummaryModes().List()...),
-		newMetric("hospitalisations", sciensano.HospitalisationsValidSummaryModes().List()...),
-		newMetric("mortalities", sciensano.MortalitiesValidSummaryModes().List()...),
-		newMetric("tests", sciensano.TestResultsValidSummaryModes().List()...),
-	} {
-		s.Handlers[m.Value] = queryHandler
-		options = append(options, grafanaJSONServer.WithMetric(m, queryHandler, nil))
-
+	for _, h := range buildHandlers(reportsStore) {
+		s.Handlers[h.Metric.Value] = h
+		options = append(options, grafanaJSONServer.WithMetric(h.Metric, h, nil))
 	}
-	queryHandler = queryhandlers.SummaryHandler{ReportsStore: reportsStore, Accumulate: true}
+
+	queryHandler := SummaryHandler{ReportsStore: reportsStore, Accumulate: true}
 	for _, m := range []grafanaJSONServer.Metric{
-		newMetric("vaccinations-rate-Partial", sciensano.VaccinationsValidSummaryModes().List()...),
-		newMetric("vaccinations-rate-Full", sciensano.VaccinationsValidSummaryModes().List()...),
+		newSummaryMetric("vaccinations-rate-Partial", sciensano.VaccinationsValidSummaryModes()),
+		newSummaryMetric("vaccinations-rate-Full", sciensano.VaccinationsValidSummaryModes()),
 	} {
 		s.Handlers[m.Value] = queryHandler
 		options = append(options, grafanaJSONServer.WithMetric(m, queryHandler, nil))
 
 	}
 
-	//{Fetch: s.vaccinationRate, Accumulate: true, Metric: newMetric("vaccinations-rate", byAgeGroup, byRegion)},
-
-	/*
-		for _, h := range []*Handler2{
-			{Fetch: s.vaccinationFilteredRate, Accumulate: true, DoseType: sciensano.Partial, Metric: newMetric("vaccinations-rate-partial", byAgeGroup, byRegion)},
-			{Fetch: s.vaccinationFilteredRate, Accumulate: true, DoseType: sciensano.Full, Metric: newMetric("vaccinations-rate-full", byAgeGroup, byRegion)},
-		} {
-			s.handlers[h.Metric.Value] = h
-			options = append(options, grafanaJSONServer.WithMetric(h.Metric, h, nil))
-		}
-	*/
 	s.JSONServer = grafanaJSONServer.NewServer(options...)
 	return s
 }

@@ -16,6 +16,16 @@ const (
 	ByCategory
 )
 
+var SummaryColumnNames map[string]SummaryColumn
+
+func init() {
+	SummaryColumnNames = make(map[string]SummaryColumn)
+
+	for i := Total; i <= ByCategory; i++ {
+		SummaryColumnNames[i.String()] = i
+	}
+}
+
 func (s SummaryColumn) String() string {
 	switch s {
 	case Total:

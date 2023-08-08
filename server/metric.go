@@ -1,29 +1,58 @@
 package server
 
 import (
+	"fmt"
+	"github.com/clambin/go-common/set"
 	grafanaJSONServer "github.com/clambin/grafana-json-server"
 	"github.com/clambin/sciensano/internal/sciensano"
-	"strconv"
 )
 
-func newMetric(name string, summaryColumns ...sciensano.SummaryColumn) grafanaJSONServer.Metric {
-	var options []grafanaJSONServer.MetricPayloadOption
+func newSummaryMetric(name string, summaryColumns set.Set[sciensano.SummaryColumn]) grafanaJSONServer.Metric {
+	f := summaryMetricProcessor{summaryColumns: summaryColumns}
 
-	for _, summaryColumn := range summaryColumns {
-		options = append(options, grafanaJSONServer.MetricPayloadOption{
-			Label: summaryColumn.String(),
-			Value: strconv.Itoa(int(summaryColumn)),
-		})
-	}
-	return grafanaJSONServer.Metric{Value: name, Payloads: []grafanaJSONServer.MetricPayload{{
-		Label:   "Summary",
-		Name:    "summary",
-		Type:    "select",
-		Width:   40,
-		Options: options,
-	}}}
+	return grafanaJSONServer.Metric{Value: name, Payloads: f.makeMetricPayload()}
 }
 
-func getSummaryMode(target string, req grafanaJSONServer.QueryRequest) (sciensano.SummaryColumn, error) {
-	panic("not implemented")
+type metricProcessor interface {
+	makeMetricPayload() []grafanaJSONServer.MetricPayload
+	getKey(target string, req grafanaJSONServer.QueryRequest) (string, error)
+}
+
+type summaryMetricProcessor struct {
+	summaryColumns set.Set[sciensano.SummaryColumn]
+}
+
+func (f summaryMetricProcessor) makeMetricPayload() []grafanaJSONServer.MetricPayload {
+	var options []grafanaJSONServer.MetricPayloadOption
+
+	for _, summaryColumn := range f.summaryColumns.List() {
+		options = append(options, grafanaJSONServer.MetricPayloadOption{
+			Label: summaryColumn.String(),
+			Value: summaryColumn.String(),
+		})
+	}
+	return []grafanaJSONServer.MetricPayload{
+		{
+			Label:   "Summary",
+			Name:    "summary",
+			Type:    "select",
+			Width:   40,
+			Options: options,
+		},
+	}
+}
+
+func (f summaryMetricProcessor) getKey(target string, req grafanaJSONServer.QueryRequest) (string, error) {
+	var summaryOption struct {
+		Summary string
+	}
+	if err := req.GetPayload(target, &summaryOption); err != nil {
+		return "", fmt.Errorf("invalid payload: %w", err)
+	}
+
+	mode, ok := sciensano.SummaryColumnNames[summaryOption.Summary]
+	if !ok {
+		return "", fmt.Errorf("invalid summary option: %s", summaryOption.Summary)
+	}
+	return target + "-" + mode.String(), nil
 }
