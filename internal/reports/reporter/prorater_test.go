@@ -20,6 +20,7 @@ import (
 func TestRater(t *testing.T) {
 	p := mocks.NewFetcher(t)
 	p.EXPECT().GetByRegion().Return(nil)
+	p.EXPECT().WaitTillReady(mock.AnythingOfType("*context.timerCtx")).Return(nil)
 
 	vaccinationsFetcher := mocks2.NewFetcher[sciensano.Vaccinations](t)
 	vaccinationsFetcher.EXPECT().GetLastModified(mock.AnythingOfType("*context.cancelCtx")).Return(time.Now(), nil)

@@ -26,6 +26,7 @@ func TestSciensanoReporters(t *testing.T) {
 	popStore := mocks2.NewFetcher(t)
 	popStore.EXPECT().GetByRegion().Return(nil)
 	popStore.EXPECT().GetByAgeBracket(mock.AnythingOfType("bracket.Bracket")).Return(1)
+	popStore.EXPECT().WaitTillReady(mock.AnythingOfType("*context.timerCtx")).Return(nil)
 
 	datasources := datasource.NewSciensanoDatastore("", 15*time.Second, logger)
 	casesFetcher := mocks.NewFetcher[sciensano.Cases](t)

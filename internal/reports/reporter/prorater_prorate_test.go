@@ -1,11 +1,12 @@
 package reporter
 
 import (
-	"github.com/clambin/sciensano/demographics/bracket"
+	"github.com/clambin/sciensano/internal/population/bracket"
 	"github.com/clambin/sciensano/internal/reports/reporter/mocks"
 	"github.com/clambin/sciensano/internal/reports/store"
 	"github.com/clambin/sciensano/internal/sciensano"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/exp/slog"
 	"testing"
@@ -20,6 +21,7 @@ func TestProRater_Prorate(t *testing.T) {
 	f.EXPECT().GetByAgeBracket(bracket.Bracket{Low: 20, High: 29}).Return(10)
 	f.EXPECT().GetByAgeBracket(bracket.Bracket{Low: 30, High: 39}).Return(5)
 	f.EXPECT().GetByAgeBracket(bracket.Bracket{Low: 40, High: 49}).Return(1)
+	f.EXPECT().WaitTillReady(mock.AnythingOfType("*context.timerCtx")).Return(nil)
 
 	ts := time.Date(2023, time.August, 7, 0, 0, 0, 0, time.UTC)
 	vaccinations := sciensano.Vaccinations{

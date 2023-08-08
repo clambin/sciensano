@@ -1,9 +1,9 @@
-package demographics
+package population
 
 import (
 	"context"
 	"fmt"
-	"github.com/clambin/sciensano/demographics/bracket"
+	"github.com/clambin/sciensano/internal/population/bracket"
 	"golang.org/x/exp/slog"
 	"math"
 	"sync"
@@ -24,6 +24,7 @@ type Fetcher interface {
 
 // Server imports the demographics data on a regular basis and exposes data APIs to callers
 type Server struct {
+	Waiter
 	Path     string
 	Interval time.Duration
 	mtime    time.Time
@@ -34,15 +35,13 @@ type Server struct {
 
 var _ Fetcher = &Server{}
 
-func (s *Server) Load() error {
+// Run imports the latest demographics data on a regular basis
+func (s *Server) Run(ctx context.Context) error {
 	if err := s.update(); err != nil {
 		return fmt.Errorf("population load failed: %w", err)
 	}
-	return nil
-}
+	s.Ready()
 
-// Run imports the latest demographics data on a regular basis
-func (s *Server) Run(ctx context.Context) error {
 	ticker := time.NewTicker(s.Interval)
 	defer ticker.Stop()
 

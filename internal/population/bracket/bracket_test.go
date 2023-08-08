@@ -1,7 +1,7 @@
 package bracket_test
 
 import (
-	"github.com/clambin/sciensano/demographics/bracket"
+	"github.com/clambin/sciensano/internal/population/bracket"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"math"

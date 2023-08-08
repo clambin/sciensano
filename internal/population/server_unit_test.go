@@ -1,4 +1,4 @@
-package demographics
+package population
 
 import (
 	"github.com/stretchr/testify/assert"

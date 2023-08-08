@@ -3,7 +3,10 @@
 package mocks
 
 import (
-	bracket "github.com/clambin/sciensano/demographics/bracket"
+	context "context"
+
+	bracket "github.com/clambin/sciensano/internal/population/bracket"
+
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -101,6 +104,48 @@ func (_c *Fetcher_GetByRegion_Call) Return(figures map[string]int) *Fetcher_GetB
 }
 
 func (_c *Fetcher_GetByRegion_Call) RunAndReturn(run func() map[string]int) *Fetcher_GetByRegion_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// WaitTillReady provides a mock function with given fields: ctx
+func (_m *Fetcher) WaitTillReady(ctx context.Context) error {
+	ret := _m.Called(ctx)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context) error); ok {
+		r0 = rf(ctx)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// Fetcher_WaitTillReady_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'WaitTillReady'
+type Fetcher_WaitTillReady_Call struct {
+	*mock.Call
+}
+
+// WaitTillReady is a helper method to define mock.On call
+//   - ctx context.Context
+func (_e *Fetcher_Expecter) WaitTillReady(ctx interface{}) *Fetcher_WaitTillReady_Call {
+	return &Fetcher_WaitTillReady_Call{Call: _e.mock.On("WaitTillReady", ctx)}
+}
+
+func (_c *Fetcher_WaitTillReady_Call) Run(run func(ctx context.Context)) *Fetcher_WaitTillReady_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context))
+	})
+	return _c
+}
+
+func (_c *Fetcher_WaitTillReady_Call) Return(_a0 error) *Fetcher_WaitTillReady_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *Fetcher_WaitTillReady_Call) RunAndReturn(run func(context.Context) error) *Fetcher_WaitTillReady_Call {
 	_c.Call.Return(run)
 	return _c
 }

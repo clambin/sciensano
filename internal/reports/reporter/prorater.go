@@ -4,10 +4,12 @@ import (
 	"context"
 	"fmt"
 	"github.com/clambin/go-common/tabulator"
-	"github.com/clambin/sciensano/demographics/bracket"
+	"github.com/clambin/sciensano/internal/population"
+	"github.com/clambin/sciensano/internal/population/bracket"
 	"github.com/clambin/sciensano/internal/reports/store"
 	"github.com/clambin/sciensano/internal/sciensano"
 	"golang.org/x/exp/slog"
+	"time"
 )
 
 type ProRater struct {
@@ -26,7 +28,11 @@ type Fetcher interface {
 	GetByAgeBracket(arguments bracket.Bracket) (count int)
 	// GetByRegion returns the demographics grouped by region
 	GetByRegion() (figures map[string]int)
+	// WaitTillReady waits until the fetcher is ready or until the context is marked as done
+	WaitTillReady(ctx context.Context) error
 }
+
+var _ Fetcher = &population.Server{}
 
 func (r *ProRater) Run(ctx context.Context) error {
 	ch := make(chan sciensano.Vaccinations, 1)
@@ -90,6 +96,11 @@ func proRate(summary *tabulator.Tabulator, mode sciensano.SummaryColumn, popStor
 }
 
 func getPopulationForGroup(mode sciensano.SummaryColumn, columns []string, popStore Fetcher) (map[string]int, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
+	defer cancel()
+	if err := popStore.WaitTillReady(ctx); err != nil {
+		return nil, fmt.Errorf("population figures not ready: %w", err)
+	}
 	var figures map[string]int
 	switch mode {
 	case sciensano.ByRegion:

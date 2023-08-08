@@ -4,8 +4,7 @@ package mocks
 
 import (
 	context "context"
-
-	bracket "github.com/clambin/sciensano/demographics/bracket"
+	"github.com/clambin/sciensano/internal/population/bracket"
 
 	mock "github.com/stretchr/testify/mock"
 )

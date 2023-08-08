@@ -1,4 +1,4 @@
-package demographics
+package population
 
 import (
 	"golang.org/x/exp/slog"

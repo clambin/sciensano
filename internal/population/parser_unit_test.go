@@ -1,4 +1,4 @@
-package demographics
+package population
 
 import (
 	"archive/zip"
@@ -32,7 +32,7 @@ func unzipTestFiles() (err error) {
 
 	for _, zipFile := range []string{"demographics.zip", "small_demographics.zip"} {
 		var archive *zip.ReadCloser
-		archive, err = zip.OpenReader(path.Join("..", "data", zipFile))
+		archive, err = zip.OpenReader(path.Join("testdata", zipFile))
 		if err != nil {
 			return fmt.Errorf("unable to open '%s': %w", zipFile, err)
 		}

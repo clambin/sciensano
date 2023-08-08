@@ -1,12 +1,11 @@
-package demographics
+package population
 
 import (
 	"context"
-	"github.com/clambin/sciensano/demographics/bracket"
+	"github.com/clambin/sciensano/internal/population/bracket"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"path"
-	"sync"
 	"testing"
 	"time"
 )
@@ -64,19 +63,18 @@ func TestStore_Run(t *testing.T) {
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
-	wg := sync.WaitGroup{}
-	wg.Add(1)
+
+	ch := make(chan error)
 	go func() {
-		s.Load()
-		s.Run(ctx)
-		wg.Done()
+		ch <- s.Run(ctx)
 	}()
 
-	assert.Eventually(t, func() bool {
-		population := s.GetByRegion()
-		return len(population) > 0
-	}, 5*time.Second, 100*time.Millisecond)
+	ctx2, cancel2 := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel2()
+	assert.NoError(t, s.WaitTillReady(ctx2))
+
+	assert.NotEmpty(t, s.GetByRegion())
 
 	cancel()
-	wg.Wait()
+	assert.NoError(t, <-ch)
 }
