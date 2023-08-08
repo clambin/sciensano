@@ -2,7 +2,6 @@ package reporter_test
 
 import (
 	"context"
-	"errors"
 	"github.com/clambin/go-common/taskmanager"
 	"github.com/clambin/sciensano/internal/reports/datasource"
 	"github.com/clambin/sciensano/internal/reports/datasource/mocks"
@@ -13,6 +12,7 @@ import (
 	"github.com/clambin/sciensano/internal/sciensano/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"golang.org/x/exp/slices"
 	"golang.org/x/exp/slog"
 	"os"
 	"sort"
@@ -65,21 +65,18 @@ func TestSciensanoReporters(t *testing.T) {
 	go func() { ch <- mgr.Run(ctx) }()
 
 	assert.Eventually(t, func() bool {
-		_, err := s.Get("cases-Total")
-		return !errors.Is(err, store.ErrNotFound)
+		keys := s.Keys()
+		sort.Strings(keys)
+		return slices.Equal(keys, []string{
+			"cases-ByAgeGroup", "cases-ByProvince", "cases-ByRegion", "cases-Total",
+			"hospitalisations-ByCategory", "hospitalisations-ByProvince", "hospitalisations-ByRegion", "hospitalisations-Total",
+			"mortalities-ByAgeGroup", "mortalities-ByRegion", "mortalities-Total",
+			"tests-ByCategory", "tests-Total",
+			"vaccinations-ByAgeGroup", "vaccinations-ByManufacturer", "vaccinations-ByRegion", "vaccinations-ByVaccinationType", "vaccinations-Total",
+			"vaccinations-rate-Full-ByAgeGroup", "vaccinations-rate-Full-ByRegion", "vaccinations-rate-Partial-ByAgeGroup", "vaccinations-rate-Partial-ByRegion",
+		})
 	}, time.Minute, time.Second)
 
 	cancel()
 	assert.ErrorIs(t, <-ch, context.Canceled)
-
-	keys := s.Keys()
-	sort.Strings(keys)
-	assert.Equal(t, []string{
-		"cases-ByAgeGroup", "cases-ByProvince", "cases-ByRegion", "cases-Total",
-		"hospitalisations-ByCategory", "hospitalisations-ByProvince", "hospitalisations-ByRegion", "hospitalisations-Total",
-		"mortalities-ByAgeGroup", "mortalities-ByRegion", "mortalities-Total",
-		"tests-ByCategory", "tests-Total",
-		"vaccinations-ByAgeGroup", "vaccinations-ByManufacturer", "vaccinations-ByRegion", "vaccinations-ByVaccinationType", "vaccinations-Total",
-		"vaccinations-rate-Full-ByAgeGroup", "vaccinations-rate-Full-ByRegion", "vaccinations-rate-Partial-ByAgeGroup", "vaccinations-rate-Partial-ByRegion",
-	}, keys)
 }
