@@ -11,7 +11,6 @@ import (
 	"github.com/clambin/sciensano/internal/reports/reporter"
 	"github.com/clambin/sciensano/internal/reports/store"
 	"github.com/clambin/sciensano/server"
-	"github.com/clambin/sciensano/version"
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/exp/slog"
 	_ "net/http/pprof"
@@ -21,6 +20,9 @@ import (
 )
 
 var (
+	// BuildVersion contains the release number
+	BuildVersion = "change-me"
+
 	debug            = flag.Bool("debug", false, "Log debug messages")
 	simpleJSONAddr   = flag.String("addr", ":8080", "Server address")
 	prometheusAddr   = flag.String("prometheus", ":9090", "Prometheus metrics port")
@@ -36,7 +38,7 @@ func main() {
 	}
 	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stderr, &opts)))
 
-	slog.Info("Sciensano API server starting", "version", version.BuildVersion)
+	slog.Info("Sciensano API server starting", "version", BuildVersion)
 
 	popStore := population.Server{Path: *demographicsPath, Interval: 24 * time.Hour}
 

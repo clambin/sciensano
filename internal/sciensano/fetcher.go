@@ -53,12 +53,12 @@ func unmarshal[T any](r io.Reader) (v T, err error) {
 	case Vaccinations:
 		var v2 Vaccinations
 		if err = easyjson.UnmarshalFromReader(r, &v2); err == nil {
-			v = interface{}(v2).(T)
+			v = any(v2).(T)
 		}
 	case Cases:
 		var v2 Cases
 		if err = easyjson.UnmarshalFromReader(r, &v2); err == nil {
-			v = interface{}(v2).(T)
+			v = any(v2).(T)
 		}
 	default:
 		err = json.NewDecoder(r).Decode(&v)

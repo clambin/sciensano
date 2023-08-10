@@ -104,5 +104,5 @@ func (h SummaryByDoseTypeHandler) getRequestOptions(target string, req grafanaJS
 		return "", accumulate, fmt.Errorf("invalid accumulate value: %s", summaryOption.Accumulate)
 	}
 
-	return target + "-" + summaryOption.Summary + "-" + summaryOption.DoseType, accumulate, nil
+	return target + "-" + summaryOption.DoseType + "-" + summaryOption.Summary, accumulate, nil
 }
