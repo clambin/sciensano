@@ -27,8 +27,8 @@ var doseTypeStrings = map[DoseType]string{
 	Booster3:   "Booster 3",
 }
 
-func (d *DoseType) String() string {
-	value, ok := doseTypeStrings[*d]
+func (d DoseType) String() string {
+	value, ok := doseTypeStrings[d]
 	if !ok {
 		value = "(unknown)"
 	}

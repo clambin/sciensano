@@ -24,7 +24,7 @@ func newSummaryByDoseTypeHandler(name string, summaryColumns set.Set[sciensano.S
 		})
 	}
 	for _, doseType := range doseTypes.List() {
-		summaryPayloadOptions = append(summaryPayloadOptions, grafanaJSONServer.MetricPayloadOption{
+		doseTypePayloadOptions = append(summaryPayloadOptions, grafanaJSONServer.MetricPayloadOption{
 			Label: doseType.String(),
 			Value: doseType.String(),
 		})
