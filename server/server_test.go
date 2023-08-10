@@ -23,7 +23,7 @@ func TestNew(t *testing.T) {
 
 	for target, handler := range s.Handlers {
 		t.Run(target, func(t *testing.T) {
-			payload := fmt.Sprintf(`{"summary":"%s"}`, sciensano.Total.String())
+			payload := fmt.Sprintf(`{"summary":"%s", "accumulate": "true"}`, sciensano.Total.String())
 			if strings.HasPrefix(target, "vaccinations-rate") {
 				// TODO
 				return

@@ -5,7 +5,6 @@ import (
 	"github.com/clambin/go-common/httpserver/middleware"
 	"github.com/clambin/go-common/tabulator"
 	grafanaJSONServer "github.com/clambin/grafana-json-server"
-	"github.com/clambin/sciensano/internal/sciensano"
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/exp/slog"
 	"net/http"
@@ -41,16 +40,6 @@ func New(reportsStore ReportsStorer, logger *slog.Logger) *Server {
 	for _, h := range buildHandlers(reportsStore) {
 		s.Handlers[h.Metric.Value] = h
 		options = append(options, grafanaJSONServer.WithMetric(h.Metric, h, nil))
-	}
-
-	queryHandler := SummaryHandler{ReportsStore: reportsStore, Accumulate: true}
-	for _, m := range []grafanaJSONServer.Metric{
-		newSummaryMetric("vaccinations-rate-Partial", sciensano.VaccinationsValidSummaryModes()),
-		newSummaryMetric("vaccinations-rate-Full", sciensano.VaccinationsValidSummaryModes()),
-	} {
-		s.Handlers[m.Value] = queryHandler
-		options = append(options, grafanaJSONServer.WithMetric(m, queryHandler, nil))
-
 	}
 
 	s.JSONServer = grafanaJSONServer.NewServer(options...)

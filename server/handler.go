@@ -2,11 +2,10 @@ package server
 
 import (
 	"github.com/clambin/go-common/set"
-	grafanaJSONServer "github.com/clambin/grafana-json-server"
 	"github.com/clambin/sciensano/internal/sciensano"
 )
 
-func buildHandlers(s ReportsStore) []*SummaryHandler {
+func buildHandlers(s ReportsStore) []SummaryHandler {
 	summaryHandlers := []struct {
 		name           string
 		summaryColumns set.Set[sciensano.SummaryColumn]
@@ -17,17 +16,13 @@ func buildHandlers(s ReportsStore) []*SummaryHandler {
 		{name: "mortalities", summaryColumns: sciensano.MortalitiesValidSummaryModes()},
 		{name: "tests", summaryColumns: sciensano.TestResultsValidSummaryModes()},
 		{name: "vaccinations", summaryColumns: sciensano.VaccinationsValidSummaryModes(), accumulate: true},
+		{name: "vaccinations-rate-Partial", summaryColumns: sciensano.VaccinationsValidSummaryModes()},
+		{name: "vaccinations-rate-Full", summaryColumns: sciensano.VaccinationsValidSummaryModes()},
 	}
 
-	var handlers []*SummaryHandler
+	var handlers []SummaryHandler
 	for _, h := range summaryHandlers {
-		processor := summaryMetricProcessor{summaryColumns: h.summaryColumns}
-		handlers = append(handlers, &SummaryHandler{
-			ReportsStore:    s,
-			Metric:          grafanaJSONServer.Metric{Label: h.name, Value: h.name, Payloads: processor.makeMetricPayload()},
-			Accumulate:      h.accumulate,
-			metricProcessor: processor,
-		})
+		handlers = append(handlers, newSummaryHandler(h.name, h.summaryColumns, s))
 	}
 
 	return handlers
