@@ -4,25 +4,18 @@ import (
 	"context"
 	"fmt"
 	"github.com/clambin/go-common/set"
-	"github.com/clambin/go-common/tabulator"
 	grafanaJSONServer "github.com/clambin/grafana-json-server"
 	"github.com/clambin/sciensano/internal/sciensano"
 )
 
-var _ grafanaJSONServer.Handler = SummaryHandler{}
-
-//go:generate mockery --name ReportsStore --with-expecter=true
-type ReportsStore interface {
-	Get(string) (*tabulator.Tabulator, error)
-}
-
-type SummaryHandler struct {
+type SummaryByDoseTypeHandler struct {
 	ReportsStore
 	grafanaJSONServer.Metric
 }
 
-func newSummaryHandler(name string, summaryColumns set.Set[sciensano.SummaryColumn], s ReportsStore) SummaryHandler {
+func newSummaryByDoseTypeHandler(name string, summaryColumns set.Set[sciensano.SummaryColumn], doseTypes set.Set[sciensano.DoseType], s ReportsStore) SummaryByDoseTypeHandler {
 	var summaryPayloadOptions []grafanaJSONServer.MetricPayloadOption
+	var doseTypePayloadOptions []grafanaJSONServer.MetricPayloadOption
 
 	for _, summaryColumn := range summaryColumns.List() {
 		summaryPayloadOptions = append(summaryPayloadOptions, grafanaJSONServer.MetricPayloadOption{
@@ -30,7 +23,13 @@ func newSummaryHandler(name string, summaryColumns set.Set[sciensano.SummaryColu
 			Value: summaryColumn.String(),
 		})
 	}
-	return SummaryHandler{
+	for _, doseType := range doseTypes.List() {
+		summaryPayloadOptions = append(summaryPayloadOptions, grafanaJSONServer.MetricPayloadOption{
+			Label: doseType.String(),
+			Value: doseType.String(),
+		})
+	}
+	return SummaryByDoseTypeHandler{
 		ReportsStore: s,
 		Metric: grafanaJSONServer.Metric{Value: name, Payloads: []grafanaJSONServer.MetricPayload{
 			{
@@ -39,6 +38,13 @@ func newSummaryHandler(name string, summaryColumns set.Set[sciensano.SummaryColu
 				Type:    "select",
 				Width:   40,
 				Options: summaryPayloadOptions,
+			},
+			{
+				Label:   "DoseType",
+				Name:    "doseType",
+				Type:    "select",
+				Width:   40,
+				Options: doseTypePayloadOptions,
 			},
 			{
 				Label: "Accumulate",
@@ -54,7 +60,7 @@ func newSummaryHandler(name string, summaryColumns set.Set[sciensano.SummaryColu
 	}
 }
 
-func (h SummaryHandler) Query(_ context.Context, target string, request grafanaJSONServer.QueryRequest) (grafanaJSONServer.QueryResponse, error) {
+func (h SummaryByDoseTypeHandler) Query(_ context.Context, target string, request grafanaJSONServer.QueryRequest) (grafanaJSONServer.QueryResponse, error) {
 	key, accumulate, err := h.getRequestOptions(target, request)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get store key: %w", err)
@@ -72,9 +78,10 @@ func (h SummaryHandler) Query(_ context.Context, target string, request grafanaJ
 	return createTableResponse(records), nil
 }
 
-func (h SummaryHandler) getRequestOptions(target string, req grafanaJSONServer.QueryRequest) (string, bool, error) {
+func (h SummaryByDoseTypeHandler) getRequestOptions(target string, req grafanaJSONServer.QueryRequest) (string, bool, error) {
 	var summaryOption struct {
 		Summary    string
+		DoseType   string
 		Accumulate string
 	}
 	var accumulate bool
@@ -84,10 +91,10 @@ func (h SummaryHandler) getRequestOptions(target string, req grafanaJSONServer.Q
 
 	//slog.Debug("getting request options", "row", string(req.Targets[0].Payload), "options", summaryOption)
 
-	mode, ok := sciensano.SummaryColumnNames[summaryOption.Summary]
-	if !ok {
-		return "", accumulate, fmt.Errorf("invalid summary option: %s", summaryOption.Summary)
-	}
+	//mode, ok := sciensano.SummaryColumnNames[summaryOption.Summary]
+	//if !ok {
+	//	return "", accumulate, fmt.Errorf("invalid summary option: %s", summaryOption.Summary)
+	//}
 	switch summaryOption.Accumulate {
 	case "yes":
 		accumulate = true
@@ -97,17 +104,5 @@ func (h SummaryHandler) getRequestOptions(target string, req grafanaJSONServer.Q
 		return "", accumulate, fmt.Errorf("invalid accumulate value: %s", summaryOption.Accumulate)
 	}
 
-	return target + "-" + mode.String(), accumulate, nil
-}
-
-func createTableResponse(t *tabulator.Tabulator) grafanaJSONServer.QueryResponse {
-	columnNames := t.GetColumns()
-	columns := make([]grafanaJSONServer.Column, 1+len(columnNames))
-	columns[0] = grafanaJSONServer.Column{Text: "time", Data: grafanaJSONServer.TimeColumn(t.GetTimestamps())}
-	for index, column := range t.GetColumns() {
-		values, _ := t.GetValues(column)
-		columns[index+1] = grafanaJSONServer.Column{Text: column, Data: grafanaJSONServer.NumberColumn(values)}
-	}
-
-	return grafanaJSONServer.TableResponse{Columns: columns}
+	return target + "-" + summaryOption.Summary + summaryOption.DoseType, accumulate, nil
 }

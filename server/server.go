@@ -41,6 +41,10 @@ func New(reportsStore ReportsStorer, logger *slog.Logger) *Server {
 		s.Handlers[h.Metric.Value] = h
 		options = append(options, grafanaJSONServer.WithMetric(h.Metric, h, nil))
 	}
+	for _, h := range buildDoseTypeHandlers(reportsStore) {
+		s.Handlers[h.Metric.Value] = h
+		options = append(options, grafanaJSONServer.WithMetric(h.Metric, h, nil))
+	}
 
 	s.JSONServer = grafanaJSONServer.NewServer(options...)
 	return s

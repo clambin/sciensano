@@ -1,4 +1,4 @@
-package server_test
+package server
 
 import (
 	"context"
@@ -8,7 +8,6 @@ import (
 	grafanaJSONServer "github.com/clambin/grafana-json-server"
 	"github.com/clambin/sciensano/internal/sciensano"
 	"github.com/clambin/sciensano/internal/sciensano/testutil"
-	"github.com/clambin/sciensano/server"
 	"github.com/clambin/sciensano/server/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -16,16 +15,14 @@ import (
 	"time"
 )
 
-func TestSummaryHandler_Query(t *testing.T) {
+func TestSummaryByDoseTypeHandler_Query(t *testing.T) {
 	targets := []struct {
 		sciensanoType string
 		summaryTypes  set.Set[sciensano.SummaryColumn]
+		doseType      sciensano.DoseType
 	}{
-		{sciensanoType: "cases", summaryTypes: sciensano.CasesValidSummaryModes()},
-		{sciensanoType: "hospitalisations", summaryTypes: sciensano.HospitalisationsValidSummaryModes()},
-		{sciensanoType: "mortalities", summaryTypes: sciensano.MortalitiesValidSummaryModes()},
-		{sciensanoType: "testResults", summaryTypes: sciensano.TestResultsValidSummaryModes()},
-		{sciensanoType: "vaccinations", summaryTypes: sciensano.VaccinationsValidSummaryModes()},
+		{sciensanoType: "vaccinations-rate", summaryTypes: sciensano.VaccinationsValidSummaryModes(), doseType: sciensano.Partial},
+		{sciensanoType: "vaccinations-rate", summaryTypes: sciensano.VaccinationsValidSummaryModes(), doseType: sciensano.Full},
 	}
 
 	type summarizer interface {
@@ -36,18 +33,6 @@ func TestSummaryHandler_Query(t *testing.T) {
 		var records summarizer
 		var summaryTypes set.Set[sciensano.SummaryColumn]
 		switch target.sciensanoType {
-		case "cases":
-			records = testutil.Cases()
-			summaryTypes = sciensano.CasesValidSummaryModes()
-		case "hospitalisations":
-			records = testutil.Hospitalisations()
-			summaryTypes = sciensano.HospitalisationsValidSummaryModes()
-		case "mortalities":
-			records = testutil.Mortalities()
-			summaryTypes = sciensano.MortalitiesValidSummaryModes()
-		case "testResults":
-			records = testutil.TestResults()
-			summaryTypes = sciensano.TestResultsValidSummaryModes()
 		case "vaccinations":
 			records = testutil.Vaccinations()
 			summaryTypes = sciensano.VaccinationsValidSummaryModes()
@@ -58,9 +43,9 @@ func TestSummaryHandler_Query(t *testing.T) {
 				s := mocks.NewReportsStorer(t)
 				report, _ := records.Summarize(summaryType)
 				expectedColumns := 1 + len(report.GetColumns())
-				s.EXPECT().Get(target.sciensanoType+"-"+summaryType.String()).Return(report, nil).Once()
+				s.EXPECT().Get(target.sciensanoType+"-"+summaryType.String()+"-"+target.doseType.String()).Return(report, nil).Once()
 
-				r := server.SummaryHandler{ReportsStore: s}
+				r := SummaryByDoseTypeHandler{ReportsStore: s}
 
 				req := grafanaJSONServer.QueryRequest{
 					Targets: []grafanaJSONServer.QueryRequestTarget{{
