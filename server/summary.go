@@ -7,6 +7,7 @@ import (
 	"github.com/clambin/go-common/tabulator"
 	grafanaJSONServer "github.com/clambin/grafana-json-server"
 	"github.com/clambin/sciensano/internal/sciensano"
+	"golang.org/x/exp/slog"
 )
 
 var _ grafanaJSONServer.Handler = SummaryHandler{}
@@ -82,17 +83,19 @@ func (h SummaryHandler) getRequestOptions(target string, req grafanaJSONServer.Q
 		return "", accumulate, fmt.Errorf("invalid payload: %w", err)
 	}
 
+	slog.Debug("getting request options", "row", string(req.Targets[0].Payload), "options", summaryOption)
+
 	mode, ok := sciensano.SummaryColumnNames[summaryOption.Summary]
 	if !ok {
 		return "", accumulate, fmt.Errorf("invalid summary option: %s", summaryOption.Summary)
 	}
 	switch summaryOption.Accumulate {
-	case "true":
+	case "yes":
 		accumulate = true
-	case "false":
+	case "no":
 		accumulate = false
 	default:
-		return "", accumulate, fmt.Errorf("invalid bool value: %s", summaryOption.Accumulate)
+		return "", accumulate, fmt.Errorf("invalid accumulate value: %s", summaryOption.Accumulate)
 	}
 
 	return target + "-" + mode.String(), accumulate, nil
