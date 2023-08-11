@@ -58,10 +58,9 @@ func New(reportsStore ReportsStorer, logger *slog.Logger) *Server {
 		options = append(options, grafanaJSONServer.WithMetric(metric, h, nil))
 	}
 
-	for _, h := range buildDoseTypeHandlers(reportsStore) {
-		s.Handlers[h.Metric.Value] = h
-		options = append(options, grafanaJSONServer.WithMetric(h.Metric, h, nil))
-	}
+	metric, h := newVaccinationDoseTypeMetric(reportsStore, "vaccination-rate", []sciensano.SummaryColumn{sciensano.ByRegion, sciensano.ByAgeGroup}, []sciensano.DoseType{sciensano.Partial, sciensano.Full})
+	s.Handlers[metric.Value] = h
+	options = append(options, grafanaJSONServer.WithMetric(metric, h, nil))
 
 	s.JSONServer = grafanaJSONServer.NewServer(options...)
 	return s

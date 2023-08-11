@@ -7,18 +7,31 @@ import (
 	"github.com/clambin/sciensano/internal/sciensano"
 )
 
-func newSummaryMetric(s ReportsStore, name string, values []sciensano.SummaryColumn) (grafanaJSONServer.Metric, grafanaJSONServer.Handler) {
-	var v []fmt.Stringer
-	for _, value := range values {
-		v = append(v, value)
+func newSummaryMetric(s ReportsStore, name string, summaryColumns []sciensano.SummaryColumn) (grafanaJSONServer.Metric, grafanaJSONServer.Handler) {
+	var v []string
+	for _, value := range summaryColumns {
+		v = append(v, value.String())
 	}
 	metric := makeMetric(name, []metricOption{{name: "Summary", values: v}}...)
 	return metric, handler{s: s, parseRequest: parseSummaryRequest}
 }
 
+func newVaccinationDoseTypeMetric(s ReportsStore, name string, summaryColumns []sciensano.SummaryColumn, doseTypes []sciensano.DoseType) (grafanaJSONServer.Metric, grafanaJSONServer.Handler) {
+	var c []string
+	for _, value := range summaryColumns {
+		c = append(c, value.String())
+	}
+	var d []string
+	for _, value := range doseTypes {
+		d = append(d, value.String())
+	}
+	metric := makeMetric(name, []metricOption{{name: "Summary", values: c}, {name: "DoseType", values: d}}...)
+	return metric, handler{s: s, parseRequest: parseVaccinationDoseTypeRequest}
+}
+
 type metricOption struct {
 	name   string
-	values []fmt.Stringer
+	values []string
 }
 
 func makeMetric(name string, options ...metricOption) grafanaJSONServer.Metric {
@@ -27,8 +40,8 @@ func makeMetric(name string, options ...metricOption) grafanaJSONServer.Metric {
 		var payloadOptions []grafanaJSONServer.MetricPayloadOption
 		for _, value := range option.values {
 			payloadOptions = append(payloadOptions, grafanaJSONServer.MetricPayloadOption{
-				Label: value.String(),
-				Value: value.String(),
+				Label: value,
+				Value: value,
 			})
 		}
 		payloads = append(payloads, grafanaJSONServer.MetricPayload{
@@ -103,4 +116,36 @@ func parseSummaryRequest(target string, req grafanaJSONServer.QueryRequest) (str
 	}
 
 	return target + "-" + mode.String(), accumulate, nil
+}
+
+func parseVaccinationDoseTypeRequest(target string, req grafanaJSONServer.QueryRequest) (string, bool, error) {
+	var summaryOption struct {
+		Summary    string
+		DoseType   string
+		Accumulate string
+	}
+	var accumulate bool
+	if err := req.GetPayload(target, &summaryOption); err != nil {
+		return "", accumulate, fmt.Errorf("invalid payload: %w", err)
+	}
+
+	//slog.Debug("getting request options", "row", string(req.Targets[0].Payload), "options", summaryOption)
+
+	mode, ok := sciensano.SummaryColumnNames[summaryOption.Summary]
+	if !ok {
+		return "", accumulate, fmt.Errorf("invalid summary option: %s", summaryOption.Summary)
+	}
+
+	//TODO: validate doseType
+
+	switch summaryOption.Accumulate {
+	case "yes":
+		accumulate = true
+	case "no":
+		accumulate = false
+	default:
+		return "", accumulate, fmt.Errorf("invalid accumulate value: %s", summaryOption.Accumulate)
+	}
+
+	return target + "-" + summaryOption.DoseType + "-" + mode.String(), accumulate, nil
 }
