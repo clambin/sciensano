@@ -24,7 +24,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 3841,
+  "id": 4147,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -124,7 +124,8 @@
           },
           "editorMode": "builder",
           "payload": {
-            "summary": "Total"
+            "Accumulate": "yes",
+            "Summary": "ByVaccinationType"
           },
           "refId": "A",
           "target": "vaccinations"
@@ -233,6 +234,8 @@
           },
           "editorMode": "builder",
           "payload": {
+            "Accumulate": "yes",
+            "Summary": "ByRegion",
             "summary": "ByRegion"
           },
           "refId": "A",
@@ -328,6 +331,8 @@
           },
           "editorMode": "builder",
           "payload": {
+            "Accumulate": "yes",
+            "Summary": "ByAgeGroup",
             "summary": "ByAgeGroup"
           },
           "refId": "A",
@@ -460,7 +465,8 @@
           },
           "editorMode": "builder",
           "payload": {
-            "summary": "Total"
+            "Accumulate": "yes",
+            "Summary": "ByVaccinationType"
           },
           "refId": "A",
           "target": "vaccinations"
@@ -538,7 +544,8 @@
           },
           "editorMode": "builder",
           "payload": {
-            "summary": "ByManufacturer"
+            "Accumulate": "yes",
+            "Summary": "ByManufacturer"
           },
           "refId": "A",
           "target": "vaccinations"
@@ -632,7 +639,8 @@
           },
           "editorMode": "builder",
           "payload": {
-            "summary": "ByManufacturer"
+            "Accumulate": "yes",
+            "Summary": "ByManufacturer"
           },
           "refId": "A",
           "target": "vaccinations"
@@ -695,7 +703,7 @@
         "text": {},
         "valueMode": "color"
       },
-      "pluginVersion": "10.0.2",
+      "pluginVersion": "10.0.3",
       "targets": [
         {
           "datasource": {
@@ -704,10 +712,12 @@
           },
           "editorMode": "builder",
           "payload": {
-            "summary": "ByRegion"
+            "Accumulate": "yes",
+            "DoseType": "Partial",
+            "Summary": "ByRegion"
           },
           "refId": "A",
-          "target": "vaccinations-rate-partial"
+          "target": "vaccination-rate"
         }
       ],
       "title": "By Region - Partial",
@@ -779,7 +789,7 @@
         "text": {},
         "valueMode": "color"
       },
-      "pluginVersion": "10.0.2",
+      "pluginVersion": "10.0.3",
       "targets": [
         {
           "datasource": {
@@ -788,10 +798,12 @@
           },
           "editorMode": "builder",
           "payload": {
-            "summary": "ByRegion"
+            "Accumulate": "yes",
+            "DoseType": "Full",
+            "Summary": "ByRegion"
           },
           "refId": "A",
-          "target": "vaccinations-rate-full"
+          "target": "vaccination-rate"
         }
       ],
       "title": "By Region - Full",
@@ -859,7 +871,7 @@
         "text": {},
         "valueMode": "color"
       },
-      "pluginVersion": "10.0.2",
+      "pluginVersion": "10.0.3",
       "targets": [
         {
           "datasource": {
@@ -868,10 +880,12 @@
           },
           "editorMode": "builder",
           "payload": {
-            "summary": "ByAgeGroup"
+            "Accumulate": "yes",
+            "DoseType": "Partial",
+            "Summary": "ByAgeGroup"
           },
           "refId": "A",
-          "target": "vaccinations-rate-partial"
+          "target": "vaccination-rate"
         }
       ],
       "title": "By Age - Partial",
@@ -937,7 +951,7 @@
         "text": {},
         "valueMode": "color"
       },
-      "pluginVersion": "10.0.2",
+      "pluginVersion": "10.0.3",
       "targets": [
         {
           "datasource": {
@@ -946,10 +960,12 @@
           },
           "editorMode": "builder",
           "payload": {
-            "summary": "ByAgeGroup"
+            "Accumulate": "yes",
+            "DoseType": "Full",
+            "Summary": "ByAgeGroup"
           },
           "refId": "A",
-          "target": "vaccinations-rate-full"
+          "target": "vaccination-rate"
         }
       ],
       "title": "By Age - Full",
@@ -977,6 +993,6 @@
   "timezone": "",
   "title": "Sciensano - Vaccinations",
   "uid": "KU9aRfgRz",
-  "version": 15,
+  "version": 3,
   "weekStart": ""
 }

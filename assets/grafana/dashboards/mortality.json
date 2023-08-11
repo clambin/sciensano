@@ -24,7 +24,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 3840,
+  "id": 4151,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -112,10 +112,11 @@
           },
           "editorMode": "builder",
           "payload": {
-            "summary": "Total"
+            "Accumulate": "no",
+            "Summary": "Total"
           },
           "refId": "A",
-          "target": "mortality"
+          "target": "mortalities"
         }
       ],
       "title": "New Deaths",
@@ -176,10 +177,11 @@
           },
           "editorMode": "builder",
           "payload": {
-            "summary": "ByAgeGroup"
+            "Accumulate": "yes",
+            "Summary": "ByAgeGroup"
           },
           "refId": "A",
-          "target": "mortality"
+          "target": "mortalities"
         }
       ],
       "title": "Total deaths by Age Group",
@@ -269,10 +271,11 @@
           },
           "editorMode": "builder",
           "payload": {
-            "summary": "ByAgeGroup"
+            "Accumulate": "no",
+            "Summary": "ByAgeGroup"
           },
           "refId": "A",
-          "target": "mortality"
+          "target": "mortalities"
         }
       ],
       "title": "New deaths by Age Group",
@@ -333,10 +336,11 @@
           },
           "editorMode": "builder",
           "payload": {
-            "summary": "ByRegion"
+            "Accumulate": "yes",
+            "Summary": "ByAgeGroup"
           },
           "refId": "A",
-          "target": "mortality"
+          "target": "mortalities"
         }
       ],
       "title": "Total deaths by Region",
@@ -426,10 +430,11 @@
           },
           "editorMode": "builder",
           "payload": {
-            "summary": "ByRegion"
+            "Accumulate": "no",
+            "Summary": "ByAgeGroup"
           },
           "refId": "A",
-          "target": "mortality"
+          "target": "mortalities"
         }
       ],
       "title": "New deaths by Region",
@@ -451,6 +456,6 @@
   "timezone": "",
   "title": "Sciensano - Mortality",
   "uid": "Q5QPJZFnk",
-  "version": 14,
+  "version": 5,
   "weekStart": ""
 }

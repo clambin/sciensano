@@ -10,7 +10,7 @@ import (
 	"github.com/clambin/sciensano/internal/reports/datasource"
 	"github.com/clambin/sciensano/internal/reports/reporter"
 	"github.com/clambin/sciensano/internal/reports/store"
-	"github.com/clambin/sciensano/server"
+	"github.com/clambin/sciensano/internal/server"
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/exp/slog"
 	_ "net/http/pprof"

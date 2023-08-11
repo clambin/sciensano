@@ -5,7 +5,7 @@ import (
 	"github.com/clambin/go-common/tabulator"
 	grafanaJSONServer "github.com/clambin/grafana-json-server"
 	"github.com/clambin/sciensano/internal/sciensano"
-	"github.com/clambin/sciensano/server/mocks"
+	"github.com/clambin/sciensano/internal/server/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"testing"

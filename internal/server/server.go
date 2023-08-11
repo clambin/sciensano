@@ -29,7 +29,6 @@ var _ prometheus.Collector = &Server{}
 func New(reportsStore ReportsStorer, logger *slog.Logger) *Server {
 	s := &Server{
 		Handlers: make(map[string]grafanaJSONServer.Handler),
-		//reportsCache: reportsStore,
 	}
 
 	options := []grafanaJSONServer.Option{

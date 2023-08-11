@@ -24,7 +24,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 3838,
+  "id": 4149,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -112,7 +112,8 @@
           },
           "editorMode": "builder",
           "payload": {
-            "summary": "Total"
+            "Accumulate": "no",
+            "Summary": "ByCategory"
           },
           "refId": "A",
           "target": "hospitalisations"
@@ -176,6 +177,8 @@
           },
           "editorMode": "builder",
           "payload": {
+            "Accumulate": "no",
+            "Summary": "ByRegion",
             "summary": "ByRegion"
           },
           "refId": "A",
@@ -269,6 +272,8 @@
           },
           "editorMode": "builder",
           "payload": {
+            "Accumulate": "no",
+            "Summary": "ByRegion",
             "summary": "ByRegion"
           },
           "refId": "A",
@@ -334,7 +339,8 @@
           },
           "editorMode": "builder",
           "payload": {
-            "summary": "ByProvince"
+            "Accumulate": "yes",
+            "Summary": "ByProvince"
           },
           "refId": "A",
           "target": "hospitalisations"
@@ -427,6 +433,8 @@
           },
           "editorMode": "builder",
           "payload": {
+            "Accumulate": "no",
+            "Summary": "ByProvince",
             "summary": "ByProvince"
           },
           "refId": "A",
@@ -452,6 +460,6 @@
   "timezone": "",
   "title": "Sciensano - Hospitalisations",
   "uid": "rU7diUF7z",
-  "version": 14,
+  "version": 2,
   "weekStart": ""
 }
