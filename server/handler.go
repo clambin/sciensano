@@ -5,27 +5,6 @@ import (
 	"github.com/clambin/sciensano/internal/sciensano"
 )
 
-func buildHandlers(s ReportsStore) []SummaryHandler {
-	summaryHandlers := []struct {
-		name           string
-		summaryColumns set.Set[sciensano.SummaryColumn]
-		accumulate     bool
-	}{
-		{name: "cases", summaryColumns: sciensano.CasesValidSummaryModes()},
-		{name: "hospitalisations", summaryColumns: sciensano.HospitalisationsValidSummaryModes()},
-		{name: "mortalities", summaryColumns: sciensano.MortalitiesValidSummaryModes()},
-		{name: "tests", summaryColumns: sciensano.TestResultsValidSummaryModes()},
-		{name: "vaccinations", summaryColumns: sciensano.VaccinationsValidSummaryModes(), accumulate: true},
-	}
-
-	var handlers []SummaryHandler
-	for _, h := range summaryHandlers {
-		handlers = append(handlers, newSummaryHandler(h.name, h.summaryColumns, s))
-	}
-
-	return handlers
-}
-
 func buildDoseTypeHandlers(s ReportsStore) []SummaryByDoseTypeHandler {
 	doseTypeHandlers := []struct {
 		name           string

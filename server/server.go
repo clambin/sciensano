@@ -3,8 +3,10 @@ package server
 import (
 	"context"
 	"github.com/clambin/go-common/httpserver/middleware"
+	"github.com/clambin/go-common/set"
 	"github.com/clambin/go-common/tabulator"
 	grafanaJSONServer "github.com/clambin/grafana-json-server"
+	"github.com/clambin/sciensano/internal/sciensano"
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/exp/slog"
 	"net/http"
@@ -37,10 +39,25 @@ func New(reportsStore ReportsStorer, logger *slog.Logger) *Server {
 		grafanaJSONServer.WithPrometheusQueryMetrics("sciensano", "", "sciensano"),
 	}
 
-	for _, h := range buildHandlers(reportsStore) {
-		s.Handlers[h.Metric.Value] = h
-		options = append(options, grafanaJSONServer.WithMetric(h.Metric, h, nil))
+	summaryHandlers := []struct {
+		name           string
+		summaryColumns set.Set[sciensano.SummaryColumn]
+		accumulate     bool
+	}{
+		{name: "cases", summaryColumns: sciensano.CasesValidSummaryModes()},
+		{name: "hospitalisations", summaryColumns: sciensano.HospitalisationsValidSummaryModes()},
+		{name: "mortalities", summaryColumns: sciensano.MortalitiesValidSummaryModes()},
+		{name: "tests", summaryColumns: sciensano.TestResultsValidSummaryModes()},
+		{name: "vaccinations", summaryColumns: sciensano.VaccinationsValidSummaryModes(), accumulate: true},
 	}
+
+	for _, summaryHandler := range summaryHandlers {
+		metric, h := newSummaryMetric(reportsStore, summaryHandler.name, summaryHandler.summaryColumns.List())
+
+		s.Handlers[summaryHandler.name] = h
+		options = append(options, grafanaJSONServer.WithMetric(metric, h, nil))
+	}
+
 	for _, h := range buildDoseTypeHandlers(reportsStore) {
 		s.Handlers[h.Metric.Value] = h
 		options = append(options, grafanaJSONServer.WithMetric(h.Metric, h, nil))

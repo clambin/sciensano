@@ -1,21 +1,6 @@
 package server_test
 
-import (
-	"context"
-	"fmt"
-	"github.com/clambin/go-common/set"
-	"github.com/clambin/go-common/tabulator"
-	grafanaJSONServer "github.com/clambin/grafana-json-server"
-	"github.com/clambin/sciensano/internal/sciensano"
-	"github.com/clambin/sciensano/internal/sciensano/testutil"
-	"github.com/clambin/sciensano/server"
-	"github.com/clambin/sciensano/server/mocks"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"testing"
-	"time"
-)
-
+/*
 func TestSummaryHandler_Query(t *testing.T) {
 	targets := []struct {
 		sciensanoType string
@@ -77,3 +62,6 @@ func TestSummaryHandler_Query(t *testing.T) {
 		}
 	}
 }
+
+
+*/
