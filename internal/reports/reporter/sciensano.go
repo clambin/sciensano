@@ -62,8 +62,8 @@ func NewSciensanoReporters(datasources *datasource.SciensanoSources, store *stor
 		modes    []sciensano.SummaryColumn
 		doseType sciensano.DoseType
 	}{
-		{dsType: vaccinationsDatasource, basename: "vaccinations-rate", modes: []sciensano.SummaryColumn{sciensano.ByRegion, sciensano.ByAgeGroup}, doseType: sciensano.Partial},
-		{dsType: vaccinationsDatasource, basename: "vaccinations-rate", modes: []sciensano.SummaryColumn{sciensano.ByRegion, sciensano.ByAgeGroup}, doseType: sciensano.Full},
+		{dsType: vaccinationsDatasource, basename: "vaccination-rate", modes: []sciensano.SummaryColumn{sciensano.ByRegion, sciensano.ByAgeGroup}, doseType: sciensano.Partial},
+		{dsType: vaccinationsDatasource, basename: "vaccination-rate", modes: []sciensano.SummaryColumn{sciensano.ByRegion, sciensano.ByAgeGroup}, doseType: sciensano.Full},
 	}
 
 	for _, rater := range raters {

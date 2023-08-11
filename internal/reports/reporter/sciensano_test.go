@@ -73,8 +73,8 @@ func TestSciensanoReporters(t *testing.T) {
 			"hospitalisations-ByCategory", "hospitalisations-ByProvince", "hospitalisations-ByRegion", "hospitalisations-Total",
 			"mortalities-ByAgeGroup", "mortalities-ByRegion", "mortalities-Total",
 			"tests-ByCategory", "tests-Total",
+			"vaccination-rate-Full-ByAgeGroup", "vaccination-rate-Full-ByRegion", "vaccination-rate-Partial-ByAgeGroup", "vaccination-rate-Partial-ByRegion",
 			"vaccinations-ByAgeGroup", "vaccinations-ByManufacturer", "vaccinations-ByRegion", "vaccinations-ByVaccinationType", "vaccinations-Total",
-			"vaccinations-rate-Full-ByAgeGroup", "vaccinations-rate-Full-ByRegion", "vaccinations-rate-Partial-ByAgeGroup", "vaccinations-rate-Partial-ByRegion",
 		})
 	}, time.Minute, time.Second)
 
