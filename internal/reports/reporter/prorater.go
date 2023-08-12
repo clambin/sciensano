@@ -53,7 +53,7 @@ func (r *ProRater) Run(ctx context.Context) error {
 }
 
 func (r *ProRater) createReport(vaccinations sciensano.Vaccinations) {
-	var filteredVaccinations sciensano.Vaccinations
+	filteredVaccinations := make(sciensano.Vaccinations, 0, len(vaccinations))
 	for _, vaccination := range vaccinations {
 		if vaccination.Dose == r.DoseType || (r.DoseType == sciensano.Full && vaccination.Dose == sciensano.SingleDose) {
 			filteredVaccinations = append(filteredVaccinations, vaccination)

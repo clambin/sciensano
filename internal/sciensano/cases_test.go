@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"github.com/clambin/sciensano/internal/sciensano"
 	"github.com/clambin/sciensano/internal/sciensano/testutil"
+	"github.com/mailru/easyjson"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"os"
@@ -19,6 +20,32 @@ func TestCases_Unmarshal(t *testing.T) {
 	err = json.NewDecoder(f).Decode(&input)
 	require.NoError(t, err)
 	assert.NotZero(t, len(input))
+}
+
+func BenchmarkCases_Unmarshal_JSON(b *testing.B) {
+	content, err := os.ReadFile(filepath.Join("testutil", "testdata", "cases.json"))
+	require.NoError(b, err)
+
+	for i := 0; i < b.N; i++ {
+		var records sciensano.Cases
+		err = json.Unmarshal(content, &records)
+		if err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+func BenchmarkCases_Unmarshal_EasyJSON(b *testing.B) {
+	content, err := os.ReadFile(filepath.Join("testutil", "testdata", "cases.json"))
+	require.NoError(b, err)
+
+	for i := 0; i < b.N; i++ {
+		var records sciensano.Cases
+		err = easyjson.Unmarshal(content, &records)
+		if err != nil {
+			b.Fatal(err)
+		}
+	}
 }
 
 func TestCases_Summarize(t *testing.T) {

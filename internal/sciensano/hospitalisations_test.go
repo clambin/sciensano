@@ -21,6 +21,19 @@ func TestHospitalisations_Unmarshal(t *testing.T) {
 	assert.NotZero(t, len(input))
 }
 
+func BenchmarkHospitalisations_Unmarshal_JSON(b *testing.B) {
+	content, err := os.ReadFile(filepath.Join("testutil", "testdata", "hospitalisations.json"))
+	require.NoError(b, err)
+
+	for i := 0; i < b.N; i++ {
+		var records sciensano.Hospitalisations
+		err = json.Unmarshal(content, &records)
+		if err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
 func TestHospitalisations_Summarize(t *testing.T) {
 	testCases := []struct {
 		summaryColumn sciensano.SummaryColumn

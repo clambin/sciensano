@@ -26,7 +26,7 @@ func easyjson69364dd1DecodeGithubComClambinSciensanoInternalSciensano(in *jlexer
 		in.Delim('[')
 		if *out == nil {
 			if !in.IsDelim(']') {
-				*out = make(Cases, 0, 8)
+				*out = make(Cases, 0, 0)
 			} else {
 				*out = Cases{}
 			}
@@ -34,16 +34,8 @@ func easyjson69364dd1DecodeGithubComClambinSciensanoInternalSciensano(in *jlexer
 			*out = (*out)[:0]
 		}
 		for !in.IsDelim(']') {
-			var v1 *Case
-			if in.IsNull() {
-				in.Skip()
-				v1 = nil
-			} else {
-				if v1 == nil {
-					v1 = new(Case)
-				}
-				(*v1).UnmarshalEasyJSON(in)
-			}
+			var v1 Case
+			(v1).UnmarshalEasyJSON(in)
 			*out = append(*out, v1)
 			in.WantComma()
 		}
@@ -62,11 +54,7 @@ func easyjson69364dd1EncodeGithubComClambinSciensanoInternalSciensano(out *jwrit
 			if v2 > 0 {
 				out.RawByte(',')
 			}
-			if v3 == nil {
-				out.RawString("null")
-			} else {
-				(*v3).MarshalEasyJSON(out)
-			}
+			(v3).MarshalEasyJSON(out)
 		}
 		out.RawByte(']')
 	}

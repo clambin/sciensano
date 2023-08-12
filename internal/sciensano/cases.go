@@ -16,7 +16,7 @@ type Case struct {
 }
 
 //easyjson:json
-type Cases []*Case
+type Cases []Case
 
 func CasesValidSummaryModes() set.Set[SummaryColumn] {
 	return set.Create(Total, ByRegion, ByProvince, ByAgeGroup)

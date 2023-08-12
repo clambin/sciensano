@@ -22,7 +22,7 @@ func (s *Store) Put(key string, report *tabulator.Tabulator) {
 		s.reports = make(map[string]*tabulator.Tabulator)
 	}
 	s.reports[key] = report
-	s.Logger.Info("report stored", "name", key, "rows", report.Size())
+	s.Logger.Debug("report stored", "name", key, "rows", report.Size())
 }
 
 func (s *Store) Get(key string) (*tabulator.Tabulator, error) {

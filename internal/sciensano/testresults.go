@@ -14,7 +14,7 @@ type TestResult struct {
 	Positive  int       `json:"TESTS_ALL_POS"`
 }
 
-type TestResults []*TestResult
+type TestResults []TestResult
 
 func TestResultsValidSummaryModes() set.Set[SummaryColumn] {
 	return set.Create(Total, ByRegion, ByProvince, ByCategory)

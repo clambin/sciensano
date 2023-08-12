@@ -5,6 +5,7 @@ import (
 	"github.com/clambin/sciensano/internal/reports/reporter/mocks"
 	"github.com/clambin/sciensano/internal/reports/store"
 	"github.com/clambin/sciensano/internal/sciensano"
+	"github.com/clambin/sciensano/internal/sciensano/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -99,5 +100,27 @@ func TestProRater_Prorate(t *testing.T) {
 				assert.Equal(t, tt.wantValues, values)
 			}
 		})
+	}
+}
+
+func BenchmarkProRater_CreateReport(b *testing.B) {
+	vaccinations := testutil.Vaccinations()
+
+	p := mocks.NewFetcher(b)
+	p.EXPECT().WaitTillReady(mock.Anything).Return(nil)
+	p.EXPECT().GetByRegion().Return(map[string]int{})
+	l := slog.Default()
+	s := store.Store{Logger: l}
+	r := ProRater{
+		PopStore: p,
+		Mode:     sciensano.ByRegion,
+		DoseType: sciensano.Partial,
+		Store:    &s,
+		Logger:   l,
+	}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		r.createReport(vaccinations)
 	}
 }

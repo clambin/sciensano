@@ -87,7 +87,7 @@ type Vaccination struct {
 }
 
 //easyjson:json
-type Vaccinations []*Vaccination
+type Vaccinations []Vaccination
 
 func VaccinationsValidSummaryModes() set.Set[SummaryColumn] {
 	return set.Create(Total, ByRegion, ByAgeGroup, ByManufacturer, ByVaccinationType)

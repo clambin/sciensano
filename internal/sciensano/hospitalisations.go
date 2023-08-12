@@ -16,7 +16,7 @@ type Hospitalisation struct {
 	TotalInECMO int       `json:"TOTAL_IN_ECMO"`
 }
 
-type Hospitalisations []*Hospitalisation
+type Hospitalisations []Hospitalisation
 
 func HospitalisationsValidSummaryModes() set.Set[SummaryColumn] {
 	return set.Create(Total, ByRegion, ByProvince, ByCategory)

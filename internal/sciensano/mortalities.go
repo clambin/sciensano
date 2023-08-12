@@ -13,7 +13,7 @@ type Mortality struct {
 	Deaths    int       `json:"DEATHS"`
 }
 
-type Mortalities []*Mortality
+type Mortalities []Mortality
 
 func MortalitiesValidSummaryModes() set.Set[SummaryColumn] {
 	return set.Create(Total, ByRegion, ByAgeGroup)
