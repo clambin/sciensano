@@ -49,7 +49,7 @@ func (f *Fetcher[T]) GetTarget() string {
 }
 
 func unmarshal[T any](r io.Reader) (v T, err error) {
-	switch interface{}(v).(type) {
+	switch any(v).(type) {
 	case Vaccinations:
 		var v2 Vaccinations
 		if err = easyjson.UnmarshalFromReader(r, &v2); err == nil {
