@@ -17,8 +17,10 @@ type SciensanoSources struct {
 	Vaccinations     DataSource[sciensano.Vaccinations]
 }
 
-func NewSciensanoDatastore(url string, pollingInterval time.Duration, logger *slog.Logger) *SciensanoSources {
-	httpClient := http.DefaultClient
+func NewSciensanoDatastore(url string, pollingInterval time.Duration, httpClient *http.Client, logger *slog.Logger) *SciensanoSources {
+	if httpClient == nil {
+		httpClient = http.DefaultClient
+	}
 	store := SciensanoSources{
 		Cases: DataSource[sciensano.Cases]{
 			Fetcher:         &sciensano.Fetcher[sciensano.Cases]{Target: sciensano.MustGetURL(url, sciensano.CasesEndpoint), Client: httpClient},

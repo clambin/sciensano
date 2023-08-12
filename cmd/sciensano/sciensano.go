@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"github.com/clambin/go-common/httpclient"
 	"github.com/clambin/go-common/taskmanager"
 	"github.com/clambin/go-common/taskmanager/httpserver"
 	promserver "github.com/clambin/go-common/taskmanager/prometheus"
@@ -44,7 +45,12 @@ func main() {
 	popStore := population.Server{Path: *demographicsPath, Interval: 24 * time.Hour}
 
 	reportsStore := store.Store{Logger: slog.Default().With("component", "reportsStore")}
-	ds := datasource.NewSciensanoDatastore("", 15*time.Minute, slog.Default().With("component", "datasource"))
+
+	r := httpclient.NewRoundTripper(httpclient.WithMetrics("sciensano", "", "sciensano"))
+	prometheus.DefaultRegisterer.MustRegister(r)
+	client := &http.Client{Transport: r}
+
+	ds := datasource.NewSciensanoDatastore("", 15*time.Minute, client, slog.Default().With("component", "datasource"))
 	reporters := reporter.NewSciensanoReporters(ds, &reportsStore, &popStore, slog.Default().With("component", "reporters"))
 
 	var tasks []taskmanager.Task

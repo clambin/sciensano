@@ -3,6 +3,7 @@ module github.com/clambin/sciensano
 go 1.20
 
 require (
+	github.com/clambin/go-common/httpclient v0.6.0
 	github.com/clambin/go-common/httpserver v0.11.0
 	github.com/clambin/go-common/set v0.2.0
 	github.com/clambin/go-common/tabulator v0.2.2-0.20230801080327-d118c4361653
@@ -18,6 +19,7 @@ require (
 require (
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
+	github.com/clambin/go-common/cache v0.2.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/go-chi/chi/v5 v5.0.10 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect

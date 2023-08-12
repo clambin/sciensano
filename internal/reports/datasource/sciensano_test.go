@@ -9,12 +9,13 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"golang.org/x/exp/slog"
+	"net/http"
 	"testing"
 	"time"
 )
 
 func TestNewSciensanoDatastore(t *testing.T) {
-	s := datasource.NewSciensanoDatastore("", time.Second, slog.Default())
+	s := datasource.NewSciensanoDatastore("", time.Second, http.DefaultClient, slog.Default())
 
 	casesFetcher := mocks.NewFetcher[sciensano.Cases](t)
 	casesFetcher.EXPECT().GetLastModified(mock.AnythingOfType("*context.cancelCtx")).Return(time.Now(), nil)

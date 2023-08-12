@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"golang.org/x/exp/slices"
 	"golang.org/x/exp/slog"
+	"net/http"
 	"os"
 	"sort"
 	"testing"
@@ -28,7 +29,7 @@ func TestSciensanoReporters(t *testing.T) {
 	popStore.EXPECT().GetByAgeBracket(mock.AnythingOfType("bracket.Bracket")).Return(1)
 	popStore.EXPECT().WaitTillReady(mock.AnythingOfType("*context.timerCtx")).Return(nil)
 
-	datasources := datasource.NewSciensanoDatastore("", 15*time.Second, logger)
+	datasources := datasource.NewSciensanoDatastore("", 15*time.Second, http.DefaultClient, logger)
 	casesFetcher := mocks.NewFetcher[sciensano.Cases](t)
 	casesFetcher.EXPECT().GetLastModified(mock.AnythingOfType("*context.cancelCtx")).Return(time.Now(), nil)
 	casesFetcher.EXPECT().Fetch(mock.AnythingOfType("*context.cancelCtx")).Return(testutil.Cases(), nil)
