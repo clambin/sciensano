@@ -4,7 +4,6 @@ import (
 	"context"
 	"github.com/clambin/go-common/httpserver/middleware"
 	"github.com/clambin/go-common/set"
-	"github.com/clambin/go-common/tabulator"
 	grafanaJSONServer "github.com/clambin/grafana-json-server"
 	"github.com/clambin/sciensano/internal/sciensano"
 	"github.com/prometheus/client_golang/prometheus"
@@ -18,15 +17,9 @@ type Server struct {
 	Handlers   map[string]grafanaJSONServer.Handler
 }
 
-//go:generate mockery --name ReportsStorer --with-expecter=true
-type ReportsStorer interface {
-	Get(string) (*tabulator.Tabulator, error)
-	Put(string, *tabulator.Tabulator)
-}
-
 var _ prometheus.Collector = &Server{}
 
-func New(reportsStore ReportsStorer, logger *slog.Logger) *Server {
+func New(reportsStore ReportsStore, logger *slog.Logger) *Server {
 	s := &Server{
 		Handlers: make(map[string]grafanaJSONServer.Handler),
 	}

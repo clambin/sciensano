@@ -24,3 +24,19 @@ func (p *Publisher[T]) Unregister(ch chan T) {
 	defer p.lock.Unlock()
 	delete(p.clients, ch)
 }
+
+/*
+func (p *Publisher[T]) Send(value T) {
+	p.lock.RLock()
+	defer p.lock.RUnlock()
+
+	currentAge := time.Now()
+	for ch, lastSent := range p.clients {
+		if lastSent.Before(currentAge) {
+			ch <- value
+			p.clients[ch] = currentAge
+		}
+	}
+
+}
+*/

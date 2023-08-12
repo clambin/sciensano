@@ -13,6 +13,7 @@ import (
 	"github.com/clambin/sciensano/internal/server"
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/exp/slog"
+	"net/http"
 	_ "net/http/pprof"
 	"os"
 	"os/signal"
@@ -58,6 +59,7 @@ func main() {
 		tasks, promserver.New(promserver.WithAddr(*prometheusAddr)),
 		s,
 		httpserver.New(*simpleJSONAddr, s.JSONServer),
+		httpserver.New(":6060", http.DefaultServeMux),
 	)
 	tm := taskmanager.New(tasks...)
 

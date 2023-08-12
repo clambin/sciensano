@@ -41,8 +41,8 @@ func TestNew(t *testing.T) {
 	}
 }
 
-func makeStore(t *testing.T) server.ReportsStorer {
-	s := mocks.NewReportsStorer(t)
+func makeStore(t *testing.T) server.ReportsStore {
+	s := mocks.NewReportsStore(t)
 
 	cases, _ := testutil.Cases().Summarize(sciensano.Total)
 	s.EXPECT().Get("cases-Total").Return(cases, nil)

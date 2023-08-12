@@ -24,7 +24,7 @@ func TestNewSummaryMetric(t *testing.T) {
 }
 
 func TestSummaryMetric_Query(t *testing.T) {
-	s := mocks.NewReportsStorer(t)
+	s := mocks.NewReportsStore(t)
 	table := tabulator.New("A", "B")
 	s.EXPECT().Get("foo-ByRegion").Return(table, nil)
 	_, query := newSummaryMetric(s, "foo", []sciensano.SummaryColumn{sciensano.ByRegion, sciensano.ByAgeGroup})
@@ -91,7 +91,7 @@ func TestNewVaccinationDoseTypeMetric(t *testing.T) {
 }
 
 func TestVaccinationDoseTypeMetric_Query(t *testing.T) {
-	s := mocks.NewReportsStorer(t)
+	s := mocks.NewReportsStore(t)
 	table := tabulator.New("A", "B")
 	s.EXPECT().Get("foo-Partial-ByRegion").Return(table, nil)
 

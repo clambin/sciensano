@@ -12,7 +12,7 @@ require (
 	github.com/prometheus/client_golang v1.16.0
 	github.com/rovaughn/fastcsv v0.0.0-20170331030356-1090019547fb
 	github.com/stretchr/testify v1.8.4
-	golang.org/x/exp v0.0.0-20230801115018-d63ba01acd4b
+	golang.org/x/exp v0.0.0-20230811145659-89c5cff77bcb
 )
 
 require (
