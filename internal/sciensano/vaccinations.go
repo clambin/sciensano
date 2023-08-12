@@ -86,6 +86,36 @@ type Vaccination struct {
 	Count        int       `json:"COUNT"`
 }
 
+func (v Vaccination) GetSummaryColumnName(column SummaryColumn) (string, error) {
+	var columnName string
+	switch column {
+	case Total:
+		columnName = "Total"
+	case ByRegion:
+		columnName = v.Region
+	case ByAgeGroup:
+		columnName = v.AgeGroup
+	case ByManufacturer:
+		columnName = v.Manufacturer
+	case ByVaccinationType:
+		switch v.Dose {
+		case Partial:
+			columnName = "partial"
+		case Full, SingleDose:
+			columnName = "full"
+		case Booster:
+			columnName = "booster"
+		case Booster2:
+			columnName = "booster2"
+		case Booster3:
+			columnName = "booster3"
+		}
+	default:
+		return "nil", fmt.Errorf("invalid summary column: %s", column.String())
+	}
+	return columnName, nil
+}
+
 //easyjson:json
 type Vaccinations []Vaccination
 
@@ -98,31 +128,9 @@ func (v Vaccinations) Summarize(summaryColumn SummaryColumn) (*tabulator.Tabulat
 
 	columnNames := set.Create[string]()
 	for _, vaccination := range v {
-		var columnName string
-		switch summaryColumn {
-		case Total:
-			columnName = "Total"
-		case ByRegion:
-			columnName = vaccination.Region
-		case ByAgeGroup:
-			columnName = vaccination.AgeGroup
-		case ByManufacturer:
-			columnName = vaccination.Manufacturer
-		case ByVaccinationType:
-			switch vaccination.Dose {
-			case Partial:
-				columnName = "partial"
-			case Full, SingleDose:
-				columnName = "full"
-			case Booster:
-				columnName = "booster"
-			case Booster2:
-				columnName = "booster2"
-			case Booster3:
-				columnName = "booster3"
-			}
-		default:
-			return nil, fmt.Errorf("vaccinations: invalid summary column: %s", summaryColumn.String())
+		columnName, err := vaccination.GetSummaryColumnName(summaryColumn)
+		if err != nil {
+			return nil, fmt.Errorf("summary: %w", err)
 		}
 		if columnName == "" {
 			columnName = "(unknown)"

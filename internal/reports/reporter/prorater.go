@@ -3,6 +3,7 @@ package reporter
 import (
 	"context"
 	"fmt"
+	"github.com/clambin/go-common/set"
 	"github.com/clambin/go-common/tabulator"
 	"github.com/clambin/sciensano/internal/population"
 	"github.com/clambin/sciensano/internal/population/bracket"
@@ -53,24 +54,39 @@ func (r *ProRater) Run(ctx context.Context) error {
 }
 
 func (r *ProRater) createReport(vaccinations sciensano.Vaccinations) {
-	filteredVaccinations := make(sciensano.Vaccinations, 0, len(vaccinations))
+	t := tabulator.New()
+	columnNames := set.Create[string]()
+
+	// Filtering and then calling summary has a major performance impact.
+	// This is basically the same code as Summary, but filters on the fly to avoid copying the large vaccinations slice.
 	for _, vaccination := range vaccinations {
-		if vaccination.Dose == r.DoseType || (r.DoseType == sciensano.Full && vaccination.Dose == sciensano.SingleDose) {
-			filteredVaccinations = append(filteredVaccinations, vaccination)
+		if vaccination.Dose != r.DoseType && !(r.DoseType == sciensano.Full && vaccination.Dose == sciensano.SingleDose) {
+			continue
 		}
+
+		columnName, err := vaccination.GetSummaryColumnName(r.Mode)
+		if err != nil {
+			r.Logger.Error("failed to generate report", "err", err)
+			return
+		}
+
+		if columnName == "" {
+			columnName = "(unknown)"
+		}
+		if !columnNames.Contains(columnName) {
+			t.RegisterColumn(columnName)
+			columnNames.Add(columnName)
+		}
+
+		t.Add(vaccination.TimeStamp.Time, columnName, float64(vaccination.Count))
 	}
 
-	summarized, err := filteredVaccinations.Summarize(r.Mode)
-	if err != nil {
-		r.Logger.Error("failed to generate report", "err", err)
-		return
-	}
-	summarized, err = proRate(summarized, r.Mode, r.PopStore)
+	t, err := proRate(t, r.Mode, r.PopStore)
 	if err != nil {
 		r.Logger.Error("failed to generate prorated report", "err", err)
 		return
 	}
-	r.Store.Put(r.Name, summarized)
+	r.Store.Put(r.Name, t)
 	r.Logger.Debug("report stored")
 }
 
