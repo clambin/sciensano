@@ -1,6 +1,6 @@
 module github.com/clambin/sciensano
 
-go 1.20
+go 1.21
 
 require (
 	github.com/clambin/go-common/httpclient v0.6.0
