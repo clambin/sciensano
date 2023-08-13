@@ -8,6 +8,8 @@ github.com/clambin/go-common/httpclient v0.6.0 h1:zSt9OV8ekXB/LwFwazEO4x8z+9p968
 github.com/clambin/go-common/httpclient v0.6.0/go.mod h1:77y+6LzAKdenkU+vwQFdNKyxs2HhUXEiqYwzS7Q9FKI=
 github.com/clambin/go-common/httpserver v0.11.0 h1:M1v8fHDjiCYt2XQ/TW5BiQxw8mWEWROylYMhwslEoFQ=
 github.com/clambin/go-common/httpserver v0.11.0/go.mod h1:b5cHmhWknlw4IJhoVIKgl0ZUH+XT9K2Y2sK+ob2bPto=
+github.com/clambin/go-common/httpserver v0.12.0 h1:qUEqOl5XCVlSQVs90nCl6glx+oBtMSV7+v78ml9h6g0=
+github.com/clambin/go-common/httpserver v0.12.0/go.mod h1:DoibGuQHoI+KsHuGWsusY/ColY3TdzwBocOPR5EwxL4=
 github.com/clambin/go-common/set v0.2.0 h1:s4wXxKns3sb2VPCtAmmLEDs4KiHNIiot+LcKgKcdPdw=
 github.com/clambin/go-common/set v0.2.0/go.mod h1:GFjAZynNo4BNjlx2hzDMHIU4ays7QjpJUSHXB/3b1ZE=
 github.com/clambin/go-common/tabulator v0.2.2-0.20230801080327-d118c4361653 h1:VxFQsRc/NM3CkdaiVyXr60xuxTQevh8heBRrMugXGWM=
@@ -16,6 +18,8 @@ github.com/clambin/go-common/taskmanager v0.2.1 h1:zkh6hr4RqRHrJHIeBTRClAw7788IM
 github.com/clambin/go-common/taskmanager v0.2.1/go.mod h1:BLq8MGQZVpj16USB4pHtikOVh4cDgnSjPIhTZyosAgM=
 github.com/clambin/grafana-json-server v0.4.0 h1:Gr2OAJRZKY0yRcTIPJbIg0D8bKLDZLVXoeIM/Tu9FmM=
 github.com/clambin/grafana-json-server v0.4.0/go.mod h1:vgiMLtDdHf14zBcVlNbyCogsK9GEP08xDEzb5nM22vY=
+github.com/clambin/grafana-json-server v0.5.0 h1:oRBVfekkJ8ArbwgHt7bZPdEHrik9En2yGLaDWe8tpqY=
+github.com/clambin/grafana-json-server v0.5.0/go.mod h1:AZECq9FjUHT7alEDhQ4aGzJJUirZnEzayCVp/pIY4lg=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
@@ -45,6 +49,8 @@ github.com/prometheus/common v0.44.0 h1:+5BrQJwiBB9xsMygAB3TNvpQKOwlkc25LbISbrdO
 github.com/prometheus/common v0.44.0/go.mod h1:ofAIvZbQ1e/nugmZGz4/qCb9Ap1VoSTIO7x0VV9VvuY=
 github.com/prometheus/procfs v0.11.0 h1:5EAgkfkMl659uZPbe9AS2N68a7Cc1TJbPEuGzFuRbyk=
 github.com/prometheus/procfs v0.11.0/go.mod h1:nwNm2aOCAYw8uTR/9bWRREkZFxAUcWzPHWJq+XBB/FM=
+github.com/prometheus/procfs v0.11.1 h1:xRC8Iq1yyca5ypa9n1EZnWZkt7dwcoRPQwX/5gwaUuI=
+github.com/prometheus/procfs v0.11.1/go.mod h1:eesXgaPo1q7lBpVMoMy0ZOFTth9hBn4W/y0/p/ScXhY=
 github.com/rogpeppe/go-internal v1.10.0 h1:TMyTOH3F/DB16zRVcYyreMH6GnZZrwQVAoYjRBZyWFQ=
 github.com/rovaughn/fastcsv v0.0.0-20170331030356-1090019547fb h1:Ck4K6hMYrpACHRsHmajnBvlfifm93KfNC+04KOxyvUI=
 github.com/rovaughn/fastcsv v0.0.0-20170331030356-1090019547fb/go.mod h1:RAuOXHr1GIj/vp9VNP2XJPsfTcrFyHcZc2qOkMVIiwU=
@@ -61,6 +67,8 @@ golang.org/x/exp v0.0.0-20230811145659-89c5cff77bcb/go.mod h1:FXUEEKJgO7OQYeo8N0
 golang.org/x/sync v0.0.0-20181221193216-37e7f081c4d4/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=
 golang.org/x/sys v0.10.0 h1:SqMFp9UcQJZa+pmYuAKjd9xq1f0j5rLcDIk0mj4qAsA=
 golang.org/x/sys v0.10.0/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
+golang.org/x/sys v0.11.0 h1:eG7RXZHdqOJ1i+0lgLgCpSXAp6M3LYlAo6osgSi0xOM=
+golang.org/x/sys v0.11.0/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543/go.mod h1:I/5z698sn9Ka8TeJc9MKroUUfqBBauWjQqLJ2OPfmY0=
 google.golang.org/protobuf v1.26.0-rc.1/go.mod h1:jlhhOSvTdKEhbULTjvd4ARK9grFBp09yW+WbY/TyQbw=
 google.golang.org/protobuf v1.26.0/go.mod h1:9q0QmTI4eRPtz6boOQmLYwt+qCgq0jsYwAQnmE0givc=

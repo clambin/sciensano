@@ -3,7 +3,7 @@ package datasource
 import (
 	"context"
 	"github.com/clambin/go-common/taskmanager"
-	"golang.org/x/exp/slog"
+	"log/slog"
 	"sync"
 	"time"
 )

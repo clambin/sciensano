@@ -5,7 +5,7 @@ import (
 	"github.com/clambin/sciensano/internal/reports/datasource"
 	"github.com/clambin/sciensano/internal/reports/datasource/mocks"
 	"github.com/stretchr/testify/assert"
-	"golang.org/x/exp/slog"
+	"log/slog"
 	"testing"
 	"time"
 )

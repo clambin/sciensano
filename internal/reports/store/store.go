@@ -3,7 +3,7 @@ package store
 import (
 	"errors"
 	"github.com/clambin/go-common/tabulator"
-	"golang.org/x/exp/slog"
+	"log/slog"
 	"sync"
 )
 

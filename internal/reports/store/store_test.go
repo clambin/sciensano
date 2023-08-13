@@ -5,7 +5,7 @@ import (
 	"github.com/clambin/sciensano/internal/reports/store"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"golang.org/x/exp/slog"
+	"log/slog"
 	"testing"
 )
 

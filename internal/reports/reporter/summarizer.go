@@ -5,7 +5,7 @@ import (
 	"github.com/clambin/go-common/tabulator"
 	"github.com/clambin/sciensano/internal/reports/store"
 	"github.com/clambin/sciensano/internal/sciensano"
-	"golang.org/x/exp/slog"
+	"log/slog"
 )
 
 type Summary[T summarizer] struct {

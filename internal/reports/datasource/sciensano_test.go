@@ -8,7 +8,7 @@ import (
 	"github.com/clambin/sciensano/internal/sciensano/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"golang.org/x/exp/slog"
+	"log/slog"
 	"net/http"
 	"testing"
 	"time"

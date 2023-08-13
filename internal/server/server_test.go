@@ -11,7 +11,7 @@ import (
 	"github.com/clambin/sciensano/internal/server/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"golang.org/x/exp/slog"
+	"log/slog"
 	"testing"
 	"time"
 )

@@ -4,11 +4,11 @@ go 1.21
 
 require (
 	github.com/clambin/go-common/httpclient v0.6.0
-	github.com/clambin/go-common/httpserver v0.11.0
+	github.com/clambin/go-common/httpserver v0.12.0
 	github.com/clambin/go-common/set v0.2.0
 	github.com/clambin/go-common/tabulator v0.2.2-0.20230801080327-d118c4361653
 	github.com/clambin/go-common/taskmanager v0.2.1
-	github.com/clambin/grafana-json-server v0.4.0
+	github.com/clambin/grafana-json-server v0.5.0
 	github.com/mailru/easyjson v0.7.7
 	github.com/prometheus/client_golang v1.16.0
 	github.com/rovaughn/fastcsv v0.0.0-20170331030356-1090019547fb
@@ -28,9 +28,9 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/prometheus/client_model v0.4.0 // indirect
 	github.com/prometheus/common v0.44.0 // indirect
-	github.com/prometheus/procfs v0.11.0 // indirect
+	github.com/prometheus/procfs v0.11.1 // indirect
 	github.com/stretchr/objx v0.5.0 // indirect
-	golang.org/x/sys v0.10.0 // indirect
+	golang.org/x/sys v0.11.0 // indirect
 	google.golang.org/protobuf v1.31.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

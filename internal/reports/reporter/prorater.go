@@ -9,7 +9,7 @@ import (
 	"github.com/clambin/sciensano/internal/population/bracket"
 	"github.com/clambin/sciensano/internal/reports/store"
 	"github.com/clambin/sciensano/internal/sciensano"
-	"golang.org/x/exp/slog"
+	"log/slog"
 	"time"
 )
 

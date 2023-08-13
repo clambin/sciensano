@@ -3,7 +3,7 @@ package datasource
 import (
 	"github.com/clambin/go-common/taskmanager"
 	"github.com/clambin/sciensano/internal/sciensano"
-	"golang.org/x/exp/slog"
+	"log/slog"
 	"net/http"
 	"time"
 )
