@@ -41,7 +41,7 @@ func (d *DataSource[T]) Run(ctx context.Context) error {
 	}
 	d.sendData()
 
-	ticker := time.NewTicker(jitter(d.PollingInterval, 10, rand.Float64()))
+	ticker := time.NewTicker(jitter(d.PollingInterval, 0.04, rand.Float64()))
 	defer ticker.Stop()
 
 	for {
@@ -59,7 +59,7 @@ func (d *DataSource[T]) Run(ctx context.Context) error {
 }
 
 func jitter(interval time.Duration, width float64, randFactor float64) time.Duration {
-	total := float64(interval) / width
+	total := float64(interval) * width
 	lowest := float64(interval) - total/2
 	j := total * randFactor
 	return time.Duration(lowest + j)
