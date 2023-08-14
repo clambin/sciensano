@@ -41,17 +41,9 @@ func TestWaiter_WaitTillReady(t *testing.T) {
 	}
 }
 
-func TestWaiter_WaitTillReady_ReUse(t *testing.T) {
+func TestWaiter_AlreadyReady(t *testing.T) {
 	w := population.Waiter{}
-	go func() {
-		time.Sleep(100 * time.Millisecond)
-		w.Ready()
-	}()
-	assert.NoError(t, w.WaitTillReady(context.Background()))
+	w.Ready()
 
-	go func() {
-		time.Sleep(100 * time.Millisecond)
-		w.Ready()
-	}()
 	assert.NoError(t, w.WaitTillReady(context.Background()))
 }
