@@ -46,7 +46,10 @@ func main() {
 
 	reportsStore := store.Store{Logger: logger.With("component", "reportsStore")}
 
-	r := httpclient.NewRoundTripper(httpclient.WithMetrics("sciensano", "", "sciensano"))
+	r := httpclient.NewRoundTripper(
+		httpclient.WithLimiter(3),
+		httpclient.WithMetrics("sciensano", "", "sciensano"),
+	)
 	prometheus.DefaultRegisterer.MustRegister(r)
 	client := &http.Client{Transport: r}
 

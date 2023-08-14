@@ -74,6 +74,6 @@ func (d *DataSource[T]) fetchData(ctx context.Context) error {
 
 func (d *DataSource[T]) sendData() {
 	if d.Publisher.Send(d.currentData, d.currentAge) {
-		d.Logger.Debug("new data found")
+		d.Logger.Info("new data found")
 	}
 }
