@@ -38,14 +38,12 @@ func unzipTestFiles() (err error) {
 		}
 		for _, f := range archive.File {
 			dstName := path.Join(tmpDir, f.Name)
-			var dstFile *os.File
-			dstFile, err = os.OpenFile(dstName, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
+			dstFile, err := os.OpenFile(dstName, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
 			if err != nil {
 				return fmt.Errorf("could not create output file '%s': %w", dstName, err)
 			}
 
-			var fileInArchive io.ReadCloser
-			fileInArchive, err = f.Open()
+			fileInArchive, err := f.Open()
 			if err != nil {
 				return fmt.Errorf("could not open '%s' in archive '%s': $w", f.Name, zipFile)
 			}

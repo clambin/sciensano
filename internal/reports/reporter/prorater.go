@@ -87,7 +87,6 @@ func (r *ProRater) createReport(vaccinations sciensano.Vaccinations) {
 		return
 	}
 	r.Store.Put(r.Name, t)
-	r.Logger.Debug("report stored")
 }
 
 func proRate(summary *tabulator.Tabulator, mode sciensano.SummaryColumn, popStore Fetcher) (*tabulator.Tabulator, error) {

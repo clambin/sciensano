@@ -75,14 +75,16 @@ func (d *DataSource[T]) fetchData(ctx context.Context) error {
 func (d *DataSource[T]) sendData() {
 	d.Publisher.lock.RLock()
 	defer d.Publisher.lock.RUnlock()
-	//d.lock.Lock()
-	//defer d.lock.Unlock()
 
+	var sent bool
 	for ch, lastSent := range d.Publisher.clients {
 		if lastSent.Before(d.currentAge) {
-			d.Logger.Debug("new data found")
 			ch <- d.currentData
 			d.Publisher.clients[ch] = d.currentAge
+			sent = true
 		}
+	}
+	if sent {
+		d.Logger.Debug("new data found")
 	}
 }

@@ -5,13 +5,14 @@ import (
 	"github.com/clambin/sciensano/internal/population/bracket"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"log/slog"
 	"path"
 	"testing"
 	"time"
 )
 
 func TestServer_GetByRegion(t *testing.T) {
-	s := Server{Path: path.Join(tmpDir, "demographics.txt")}
+	s := Server{Path: path.Join(tmpDir, "demographics.txt"), Logger: slog.Default()}
 	err := s.update()
 	require.NoError(t, err)
 
@@ -27,7 +28,7 @@ func TestServer_GetByRegion(t *testing.T) {
 }
 
 func TestServer_GetByAgeBracket(t *testing.T) {
-	s := Server{Path: path.Join(tmpDir, "demographics.txt")}
+	s := Server{Path: path.Join(tmpDir, "demographics.txt"), Logger: slog.Default()}
 	err := s.update()
 	require.NoError(t, err)
 
@@ -60,6 +61,7 @@ func TestStore_Run(t *testing.T) {
 	s := Server{
 		Path:     path.Join(tmpDir, "demographics.txt"),
 		Interval: time.Hour,
+		Logger:   slog.Default(),
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())

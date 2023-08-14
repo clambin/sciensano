@@ -52,5 +52,4 @@ func (s *Summary[T]) createReport(data T) {
 		return
 	}
 	s.Store.Put(s.Name, summarized)
-	s.Logger.Debug("report stored")
 }

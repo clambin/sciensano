@@ -38,27 +38,27 @@ func main() {
 	if *debug {
 		opts.Level = slog.LevelDebug
 	}
-	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stderr, &opts)))
+	logger := slog.New(slog.NewTextHandler(os.Stderr, &opts))
 
-	slog.Info("Sciensano API server starting", "version", version)
+	logger.Info("Sciensano API server starting", "version", version)
 
-	popStore := population.Server{Path: *demographicsPath, Interval: 24 * time.Hour}
+	popStore := population.Server{Path: *demographicsPath, Interval: 24 * time.Hour, Logger: logger.With("component", "population")}
 
-	reportsStore := store.Store{Logger: slog.Default().With("component", "reportsStore")}
+	reportsStore := store.Store{Logger: logger.With("component", "reportsStore")}
 
 	r := httpclient.NewRoundTripper(httpclient.WithMetrics("sciensano", "", "sciensano"))
 	prometheus.DefaultRegisterer.MustRegister(r)
 	client := &http.Client{Transport: r}
 
-	ds := datasource.NewSciensanoDatastore("", 15*time.Minute, client, slog.Default().With("component", "datasource"))
-	reporters := reporter.NewSciensanoReporters(ds, &reportsStore, &popStore, slog.Default().With("component", "reporters"))
+	ds := datasource.NewSciensanoDatastore("", 15*time.Minute, client, logger.With("component", "datasource"))
+	reporters := reporter.NewSciensanoReporters(ds, &reportsStore, &popStore, logger.With("component", "reporters"))
 
 	var tasks []taskmanager.Task
 	tasks = append(tasks, ds)
 	tasks = append(tasks, &popStore)
 	tasks = append(tasks, reporters...)
 
-	s := server.New(&reportsStore, slog.Default())
+	s := server.New(&reportsStore, logger.With("component", "server"))
 	prometheus.DefaultRegisterer.MustRegister(s)
 
 	tasks = append(
@@ -73,7 +73,7 @@ func main() {
 	defer done()
 
 	if err := tm.Run(ctx); err != nil && !errors.Is(err, context.Canceled) {
-		slog.Error("failed to start", "err", err)
+		logger.Error("failed to start", "err", err)
 		os.Exit(1)
 	}
 }

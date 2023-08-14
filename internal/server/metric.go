@@ -129,8 +129,6 @@ func parseVaccinationDoseTypeRequest(target string, req grafanaJSONServer.QueryR
 		return "", accumulate, fmt.Errorf("invalid payload: %w", err)
 	}
 
-	//slog.Debug("getting request options", "row", string(req.Targets[0].Payload), "options", summaryOption)
-
 	mode, ok := sciensano.SummaryColumnNames[summaryOption.Summary]
 	if !ok {
 		return "", accumulate, fmt.Errorf("invalid summary option: %s", summaryOption.Summary)

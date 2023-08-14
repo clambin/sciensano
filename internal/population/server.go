@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/clambin/sciensano/internal/population/bracket"
-	"golang.org/x/exp/slog"
+	"log/slog"
 	"math"
 	"sync"
 	"time"
@@ -27,6 +27,7 @@ type Server struct {
 	Waiter
 	Path     string
 	Interval time.Duration
+	Logger   *slog.Logger
 	mtime    time.Time
 	byRegion map[string]int
 	byAge    map[int]int
@@ -51,7 +52,7 @@ func (s *Server) Run(ctx context.Context) error {
 			return nil
 		case <-ticker.C:
 			if err := s.update(); err != nil {
-				slog.Error("failed to read demographics file", "err", err)
+				s.Logger.Error("failed to read demographics file", "err", err)
 			}
 		}
 	}

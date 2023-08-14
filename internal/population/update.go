@@ -1,7 +1,6 @@
 package population
 
 import (
-	"golang.org/x/exp/slog"
 	"os"
 	"time"
 )
@@ -31,7 +30,7 @@ func (s *Server) isUpdated() (mtime time.Time, updated bool, err error) {
 const ostbelgienPopulation = 78000
 
 func (s *Server) process() error {
-	slog.Info("loading demographics")
+	s.Logger.Info("loading demographics")
 	start := time.Now()
 	byRegion, byAge, err := groupPopulation(s.Path)
 	if err != nil {
@@ -53,6 +52,6 @@ func (s *Server) process() error {
 	s.byRegion = byRegion
 	s.byAge = byAge
 
-	slog.Info("loaded demographics", "duration", time.Since(start))
+	s.Logger.Info("loaded demographics", "duration", time.Since(start))
 	return nil
 }

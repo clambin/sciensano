@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/clambin/go-common/httpserver/middleware"
 	"github.com/clambin/go-common/set"
+	"github.com/clambin/go-common/tabulator"
 	grafanaJSONServer "github.com/clambin/grafana-json-server"
 	"github.com/clambin/sciensano/internal/sciensano"
 	"github.com/prometheus/client_golang/prometheus"
@@ -15,6 +16,13 @@ import (
 type Server struct {
 	JSONServer *grafanaJSONServer.Server
 	Handlers   map[string]grafanaJSONServer.Handler
+	reports    ReportsStore
+}
+
+//go:generate mockery --name ReportsStore --with-expecter=true
+type ReportsStore interface {
+	Get(string) (*tabulator.Tabulator, error)
+	Keys() []string
 }
 
 var _ prometheus.Collector = &Server{}
@@ -22,6 +30,7 @@ var _ prometheus.Collector = &Server{}
 func New(reportsStore ReportsStore, logger *slog.Logger) *Server {
 	s := &Server{
 		Handlers: make(map[string]grafanaJSONServer.Handler),
+		reports:  reportsStore,
 	}
 
 	options := []grafanaJSONServer.Option{
@@ -65,11 +74,21 @@ func (s *Server) Run(ctx context.Context) error {
 }
 
 func (s *Server) Describe(descs chan<- *prometheus.Desc) {
-	// s.apiCache.Describe(descs)
 	s.JSONServer.Describe(descs)
 }
 
 func (s *Server) Collect(metrics chan<- prometheus.Metric) {
-	//s.apiCache.Collect(metrics)
 	s.JSONServer.Collect(metrics)
+}
+
+func createTableResponse(t *tabulator.Tabulator) grafanaJSONServer.QueryResponse {
+	columnNames := t.GetColumns()
+	columns := make([]grafanaJSONServer.Column, 1+len(columnNames))
+	columns[0] = grafanaJSONServer.Column{Text: "time", Data: grafanaJSONServer.TimeColumn(t.GetTimestamps())}
+	for index, column := range t.GetColumns() {
+		values, _ := t.GetValues(column)
+		columns[index+1] = grafanaJSONServer.Column{Text: column, Data: grafanaJSONServer.NumberColumn(values)}
+	}
+
+	return grafanaJSONServer.TableResponse{Columns: columns}
 }

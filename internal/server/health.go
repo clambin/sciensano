@@ -8,10 +8,10 @@ import (
 func (s *Server) Health(w http.ResponseWriter, _ *http.Request) {
 	response := struct {
 		DataSources   int
-		ReporterCache map[string]int
+		ReporterCache []string
 	}{
-		DataSources: len(s.Handlers),
-		//ReporterCache: s.reportsCache.Stats(),
+		DataSources:   len(s.Handlers),
+		ReporterCache: s.reports.Keys(),
 	}
 
 	encoder := json.NewEncoder(w)
