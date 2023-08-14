@@ -15,7 +15,7 @@ import (
 
 type ProRater struct {
 	Name     string
-	Source   Publisher[sciensano.Vaccinations] //*datasource.DataSource[sciensano.Vaccinations]
+	Source   Publisher[sciensano.Vaccinations]
 	PopStore Fetcher
 	Mode     sciensano.SummaryColumn
 	DoseType sciensano.DoseType

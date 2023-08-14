@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"github.com/clambin/go-common/httpclient"
 	"github.com/clambin/go-common/taskmanager"
@@ -22,13 +23,12 @@ import (
 )
 
 var (
-	// BuildVersion contains the release number
-	BuildVersion = "change-me"
+	version = "change-me"
 
 	debug            = flag.Bool("debug", false, "Log debug messages")
 	simpleJSONAddr   = flag.String("addr", ":8080", "Server address")
 	prometheusAddr   = flag.String("prometheus", ":9090", "Prometheus metrics port")
-	demographicsPath = flag.String("demographics", "/data/population/TF_SOC_POP_STRUCT_2021.txt", "Path of the demographics server")
+	demographicsPath = flag.String("demographics", "/data/population/TF_SOC_POP_STRUCT_2023.txt", "Path of the demographics file")
 )
 
 func main() {
@@ -40,7 +40,7 @@ func main() {
 	}
 	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stderr, &opts)))
 
-	slog.Info("Sciensano API server starting", "version", BuildVersion)
+	slog.Info("Sciensano API server starting", "version", version)
 
 	popStore := population.Server{Path: *demographicsPath, Interval: 24 * time.Hour}
 
@@ -72,8 +72,7 @@ func main() {
 	ctx, done := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer done()
 
-	err := tm.Run(ctx)
-	if err != nil {
+	if err := tm.Run(ctx); err != nil && !errors.Is(err, context.Canceled) {
 		slog.Error("failed to start", "err", err)
 		os.Exit(1)
 	}

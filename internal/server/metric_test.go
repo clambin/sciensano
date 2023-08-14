@@ -115,8 +115,18 @@ func TestVaccinationDoseTypeMetric_Query(t *testing.T) {
 			wantErr: assert.Error,
 		},
 		{
+			name:    "invalid dose type",
+			payload: []byte(`{ "summary": "ByRegion", "doseType": "invalid", "accumulate": "no" }`),
+			wantErr: assert.Error,
+		},
+		{
 			name:    "missing summary",
 			payload: []byte(`{ "accumulate": "yes" }`),
+			wantErr: assert.Error,
+		},
+		{
+			name:    "invalid summary",
+			payload: []byte(`{ "summary": "invalid", "doseType": "Full", "accumulate": "no" }`),
 			wantErr: assert.Error,
 		},
 		{

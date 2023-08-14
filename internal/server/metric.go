@@ -136,7 +136,9 @@ func parseVaccinationDoseTypeRequest(target string, req grafanaJSONServer.QueryR
 		return "", accumulate, fmt.Errorf("invalid summary option: %s", summaryOption.Summary)
 	}
 
-	//TODO: validate doseType
+	if _, ok = sciensano.DoseTypeNames[summaryOption.DoseType]; !ok {
+		return "", accumulate, fmt.Errorf("invalid dose type: %s", summaryOption.DoseType)
+	}
 
 	switch summaryOption.Accumulate {
 	case "yes":

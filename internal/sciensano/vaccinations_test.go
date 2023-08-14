@@ -128,7 +128,7 @@ func TestVaccinations_Summarize(t *testing.T) {
 }
 
 func BenchmarkVaccinations_Summarize_Total(b *testing.B) {
-	vaccinations := testutil.Vaccinations() //makeVaccinations(365)
+	vaccinations := testutil.Vaccinations()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_, err := vaccinations.Summarize(sciensano.Total)
@@ -139,7 +139,7 @@ func BenchmarkVaccinations_Summarize_Total(b *testing.B) {
 }
 
 func BenchmarkVaccinations_Summarize_ByRegion(b *testing.B) {
-	vaccinations := testutil.Vaccinations() //makeVaccinations(365)
+	vaccinations := testutil.Vaccinations()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_, err := vaccinations.Summarize(sciensano.ByRegion)
