@@ -3,6 +3,7 @@ package datasource
 import (
 	"context"
 	"github.com/clambin/go-common/taskmanager"
+	"golang.org/x/exp/rand"
 	"log/slog"
 	"sync"
 	"time"
@@ -40,7 +41,7 @@ func (d *DataSource[T]) Run(ctx context.Context) error {
 	}
 	d.sendData()
 
-	ticker := time.NewTicker(d.PollingInterval)
+	ticker := time.NewTicker(jitter(d.PollingInterval, 10, rand.Float64()))
 	defer ticker.Stop()
 
 	for {
@@ -55,6 +56,13 @@ func (d *DataSource[T]) Run(ctx context.Context) error {
 			d.sendData()
 		}
 	}
+}
+
+func jitter(interval time.Duration, width float64, randFactor float64) time.Duration {
+	total := float64(interval) / width
+	lowest := float64(interval) - total/2
+	j := total * randFactor
+	return time.Duration(lowest + j)
 }
 
 func (d *DataSource[T]) fetchData(ctx context.Context) error {
