@@ -30,7 +30,7 @@ func TestWaiter_WaitTillReady(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
 			defer cancel()
-			w := population.Waiter{Interval: 10 * time.Millisecond}
+			w := population.Waiter{}
 			go func() {
 				time.Sleep(tt.delay)
 				w.Ready()
@@ -39,4 +39,19 @@ func TestWaiter_WaitTillReady(t *testing.T) {
 			tt.wantErr(t, w.WaitTillReady(ctx))
 		})
 	}
+}
+
+func TestWaiter_WaitTillReady_ReUse(t *testing.T) {
+	w := population.Waiter{}
+	go func() {
+		time.Sleep(100 * time.Millisecond)
+		w.Ready()
+	}()
+	assert.NoError(t, w.WaitTillReady(context.Background()))
+
+	go func() {
+		time.Sleep(100 * time.Millisecond)
+		w.Ready()
+	}()
+	assert.NoError(t, w.WaitTillReady(context.Background()))
 }

@@ -25,18 +25,17 @@ func (p *Publisher[T]) Unregister(ch chan T) {
 	delete(p.clients, ch)
 }
 
-/*
-func (p *Publisher[T]) Send(value T) {
+func (p *Publisher[T]) Send(value T, currentAge time.Time) bool {
 	p.lock.RLock()
 	defer p.lock.RUnlock()
 
-	currentAge := time.Now()
+	var sent bool
 	for ch, lastSent := range p.clients {
 		if lastSent.Before(currentAge) {
 			ch <- value
 			p.clients[ch] = currentAge
+			sent = true
 		}
 	}
-
+	return sent
 }
-*/

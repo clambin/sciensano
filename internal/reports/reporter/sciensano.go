@@ -35,7 +35,7 @@ func NewSciensanoReporters(datasources *datasource.SciensanoSources, store *stor
 	for _, option := range summarizers {
 		for _, mode := range option.modes {
 			fullName := option.basename + "-" + mode.String()
-			l := logger.With("reporter", fullName)
+			l := logger.With(slog.String("reporter", fullName))
 
 			var task taskmanager.Task
 			switch option.dsType {
