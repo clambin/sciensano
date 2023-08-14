@@ -38,8 +38,9 @@ func (d *DataSource[T]) GetCurrentAge() time.Time {
 func (d *DataSource[T]) Run(ctx context.Context) error {
 	if err := d.fetchData(ctx); err != nil {
 		d.Logger.Error("failed to collect data", "err", err)
+	} else {
+		d.sendData()
 	}
-	d.sendData()
 
 	ticker := time.NewTicker(jitter(d.PollingInterval, 0.04, rand.Float64()))
 	defer ticker.Stop()
@@ -76,12 +77,11 @@ func (d *DataSource[T]) fetchData(ctx context.Context) error {
 	if err == nil {
 		d.currentData = data
 		d.currentAge = timestamp
+		d.Logger.Info("new data found")
 	}
 	return err
 }
 
 func (d *DataSource[T]) sendData() {
-	if d.Publisher.Send(d.currentData, d.currentAge) {
-		d.Logger.Info("new data found")
-	}
+	d.Publisher.Send(d.currentData, d.currentAge)
 }
