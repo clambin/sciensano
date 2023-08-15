@@ -12,5 +12,5 @@ jobs:
     steps:
       - id: govulncheck
         uses: golang/govulncheck-action@v1
-  vulnerabilities:
-    uses: clambin/workflows/.github/workflows/vulnerabilities.yaml@main
+        with:
+          go-version-input: 1.21

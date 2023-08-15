@@ -24,7 +24,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 3837,
+  "id": 4148,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -113,6 +113,8 @@
           },
           "editorMode": "builder",
           "payload": {
+            "Accumulate": "no",
+            "Summary": "Total",
             "summary": "Total"
           },
           "refId": "A",
@@ -183,7 +185,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "rate"
+              "options": "ratio"
             },
             "properties": [
               {
@@ -225,13 +227,32 @@
           },
           "editorMode": "builder",
           "payload": {
-            "summary": "Total"
+            "Accumulate": "no",
+            "Summary": "ByCategory"
           },
           "refId": "A",
           "target": "tests"
         }
       ],
       "title": "Tests",
+      "transformations": [
+        {
+          "id": "calculateField",
+          "options": {
+            "alias": "ratio",
+            "binary": {
+              "left": "positive",
+              "operator": "/",
+              "reducer": "sum",
+              "right": "total"
+            },
+            "mode": "binary",
+            "reduce": {
+              "reducer": "sum"
+            }
+          }
+        }
+      ],
       "type": "timeseries"
     },
     {
@@ -289,6 +310,8 @@
           },
           "editorMode": "builder",
           "payload": {
+            "Accumulate": "no",
+            "Summary": "ByRegion",
             "summary": "ByRegion"
           },
           "refId": "A",
@@ -383,6 +406,8 @@
           },
           "editorMode": "builder",
           "payload": {
+            "Accumulate": "no",
+            "Summary": "ByRegion",
             "summary": "ByRegion"
           },
           "refId": "A",
@@ -447,7 +472,8 @@
           },
           "editorMode": "builder",
           "payload": {
-            "summary": "ByProvince"
+            "Accumulate": "yes",
+            "Summary": "ByProvince"
           },
           "refId": "A",
           "target": "cases"
@@ -541,7 +567,8 @@
           },
           "editorMode": "builder",
           "payload": {
-            "summary": "ByProvince"
+            "Accumulate": "no",
+            "Summary": "ByProvince"
           },
           "refId": "A",
           "target": "cases"
@@ -605,7 +632,8 @@
           },
           "editorMode": "builder",
           "payload": {
-            "summary": "ByAgeGroup"
+            "Accumulate": "yes",
+            "Summary": "ByAgeGroup"
           },
           "refId": "A",
           "target": "cases"
@@ -670,7 +698,32 @@
           },
           "unit": "short"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "__systemRef": "hideSeriesFrom",
+            "matcher": {
+              "id": "byNames",
+              "options": {
+                "mode": "exclude",
+                "names": [
+                  "0-9"
+                ],
+                "prefix": "All except:",
+                "readOnly": true
+              }
+            },
+            "properties": [
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": true
+                }
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 8,
@@ -699,7 +752,8 @@
           },
           "editorMode": "builder",
           "payload": {
-            "summary": "ByAgeGroup"
+            "Accumulate": "no",
+            "Summary": "ByAgeGroup"
           },
           "refId": "A",
           "target": "cases"
@@ -717,13 +771,13 @@
     "list": []
   },
   "time": {
-    "from": "now-2y",
+    "from": "now-6M",
     "to": "now"
   },
   "timepicker": {},
   "timezone": "",
   "title": "Sciensano - Cases",
   "uid": "6lJUW_O7k",
-  "version": 13,
+  "version": 3,
   "weekStart": ""
 }
