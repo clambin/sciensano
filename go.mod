@@ -7,7 +7,7 @@ require (
 	github.com/clambin/go-common/httpserver v0.12.0
 	github.com/clambin/go-common/set v0.2.0
 	github.com/clambin/go-common/tabulator v0.2.2-0.20230801080327-d118c4361653
-	github.com/clambin/go-common/taskmanager v0.2.1
+	github.com/clambin/go-common/taskmanager v0.3.0
 	github.com/clambin/grafana-json-server v0.5.0
 	github.com/mailru/easyjson v0.7.7
 	github.com/prometheus/client_golang v1.16.0
