@@ -22,7 +22,7 @@ func TestFetcher_Cases(t *testing.T) {
 		Client: http.DefaultClient,
 	}
 
-	assert.Equal(t, "COVID19BE_CASES_AGESEX.json", filepath.Base(f.GetTarget()))
+	assert.Equal(t, "COVID19BE_CASES_AGESEX.json", filepath.Base(f.Target))
 
 	ctx := context.Background()
 
@@ -44,7 +44,7 @@ func TestFetcher_Vaccinations(t *testing.T) {
 		Client: http.DefaultClient,
 	}
 
-	assert.Equal(t, "COVID19BE_VACC.json", filepath.Base(f.GetTarget()))
+	assert.Equal(t, "COVID19BE_VACC.json", filepath.Base(f.Target))
 
 	ctx := context.Background()
 
@@ -66,7 +66,7 @@ func TestFetcher_TestResults(t *testing.T) {
 		Client: http.DefaultClient,
 	}
 
-	assert.Equal(t, "COVID19BE_tests.json", filepath.Base(f.GetTarget()))
+	assert.Equal(t, "COVID19BE_tests.json", filepath.Base(f.Target))
 
 	ctx := context.Background()
 

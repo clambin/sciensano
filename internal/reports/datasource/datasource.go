@@ -13,7 +13,6 @@ import (
 type Fetcher[T any] interface {
 	GetLastModified(ctx context.Context) (time.Time, error)
 	Fetch(ctx context.Context) (T, error)
-	GetTarget() string
 }
 
 var _ taskmanager.Task = &DataSource[int]{}
@@ -26,7 +25,6 @@ type DataSource[T any] struct {
 	currentData     T
 	currentAge      time.Time
 	lock            sync.RWMutex
-	//clients         map[chan T]time.Time
 }
 
 func (d *DataSource[T]) GetCurrentAge() time.Time {

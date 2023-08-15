@@ -44,10 +44,6 @@ func (f *Fetcher[T]) Fetch(ctx context.Context) (T, error) {
 	return unmarshal[T](resp.Body)
 }
 
-func (f *Fetcher[T]) GetTarget() string {
-	return f.Target
-}
-
 func unmarshal[T any](r io.Reader) (v T, err error) {
 	switch any(v).(type) {
 	case Vaccinations:

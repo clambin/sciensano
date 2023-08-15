@@ -12,19 +12,19 @@ type populationRecord struct {
 	Count  []byte `csv:"MS_POPULATION\r"`
 }
 
-func groupPopulation(filename string) (byRegion map[string]int, byAge map[int]int, err error) {
-	var reader *csv.FileReader
+func groupPopulation(filename string) (map[string]int, map[int]int, error) {
 	var record populationRecord
-	if reader, err = csv.NewFileReader(filename, '|', &record); err != nil {
-		return
+	reader, err := csv.NewFileReader(filename, '|', &record)
+	if err != nil {
+		return nil, nil, err
 	}
 
 	defer func() {
 		_ = reader.Close()
 	}()
 
-	byRegion = make(map[string]int)
-	byAge = make(map[int]int)
+	byRegion := make(map[string]int)
+	byAge := make(map[int]int)
 
 	var line int
 	for reader.Scan() {
@@ -35,37 +35,32 @@ func groupPopulation(filename string) (byRegion map[string]int, byAge map[int]in
 		var count int
 		count, err = strconv.Atoi(string(record.Count))
 		if err != nil {
-			err = fmt.Errorf("invalid number for Count on line %d: %w", line, err)
-			return
+			return nil, nil, fmt.Errorf("invalid number for Count on line %d: %w", line, err)
 		}
-
-		region := translateRegion(string(record.Region))
 
 		var age int
 		age, err = strconv.Atoi(string(record.Age))
 		if err != nil {
-			err = fmt.Errorf("invalid number for Age on line %d: %w", line, err)
-			return
+			return nil, nil, fmt.Errorf("invalid number for Age on line %d: %w", line, err)
 		}
 
-		byRegionCount := byRegion[region]
-		byRegion[region] = byRegionCount + count
+		region := translateRegion(string(record.Region))
 
-		byAgeCount := byAge[age]
-		byAge[age] = byAgeCount + count
+		byRegion[region] += count
+		byAge[age] += count
 	}
 
-	return
+	return byRegion, byAge, nil
+}
+
+var regionTranslationTable = map[string]string{
+	"Vlaams Gewest":                  "Flanders",
+	"Waals Gewest":                   "Wallonia",
+	"Brussels Hoofdstedelijk Gewest": "Brussels",
 }
 
 func translateRegion(input string) string {
-	translation := map[string]string{
-		"Vlaams Gewest":                  "Flanders",
-		"Waals Gewest":                   "Wallonia",
-		"Brussels Hoofdstedelijk Gewest": "Brussels",
-	}
-
-	output, ok := translation[input]
+	output, ok := regionTranslationTable[input]
 	if !ok {
 		output = input
 	}
