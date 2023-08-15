@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/clambin/go-common/tabulator"
 	"log/slog"
+	"slices"
 	"sync"
 )
 
@@ -41,9 +42,10 @@ func (s *Store) Get(key string) (*tabulator.Tabulator, error) {
 func (s *Store) Keys() []string {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
-	var keys []string
+	keys := make([]string, 0, len(s.reports))
 	for key := range s.reports {
 		keys = append(keys, key)
 	}
+	slices.Sort(keys)
 	return keys
 }

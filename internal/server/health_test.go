@@ -22,7 +22,14 @@ func TestServer_Health(t *testing.T) {
 
 	require.Equal(t, http.StatusOK, w.Code)
 	assert.Equal(t, `{
-  "DataSources": 6,
+  "DataSources": [
+    "cases",
+    "hospitalisations",
+    "mortalities",
+    "tests",
+    "vaccination-rate",
+    "vaccinations"
+  ],
   "ReporterCache": [
     "foo",
     "bar"
