@@ -3,8 +3,8 @@ package datasource
 import (
 	"context"
 	"github.com/clambin/go-common/taskmanager"
-	"golang.org/x/exp/rand"
 	"log/slog"
+	"math/rand"
 	"sync"
 	"time"
 )
