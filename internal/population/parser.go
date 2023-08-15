@@ -60,9 +60,8 @@ var regionTranslationTable = map[string]string{
 }
 
 func translateRegion(input string) string {
-	output, ok := regionTranslationTable[input]
-	if !ok {
-		output = input
+	if translated, ok := regionTranslationTable[input]; ok {
+		return translated
 	}
-	return output
+	return input
 }
