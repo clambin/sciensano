@@ -16,12 +16,6 @@ type Summary[T summarizer] struct {
 	Logger *slog.Logger
 }
 
-//go:generate mockery --name Publisher --with-expecter=true
-type Publisher[T any] interface {
-	Register(chan T)
-	Unregister(chan T)
-}
-
 type summarizer interface {
 	Summarize(column sciensano.SummaryColumn) (*tabulator.Tabulator, error)
 }

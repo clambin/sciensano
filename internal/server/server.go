@@ -19,7 +19,6 @@ type Server struct {
 	reports    ReportsStore
 }
 
-//go:generate mockery --name ReportsStore --with-expecter=true
 type ReportsStore interface {
 	Get(string) (*tabulator.Tabulator, error)
 	Keys() []string

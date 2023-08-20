@@ -9,8 +9,8 @@ import (
 	"github.com/clambin/go-common/taskmanager/httpserver"
 	promserver "github.com/clambin/go-common/taskmanager/prometheus"
 	"github.com/clambin/sciensano/internal/population"
+	"github.com/clambin/sciensano/internal/reports"
 	"github.com/clambin/sciensano/internal/reports/datasource"
-	"github.com/clambin/sciensano/internal/reports/reporter"
 	"github.com/clambin/sciensano/internal/reports/store"
 	"github.com/clambin/sciensano/internal/server"
 	"github.com/prometheus/client_golang/prometheus"
@@ -54,7 +54,7 @@ func main() {
 	client := &http.Client{Transport: r}
 
 	ds := datasource.NewSciensanoDatastore("", 15*time.Minute, client, logger.With("component", "datasource"))
-	reporters := reporter.NewSciensanoReporters(ds, &reportsStore, &popStore, logger.With("component", "reporters"))
+	reporters := reports.NewSciensanoReporters(ds, &reportsStore, &popStore, logger.With("component", "reporters"))
 
 	var tasks []taskmanager.Task
 	tasks = append(tasks, ds)

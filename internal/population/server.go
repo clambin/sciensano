@@ -10,18 +10,6 @@ import (
 	"time"
 )
 
-// Fetcher interface for population data
-//
-//go:generate mockery --name Fetcher
-type Fetcher interface {
-	// GetByAgeBracket returns the demographics for the specified AgeBracket
-	GetByAgeBracket(arguments bracket.Bracket) (count int)
-	// GetByRegion returns the demographics grouped by region
-	GetByRegion() (figures map[string]int)
-	// Run updates demographics and refreshes them on a periodic basis
-	Run(ctx context.Context) error
-}
-
 // Server imports the demographics data on a regular basis and exposes data APIs to callers
 type Server struct {
 	Waiter
@@ -33,8 +21,6 @@ type Server struct {
 	byAge    map[int]int
 	lock     sync.RWMutex
 }
-
-var _ Fetcher = &Server{}
 
 // Run imports the latest demographics data on a regular basis
 func (s *Server) Run(ctx context.Context) error {

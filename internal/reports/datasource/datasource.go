@@ -9,7 +9,6 @@ import (
 	"time"
 )
 
-//go:generate mockery --name Fetcher --with-expecter=true
 type Fetcher[T any] interface {
 	GetLastModified(ctx context.Context) (time.Time, error)
 	Fetch(ctx context.Context) (T, error)

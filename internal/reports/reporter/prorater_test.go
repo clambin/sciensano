@@ -3,8 +3,6 @@ package reporter_test
 import (
 	"context"
 	"errors"
-	"github.com/clambin/sciensano/internal/reports/datasource"
-	mocks2 "github.com/clambin/sciensano/internal/reports/datasource/mocks"
 	"github.com/clambin/sciensano/internal/reports/reporter"
 	"github.com/clambin/sciensano/internal/reports/reporter/mocks"
 	"github.com/clambin/sciensano/internal/reports/store"
@@ -18,26 +16,23 @@ import (
 )
 
 func TestRater(t *testing.T) {
-	p := mocks.NewFetcher(t)
-	p.EXPECT().GetByRegion().Return(nil)
-	p.EXPECT().WaitTillReady(mock.AnythingOfType("*context.timerCtx")).Return(nil)
+	f := mocks.NewPopulationFetcher(t)
+	f.EXPECT().GetByRegion().Return(nil)
+	f.EXPECT().WaitTillReady(mock.AnythingOfType("*context.timerCtx")).Return(nil)
 
-	vaccinationsFetcher := mocks2.NewFetcher[sciensano.Vaccinations](t)
-	vaccinationsFetcher.EXPECT().GetLastModified(mock.AnythingOfType("*context.cancelCtx")).Return(time.Now(), nil)
-	vaccinationsFetcher.EXPECT().Fetch(mock.AnythingOfType("*context.cancelCtx")).Return(testutil.Vaccinations(), nil)
+	dataChCh := make(chan chan sciensano.Vaccinations)
+	p := mocks.NewPublisher[sciensano.Vaccinations](t)
+	p.EXPECT().Register(mock.AnythingOfType("chan sciensano.Vaccinations")).Run(func(ch chan sciensano.Vaccinations) {
+		dataChCh <- ch
+	})
+	p.EXPECT().Unregister(mock.AnythingOfType("chan sciensano.Vaccinations"))
 
 	s := &store.Store{Logger: slog.Default().With("component", "reportsStore")}
 
-	d := &datasource.DataSource[sciensano.Vaccinations]{
-		Fetcher:         vaccinationsFetcher,
-		PollingInterval: time.Second,
-		Logger:          slog.Default().With("datasource", "vaccinations"),
-	}
-
 	r := reporter.ProRater{
 		Name:     "vaccinations-rate-Full-ByRegion",
-		Source:   d,
-		PopStore: p,
+		Source:   p,
+		PopStore: f,
 		Mode:     sciensano.ByRegion,
 		DoseType: sciensano.Full,
 		Store:    s,
@@ -46,13 +41,13 @@ func TestRater(t *testing.T) {
 
 	ctx, cancel := context.WithCancel(context.Background())
 
-	ch := make(chan error)
+	ch2 := make(chan error)
 	go func() {
-		ch <- d.Run(ctx)
+		ch2 <- r.Run(ctx)
 	}()
-	go func() {
-		ch <- r.Run(ctx)
-	}()
+
+	dataCh := <-dataChCh
+	dataCh <- testutil.Vaccinations()
 
 	assert.Eventually(t, func() bool {
 		_, err := r.Store.Get("vaccinations-rate-Full-ByRegion")
@@ -60,6 +55,5 @@ func TestRater(t *testing.T) {
 	}, time.Minute, time.Second)
 
 	cancel()
-	assert.ErrorIs(t, <-ch, context.Canceled)
-	assert.ErrorIs(t, <-ch, context.Canceled)
+	assert.ErrorIs(t, <-ch2, context.Canceled)
 }

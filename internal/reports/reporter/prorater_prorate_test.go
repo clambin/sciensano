@@ -17,7 +17,7 @@ import (
 func TestProRater_Prorate(t *testing.T) {
 	l := slog.Default()
 
-	f := mocks.NewFetcher(t)
+	f := mocks.NewPopulationFetcher(t)
 	f.EXPECT().GetByRegion().Return(map[string]int{"Flanders": 10, "Wallonia": 5, "Brussels": 1})
 	f.EXPECT().GetByAgeBracket(bracket.Bracket{Low: 20, High: 29}).Return(10)
 	f.EXPECT().GetByAgeBracket(bracket.Bracket{Low: 30, High: 39}).Return(5)
@@ -106,7 +106,7 @@ func TestProRater_Prorate(t *testing.T) {
 func BenchmarkProRater_CreateReport(b *testing.B) {
 	vaccinations := testutil.Vaccinations()
 
-	p := mocks.NewFetcher(b)
+	p := mocks.NewPopulationFetcher(b)
 	p.EXPECT().WaitTillReady(mock.Anything).Return(nil)
 	p.EXPECT().GetByRegion().Return(map[string]int{})
 	l := slog.Default()

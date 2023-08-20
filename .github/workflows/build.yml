@@ -4,7 +4,7 @@ on:
   push:
     branches:
     - master
-    - redesign
+    - mock
     paths-ignore:
       - '**.md'
       - 'assets/grafana/dashboards/**'

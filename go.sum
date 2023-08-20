@@ -10,8 +10,8 @@ github.com/clambin/go-common/httpserver v0.12.0 h1:qUEqOl5XCVlSQVs90nCl6glx+oBtM
 github.com/clambin/go-common/httpserver v0.12.0/go.mod h1:DoibGuQHoI+KsHuGWsusY/ColY3TdzwBocOPR5EwxL4=
 github.com/clambin/go-common/set v0.2.0 h1:s4wXxKns3sb2VPCtAmmLEDs4KiHNIiot+LcKgKcdPdw=
 github.com/clambin/go-common/set v0.2.0/go.mod h1:GFjAZynNo4BNjlx2hzDMHIU4ays7QjpJUSHXB/3b1ZE=
-github.com/clambin/go-common/tabulator v0.3.0 h1:k8vUvyCQxANE3IeBrXGYJcFWjWF5wLMO8NIr/Y92CQI=
-github.com/clambin/go-common/tabulator v0.3.0/go.mod h1:Gl1w5I1CDvLqPjor2l08FMWtpAEkDHWRnnz297Nwwfs=
+github.com/clambin/go-common/tabulator v0.3.1 h1:PpC49uc8eSSRgHM4jP9vNLgLkGkrafy0djzYmZ+lLt0=
+github.com/clambin/go-common/tabulator v0.3.1/go.mod h1:Gl1w5I1CDvLqPjor2l08FMWtpAEkDHWRnnz297Nwwfs=
 github.com/clambin/go-common/taskmanager v0.3.0 h1:ASA0axYdGBOukljpdfJxgDE2BwneA1iSgvA/7tLxKw4=
 github.com/clambin/go-common/taskmanager v0.3.0/go.mod h1:lciRo5ME2pCRf0fi5Rx7TcDDgr3/6HuE9qxFgFamfLg=
 github.com/clambin/grafana-json-server v0.5.0 h1:oRBVfekkJ8ArbwgHt7bZPdEHrik9En2yGLaDWe8tpqY=

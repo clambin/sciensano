@@ -1,8 +1,9 @@
-package reporter
+package reports
 
 import (
 	"github.com/clambin/go-common/taskmanager"
 	"github.com/clambin/sciensano/internal/reports/datasource"
+	"github.com/clambin/sciensano/internal/reports/reporter"
 	"github.com/clambin/sciensano/internal/reports/store"
 	"github.com/clambin/sciensano/internal/sciensano"
 	"log/slog"
@@ -18,7 +19,7 @@ const (
 	vaccinationsDatasource
 )
 
-func NewSciensanoReporters(datasources *datasource.SciensanoSources, store *store.Store, popStore Fetcher, logger *slog.Logger) []taskmanager.Task {
+func NewSciensanoReporters(datasources *datasource.SciensanoSources, store *store.Store, popStore reporter.PopulationFetcher, logger *slog.Logger) []taskmanager.Task {
 	summarizers := []struct {
 		dsType   datasourceType
 		basename string
@@ -40,15 +41,15 @@ func NewSciensanoReporters(datasources *datasource.SciensanoSources, store *stor
 			var task taskmanager.Task
 			switch option.dsType {
 			case casesDatasource:
-				task = &Summary[sciensano.Cases]{Name: fullName, Source: &datasources.Cases, Mode: mode, Store: store, Logger: l}
+				task = &reporter.Summary[sciensano.Cases]{Name: fullName, Source: &datasources.Cases, Mode: mode, Store: store, Logger: l}
 			case hospitalisationsDatasource:
-				task = &Summary[sciensano.Hospitalisations]{Name: fullName, Source: &datasources.Hospitalisations, Mode: mode, Store: store, Logger: l}
+				task = &reporter.Summary[sciensano.Hospitalisations]{Name: fullName, Source: &datasources.Hospitalisations, Mode: mode, Store: store, Logger: l}
 			case mortalitiesDatasource:
-				task = &Summary[sciensano.Mortalities]{Name: fullName, Source: &datasources.Mortalities, Mode: mode, Store: store, Logger: l}
+				task = &reporter.Summary[sciensano.Mortalities]{Name: fullName, Source: &datasources.Mortalities, Mode: mode, Store: store, Logger: l}
 			case testResultsDatasource:
-				task = &Summary[sciensano.TestResults]{Name: fullName, Source: &datasources.TestResults, Mode: mode, Store: store, Logger: l}
+				task = &reporter.Summary[sciensano.TestResults]{Name: fullName, Source: &datasources.TestResults, Mode: mode, Store: store, Logger: l}
 			case vaccinationsDatasource:
-				task = &Summary[sciensano.Vaccinations]{Name: fullName, Source: &datasources.Vaccinations, Mode: mode, Store: store, Logger: l}
+				task = &reporter.Summary[sciensano.Vaccinations]{Name: fullName, Source: &datasources.Vaccinations, Mode: mode, Store: store, Logger: l}
 			default:
 				panic("invalid mode")
 			}
@@ -71,7 +72,7 @@ func NewSciensanoReporters(datasources *datasource.SciensanoSources, store *stor
 			fullName := rater.basename + "-" + rater.doseType.String() + "-" + mode.String()
 			l := logger.With("reporter", fullName)
 
-			reporters = append(reporters, &ProRater{
+			reporters = append(reporters, &reporter.ProRater{
 				Name:     fullName,
 				Source:   &datasources.Vaccinations,
 				PopStore: popStore,

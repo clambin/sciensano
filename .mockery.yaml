@@ -1,0 +1,16 @@
+with-expecter: true
+filename: "{{.InterfaceName}}.go"
+dir: "{{.InterfaceDir}}/mocks"
+mockname: "{{.InterfaceName}}"
+outpkg: "mocks"
+packages:
+  github.com/clambin/sciensano/internal/reports/datasource:
+    interfaces:
+      Fetcher:
+  github.com/clambin/sciensano/internal/reports/reporter:
+    interfaces:
+      Publisher:
+      PopulationFetcher:
+  github.com/clambin/sciensano/internal/server:
+    interfaces:
+      ReportsStore:

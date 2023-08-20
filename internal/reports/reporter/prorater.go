@@ -16,15 +16,14 @@ import (
 type ProRater struct {
 	Name     string
 	Source   Publisher[sciensano.Vaccinations]
-	PopStore Fetcher
+	PopStore PopulationFetcher
 	Mode     sciensano.SummaryColumn
 	DoseType sciensano.DoseType
 	Store    *store.Store
 	Logger   *slog.Logger
 }
 
-//go:generate mockery --name Fetcher --with-expecter=true
-type Fetcher interface {
+type PopulationFetcher interface {
 	// GetByAgeBracket returns the demographics for the specified AgeBracket
 	GetByAgeBracket(arguments bracket.Bracket) (count int)
 	// GetByRegion returns the demographics grouped by region
@@ -33,7 +32,7 @@ type Fetcher interface {
 	WaitTillReady(ctx context.Context) error
 }
 
-var _ Fetcher = &population.Server{}
+var _ PopulationFetcher = &population.Server{}
 
 func (r *ProRater) Run(ctx context.Context) error {
 	ch := make(chan sciensano.Vaccinations, 1)
@@ -89,7 +88,7 @@ func (r *ProRater) createReport(vaccinations sciensano.Vaccinations) {
 	r.Store.Put(r.Name, t)
 }
 
-func proRate(summary *tabulator.Tabulator, mode sciensano.SummaryColumn, popStore Fetcher) (*tabulator.Tabulator, error) {
+func proRate(summary *tabulator.Tabulator, mode sciensano.SummaryColumn, popStore PopulationFetcher) (*tabulator.Tabulator, error) {
 	figures, err := getPopulationForGroup(mode, summary.GetColumns(), popStore)
 	if err != nil {
 		return nil, err
@@ -110,7 +109,7 @@ func proRate(summary *tabulator.Tabulator, mode sciensano.SummaryColumn, popStor
 	return rated, nil
 }
 
-func getPopulationForGroup(mode sciensano.SummaryColumn, columns []string, popStore Fetcher) (map[string]int, error) {
+func getPopulationForGroup(mode sciensano.SummaryColumn, columns []string, popStore PopulationFetcher) (map[string]int, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
 	defer cancel()
 	if err := popStore.WaitTillReady(ctx); err != nil {
