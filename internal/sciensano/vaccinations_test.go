@@ -77,6 +77,22 @@ func BenchmarkVaccinations_Unmarshal_Easyjson(b *testing.B) {
 	}
 }
 
+/*
+	func BenchmarkVaccinations_Unmarshal_JsonIter(b *testing.B) {
+		content, err := os.ReadFile(filepath.Join("testutil", "testdata", "vaccinations.json"))
+		require.NoError(b, err)
+
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			var vaccinations sciensano.Vaccinations
+			err = jsoniter.ConfigCompatibleWithStandardLibrary.Unmarshal(content, &vaccinations)
+			if err != nil {
+				b.Fatal(err)
+			}
+		}
+	}
+*/
+
 func TestVaccinations_Summarize(t *testing.T) {
 	testCases := []struct {
 		summaryColumn sciensano.SummaryColumn
