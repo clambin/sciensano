@@ -2,10 +2,10 @@ package reports
 
 import (
 	"github.com/clambin/go-common/taskmanager"
-	"github.com/clambin/sciensano/internal/reports/datasource"
-	"github.com/clambin/sciensano/internal/reports/reporter"
-	"github.com/clambin/sciensano/internal/reports/store"
-	"github.com/clambin/sciensano/internal/sciensano"
+	"github.com/clambin/sciensano/v2/internal/reports/datasource"
+	"github.com/clambin/sciensano/v2/internal/reports/reporter"
+	"github.com/clambin/sciensano/v2/internal/reports/store"
+	"github.com/clambin/sciensano/v2/internal/sciensano"
 	"log/slog"
 )
 

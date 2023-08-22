@@ -2,7 +2,7 @@ package store_test
 
 import (
 	"github.com/clambin/go-common/tabulator"
-	"github.com/clambin/sciensano/internal/reports/store"
+	"github.com/clambin/sciensano/v2/internal/reports/store"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"log/slog"

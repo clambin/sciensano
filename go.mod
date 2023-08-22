@@ -1,4 +1,4 @@
-module github.com/clambin/sciensano
+module github.com/clambin/sciensano/v2
 
 go 1.21
 

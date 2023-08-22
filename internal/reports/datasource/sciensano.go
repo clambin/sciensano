@@ -2,7 +2,7 @@ package datasource
 
 import (
 	"github.com/clambin/go-common/taskmanager"
-	"github.com/clambin/sciensano/internal/sciensano"
+	"github.com/clambin/sciensano/v2/internal/sciensano"
 	"log/slog"
 	"net/http"
 	"time"

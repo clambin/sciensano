@@ -3,7 +3,7 @@ package population
 import (
 	"context"
 	"fmt"
-	"github.com/clambin/sciensano/internal/population/bracket"
+	"github.com/clambin/sciensano/v2/internal/population/bracket"
 	"log/slog"
 	"math"
 	"sync"

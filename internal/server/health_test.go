@@ -1,8 +1,8 @@
 package server_test
 
 import (
-	"github.com/clambin/sciensano/internal/server"
-	"github.com/clambin/sciensano/internal/server/mocks"
+	"github.com/clambin/sciensano/v2/internal/server"
+	"github.com/clambin/sciensano/v2/internal/server/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"log/slog"

@@ -3,8 +3,8 @@ package reporter
 import (
 	"context"
 	"github.com/clambin/go-common/tabulator"
-	"github.com/clambin/sciensano/internal/reports/store"
-	"github.com/clambin/sciensano/internal/sciensano"
+	"github.com/clambin/sciensano/v2/internal/reports/store"
+	"github.com/clambin/sciensano/v2/internal/sciensano"
 	"log/slog"
 )
 

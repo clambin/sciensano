@@ -2,7 +2,7 @@ package population
 
 import (
 	"context"
-	"github.com/clambin/sciensano/internal/population/bracket"
+	"github.com/clambin/sciensano/v2/internal/population/bracket"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"log/slog"

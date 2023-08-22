@@ -1,11 +1,11 @@
 package reporter
 
 import (
-	"github.com/clambin/sciensano/internal/population/bracket"
-	"github.com/clambin/sciensano/internal/reports/reporter/mocks"
-	"github.com/clambin/sciensano/internal/reports/store"
-	"github.com/clambin/sciensano/internal/sciensano"
-	"github.com/clambin/sciensano/internal/sciensano/testutil"
+	"github.com/clambin/sciensano/v2/internal/population/bracket"
+	"github.com/clambin/sciensano/v2/internal/reports/reporter/mocks"
+	"github.com/clambin/sciensano/v2/internal/reports/store"
+	"github.com/clambin/sciensano/v2/internal/sciensano"
+	"github.com/clambin/sciensano/v2/internal/sciensano/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"

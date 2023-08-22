@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	grafanaJSONServer "github.com/clambin/grafana-json-server"
-	"github.com/clambin/sciensano/internal/sciensano"
+	"github.com/clambin/sciensano/v2/internal/sciensano"
 )
 
 func newSummaryMetric(s ReportsStore, name string, summaryColumns []sciensano.SummaryColumn) (grafanaJSONServer.Metric, grafanaJSONServer.Handler) {

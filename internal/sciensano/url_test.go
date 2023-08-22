@@ -1,7 +1,7 @@
 package sciensano_test
 
 import (
-	"github.com/clambin/sciensano/internal/sciensano"
+	"github.com/clambin/sciensano/v2/internal/sciensano"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )

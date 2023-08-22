@@ -4,7 +4,7 @@ import (
 	"embed"
 	"encoding/json"
 	"fmt"
-	"github.com/clambin/sciensano/internal/sciensano"
+	"github.com/clambin/sciensano/v2/internal/sciensano"
 	"path"
 )
 

@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"github.com/clambin/sciensano/internal/sciensano"
-	"github.com/clambin/sciensano/internal/sciensano/testutil"
+	"github.com/clambin/sciensano/v2/internal/sciensano"
+	"github.com/clambin/sciensano/v2/internal/sciensano/testutil"
 	"github.com/stretchr/testify/assert"
 	"io"
 	"net/http"
@@ -47,7 +47,7 @@ func updateReferenceFile[T any](source, filename string) {
 	if err != nil {
 		panic(err)
 	}
-	defer content.Body.Close()
+	defer func(Body io.ReadCloser) { _ = Body.Close() }(content.Body)
 
 	filtered, err := filterReferenceFile[T](content.Body)
 	if err != nil {
@@ -58,7 +58,7 @@ func updateReferenceFile[T any](source, filename string) {
 	if err != nil {
 		panic(err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 	_, err = io.Copy(f, filtered)
 	if err != nil {
 		panic(err)

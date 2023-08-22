@@ -6,7 +6,7 @@ import (
 	"github.com/clambin/go-common/set"
 	"github.com/clambin/go-common/tabulator"
 	grafanaJSONServer "github.com/clambin/grafana-json-server"
-	"github.com/clambin/sciensano/internal/sciensano"
+	"github.com/clambin/sciensano/v2/internal/sciensano"
 	"github.com/prometheus/client_golang/prometheus"
 	"log/slog"
 	"net/http"

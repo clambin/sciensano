@@ -2,7 +2,7 @@ package population_test
 
 import (
 	"context"
-	"github.com/clambin/sciensano/internal/population"
+	"github.com/clambin/sciensano/v2/internal/population"
 	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
