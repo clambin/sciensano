@@ -4,13 +4,13 @@ dir: "{{.InterfaceDir}}/mocks"
 mockname: "{{.InterfaceName}}"
 outpkg: "mocks"
 packages:
-  github.com/clambin/sciensano/internal/reports/datasource:
+  github.com/clambin/sciensano/v2/internal/reports/datasource:
     interfaces:
       Fetcher:
-  github.com/clambin/sciensano/internal/reports/reporter:
+  github.com/clambin/sciensano/v2/internal/reports/reporter:
     interfaces:
       Publisher:
       PopulationFetcher:
-  github.com/clambin/sciensano/internal/server:
+  github.com/clambin/sciensano/v2/internal/server:
     interfaces:
       ReportsStore:

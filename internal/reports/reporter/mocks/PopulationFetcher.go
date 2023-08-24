@@ -23,13 +23,13 @@ func (_m *PopulationFetcher) EXPECT() *PopulationFetcher_Expecter {
 	return &PopulationFetcher_Expecter{mock: &_m.Mock}
 }
 
-// GetByAgeBracket provides a mock function with given fields: arguments
-func (_m *PopulationFetcher) GetByAgeBracket(arguments bracket.Bracket) int {
-	ret := _m.Called(arguments)
+// GetForAgeBracket provides a mock function with given fields: _a0
+func (_m *PopulationFetcher) GetForAgeBracket(_a0 bracket.Bracket) int {
+	ret := _m.Called(_a0)
 
 	var r0 int
 	if rf, ok := ret.Get(0).(func(bracket.Bracket) int); ok {
-		r0 = rf(arguments)
+		r0 = rf(_a0)
 	} else {
 		r0 = ret.Get(0).(int)
 	}
@@ -37,73 +37,72 @@ func (_m *PopulationFetcher) GetByAgeBracket(arguments bracket.Bracket) int {
 	return r0
 }
 
-// PopulationFetcher_GetByAgeBracket_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetByAgeBracket'
-type PopulationFetcher_GetByAgeBracket_Call struct {
+// PopulationFetcher_GetForAgeBracket_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetForAgeBracket'
+type PopulationFetcher_GetForAgeBracket_Call struct {
 	*mock.Call
 }
 
-// GetByAgeBracket is a helper method to define mock.On call
-//   - arguments bracket.Bracket
-func (_e *PopulationFetcher_Expecter) GetByAgeBracket(arguments interface{}) *PopulationFetcher_GetByAgeBracket_Call {
-	return &PopulationFetcher_GetByAgeBracket_Call{Call: _e.mock.On("GetByAgeBracket", arguments)}
+// GetForAgeBracket is a helper method to define mock.On call
+//   - _a0 bracket.Bracket
+func (_e *PopulationFetcher_Expecter) GetForAgeBracket(_a0 interface{}) *PopulationFetcher_GetForAgeBracket_Call {
+	return &PopulationFetcher_GetForAgeBracket_Call{Call: _e.mock.On("GetForAgeBracket", _a0)}
 }
 
-func (_c *PopulationFetcher_GetByAgeBracket_Call) Run(run func(arguments bracket.Bracket)) *PopulationFetcher_GetByAgeBracket_Call {
+func (_c *PopulationFetcher_GetForAgeBracket_Call) Run(run func(_a0 bracket.Bracket)) *PopulationFetcher_GetForAgeBracket_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(bracket.Bracket))
 	})
 	return _c
 }
 
-func (_c *PopulationFetcher_GetByAgeBracket_Call) Return(count int) *PopulationFetcher_GetByAgeBracket_Call {
+func (_c *PopulationFetcher_GetForAgeBracket_Call) Return(count int) *PopulationFetcher_GetForAgeBracket_Call {
 	_c.Call.Return(count)
 	return _c
 }
 
-func (_c *PopulationFetcher_GetByAgeBracket_Call) RunAndReturn(run func(bracket.Bracket) int) *PopulationFetcher_GetByAgeBracket_Call {
+func (_c *PopulationFetcher_GetForAgeBracket_Call) RunAndReturn(run func(bracket.Bracket) int) *PopulationFetcher_GetForAgeBracket_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// GetByRegion provides a mock function with given fields:
-func (_m *PopulationFetcher) GetByRegion() map[string]int {
-	ret := _m.Called()
+// GetForRegion provides a mock function with given fields: region
+func (_m *PopulationFetcher) GetForRegion(region string) int {
+	ret := _m.Called(region)
 
-	var r0 map[string]int
-	if rf, ok := ret.Get(0).(func() map[string]int); ok {
-		r0 = rf()
+	var r0 int
+	if rf, ok := ret.Get(0).(func(string) int); ok {
+		r0 = rf(region)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(map[string]int)
-		}
+		r0 = ret.Get(0).(int)
 	}
 
 	return r0
 }
 
-// PopulationFetcher_GetByRegion_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetByRegion'
-type PopulationFetcher_GetByRegion_Call struct {
+// PopulationFetcher_GetForRegion_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetForRegion'
+type PopulationFetcher_GetForRegion_Call struct {
 	*mock.Call
 }
 
-// GetByRegion is a helper method to define mock.On call
-func (_e *PopulationFetcher_Expecter) GetByRegion() *PopulationFetcher_GetByRegion_Call {
-	return &PopulationFetcher_GetByRegion_Call{Call: _e.mock.On("GetByRegion")}
+// GetForRegion is a helper method to define mock.On call
+//   - region string
+func (_e *PopulationFetcher_Expecter) GetForRegion(region interface{}) *PopulationFetcher_GetForRegion_Call {
+	return &PopulationFetcher_GetForRegion_Call{Call: _e.mock.On("GetForRegion", region)}
 }
 
-func (_c *PopulationFetcher_GetByRegion_Call) Run(run func()) *PopulationFetcher_GetByRegion_Call {
+func (_c *PopulationFetcher_GetForRegion_Call) Run(run func(region string)) *PopulationFetcher_GetForRegion_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run()
+		run(args[0].(string))
 	})
 	return _c
 }
 
-func (_c *PopulationFetcher_GetByRegion_Call) Return(figures map[string]int) *PopulationFetcher_GetByRegion_Call {
-	_c.Call.Return(figures)
+func (_c *PopulationFetcher_GetForRegion_Call) Return(count int) *PopulationFetcher_GetForRegion_Call {
+	_c.Call.Return(count)
 	return _c
 }
 
-func (_c *PopulationFetcher_GetByRegion_Call) RunAndReturn(run func() map[string]int) *PopulationFetcher_GetByRegion_Call {
+func (_c *PopulationFetcher_GetForRegion_Call) RunAndReturn(run func(string) int) *PopulationFetcher_GetForRegion_Call {
 	_c.Call.Return(run)
 	return _c
 }

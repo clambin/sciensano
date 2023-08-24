@@ -18,10 +18,12 @@ func TestProRater_Prorate(t *testing.T) {
 	l := slog.Default()
 
 	f := mocks.NewPopulationFetcher(t)
-	f.EXPECT().GetByRegion().Return(map[string]int{"Flanders": 10, "Wallonia": 5, "Brussels": 1})
-	f.EXPECT().GetByAgeBracket(bracket.Bracket{Low: 20, High: 29}).Return(10)
-	f.EXPECT().GetByAgeBracket(bracket.Bracket{Low: 30, High: 39}).Return(5)
-	f.EXPECT().GetByAgeBracket(bracket.Bracket{Low: 40, High: 49}).Return(1)
+	f.EXPECT().GetForRegion("Flanders").Return(10)
+	f.EXPECT().GetForRegion("Wallonia").Return(5)
+	f.EXPECT().GetForRegion("Brussels").Return(1)
+	f.EXPECT().GetForAgeBracket(bracket.Bracket{Low: 20, High: 29}).Return(10)
+	f.EXPECT().GetForAgeBracket(bracket.Bracket{Low: 30, High: 39}).Return(5)
+	f.EXPECT().GetForAgeBracket(bracket.Bracket{Low: 40, High: 49}).Return(1)
 	f.EXPECT().WaitTillReady(mock.AnythingOfType("*context.timerCtx")).Return(nil)
 
 	ts := time.Date(2023, time.August, 7, 0, 0, 0, 0, time.UTC)
@@ -108,7 +110,7 @@ func BenchmarkProRater_CreateReport(b *testing.B) {
 
 	p := mocks.NewPopulationFetcher(b)
 	p.EXPECT().WaitTillReady(mock.Anything).Return(nil)
-	p.EXPECT().GetByRegion().Return(map[string]int{})
+	p.EXPECT().GetForRegion(mock.AnythingOfType("string")).Return(1)
 	l := slog.Default()
 	s := store.Store{Logger: l}
 	r := ProRater{

@@ -17,7 +17,7 @@ import (
 
 func TestRater(t *testing.T) {
 	f := mocks.NewPopulationFetcher(t)
-	f.EXPECT().GetByRegion().Return(nil)
+	f.EXPECT().GetForRegion(mock.AnythingOfType("string")).Return(1)
 	f.EXPECT().WaitTillReady(mock.AnythingOfType("*context.timerCtx")).Return(nil)
 
 	dataChCh := make(chan chan sciensano.Vaccinations)

@@ -59,18 +59,18 @@ func unzipTestFiles() (err error) {
 	return
 }
 
-func TestStore_Parser(t *testing.T) {
+func TestStore_groupPopulation(t *testing.T) {
 	byRegion, byAge, err := groupPopulation(path.Join(tmpDir, "demographics.txt"))
 	require.NoError(t, err)
 	require.Len(t, byRegion, 3)
-	assert.Contains(t, byRegion, "Wallonia")
-	assert.Contains(t, byRegion, "Flanders")
-	assert.Contains(t, byRegion, "Brussels")
+	assert.Contains(t, byRegion, "Waals Gewest")
+	assert.Contains(t, byRegion, "Vlaams Gewest")
+	assert.Contains(t, byRegion, "Brussels Hoofdstedelijk Gewest")
 	assert.NotEmpty(t, byAge)
 	assert.Contains(t, byAge, 52)
 }
 
-func BenchmarkStore_Parser(b *testing.B) {
+func BenchmarkStore_groupPopulation(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		_, _, err := groupPopulation(path.Join(tmpDir, "TF_SOC_POP_STRUCT_2021.txt"))
 		if err != nil {

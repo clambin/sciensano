@@ -24,10 +24,10 @@ type ProRater struct {
 }
 
 type PopulationFetcher interface {
-	// GetByAgeBracket returns the demographics for the specified AgeBracket
-	GetByAgeBracket(arguments bracket.Bracket) (count int)
-	// GetByRegion returns the demographics grouped by region
-	GetByRegion() (figures map[string]int)
+	// GetForAgeBracket returns the population for the specified AgeBracket
+	GetForAgeBracket(bracket bracket.Bracket) (count int)
+	// GetForRegion returns the population region
+	GetForRegion(region string) (count int)
 	// WaitTillReady waits until the fetcher is ready or until the context is marked as done
 	WaitTillReady(ctx context.Context) error
 }
@@ -115,22 +115,25 @@ func getPopulationForGroup(mode sciensano.SummaryColumn, columns []string, popSt
 	if err := popStore.WaitTillReady(ctx); err != nil {
 		return nil, fmt.Errorf("population figures not ready: %w", err)
 	}
-	var figures map[string]int
-	switch mode {
-	case sciensano.ByRegion:
-		figures = popStore.GetByRegion()
-	case sciensano.ByAgeGroup:
-		figures = make(map[string]int)
-		for _, column := range columns {
-			if column == "(unknown)" {
-				continue
-			}
+
+	figures := make(map[string]int)
+
+	for _, column := range columns {
+		if column == "(unknown)" {
+			continue
+		}
+		var pop int
+		switch mode {
+		case sciensano.ByRegion:
+			pop = popStore.GetForRegion(column)
+		case sciensano.ByAgeGroup:
 			b, err := bracket.FromString(column)
 			if err != nil {
 				return nil, fmt.Errorf("invalid age bracket: '%s' : %w", column, err)
 			}
-			figures[column] = popStore.GetByAgeBracket(b)
+			pop = popStore.GetForAgeBracket(b)
 		}
+		figures[column] = pop
 	}
 	return figures, nil
 }

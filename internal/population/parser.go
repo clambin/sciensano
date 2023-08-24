@@ -44,24 +44,9 @@ func groupPopulation(filename string) (map[string]int, map[int]int, error) {
 			return nil, nil, fmt.Errorf("invalid number for Age on line %d: %w", line, err)
 		}
 
-		region := translateRegion(string(record.Region))
-
-		byRegion[region] += count
+		byRegion[string(record.Region)] += count
 		byAge[age] += count
 	}
 
 	return byRegion, byAge, nil
-}
-
-var regionTranslationTable = map[string]string{
-	"Vlaams Gewest":                  "Flanders",
-	"Waals Gewest":                   "Wallonia",
-	"Brussels Hoofdstedelijk Gewest": "Brussels",
-}
-
-func translateRegion(input string) string {
-	if translated, ok := regionTranslationTable[input]; ok {
-		return translated
-	}
-	return input
 }

@@ -15,16 +15,37 @@ func TestServer_GetByRegion(t *testing.T) {
 	s := Server{Path: path.Join(tmpDir, "demographics.txt"), Logger: slog.Default()}
 	err := s.update()
 	require.NoError(t, err)
+	err = s.update()
+	assert.NoError(t, err)
 
-	regions := s.GetByRegion()
-	assert.Len(t, regions, 4)
+	testCases := []struct {
+		region string
+		want   int
+	}{
+		{
+			region: "Ostbelgien",
+			want:   ostbelgienPopulation,
+		},
+		{
+			region: "Wallonia",
+			want:   -61704,
+		},
+		{
+			region: "Brussels",
+			want:   87835,
+		},
+		{
+			region: "Flanders",
+			want:   2972,
+		},
+	}
 
-	count, ok := regions["Ostbelgien"]
-	require.True(t, ok)
-	assert.Equal(t, ostbelgienPopulation, count)
-
-	_, ok = regions["invalid"]
-	assert.False(t, ok)
+	for _, tt := range testCases {
+		t.Run(tt.region, func(t *testing.T) {
+			population := s.GetForRegion(tt.region)
+			assert.Equal(t, tt.want, population)
+		})
+	}
 }
 
 func TestServer_GetByAgeBracket(t *testing.T) {
@@ -51,7 +72,7 @@ func TestServer_GetByAgeBracket(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		count := s.GetByAgeBracket(testCase.arguments)
+		count := s.GetForAgeBracket(testCase.arguments)
 		assert.Equal(t, testCase.expected, count)
 
 	}
@@ -75,7 +96,7 @@ func TestStore_Run(t *testing.T) {
 	defer cancel2()
 	assert.NoError(t, s.WaitTillReady(ctx2))
 
-	assert.NotEmpty(t, s.GetByRegion())
+	assert.NotZero(t, s.GetForRegion("Ostbelgien"))
 
 	cancel()
 	assert.NoError(t, <-ch)

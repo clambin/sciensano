@@ -30,8 +30,8 @@ func TestSciensanoReporters(t *testing.T) {
 	s := store.Store{Logger: logger.With("component", "store")}
 
 	popStore := mocks.NewPopulationFetcher(t)
-	popStore.EXPECT().GetByRegion().Return(nil)
-	popStore.EXPECT().GetByAgeBracket(mock.AnythingOfType("bracket.Bracket")).Return(1)
+	popStore.EXPECT().GetForRegion(mock.AnythingOfType("string")).Return(1)
+	popStore.EXPECT().GetForAgeBracket(mock.AnythingOfType("bracket.Bracket")).Return(1)
 	popStore.EXPECT().WaitTillReady(mock.AnythingOfType("*context.timerCtx")).Return(nil)
 
 	reporters := reports.NewSciensanoReporters(datasources, &s, popStore, logger)

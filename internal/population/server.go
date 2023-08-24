@@ -44,30 +44,52 @@ func (s *Server) Run(ctx context.Context) error {
 	}
 }
 
-// GetByRegion returns the number of people in each region
-func (s *Server) GetByRegion() (response map[string]int) {
+const ostbelgienPopulation = 78000
+
+// GetForRegion returns the number of people in each region
+func (s *Server) GetForRegion(region string) int {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
-	response = make(map[string]int)
-	for key, value := range s.byRegion {
-		response[key] = value
+	switch region {
+	case "Ostbelgien":
+		// demographic figures counts Ostbelgien as part of Wallonia. Hardcode the split here.
+		// yes, it's ugly. :-)
+		return ostbelgienPopulation
+	case "Wallonia":
+		return s.byRegion["Waals Gewest"] - ostbelgienPopulation
+	default:
+		return s.byRegion[translateRegion(region)]
 	}
-	return
 }
 
-// GetByAgeBracket returns the number of people within a specific age bracket. Set High to math.Inf(+1)
+var regionTranslationTable = map[string]string{
+	"Flanders": "Vlaams Gewest",
+	"Wallonia": "Waals Gewest",
+	"Brussels": "Brussels Hoofdstedelijk Gewest",
+}
+
+func translateRegion(input string) string {
+	if translated, ok := regionTranslationTable[input]; ok {
+		return translated
+	}
+	return input
+}
+
+// GetForAgeBracket returns the number of people within a specific age bracket. Set High to math.Inf(+1)
 // to return all people older than a given age
-func (s *Server) GetByAgeBracket(arguments bracket.Bracket) (response int) {
+func (s *Server) GetForAgeBracket(arguments bracket.Bracket) int {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
 
 	if arguments.High == 0 {
 		arguments.High = math.Inf(+1)
 	}
+
+	var total int
 	for age, count := range s.byAge {
 		if float64(age) >= arguments.Low && float64(age) <= arguments.High {
-			response += count
+			total += count
 		}
 	}
-	return
+	return total
 }
