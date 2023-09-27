@@ -10,7 +10,7 @@ require (
 	github.com/clambin/go-common/taskmanager v0.3.0
 	github.com/clambin/grafana-json-server v0.5.1
 	github.com/mailru/easyjson v0.7.7
-	github.com/prometheus/client_golang v1.16.0
+	github.com/prometheus/client_golang v1.17.0
 	github.com/rovaughn/fastcsv v0.0.0-20170331030356-1090019547fb
 	github.com/stretchr/testify v1.8.4
 )
@@ -28,7 +28,7 @@ require (
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/prometheus/client_model v0.4.0 // indirect
+	github.com/prometheus/client_model v0.4.1-0.20230718164431-9a2bf3000d16 // indirect
 	github.com/prometheus/common v0.44.0 // indirect
 	github.com/prometheus/procfs v0.11.1 // indirect
 	github.com/stretchr/objx v0.5.0 // indirect
