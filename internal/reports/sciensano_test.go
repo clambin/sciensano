@@ -14,7 +14,6 @@ import (
 	"net/http"
 	"os"
 	"slices"
-	"sort"
 	"testing"
 	"time"
 )
@@ -44,7 +43,7 @@ func TestSciensanoReporters(t *testing.T) {
 
 	assert.Eventually(t, func() bool {
 		keys := s.Keys()
-		sort.Strings(keys)
+		slices.Sort(keys)
 		return slices.Equal(keys, []string{
 			"cases-ByAgeGroup", "cases-ByProvince", "cases-ByRegion", "cases-Total",
 			"hospitalisations-ByCategory", "hospitalisations-ByProvince", "hospitalisations-ByRegion", "hospitalisations-Total",
