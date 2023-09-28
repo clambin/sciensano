@@ -44,7 +44,7 @@ jobs:
           grep -v "_easyjson.go" coverage.txt > coverage.filtered
         shell: bash
       - name: upload code coverage
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v3
         with:
           file: coverage.filtered
           token: ${{ secrets.CODECOV_TOKEN }}
