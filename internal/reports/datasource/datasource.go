@@ -80,5 +80,5 @@ func (d *DataSource[T]) fetchData(ctx context.Context) error {
 }
 
 func (d *DataSource[T]) sendData() {
-	d.Publisher.Send(d.currentData, d.currentAge)
+	d.Publisher.Publish(d.currentData, d.currentAge)
 }

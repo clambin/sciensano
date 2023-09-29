@@ -38,7 +38,7 @@ func main() {
 	if *debug {
 		opts.Level = slog.LevelDebug
 	}
-	logger := slog.New(slog.NewTextHandler(os.Stderr, &opts))
+	logger := slog.New(slog.NewJSONHandler(os.Stderr, &opts))
 
 	logger.Info("Sciensano API server starting", "version", version)
 

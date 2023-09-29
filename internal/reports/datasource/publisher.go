@@ -25,7 +25,7 @@ func (p *Publisher[T]) Unregister(ch chan T) {
 	delete(p.clients, ch)
 }
 
-func (p *Publisher[T]) Send(value T, currentAge time.Time) bool {
+func (p *Publisher[T]) Publish(value T, currentAge time.Time) bool {
 	p.lock.RLock()
 	defer p.lock.RUnlock()
 
