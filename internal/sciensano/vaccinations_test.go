@@ -112,7 +112,7 @@ func TestVaccinations_Summarize(t *testing.T) {
 		{
 			summaryColumn: sciensano.ByManufacturer,
 			wantErr:       assert.NoError,
-			want:          []string{"AstraZeneca-Oxford", "Johnson&Johnson", "Moderna Bivalent BA1", "Moderna Original", "Novavax", "Other", "Pfizer-BioNTech Bivalent BA1", "Pfizer-BioNTech Bivalent BA4-5", "Pfizer-BioNTech Original"},
+			want:          []string{"AstraZeneca-Oxford", "Johnson&Johnson", "Moderna Bivalent BA1", "Moderna Original", "Novavax", "Other", "Pfizer-BioNTech Bivalent BA1", "Pfizer-BioNTech Bivalent BA4-5", "Pfizer-BioNTech Original", "Pfizer-BioNTech XBB1.5", "Sanofi-GSK"},
 		},
 		{
 			summaryColumn: sciensano.ByAgeGroup,
@@ -126,7 +126,7 @@ func TestVaccinations_Summarize(t *testing.T) {
 		{
 			summaryColumn: sciensano.ByVaccinationType,
 			wantErr:       assert.NoError,
-			want:          []string{"booster", "booster2", "booster3", "full", "partial"},
+			want:          []string{"Booster", "Booster 2", "Booster 3", "Booster 4", "Full", "Partial", "SingleDose"},
 		},
 	}
 

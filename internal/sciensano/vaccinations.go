@@ -29,18 +29,7 @@ func (v Vaccination) GetSummaryColumnName(column SummaryColumn) (string, error) 
 	case ByManufacturer:
 		columnName = v.Manufacturer
 	case ByVaccinationType:
-		switch v.Dose {
-		case Partial:
-			columnName = "partial"
-		case Full, SingleDose:
-			columnName = "full"
-		case Booster:
-			columnName = "booster"
-		case Booster2:
-			columnName = "booster2"
-		case Booster3:
-			columnName = "booster3"
-		}
+		columnName = v.Dose.String()
 	default:
 		return "nil", fmt.Errorf("invalid summary column: %s", column.String())
 	}

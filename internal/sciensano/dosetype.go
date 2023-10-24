@@ -12,6 +12,7 @@ const (
 	Booster
 	Booster2
 	Booster3
+	Booster4
 )
 
 var doseTypeStrings = map[DoseType]string{
@@ -21,6 +22,7 @@ var doseTypeStrings = map[DoseType]string{
 	Booster:    "Booster",
 	Booster2:   "Booster 2",
 	Booster3:   "Booster 3",
+	Booster4:   "Booster 4",
 }
 
 var DoseTypeNames map[string]DoseType
@@ -28,7 +30,7 @@ var DoseTypeNames map[string]DoseType
 func init() {
 	DoseTypeNames = make(map[string]DoseType)
 
-	for i := Partial; i <= Booster3; i++ {
+	for i := Partial; i <= Booster4; i++ {
 		DoseTypeNames[i.String()] = i
 	}
 }
@@ -55,6 +57,8 @@ func (d *DoseType) UnmarshalJSON(body []byte) (err error) {
 		*d = Booster2
 	case `"E3"`:
 		*d = Booster3
+	case `"E4+"`:
+		*d = Booster4
 	default:
 		err = fmt.Errorf("invalid Dose: %s", string(body))
 	}
@@ -75,6 +79,8 @@ func (d DoseType) MarshalJSON() (body []byte, err error) {
 		body = []byte(`"E2"`)
 	case Booster3:
 		body = []byte(`"E3"`)
+	case Booster4:
+		body = []byte(`"E4+"`)
 	default:
 		err = fmt.Errorf("invalid Dose: %d", d)
 	}
