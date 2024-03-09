@@ -21,7 +21,7 @@ var SummaryColumnNames map[string]SummaryColumn
 func init() {
 	SummaryColumnNames = make(map[string]SummaryColumn)
 
-	for i := Total; i <= ByCategory; i++ {
+	for i := range ByCategory + 1 {
 		SummaryColumnNames[i.String()] = i
 	}
 }

@@ -54,7 +54,7 @@ func BenchmarkVaccinations_Unmarshal_Json(b *testing.B) {
 	content, err := os.ReadFile(filepath.Join("testutil", "testdata", "vaccinations.json"))
 	require.NoError(b, err)
 
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		var vaccinations sciensano.Vaccinations
 		err = json.Unmarshal(content, &vaccinations)
 		if err != nil {
@@ -68,7 +68,7 @@ func BenchmarkVaccinations_Unmarshal_Easyjson(b *testing.B) {
 	require.NoError(b, err)
 
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		var vaccinations sciensano.Vaccinations
 		err = easyjson.Unmarshal(content, &vaccinations)
 		if err != nil {
@@ -76,22 +76,6 @@ func BenchmarkVaccinations_Unmarshal_Easyjson(b *testing.B) {
 		}
 	}
 }
-
-/*
-	func BenchmarkVaccinations_Unmarshal_JsonIter(b *testing.B) {
-		content, err := os.ReadFile(filepath.Join("testutil", "testdata", "vaccinations.json"))
-		require.NoError(b, err)
-
-		b.ResetTimer()
-		for i := 0; i < b.N; i++ {
-			var vaccinations sciensano.Vaccinations
-			err = jsoniter.ConfigCompatibleWithStandardLibrary.Unmarshal(content, &vaccinations)
-			if err != nil {
-				b.Fatal(err)
-			}
-		}
-	}
-*/
 
 func TestVaccinations_Summarize(t *testing.T) {
 	testCases := []struct {
@@ -146,7 +130,7 @@ func TestVaccinations_Summarize(t *testing.T) {
 func BenchmarkVaccinations_Summarize_Total(b *testing.B) {
 	vaccinations := testutil.Vaccinations()
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		_, err := vaccinations.Summarize(sciensano.Total)
 		if err != nil {
 			b.Fatal(err)
@@ -157,7 +141,7 @@ func BenchmarkVaccinations_Summarize_Total(b *testing.B) {
 func BenchmarkVaccinations_Summarize_ByRegion(b *testing.B) {
 	vaccinations := testutil.Vaccinations()
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		_, err := vaccinations.Summarize(sciensano.ByRegion)
 		if err != nil {
 			b.Fatal(err)

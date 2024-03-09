@@ -25,7 +25,7 @@ func BenchmarkTestResults_Unmarshal_JSON(b *testing.B) {
 	content, err := os.ReadFile(filepath.Join("testutil", "testdata", "testResults.json"))
 	require.NoError(b, err)
 
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		var records sciensano.TestResults
 		err = json.Unmarshal(content, &records)
 		if err != nil {

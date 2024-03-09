@@ -71,7 +71,7 @@ func TestStore_groupPopulation(t *testing.T) {
 }
 
 func BenchmarkStore_groupPopulation(b *testing.B) {
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		_, _, err := groupPopulation(path.Join(tmpDir, "TF_SOC_POP_STRUCT_2021.txt"))
 		if err != nil {
 			b.Fatal(err)

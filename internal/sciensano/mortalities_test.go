@@ -25,7 +25,7 @@ func BenchmarkMortalities_Unmarshal_JSON(b *testing.B) {
 	content, err := os.ReadFile(filepath.Join("testutil", "testdata", "mortalities.json"))
 	require.NoError(b, err)
 
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		var records sciensano.Mortalities
 		err = json.Unmarshal(content, &records)
 		if err != nil {
@@ -77,7 +77,7 @@ func TestMortalities_Summarize(t *testing.T) {
 func BenchmarkMortalities_Summarize_Total(b *testing.B) {
 	mortalities := testutil.Mortalities()
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		_, err := mortalities.Summarize(sciensano.Total)
 		if err != nil {
 			b.Fatal(err)
@@ -88,7 +88,7 @@ func BenchmarkMortalities_Summarize_Total(b *testing.B) {
 func BenchmarkMortalities_Summarize_ByAgeGroup(b *testing.B) {
 	mortalities := testutil.Mortalities()
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		_, err := mortalities.Summarize(sciensano.ByAgeGroup)
 		if err != nil {
 			b.Fatal(err)

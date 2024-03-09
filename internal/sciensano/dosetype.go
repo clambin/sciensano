@@ -30,7 +30,7 @@ var DoseTypeNames map[string]DoseType
 func init() {
 	DoseTypeNames = make(map[string]DoseType)
 
-	for i := Partial; i <= Booster4; i++ {
+	for i := range Booster4 + 1 {
 		DoseTypeNames[i.String()] = i
 	}
 }
