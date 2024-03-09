@@ -1,6 +1,7 @@
 package reporter
 
 import (
+	"context"
 	"github.com/clambin/sciensano/v2/internal/population/bracket"
 	"github.com/clambin/sciensano/v2/internal/reports/reporter/mocks"
 	"github.com/clambin/sciensano/v2/internal/reports/store"
@@ -108,13 +109,10 @@ func TestProRater_Prorate(t *testing.T) {
 func BenchmarkProRater_CreateReport(b *testing.B) {
 	vaccinations := testutil.Vaccinations()
 
-	p := mocks.NewPopulationFetcher(b)
-	p.EXPECT().WaitTillReady(mock.Anything).Return(nil)
-	p.EXPECT().GetForRegion(mock.AnythingOfType("string")).Return(1)
 	l := slog.Default()
 	s := store.Store{Logger: l}
 	r := ProRater{
-		PopStore: p,
+		PopStore: fakePopStore{},
 		Mode:     sciensano.ByRegion,
 		DoseType: sciensano.Partial,
 		Store:    &s,
@@ -125,4 +123,21 @@ func BenchmarkProRater_CreateReport(b *testing.B) {
 	for range b.N {
 		r.createReport(vaccinations)
 	}
+}
+
+var _ PopulationFetcher = fakePopStore{}
+
+type fakePopStore struct{}
+
+func (f fakePopStore) GetForAgeBracket(_ bracket.Bracket) (count int) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (f fakePopStore) GetForRegion(_ string) (count int) {
+	return 1
+}
+
+func (f fakePopStore) WaitTillReady(_ context.Context) error {
+	return nil
 }

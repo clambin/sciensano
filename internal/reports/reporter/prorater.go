@@ -53,20 +53,33 @@ func (r *ProRater) Run(ctx context.Context) error {
 }
 
 func (r *ProRater) createReport(vaccinations sciensano.Vaccinations) {
+	t, err := filterVaccinations(vaccinations, r.Mode, r.DoseType)
+	if err != nil {
+		r.Logger.Error("failed to generate report", "err", err)
+		return
+	}
+	t, err = proRate(t, r.Mode, r.PopStore)
+	if err != nil {
+		r.Logger.Error("failed to generate prorated report", "err", err)
+		return
+	}
+	r.Store.Put(r.Name, t)
+}
+
+func filterVaccinations(vaccinations sciensano.Vaccinations, mode sciensano.SummaryColumn, doseType sciensano.DoseType) (*tabulator.Tabulator, error) {
 	t := tabulator.New()
-	columnNames := set.Create[string]()
+	columnNames := set.New[string]()
 
 	// Filtering and then calling summary has a major performance impact.
 	// This is basically the same code as Summary, but filters on the fly to avoid copying the large vaccinations slice.
-	for _, vaccination := range vaccinations {
-		if vaccination.Dose != r.DoseType && !(r.DoseType == sciensano.Full && vaccination.Dose == sciensano.SingleDose) {
+	for i := range vaccinations {
+		if vaccinations[i].Dose != doseType && !(doseType == sciensano.Full && vaccinations[i].Dose == sciensano.SingleDose) {
 			continue
 		}
 
-		columnName, err := vaccination.GetSummaryColumnName(r.Mode)
+		columnName, err := vaccinations[i].GetSummaryColumnName(mode)
 		if err != nil {
-			r.Logger.Error("failed to generate report", "err", err)
-			return
+			return nil, err
 		}
 
 		if columnName == "" {
@@ -77,15 +90,9 @@ func (r *ProRater) createReport(vaccinations sciensano.Vaccinations) {
 			columnNames.Add(columnName)
 		}
 
-		t.Add(vaccination.TimeStamp.Time, columnName, float64(vaccination.Count))
+		t.Add(vaccinations[i].TimeStamp.Time, columnName, float64(vaccinations[i].Count))
 	}
-
-	t, err := proRate(t, r.Mode, r.PopStore)
-	if err != nil {
-		r.Logger.Error("failed to generate prorated report", "err", err)
-		return
-	}
-	r.Store.Put(r.Name, t)
+	return t, nil
 }
 
 func proRate(summary *tabulator.Tabulator, mode sciensano.SummaryColumn, popStore PopulationFetcher) (*tabulator.Tabulator, error) {
@@ -132,6 +139,7 @@ func getPopulationForGroup(mode sciensano.SummaryColumn, columns []string, popSt
 				return nil, fmt.Errorf("invalid age bracket: '%s' : %w", column, err)
 			}
 			pop = popStore.GetForAgeBracket(b)
+		default:
 		}
 		figures[column] = pop
 	}
