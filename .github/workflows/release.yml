@@ -19,4 +19,4 @@ jobs:
   release:
     needs:
       - build
-    uses: clambin/workflows/.github/workflows/release.yaml@main
+    uses: clambin/workflows/.github/workflows/release.yaml@release
