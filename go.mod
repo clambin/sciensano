@@ -3,7 +3,7 @@ module github.com/clambin/sciensano/v2
 go 1.22
 
 require (
-	github.com/clambin/go-common/httpclient v0.6.0
+	github.com/clambin/go-common/httpclient v0.7.0
 	github.com/clambin/go-common/httpserver v0.12.0
 	github.com/clambin/go-common/set v0.4.3
 	github.com/clambin/go-common/tabulator v0.3.1
