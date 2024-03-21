@@ -14,8 +14,8 @@ github.com/clambin/go-common/tabulator v0.3.1 h1:PpC49uc8eSSRgHM4jP9vNLgLkGkrafy
 github.com/clambin/go-common/tabulator v0.3.1/go.mod h1:Gl1w5I1CDvLqPjor2l08FMWtpAEkDHWRnnz297Nwwfs=
 github.com/clambin/go-common/taskmanager v0.3.0 h1:ASA0axYdGBOukljpdfJxgDE2BwneA1iSgvA/7tLxKw4=
 github.com/clambin/go-common/taskmanager v0.3.0/go.mod h1:lciRo5ME2pCRf0fi5Rx7TcDDgr3/6HuE9qxFgFamfLg=
-github.com/clambin/grafana-json-server v0.6.0 h1:OvXSACq0JhXwfCS6M0QZ29EwlCNeZJ+agwyIwkky/n0=
-github.com/clambin/grafana-json-server v0.6.0/go.mod h1:i9Vx3MfAdzVo3InbkbfS5SPFLsHX+hm0gQwyMymVuN8=
+github.com/clambin/grafana-json-server v0.7.0 h1:Z+C4oX16ywKErdNCypQhvaHOj2f1Iuy91nLicbEoysc=
+github.com/clambin/grafana-json-server v0.7.0/go.mod h1:/hlTOY+kysSJdejegQC8s7df41bddYaKXe1TVPcZ0Rw=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=

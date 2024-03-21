@@ -8,7 +8,7 @@ require (
 	github.com/clambin/go-common/set v0.4.3
 	github.com/clambin/go-common/tabulator v0.3.1
 	github.com/clambin/go-common/taskmanager v0.3.0
-	github.com/clambin/grafana-json-server v0.6.0
+	github.com/clambin/grafana-json-server v0.7.0
 	github.com/mailru/easyjson v0.7.7
 	github.com/prometheus/client_golang v1.19.0
 	github.com/rovaughn/fastcsv v0.0.0-20170331030356-1090019547fb
