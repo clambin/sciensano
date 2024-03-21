@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/clambin/go-common/tabulator"
-	grafanaJSONServer "github.com/clambin/grafana-json-server"
+	gjson "github.com/clambin/grafana-json-server"
 	"github.com/clambin/sciensano/v2/internal/sciensano"
 	"github.com/clambin/sciensano/v2/internal/sciensano/testutil"
 	"github.com/clambin/sciensano/v2/internal/server"
@@ -18,7 +18,7 @@ import (
 
 func TestNew(t *testing.T) {
 	store := makeStore(t)
-	s := server.New(store, slog.Default())
+	s := server.New(store, nil, slog.Default())
 	ctx := context.Background()
 
 	for target, handler := range s.Handlers {
@@ -28,14 +28,14 @@ func TestNew(t *testing.T) {
 				payload = fmt.Sprintf(`{"summary":"%s", "doseType": "%s", "accumulate": "yes"}`, sciensano.Total.String(), sciensano.Partial.String())
 			}
 
-			req := grafanaJSONServer.QueryRequest{Targets: []grafanaJSONServer.QueryRequestTarget{
+			req := gjson.QueryRequest{Targets: []gjson.QueryRequestTarget{
 				{Target: target, Payload: []byte(payload)},
-			}, Range: grafanaJSONServer.Range{To: time.Now()}}
+			}, Range: gjson.Range{To: time.Now()}}
 
 			resp, err := handler.Query(ctx, target, req)
 			require.NoError(t, err)
 			if target != "vaccination-rate" {
-				assert.NotZero(t, len(resp.(grafanaJSONServer.TableResponse).Columns[0].Data.(grafanaJSONServer.TimeColumn)))
+				assert.NotZero(t, len(resp.(gjson.TableResponse).Columns[0].Data.(gjson.TimeColumn)))
 			}
 		})
 	}

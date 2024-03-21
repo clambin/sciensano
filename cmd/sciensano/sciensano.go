@@ -4,10 +4,11 @@ import (
 	"context"
 	"errors"
 	"flag"
-	"github.com/clambin/go-common/httpclient"
+	"github.com/clambin/go-common/http/roundtripper"
 	"github.com/clambin/go-common/taskmanager"
 	"github.com/clambin/go-common/taskmanager/httpserver"
 	promserver "github.com/clambin/go-common/taskmanager/prometheus"
+	gjson "github.com/clambin/grafana-json-server"
 	"github.com/clambin/sciensano/v2/internal/population"
 	"github.com/clambin/sciensano/v2/internal/reports"
 	"github.com/clambin/sciensano/v2/internal/reports/datasource"
@@ -46,11 +47,12 @@ func main() {
 
 	reportsStore := store.Store{Logger: logger.With("component", "reportsStore")}
 
-	r := httpclient.NewRoundTripper(
-		httpclient.WithLimiter(3),
-		httpclient.WithMetrics("sciensano", "", "sciensano"),
+	httpMetrics := roundtripper.NewDefaultRoundTripMetrics("sciensano", "", "sciensano")
+	prometheus.MustRegister(httpMetrics)
+	r := roundtripper.New(
+		roundtripper.WithLimiter(3),
+		roundtripper.WithInstrumentedRoundTripper(httpMetrics),
 	)
-	prometheus.DefaultRegisterer.MustRegister(r)
 	client := &http.Client{Transport: r}
 
 	ds := datasource.NewSciensanoDatastore("", 15*time.Minute, client, logger.With("component", "datasource"))
@@ -61,8 +63,9 @@ func main() {
 	tasks = append(tasks, &popStore)
 	tasks = append(tasks, reporters...)
 
-	s := server.New(&reportsStore, logger.With("component", "server"))
-	prometheus.DefaultRegisterer.MustRegister(s)
+	gjsonMetrics := gjson.NewDefaultPrometheusQueryMetrics("sciensano", "", "sciensano")
+	prometheus.MustRegister(gjsonMetrics)
+	s := server.New(&reportsStore, gjsonMetrics, logger.With("component", "server"))
 
 	tasks = append(
 		tasks, promserver.New(promserver.WithAddr(*prometheusAddr)),

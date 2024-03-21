@@ -2,20 +2,17 @@ package server
 
 import (
 	"context"
-	"github.com/clambin/go-common/httpserver/middleware"
 	"github.com/clambin/go-common/set"
 	"github.com/clambin/go-common/tabulator"
-	grafanaJSONServer "github.com/clambin/grafana-json-server"
+	gjson "github.com/clambin/grafana-json-server"
 	"github.com/clambin/sciensano/v2/internal/sciensano"
-	"github.com/prometheus/client_golang/prometheus"
 	"log/slog"
-	"net/http"
 )
 
 // Server groups Grafana JSON API handlers that retrieve Belgium COVID-19-related statistics
 type Server struct {
-	JSONServer *grafanaJSONServer.Server
-	Handlers   map[string]grafanaJSONServer.Handler
+	JSONServer *gjson.Server
+	Handlers   map[string]gjson.Handler
 	reports    ReportsStore
 }
 
@@ -24,19 +21,15 @@ type ReportsStore interface {
 	Keys() []string
 }
 
-var _ prometheus.Collector = &Server{}
-
-func New(reportsStore ReportsStore, logger *slog.Logger) *Server {
+func New(reportsStore ReportsStore, metrics gjson.PrometheusQueryMetrics, logger *slog.Logger) *Server {
 	s := &Server{
-		Handlers: make(map[string]grafanaJSONServer.Handler),
+		Handlers: make(map[string]gjson.Handler),
 		reports:  reportsStore,
 	}
 
-	options := []grafanaJSONServer.Option{
-		grafanaJSONServer.WithLogger(logger.With("component", "grafana-json-server")),
-		grafanaJSONServer.WithRequestLogger(slog.LevelDebug, middleware.DefaultRequestLogFormatter),
-		grafanaJSONServer.WithHTTPHandler(http.MethodGet, "/health", http.HandlerFunc(s.Health)),
-		grafanaJSONServer.WithPrometheusQueryMetrics("sciensano", "", "sciensano"),
+	options := []gjson.Option{
+		gjson.WithLogger(logger.With("component", "grafana-json-server")),
+		gjson.WithPrometheusQueryMetrics(metrics),
 	}
 
 	summaryHandlers := []struct {
@@ -55,14 +48,15 @@ func New(reportsStore ReportsStore, logger *slog.Logger) *Server {
 		metric, h := newSummaryMetric(reportsStore, summaryHandler.name, summaryHandler.summaryColumns.List())
 
 		s.Handlers[summaryHandler.name] = h
-		options = append(options, grafanaJSONServer.WithMetric(metric, h, nil))
+		options = append(options, gjson.WithMetric(metric, h, nil))
 	}
 
 	metric, h := newVaccinationDoseTypeMetric(reportsStore, "vaccination-rate", []sciensano.SummaryColumn{sciensano.ByRegion, sciensano.ByAgeGroup}, []sciensano.DoseType{sciensano.Partial, sciensano.Full})
 	s.Handlers[metric.Value] = h
-	options = append(options, grafanaJSONServer.WithMetric(metric, h, nil))
+	options = append(options, gjson.WithMetric(metric, h, nil))
 
-	s.JSONServer = grafanaJSONServer.NewServer(options...)
+	s.JSONServer = gjson.NewServer(options...)
+	s.JSONServer.HandleFunc("/health", s.Health)
 	return s
 }
 
@@ -72,22 +66,14 @@ func (s *Server) Run(ctx context.Context) error {
 	return nil
 }
 
-func (s *Server) Describe(descs chan<- *prometheus.Desc) {
-	s.JSONServer.Describe(descs)
-}
-
-func (s *Server) Collect(metrics chan<- prometheus.Metric) {
-	s.JSONServer.Collect(metrics)
-}
-
-func createTableResponse(t *tabulator.Tabulator) grafanaJSONServer.QueryResponse {
+func createTableResponse(t *tabulator.Tabulator) gjson.QueryResponse {
 	columnNames := t.GetColumns()
-	columns := make([]grafanaJSONServer.Column, 1+len(columnNames))
-	columns[0] = grafanaJSONServer.Column{Text: "time", Data: grafanaJSONServer.TimeColumn(t.GetTimestamps())}
+	columns := make([]gjson.Column, 1+len(columnNames))
+	columns[0] = gjson.Column{Text: "time", Data: gjson.TimeColumn(t.GetTimestamps())}
 	for index, column := range t.GetColumns() {
 		values, _ := t.GetValues(column)
-		columns[index+1] = grafanaJSONServer.Column{Text: column, Data: grafanaJSONServer.NumberColumn(values)}
+		columns[index+1] = gjson.Column{Text: column, Data: gjson.NumberColumn(values)}
 	}
 
-	return grafanaJSONServer.TableResponse{Columns: columns}
+	return gjson.TableResponse{Columns: columns}
 }
